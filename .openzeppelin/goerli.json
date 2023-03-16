@@ -1,0 +1,1830 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x0E2f375D6d5FFc60D486f88f0D3FF8244678448E",
+    "txHash": "0xc1ba95cd797f31df2ce21e9be0a2260fb8b6dba69aa1d296799d91d0ff4c4ddc",
+    "deployTransaction": {
+      "hash": "0xc1ba95cd797f31df2ce21e9be0a2260fb8b6dba69aa1d296799d91d0ff4c4ddc",
+      "type": 0,
+      "accessList": null,
+      "blockHash": null,
+      "blockNumber": null,
+      "transactionIndex": null,
+      "confirmations": 0,
+      "from": "0x19596e1D6cd97916514B5DBaA4730781eFE49975",
+      "gasPrice": {
+        "type": "BigNumber",
+        "hex": "0x0a38c7188e"
+      },
+      "gasLimit": {
+        "type": "BigNumber",
+        "hex": "0x0762b4"
+      },
+      "to": null,
+      "value": {
+        "type": "BigNumber",
+        "hex": "0x00"
+      },
+      "nonce": 161,
+      "data": "0x608060405234801561001057600080fd5b50600080546001600160a01b031916339081178255604051909182917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a350610759806100616000396000f3fe60806040526004361061007b5760003560e01c80639623609d1161004e5780639623609d1461011157806399a88ec414610124578063f2fde38b14610144578063f3b7dead146101645761007b565b8063204e1c7a14610080578063715018a6146100bc5780637eff275e146100d35780638da5cb5b146100f3575b600080fd5b34801561008c57600080fd5b506100a061009b366004610515565b610184565b6040516001600160a01b03909116815260200160405180910390f35b3480156100c857600080fd5b506100d1610215565b005b3480156100df57600080fd5b506100d16100ee366004610554565b610292565b3480156100ff57600080fd5b506000546001600160a01b03166100a0565b6100d161011f36600461058c565b61031c565b34801561013057600080fd5b506100d161013f366004610554565b6103ad565b34801561015057600080fd5b506100d161015f366004610515565b610405565b34801561017057600080fd5b506100a061017f366004610515565b6104ef565b6000806000836001600160a01b03166040516101aa90635c60da1b60e01b815260040190565b600060405180830381855afa9150503d80600081146101e5576040519150601f19603f3d011682016040523d82523d6000602084013e6101ea565b606091505b5091509150816101f957600080fd5b8080602001905181019061020d9190610538565b949350505050565b6000546001600160a01b031633146102485760405162461bcd60e51b815260040161023f906106c0565b60405180910390fd5b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b6000546001600160a01b031633146102bc5760405162461bcd60e51b815260040161023f906106c0565b6040516308f2839760e41b81526001600160a01b038281166004830152831690638f283970906024015b600060405180830381600087803b15801561030057600080fd5b505af1158015610314573d6000803e3d6000fd5b505050505050565b6000546001600160a01b031633146103465760405162461bcd60e51b815260040161023f906106c0565b60405163278f794360e11b81526001600160a01b03841690634f1ef286903490610376908690869060040161065d565b6000604051808303818588803b15801561038f57600080fd5b505af11580156103a3573d6000803e3d6000fd5b5050505050505050565b6000546001600160a01b031633146103d75760405162461bcd60e51b815260040161023f906106c0565b604051631b2ce7f360e11b81526001600160a01b038281166004830152831690633659cfe6906024016102e6565b6000546001600160a01b0316331461042f5760405162461bcd60e51b815260040161023f906106c0565b6001600160a01b0381166104945760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b606482015260840161023f565b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b6000806000836001600160a01b03166040516101aa906303e1469160e61b815260040190565b600060208284031215610526578081fd5b81356105318161070b565b9392505050565b600060208284031215610549578081fd5b81516105318161070b565b60008060408385031215610566578081fd5b82356105718161070b565b915060208301356105818161070b565b809150509250929050565b6000806000606084860312156105a0578081fd5b83356105ab8161070b565b925060208401356105bb8161070b565b9150604084013567ffffffffffffffff808211156105d7578283fd5b818601915086601f8301126105ea578283fd5b8135818111156105fc576105fc6106f5565b604051601f8201601f19908116603f01168101908382118183101715610624576106246106f5565b8160405282815289602084870101111561063c578586fd5b82602086016020830137856020848301015280955050505050509250925092565b600060018060a01b038416825260206040818401528351806040850152825b818110156106985785810183015185820160600152820161067c565b818111156106a95783606083870101525b50601f01601f191692909201606001949350505050565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604082015260600190565b634e487b7160e01b600052604160045260246000fd5b6001600160a01b038116811461072057600080fd5b5056fea2646970667358221220d849f96f3086b9f82cdcf665adb8c697ace05638da1c7c16ab2d26293717af6764736f6c63430008020033",
+      "r": "0x18e11b3cd560829d02d8c39eb9a5629003511305bf384d2ec323ff42e6197674",
+      "s": "0x35cf8ac7e212f60d5f3d4adbb130fe5046f4888bcf6da5eadb38e4323a5f4887",
+      "v": 45,
+      "creates": "0x0E2f375D6d5FFc60D486f88f0D3FF8244678448E",
+      "chainId": 5
+    }
+  },
+  "proxies": [
+    {
+      "address": "0xcf1D4d99eb19B0FA3e9812Ff52c41942F27be6CE",
+      "txHash": "0xf46090600eb2b7e0560f79989726e26e7a1d742fd90207e3bbebbdee1b4131fa",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xF05EDE9b6642484641c3401bAE60EBA5234625FB",
+      "txHash": "0x2109f584b65299d58a6271ac446c98e681d8355d33775c20a3761e3cf5665e30",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xd26Ae4DbE2512aff86Cd538C483B655187250556",
+      "txHash": "0xc928abb4280228057636ece0d3f492045edb488f87dbfe8983c981b3129eea2c",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xF2BAbEF366e710fBc9cE8021Ca4528438F97614f",
+      "txHash": "0x31c852eb78afc25cb468dca2940f34c399bf9d8f616735de46bb0bf5aea06174",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xD7edB4C0AdB609C17e6645fF06329a2BB40B1D81",
+      "txHash": "0x0c0ca54af75554281bb7ddffe49515bd04198aab738ace9fa84c8e0faf264e3c",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xA7E15E96218E6001b83741833c2c1C82f9B2C58a",
+      "txHash": "0xb7b734ebd2a7a39d1e7d3c71502683f1083696e5a247f49c7f71ca316fd14104",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x79C924865449e8002044Ceaf0364945519Ba396D",
+      "txHash": "0xa1668f22e77b25b3e233033efb07f265f5d8c688c8d4b1b712d65be608f8b9e6",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xAc9f7902C6061Ea08d94eAf364f6c6Cb70102c29",
+      "txHash": "0x467b2470a5a49e22742a42ce9bcd9bb7f694c6341ab93c52863289f25cd5d557",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x1B7da8b1726c573776B2A9e28bc689421A0625D0",
+      "txHash": "0x0cfad905838213ac0f7f6e793e162f319d0515bdbfc6d0f475cf3890f3719e6d",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xbb77b4527FEe69C4CddE8Cca56d040eb6001F6C3",
+      "txHash": "0x687a1e81171b3e199fa5ef5864081b92a98e9eff2d9fd537be6cc4c41a24d95a",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x5335b81FE26BBbbF10c014D8183313AD875e82A6",
+      "txHash": "0x2e91a37c3881048be7cd17113dd37071d43b273cd19d60a1cfa1504c55a53aa0",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x94642Fe752E6738F376F9DDdCB839f144e5f3CE9",
+      "txHash": "0xc52c6a74c336ff5deec8d12f5e726e2e118324bba44b7dfb0ef5dd927462051a",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "e63bfcbfb70ce63670cf5d323882ebb39816f8320e1c512c61444338628bf449": {
+      "address": "0xb16dc54C0D90b52694B95b540f4D961Bb97e2c1d",
+      "txHash": "0xd8e2c64bbaa7d1596d60b89314a0e90f4949b94663688e298b238aa74abd893d",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "contracts\\Dependencies\\ReentrancyGuardUpgradeable.sol:21"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "contracts\\Dependencies\\ReentrancyGuardUpgradeable.sol:58"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "borrowerOperationsAddress",
+            "type": "t_address",
+            "src": "contracts\\ActivePool.sol:35"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "vesselManagerAddress",
+            "type": "t_address",
+            "src": "contracts\\ActivePool.sol:36"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "stabilityPoolAddress",
+            "type": "t_address",
+            "src": "contracts\\ActivePool.sol:37"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)13398",
+            "src": "contracts\\ActivePool.sol:38"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "collSurplusPool",
+            "type": "t_contract(ICollSurplusPool)13248",
+            "src": "contracts\\ActivePool.sol:39"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\ActivePool.sol:41"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "assetsBalances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\ActivePool.sol:43"
+          },
+          {
+            "contract": "ActivePool",
+            "label": "debtTokenBalances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\ActivePool.sol:44"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IDefaultPool)13398": {
+            "label": "contract IDefaultPool"
+          },
+          "t_contract(ICollSurplusPool)13248": {
+            "label": "contract ICollSurplusPool"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "839f339c389701bc889ecb64264ffca7f011a7cdc51258440eb774aada04ae0f": {
+      "address": "0xDD78698619bCdeEeFe67B6Ff39fceEEB7E73C178",
+      "txHash": "0xa566294d8a3aa63068f6e98a8df00cceae2adb3b0362c450c2d42afc301dbb0a",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "adminContract",
+            "type": "t_contract(IAdminContract)13031",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:28"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "activePool",
+            "type": "t_contract(IActivePool)12714",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:29"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)13398",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:30"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "vesselManager",
+            "type": "t_contract(IVesselManager)14654",
+            "src": "contracts\\BorrowerOperations.sol:25"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "stabilityPool",
+            "type": "t_contract(IStabilityPool)14082",
+            "src": "contracts\\BorrowerOperations.sol:26"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "gasPoolAddress",
+            "type": "t_address",
+            "src": "contracts\\BorrowerOperations.sol:27"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "collSurplusPool",
+            "type": "t_contract(ICollSurplusPool)13248",
+            "src": "contracts\\BorrowerOperations.sol:28"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "feeCollector",
+            "type": "t_contract(IFeeCollector)13505",
+            "src": "contracts\\BorrowerOperations.sol:29"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "debtToken",
+            "type": "t_contract(IDebtToken)13373",
+            "src": "contracts\\BorrowerOperations.sol:30"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "sortedVessels",
+            "type": "t_contract(ISortedVessels)13913",
+            "src": "contracts\\BorrowerOperations.sol:31"
+          },
+          {
+            "contract": "BorrowerOperations",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\BorrowerOperations.sol:32"
+          }
+        ],
+        "types": {
+          "t_contract(IVesselManager)14654": {
+            "label": "contract IVesselManager"
+          },
+          "t_contract(IStabilityPool)14082": {
+            "label": "contract IStabilityPool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(ICollSurplusPool)13248": {
+            "label": "contract ICollSurplusPool"
+          },
+          "t_contract(IFeeCollector)13505": {
+            "label": "contract IFeeCollector"
+          },
+          "t_contract(IDebtToken)13373": {
+            "label": "contract IDebtToken"
+          },
+          "t_contract(ISortedVessels)13913": {
+            "label": "contract ISortedVessels"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IAdminContract)13031": {
+            "label": "contract IAdminContract"
+          },
+          "t_contract(IActivePool)12714": {
+            "label": "contract IActivePool"
+          },
+          "t_contract(IDefaultPool)13398": {
+            "label": "contract IDefaultPool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "9c510a283c72257ac34ed5d8780b049c2e0714a592dffc24848aa1fc2353ed7e": {
+      "address": "0x4dc85466E95E49412Ab750d07826ED45f459eabD",
+      "txHash": "0xf6e0218ecec35e5c659ed8b93c2d4ff77c4bb14dc43804a0408667218be817a5",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "CollSurplusPool",
+            "label": "borrowerOperationsAddress",
+            "type": "t_address",
+            "src": "contracts\\CollSurplusPool.sol:19"
+          },
+          {
+            "contract": "CollSurplusPool",
+            "label": "vesselManagerAddress",
+            "type": "t_address",
+            "src": "contracts\\CollSurplusPool.sol:20"
+          },
+          {
+            "contract": "CollSurplusPool",
+            "label": "activePoolAddress",
+            "type": "t_address",
+            "src": "contracts\\CollSurplusPool.sol:21"
+          },
+          {
+            "contract": "CollSurplusPool",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\CollSurplusPool.sol:23"
+          },
+          {
+            "contract": "CollSurplusPool",
+            "label": "balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\CollSurplusPool.sol:26"
+          },
+          {
+            "contract": "CollSurplusPool",
+            "label": "userBalances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "contracts\\CollSurplusPool.sol:28"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "9978237e7e1092e7238a415cba11ef81737c695a51ce1663777263ca34e3af40": {
+      "address": "0x925A1f6C01bEb2870960A2B7c6f030271a7bb0E3",
+      "txHash": "0xf0bf2d29515ca9f41da683ac90342b6526b3e539719f77d8d74e68205e7d9bf1",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "DefaultPool",
+            "label": "vesselManagerAddress",
+            "type": "t_address",
+            "src": "contracts\\DefaultPool.sol:26"
+          },
+          {
+            "contract": "DefaultPool",
+            "label": "activePoolAddress",
+            "type": "t_address",
+            "src": "contracts\\DefaultPool.sol:27"
+          },
+          {
+            "contract": "DefaultPool",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\DefaultPool.sol:29"
+          },
+          {
+            "contract": "DefaultPool",
+            "label": "assetsBalance",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\DefaultPool.sol:31"
+          },
+          {
+            "contract": "DefaultPool",
+            "label": "VUSDDebts",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\DefaultPool.sol:32"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "3607782085ec5e4461f35bb5b1b20ad76db7dbf9a6a5e1e1e008b2dac58d707d": {
+      "address": "0x5233FF129EAEC60839887c2b1eC44088E6FDD799",
+      "txHash": "0xb8135a3f41a552c94dbdc6fc5048bcc5810518137b3d5c135ab5f6ac3833ce52",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "feeRecords",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)13452_storage))",
+            "src": "contracts\\FeeCollector.sol:24"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "borrowerOperationsAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:26"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "vesselManagerAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:27"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "treasuryAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:28"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "grvtStakingAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:29"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "debtTokenAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:30"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "routeToGRVTStaking",
+            "type": "t_bool",
+            "src": "contracts\\FeeCollector.sol:31"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\FeeCollector.sol:32"
+          }
+        ],
+        "types": {
+          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)13452_storage))": {
+            "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_struct(FeeRecord)13452_storage)": {
+            "label": "mapping(address => struct IFeeCollector.FeeRecord)"
+          },
+          "t_struct(FeeRecord)13452_storage": {
+            "label": "struct IFeeCollector.FeeRecord",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_uint256"
+              },
+              {
+                "label": "to",
+                "type": "t_uint256"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "9984ca50acd30a40595a901dbb9652e4f4cc44e154d6fd9a876c5431c67d829f": {
+      "address": "0x7d678d136F310589BA814566D5a91D646852fE52",
+      "txHash": "0x88d647bd2d04ef45b677487368d1624eeb09103ad15e4e8070e39bad0dd3994b",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "adminContract",
+            "type": "t_contract(IAdminContract)13031",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:28"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "activePool",
+            "type": "t_contract(IActivePool)12714",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:29"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)13398",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:30"
+          },
+          {
+            "contract": "HintHelpers",
+            "label": "sortedVessels",
+            "type": "t_contract(ISortedVessels)13913",
+            "src": "contracts\\HintHelpers.sol:21"
+          },
+          {
+            "contract": "HintHelpers",
+            "label": "vesselManager",
+            "type": "t_contract(IVesselManager)14654",
+            "src": "contracts\\HintHelpers.sol:22"
+          },
+          {
+            "contract": "HintHelpers",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\HintHelpers.sol:24"
+          }
+        ],
+        "types": {
+          "t_contract(ISortedVessels)13913": {
+            "label": "contract ISortedVessels"
+          },
+          "t_contract(IVesselManager)14654": {
+            "label": "contract IVesselManager"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IAdminContract)13031": {
+            "label": "contract IAdminContract"
+          },
+          "t_contract(IActivePool)12714": {
+            "label": "contract IActivePool"
+          },
+          "t_contract(IDefaultPool)13398": {
+            "label": "contract IDefaultPool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "e80b8fc109c0f9bc04b26b802317983ac3f2c6ba92e6c194fbd924e2d584455a": {
+      "address": "0xbB518F65b3425d2779477f83BDd502cbc9B7Ce4D",
+      "txHash": "0xbb026bf521a8f0c914615d08c23951b86f1bb20033c37609e6c58cb32c387132",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "SortedVessels",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\SortedVessels.sol:46"
+          },
+          {
+            "contract": "SortedVessels",
+            "label": "borrowerOperationsAddress",
+            "type": "t_address",
+            "src": "contracts\\SortedVessels.sol:51"
+          },
+          {
+            "contract": "SortedVessels",
+            "label": "vesselManager",
+            "type": "t_contract(IVesselManager)14654",
+            "src": "contracts\\SortedVessels.sol:53"
+          },
+          {
+            "contract": "SortedVessels",
+            "label": "data",
+            "type": "t_mapping(t_address,t_struct(Data)15863_storage)",
+            "src": "contracts\\SortedVessels.sol:73"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IVesselManager)14654": {
+            "label": "contract IVesselManager"
+          },
+          "t_mapping(t_address,t_struct(Data)15863_storage)": {
+            "label": "mapping(address => struct SortedVessels.Data)"
+          },
+          "t_struct(Data)15863_storage": {
+            "label": "struct SortedVessels.Data",
+            "members": [
+              {
+                "label": "head",
+                "type": "t_address"
+              },
+              {
+                "label": "tail",
+                "type": "t_address"
+              },
+              {
+                "label": "maxSize",
+                "type": "t_uint256"
+              },
+              {
+                "label": "size",
+                "type": "t_uint256"
+              },
+              {
+                "label": "nodes",
+                "type": "t_mapping(t_address,t_struct(Node)15849_storage)"
+              }
+            ]
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_struct(Node)15849_storage)": {
+            "label": "mapping(address => struct SortedVessels.Node)"
+          },
+          "t_struct(Node)15849_storage": {
+            "label": "struct SortedVessels.Node",
+            "members": [
+              {
+                "label": "exists",
+                "type": "t_bool"
+              },
+              {
+                "label": "nextId",
+                "type": "t_address"
+              },
+              {
+                "label": "prevId",
+                "type": "t_address"
+              }
+            ]
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "27d725161e117e12518f9fc1992d6c1b34819f031d77cdc399c4a7310d7064d0": {
+      "address": "0x366817A18F629c1C6056ed87ca92D9415405dB4E",
+      "txHash": "0xe9372c2bdc1cb6d4e35675e2f6a08574abaffceaca289a7715d0f543c4e94db5",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "adminContract",
+            "type": "t_contract(IAdminContract)13031",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:28"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "activePool",
+            "type": "t_contract(IActivePool)12714",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:29"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)13398",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:30"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\VesselManager.sol:49"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "borrowerOperations",
+            "type": "t_address",
+            "src": "contracts\\VesselManager.sol:51"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "gasPoolAddress",
+            "type": "t_address",
+            "src": "contracts\\VesselManager.sol:52"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "vesselManagerOperations",
+            "type": "t_contract(IVesselManagerOperations)14864",
+            "src": "contracts\\VesselManager.sol:54"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "stabilityPool",
+            "type": "t_contract(IStabilityPool)14082",
+            "src": "contracts\\VesselManager.sol:55"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "debtToken",
+            "type": "t_contract(IDebtToken)13373",
+            "src": "contracts\\VesselManager.sol:56"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "collSurplusPool",
+            "type": "t_contract(ICollSurplusPool)13248",
+            "src": "contracts\\VesselManager.sol:57"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "grvtStaking",
+            "type": "t_contract(IGRVTStaking)13628",
+            "src": "contracts\\VesselManager.sol:58"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "sortedVessels",
+            "type": "t_contract(ISortedVessels)13913",
+            "src": "contracts\\VesselManager.sol:59"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "baseRate",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:61"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "lastFeeOperationTime",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:64"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "Vessels",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14204_storage))",
+            "src": "contracts\\VesselManager.sol:67"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "totalStakes",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:69"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "totalStakesSnapshot",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:72"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "totalCollateralSnapshot",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:75"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "L_ASSETS",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:85"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "L_VUSDDebts",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:86"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "rewardSnapshots",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)20325_storage))",
+            "src": "contracts\\VesselManager.sol:89"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "VesselOwners",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "src": "contracts\\VesselManager.sol:92"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "lastETHError_Redistribution",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:95"
+          },
+          {
+            "contract": "VesselManager",
+            "label": "lastVUSDDebtError_Redistribution",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\VesselManager.sol:96"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IVesselManagerOperations)14864": {
+            "label": "contract IVesselManagerOperations"
+          },
+          "t_contract(IStabilityPool)14082": {
+            "label": "contract IStabilityPool"
+          },
+          "t_contract(IDebtToken)13373": {
+            "label": "contract IDebtToken"
+          },
+          "t_contract(ICollSurplusPool)13248": {
+            "label": "contract ICollSurplusPool"
+          },
+          "t_contract(IGRVTStaking)13628": {
+            "label": "contract IGRVTStaking"
+          },
+          "t_contract(ISortedVessels)13913": {
+            "label": "contract ISortedVessels"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14204_storage))": {
+            "label": "mapping(address => mapping(address => struct IVesselManager.Vessel))"
+          },
+          "t_mapping(t_address,t_struct(Vessel)14204_storage)": {
+            "label": "mapping(address => struct IVesselManager.Vessel)"
+          },
+          "t_struct(Vessel)14204_storage": {
+            "label": "struct IVesselManager.Vessel",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address"
+              },
+              {
+                "label": "debt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "coll",
+                "type": "t_uint256"
+              },
+              {
+                "label": "stake",
+                "type": "t_uint256"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(Status)14102"
+              },
+              {
+                "label": "arrayIndex",
+                "type": "t_uint128"
+              }
+            ]
+          },
+          "t_enum(Status)14102": {
+            "label": "enum IVesselManager.Status",
+            "members": [
+              "nonExistent",
+              "active",
+              "closedByOwner",
+              "closedByLiquidation",
+              "closedByRedemption"
+            ]
+          },
+          "t_uint128": {
+            "label": "uint128"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)20325_storage))": {
+            "label": "mapping(address => mapping(address => struct VesselManager.RewardSnapshot))"
+          },
+          "t_mapping(t_address,t_struct(RewardSnapshot)20325_storage)": {
+            "label": "mapping(address => struct VesselManager.RewardSnapshot)"
+          },
+          "t_struct(RewardSnapshot)20325_storage": {
+            "label": "struct VesselManager.RewardSnapshot",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_uint256"
+              },
+              {
+                "label": "VUSDDebt",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_contract(IAdminContract)13031": {
+            "label": "contract IAdminContract"
+          },
+          "t_contract(IActivePool)12714": {
+            "label": "contract IActivePool"
+          },
+          "t_contract(IDefaultPool)13398": {
+            "label": "contract IDefaultPool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "c73402fe3ad9260d5f1728f5ba18949ddbc9403cd2c2c4f548917a3ece875388": {
+      "address": "0xdEbbc1Efe9Ce6CA4DE6239a74DD8d76a475d2778",
+      "txHash": "0x4620df31fc52c7c0e4a3bbb134f28962bb330d5e1219540ccfca0ba522fa0da1",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "adminContract",
+            "type": "t_contract(IAdminContract)3168",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:28"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "activePool",
+            "type": "t_contract(IActivePool)2851",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:29"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)3332",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:30"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\VesselManagerOperations.sol:26"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "vesselManager",
+            "type": "t_contract(IVesselManager)4491",
+            "src": "contracts\\VesselManagerOperations.sol:27"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "sortedVessels",
+            "type": "t_contract(ISortedVessels)3750",
+            "src": "contracts\\VesselManagerOperations.sol:28"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "stabilityPool",
+            "type": "t_contract(IStabilityPool)3919",
+            "src": "contracts\\VesselManagerOperations.sol:29"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "collSurplusPool",
+            "type": "t_contract(ICollSurplusPool)3227",
+            "src": "contracts\\VesselManagerOperations.sol:30"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "debtToken",
+            "type": "t_contract(IDebtToken)3307",
+            "src": "contracts\\VesselManagerOperations.sol:31"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IVesselManager)4491": {
+            "label": "contract IVesselManager"
+          },
+          "t_contract(ISortedVessels)3750": {
+            "label": "contract ISortedVessels"
+          },
+          "t_contract(IStabilityPool)3919": {
+            "label": "contract IStabilityPool"
+          },
+          "t_contract(ICollSurplusPool)3227": {
+            "label": "contract ICollSurplusPool"
+          },
+          "t_contract(IDebtToken)3307": {
+            "label": "contract IDebtToken"
+          },
+          "t_contract(IAdminContract)3168": {
+            "label": "contract IAdminContract"
+          },
+          "t_contract(IActivePool)2851": {
+            "label": "contract IActivePool"
+          },
+          "t_contract(IDefaultPool)3332": {
+            "label": "contract IDefaultPool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "8b485ad081553da2ffd3390a96248a117312878c9141c499367c7eef6e7de46c": {
+      "address": "0x59Ef7438bcFcfa56342F922718670E53EdEC80f4",
+      "txHash": "0x2e78b0a0aac52cca832262f4a538a4b74f075ecf6946d54ab3de20e9be900896",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "adminContract",
+            "type": "t_contract(IAdminContract)5846",
+            "src": "contracts/Dependencies/GravitaBase.sol:28"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "activePool",
+            "type": "t_contract(IActivePool)5543",
+            "src": "contracts/Dependencies/GravitaBase.sol:29"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)6215",
+            "src": "contracts/Dependencies/GravitaBase.sol:30"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts/VesselManagerOperations.sol:41"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "vesselManager",
+            "type": "t_contract(IVesselManager)7509",
+            "src": "contracts/VesselManagerOperations.sol:42"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "sortedVessels",
+            "type": "t_contract(ISortedVessels)6784",
+            "src": "contracts/VesselManagerOperations.sol:43"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "stabilityPool",
+            "type": "t_contract(IStabilityPool)6953",
+            "src": "contracts/VesselManagerOperations.sol:44"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "collSurplusPool",
+            "type": "t_contract(ICollSurplusPool)6065",
+            "src": "contracts/VesselManagerOperations.sol:45"
+          },
+          {
+            "contract": "VesselManagerOperations",
+            "label": "debtToken",
+            "type": "t_contract(IDebtToken)6190",
+            "src": "contracts/VesselManagerOperations.sol:46"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IVesselManager)7509": {
+            "label": "contract IVesselManager"
+          },
+          "t_contract(ISortedVessels)6784": {
+            "label": "contract ISortedVessels"
+          },
+          "t_contract(IStabilityPool)6953": {
+            "label": "contract IStabilityPool"
+          },
+          "t_contract(ICollSurplusPool)6065": {
+            "label": "contract ICollSurplusPool"
+          },
+          "t_contract(IDebtToken)6190": {
+            "label": "contract IDebtToken"
+          },
+          "t_contract(IAdminContract)5846": {
+            "label": "contract IAdminContract"
+          },
+          "t_contract(IActivePool)5543": {
+            "label": "contract IActivePool"
+          },
+          "t_contract(IDefaultPool)6215": {
+            "label": "contract IDefaultPool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "128f1df19d5c50a1b3f975b76ca1c10e8e28b7875e816008c6d1db451d0894bd": {
+      "address": "0xae4f76DDBB06357A5AE861Ff141F6085D9E37Ceb",
+      "txHash": "0xb2922b790eb07bc21350f02479d9c477613010c1226446d485d3c1af8e8001d9",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:29"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:116"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "contracts\\Dependencies\\ReentrancyGuardUpgradeable.sol:21"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "contracts\\Dependencies\\ReentrancyGuardUpgradeable.sol:58"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:21"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "stakes",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:27"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "totalGRVTStaked",
+            "type": "t_uint256",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:28"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "F_ASSETS",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:30"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "F_DEBT_TOKENS",
+            "type": "t_uint256",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:31"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "snapshots",
+            "type": "t_mapping(t_address,t_struct(Snapshot)10241_storage)",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:34"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "ASSET_TYPE",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:41"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "isAssetTracked",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:42"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "sentToTreasuryTracker",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:43"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "grvtToken",
+            "type": "t_contract(IERC20Upgradeable)672",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:45"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "debtToken",
+            "type": "t_contract(IERC20Upgradeable)672",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:46"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "activePoolAddress",
+            "type": "t_address",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:48"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "feeCollectorAddress",
+            "type": "t_address",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:49"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "vesselManagerAddress",
+            "type": "t_address",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:50"
+          },
+          {
+            "contract": "GRVTStaking",
+            "label": "treasury",
+            "type": "t_address",
+            "src": "contracts\\GRVT\\GRVTStaking.sol:51"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_struct(Snapshot)10241_storage)": {
+            "label": "mapping(address => struct GRVTStaking.Snapshot)"
+          },
+          "t_struct(Snapshot)10241_storage": {
+            "label": "struct GRVTStaking.Snapshot",
+            "members": [
+              {
+                "label": "F_ASSETS_Snapshot",
+                "type": "t_mapping(t_address,t_uint256)"
+              },
+              {
+                "label": "F_DEBT_TOKENS_Snapshot",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_contract(IERC20Upgradeable)672": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "3d07370e8861984179dc29299093a642e327138f6603b51c12dca2dae8a0ffa2": {
+      "address": "0xe301ee5C8fb873de2d619FF7ec3E95702ACf81C5",
+      "txHash": "0x7c648b3c45414fe99e1d9bef8f7a1c630f409294398e13213d06dbb0c2000f52",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "grvtToken",
+            "type": "t_contract(IERC20Upgradeable)586",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:23"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "stabilityPool",
+            "type": "t_contract(IStabilityPool)12918",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:24"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "totalGRVTIssued",
+            "type": "t_uint256",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:26"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "lastUpdateTime",
+            "type": "t_uint256",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:27"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "GRVTSupplyCap",
+            "type": "t_uint256",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:28"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "grvtDistribution",
+            "type": "t_uint256",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:29"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "adminContract",
+            "type": "t_address",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:31"
+          },
+          {
+            "contract": "CommunityIssuance",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\GRVT\\CommunityIssuance.sol:33"
+          }
+        ],
+        "types": {
+          "t_contract(IERC20Upgradeable)586": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_contract(IStabilityPool)12918": {
+            "label": "contract IStabilityPool"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    }
+  }
+}
