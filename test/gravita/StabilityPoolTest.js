@@ -2002,41 +2002,24 @@ contract("StabilityPool", async accounts => {
 				assert.isAtMost(th.getDifference(ColinSP_After, "0"), 100000)
 			})
 
-			// --- GRVT functionality ---
 			it("withdrawFromSP(): triggers GRVT reward event - increases the sum G", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
 
 				// A, B, C open vessels
-				await openVessel({
-					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
-					ICR: toBN(dec(2, 18)),
-					extraParams: { from: alice },
-				})
-				await openVessel({
-					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(20000, 18)),
-					ICR: toBN(dec(2, 18)),
-					extraParams: { from: bob },
-				})
-				await openVessel({
-					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(30000, 18)),
-					ICR: toBN(dec(2, 18)),
-					extraParams: { from: carol },
-				})
+				await _openVessel(erc20, 10_000, alice)
+				await _openVessel(erc20B, 20_000, bob)
+				await _openVessel(erc20, 20_000, carol)
 
 				// A and B provide to SP
-				await stabilityPool.provideToSP(dec(10000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(10000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(10_000, 18), { from: bob })
 
 				const G_Before = await stabilityPool.epochToScaleToG(0, 0)
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// A withdraws from SP
-				await stabilityPool.withdrawFromSP(dec(5000, 18), { from: alice })
-
+				await stabilityPool.withdrawFromSP(dec(5_000, 18), { from: alice })
 				const G_1 = await stabilityPool.epochToScaleToG(0, 0)
 
 				// Expect G has increased from the GRVT reward event triggered
@@ -2044,9 +2027,8 @@ contract("StabilityPool", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// A withdraws from SP
-				await stabilityPool.withdrawFromSP(dec(5000, 18), { from: bob })
-
+				// B withdraws from SP
+				await stabilityPool.withdrawFromSP(dec(5_000, 18), { from: bob })
 				const G_2 = await stabilityPool.epochToScaleToG(0, 0)
 
 				// Expect G has increased from the GRVT reward event triggered
@@ -2056,15 +2038,17 @@ contract("StabilityPool", async accounts => {
 			it("withdrawFromSP(): partial withdrawal = depositor receives GRVT rewards", async () => {
 				await openWhaleVessel(erc20)
 
-				// A, B, C open vessels
+				// A, B, C, D open vessels
 				await _openVessel(erc20, 10_000, alice)
 				await _openVessel(erc20, 20_000, bob)
-				await _openVessel(erc20, 30_000, carol)
+				await _openVessel(erc20B, 1_000, carol)
+				await _openVessel(erc20B, 500, dennis)
 
-				// A, B, C, provide to SP
+				// A, B, C, D provide to SP
 				await stabilityPool.provideToSP(dec(10, 18), { from: alice })
 				await stabilityPool.provideToSP(dec(20, 18), { from: bob })
 				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(40, 18), { from: dennis })
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -2072,21 +2056,25 @@ contract("StabilityPool", async accounts => {
 				const A_GRVTBalance_Before = await grvtToken.balanceOf(alice)
 				const B_GRVTBalance_Before = await grvtToken.balanceOf(bob)
 				const C_GRVTBalance_Before = await grvtToken.balanceOf(carol)
+				const D_GRVTBalance_Before = await grvtToken.balanceOf(dennis)
 
 				// A, B, C withdraw
 				await stabilityPool.withdrawFromSP(dec(1, 18), { from: alice })
 				await stabilityPool.withdrawFromSP(dec(2, 18), { from: bob })
 				await stabilityPool.withdrawFromSP(dec(3, 18), { from: carol })
+				await stabilityPool.withdrawFromSP(dec(4, 18), { from: dennis })
 
 				// Get GRVT balance after
 				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
 				const B_GRVTBalance_After = await grvtToken.balanceOf(bob)
 				const C_GRVTBalance_After = await grvtToken.balanceOf(carol)
+				const D_GRVTBalance_After = await grvtToken.balanceOf(dennis)
 
 				// Check GRVT Balance of A, B, C has increased
 				assert.isTrue(A_GRVTBalance_After.gt(A_GRVTBalance_Before))
 				assert.isTrue(B_GRVTBalance_After.gt(B_GRVTBalance_Before))
 				assert.isTrue(C_GRVTBalance_After.gt(C_GRVTBalance_Before))
+				assert.isTrue(D_GRVTBalance_After.gt(D_GRVTBalance_Before))
 			})
 
 			it("withdrawFromSP(): full withdrawal = zero's depositor's snapshots", async () => {
