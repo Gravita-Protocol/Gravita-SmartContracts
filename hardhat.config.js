@@ -2,7 +2,7 @@ require("@nomiclabs/hardhat-truffle5")
 require("@nomiclabs/hardhat-ethers")
 require("@nomiclabs/hardhat-etherscan")
 require("@openzeppelin/hardhat-upgrades")
-require("hardhat-gas-reporter")
+//require("hardhat-gas-reporter")
 require("hardhat-contract-sizer")
 require("hardhat-interface-generator")
 require("solidity-coverage")
@@ -48,11 +48,11 @@ module.exports = {
 		// 	gasPrice: process.env.GAS_PRICE ? parseInt(process.env.GAS_PRICE) : 20000000000,
 		// 	accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		// },
-		goerli: {
-			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-			gas: 20_000_000, // tx gas limit
-			accounts: [`${process.env.GOERLI_DEPLOYER_PRIVATEKEY}`],
-		},
+		// goerli: {
+		// 	url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+		// 	gas: 20_000_000, // tx gas limit
+		// 	accounts: [`${process.env.GOERLI_DEPLOYER_PRIVATEKEY}`],
+		// },
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
