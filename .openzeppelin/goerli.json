@@ -94,6 +94,11 @@
       "address": "0xcD1FFfBeD653bfB20a6b01a88bB5B4ddA9D62BAf",
       "txHash": "0x02baeb4259a0d013da4680e63656466cd0a54cbb8ead88986a717325c1551e4b",
       "kind": "transparent"
+    },
+    {
+      "address": "0x0BD2eA46F13C41326557Adf960f914181Fafb72F",
+      "txHash": "0x5715b1e0266ad381dcce17a52c8acf7324796a8e2eb1d95d68f8293d138ec46a",
+      "kind": "transparent"
     }
   ],
   "impls": {

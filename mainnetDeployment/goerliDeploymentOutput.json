@@ -78,6 +78,17 @@
   },
   "GRVTStaking": {
     "address": "0xcD1FFfBeD653bfB20a6b01a88bB5B4ddA9D62BAf",
-    "txHash": "0x02baeb4259a0d013da4680e63656466cd0a54cbb8ead88986a717325c1551e4b"
+    "txHash": "0x02baeb4259a0d013da4680e63656466cd0a54cbb8ead88986a717325c1551e4b",
+    "verification": "https://goerli.etherscan.io/address/0xcD1FFfBeD653bfB20a6b01a88bB5B4ddA9D62BAf#code"
+  },
+  "communityIssuance": {
+    "address": "0x0BD2eA46F13C41326557Adf960f914181Fafb72F",
+    "txHash": "0x5715b1e0266ad381dcce17a52c8acf7324796a8e2eb1d95d68f8293d138ec46a",
+    "verification": "https://goerli.etherscan.io/address/0x0BD2eA46F13C41326557Adf960f914181Fafb72F#code"
+  },
+  "GRVTToken": {
+    "address": "0x306d0387442dD967F798249DB6429527A4e58dcD",
+    "txHash": "0x7a01ab917cf902816a151a6244d57fb245d90b20cff947208ff9fc88ba204bb3",
+    "verification": "https://goerli.etherscan.io/address/0x306d0387442dD967F798249DB6429527A4e58dcD#code"
   }
 }
