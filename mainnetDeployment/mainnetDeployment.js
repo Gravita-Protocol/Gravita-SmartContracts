@@ -44,7 +44,9 @@ async function mainnetDeploy(configParams) {
 
 	await approveGRVTTokenAllowanceForCommunityIssuance()
 	await addCollaterals()
-	await coreContracts.adminContract.setInitialized()
+	
+	// TODO uncomment for production!!!
+	// await coreContracts.adminContract.setInitialized()
 
 	helper.saveDeployment(deploymentState)
 
