@@ -33,7 +33,7 @@ async function mainnetDeploy(configParams) {
 		return
 	}
 
-	coreContracts = await helper.deployCoreContracts(deploymentState, ADMIN_WALLET)
+	coreContracts = await helper.deployCoreContracts(deploymentState)
 	grvtTokenContracts = await helper.deployGRVTTokenContracts(
 		TREASURY_WALLET, // multisig GRVT endowment address
 		deploymentState
@@ -43,10 +43,11 @@ async function mainnetDeploy(configParams) {
 	await helper.connectGRVTTokenContractsToCore(grvtTokenContracts, coreContracts, TREASURY_WALLET)
 
 	await approveGRVTTokenAllowanceForCommunityIssuance()
-	await addCollaterals()
 	
-	// TODO uncomment for production!!!
-	// await coreContracts.adminContract.setInitialized()
+	if ("mainnet" == configParams.targetNetwork) {
+		await addCollaterals()
+		await coreContracts.adminContract.setInitialized()
+	}
 
 	helper.saveDeployment(deploymentState)
 
@@ -81,10 +82,7 @@ async function addCollaterals() {
 }
 
 async function addCollateral(name, configKey) {
-	const address =
-		"localhost" == config.targetNetwork
-			? await helper.deployMockERC20Contract(deploymentState, name, 18)
-			: config.externalAddrs[configKey]
+	const address = config.externalAddrs[configKey]
 	if (!address || address == "") {
 		throw `No address found for collateral ${name} using config var externalAddrs.${configKey}`
 	}
