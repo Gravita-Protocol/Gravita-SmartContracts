@@ -43,10 +43,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	uint256 public constant REDEMPTION_BLOCK_DAY = 14;
 	uint256 public constant MCR_DEFAULT = 1100000000000000000; // 110%
 	uint256 public constant CCR_DEFAULT = 1500000000000000000; // 150%
-	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 0.5%
+	uint256 public constant PERCENT_DIVISOR_DEFAULT = 200; // dividing by 200 yields 0.5%
 	uint256 public constant BORROWING_FEE_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
-	uint256 public constant DEBT_TOKEN_GAS_COMPENSATION_DEFAULT = 30 ether;
-	uint256 public constant MIN_NET_DEBT_DEFAULT = 300 ether;
+	uint256 public constant DEBT_TOKEN_GAS_COMPENSATION_DEFAULT = 200 ether;
+	uint256 public constant MIN_NET_DEBT_DEFAULT = 2000 ether;
 	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
 	uint256 public constant MINT_CAP_DEFAULT = 1000000 ether; // 1 million
 
