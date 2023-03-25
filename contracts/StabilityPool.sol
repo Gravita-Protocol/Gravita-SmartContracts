@@ -798,7 +798,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 			}
 			address asset = assets[i];
 			// Assumes we're internally working only with the wrapped version of ERC20 tokens
-			IERC20Upgradeable(asset).safeTransferFrom(address(this), _to, amount);
+			IERC20Upgradeable(asset).safeTransfer(_to, amount);
 		}
 		totalColl.amounts = _leftSubColls(totalColl, assets, amounts);
 
