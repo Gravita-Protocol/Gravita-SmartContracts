@@ -592,92 +592,92 @@
             "contract": "Initializable",
             "label": "_initialized",
             "type": "t_uint8",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
           },
           {
             "contract": "Initializable",
             "label": "_initializing",
             "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
           },
           {
             "contract": "ContextUpgradeable",
             "label": "__gap",
             "type": "t_array(t_uint256)50_storage",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
           },
           {
             "contract": "OwnableUpgradeable",
             "label": "_owner",
             "type": "t_address",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
           },
           {
             "contract": "OwnableUpgradeable",
             "label": "__gap",
             "type": "t_array(t_uint256)49_storage",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
           },
           {
             "contract": "FeeCollector",
             "label": "feeRecords",
-            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)14642_storage))",
-            "src": "contracts/FeeCollector.sol:28"
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)15038_storage))",
+            "src": "contracts\\FeeCollector.sol:28"
           },
           {
             "contract": "FeeCollector",
             "label": "borrowerOperationsAddress",
             "type": "t_address",
-            "src": "contracts/FeeCollector.sol:30"
+            "src": "contracts\\FeeCollector.sol:30"
           },
           {
             "contract": "FeeCollector",
             "label": "vesselManagerAddress",
             "type": "t_address",
-            "src": "contracts/FeeCollector.sol:31"
+            "src": "contracts\\FeeCollector.sol:31"
           },
           {
             "contract": "FeeCollector",
             "label": "treasuryAddress",
             "type": "t_address",
-            "src": "contracts/FeeCollector.sol:32"
+            "src": "contracts\\FeeCollector.sol:32"
           },
           {
             "contract": "FeeCollector",
             "label": "debtTokenAddress",
             "type": "t_address",
-            "src": "contracts/FeeCollector.sol:33"
+            "src": "contracts\\FeeCollector.sol:33"
           },
           {
             "contract": "FeeCollector",
             "label": "grvtStaking",
-            "type": "t_contract(IGRVTStaking)14848",
-            "src": "contracts/FeeCollector.sol:35"
+            "type": "t_contract(IGRVTStaking)15244",
+            "src": "contracts\\FeeCollector.sol:35"
           },
           {
             "contract": "FeeCollector",
             "label": "routeToGRVTStaking",
             "type": "t_bool",
-            "src": "contracts/FeeCollector.sol:36"
+            "src": "contracts\\FeeCollector.sol:36"
           },
           {
             "contract": "FeeCollector",
             "label": "isInitialized",
             "type": "t_bool",
-            "src": "contracts/FeeCollector.sol:38"
+            "src": "contracts\\FeeCollector.sol:38"
           }
         ],
         "types": {
-          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)14642_storage))": {
+          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)15038_storage))": {
             "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))"
           },
           "t_address": {
             "label": "address"
           },
-          "t_mapping(t_address,t_struct(FeeRecord)14642_storage)": {
+          "t_mapping(t_address,t_struct(FeeRecord)15038_storage)": {
             "label": "mapping(address => struct IFeeCollector.FeeRecord)"
           },
-          "t_struct(FeeRecord)14642_storage": {
+          "t_struct(FeeRecord)15038_storage": {
             "label": "struct IFeeCollector.FeeRecord",
             "members": [
               {
@@ -697,7 +697,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IGRVTStaking)14848": {
+          "t_contract(IGRVTStaking)15244": {
             "label": "contract IGRVTStaking"
           },
           "t_bool": {
@@ -2028,6 +2028,138 @@
           },
           "t_address": {
             "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
+    },
+    "56b73494ebc1f94aaae5c478b81fd51a7bc41342d7d571e9d545157ed333a9ec": {
+      "address": "0x90a10b5f9AdA0Cb88758c1AfA915eFfb8181EFbD",
+      "txHash": "0xafe40aa21b3896595ea642fe156509d169dc6ab048ca5f78be60733bbab84aad",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "feeRecords",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)14726_storage))",
+            "src": "contracts\\FeeCollector.sol:28"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "borrowerOperationsAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:30"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "vesselManagerAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:31"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "treasuryAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:32"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "debtTokenAddress",
+            "type": "t_address",
+            "src": "contracts\\FeeCollector.sol:33"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "grvtStaking",
+            "type": "t_contract(IGRVTStaking)14943",
+            "src": "contracts\\FeeCollector.sol:35"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "routeToGRVTStaking",
+            "type": "t_bool",
+            "src": "contracts\\FeeCollector.sol:36"
+          },
+          {
+            "contract": "FeeCollector",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\FeeCollector.sol:38"
+          }
+        ],
+        "types": {
+          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)14726_storage))": {
+            "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_struct(FeeRecord)14726_storage)": {
+            "label": "mapping(address => struct IFeeCollector.FeeRecord)"
+          },
+          "t_struct(FeeRecord)14726_storage": {
+            "label": "struct IFeeCollector.FeeRecord",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_uint256"
+              },
+              {
+                "label": "to",
+                "type": "t_uint256"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_contract(IGRVTStaking)14943": {
+            "label": "contract IGRVTStaking"
           },
           "t_bool": {
             "label": "bool"
