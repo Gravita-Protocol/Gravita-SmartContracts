@@ -428,3 +428,5 @@ contract("PriceFeed", async accounts => {
 		assert.equal(price, dec(1234, 18).toString())
 	})
 })
+
+contract("Reset chain state", async accounts => {})

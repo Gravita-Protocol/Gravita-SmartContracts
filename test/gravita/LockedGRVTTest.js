@@ -436,3 +436,4 @@ contract("LockedGRVTTest", async accounts => {
 	})
 })
 
+contract("Reset chain state", async accounts => {})

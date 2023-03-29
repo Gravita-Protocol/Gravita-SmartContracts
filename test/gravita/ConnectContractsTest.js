@@ -152,3 +152,5 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		})
 	})
 })
+
+contract("Reset chain state", async accounts => {})

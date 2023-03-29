@@ -366,3 +366,5 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 		})
 	})
 })
+
+contract("Reset chain state", async accounts => {})

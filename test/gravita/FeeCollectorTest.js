@@ -20,7 +20,6 @@ const ERROR_MARGIN = 1e9
 const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
 
 contract("FeeCollector", async accounts => {
-
 	const openVessel = async params => th.openVessel(contracts, params)
 	const withdrawVUSD = async params => th.withdrawVUSD(contracts, params)
 	const f = val => ethers.utils.formatUnits(val.toString())
@@ -116,6 +115,18 @@ contract("FeeCollector", async accounts => {
 		})
 
 		describe("Fee yielding & refund generation", async () => {
+			it("Simulate refunds", async () => {
+				const borrowAmount = toBN(dec(500_000, 18))
+				await openOrAjustVessel(alice, asset, borrowAmount)
+				const { minFee, maxFee } = calcFees(borrowAmount)
+				// simulate 100% payback refund
+				let avaiableRefund = await feeCollector.simulateRefund(alice, asset, (1e18).toString())
+				assert.equal(maxFee.sub(minFee).toString(), avaiableRefund.toString())
+				// simulate 50% payback refund
+				avaiableRefund = await feeCollector.simulateRefund(alice, asset, toBN((1e18).toString()).div(toBN(2)))
+				assert.equal(maxFee.sub(minFee).div(toBN(2)).toString(), avaiableRefund.toString())
+			})
+
 			it("1 loan, 1 expired payback = should yield maximum fee (and generate no refunds)", async () => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
 				const { minFee, maxFee } = calcFees(borrowAmount)
@@ -414,11 +425,15 @@ contract("FeeCollector", async accounts => {
 					ICR: targetICR,
 					extraParams: { from: alice },
 				})
-				const { minFee: minFeeAlice, maxFee: maxFeeAlice} = calcFees(netDebtAlice.add(extraDebtAlice))
+				const { minFee: minFeeAlice, maxFee: maxFeeAlice } = calcFees(netDebtAlice.add(extraDebtAlice))
 				const treasuryBalanceBeforeLiquidation = await debtToken.balanceOf(treasury)
-				
+
 				// treasury must have been paid both borrower's minFees
-				th.assertIsApproximatelyEqual(minFeeWhale.add(minFeeAlice).toString(), treasuryBalanceBeforeLiquidation.toString(), 100)
+				th.assertIsApproximatelyEqual(
+					minFeeWhale.add(minFeeAlice).toString(),
+					treasuryBalanceBeforeLiquidation.toString(),
+					100
+				)
 
 				// price drops to 1:$100, reducing Alice's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
@@ -433,13 +448,17 @@ contract("FeeCollector", async accounts => {
 
 				// check the vessel is successfully closed, and removed from sortedList
 				const status_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_STATUS_INDEX]
-				
+
 				// status enum 3 corresponds to "Closed by liquidation"
 				assert.equal(status_Asset, 3)
 				assert.isFalse(await sortedVessels.contains(erc20.address, alice))
 
 				// treasury must now account for whale's minFee and alice's maxFee
-				th.assertIsApproximatelyEqual(minFeeWhale.add(maxFeeAlice).toString(), treasuryBalanceAfterLiquidation.toString(), 100)
+				th.assertIsApproximatelyEqual(
+					minFeeWhale.add(maxFeeAlice).toString(),
+					treasuryBalanceAfterLiquidation.toString(),
+					100
+				)
 			})
 		})
 
@@ -513,4 +532,3 @@ function calcExpiredAmount(_from, _to, _amount, _now, _debug = false) {
 }
 
 contract("Reset chain state", async accounts => {})
-

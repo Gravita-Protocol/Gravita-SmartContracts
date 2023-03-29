@@ -22,3 +22,5 @@ contract('GravitaMath', async accounts => {
     await checkFunction('callMax', (a, b) => Math.max(a, b), [1, 2])
   })
 })
+
+contract("Reset chain state", async accounts => {})
