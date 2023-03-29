@@ -166,3 +166,4 @@ contract("CommunityIssuance", async accounts => {
 	})
 })
 
+contract("Reset chain state", async accounts => {})
