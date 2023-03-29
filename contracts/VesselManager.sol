@@ -6,7 +6,6 @@ import "./Dependencies/GravitaBase.sol";
 
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
-import "./Interfaces/IVesselManagerOperations.sol";
 
 contract VesselManager is IVesselManager, GravitaBase {
 	using SafeMathUpgradeable for uint256;
@@ -51,8 +50,8 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	address public borrowerOperations;
 	address public gasPoolAddress;
+	address public vesselManagerOperations;
 
-	IVesselManagerOperations public vesselManagerOperations;
 	IStabilityPool public stabilityPool;
 	IDebtToken public debtToken;
 	IFeeCollector public feeCollector;
@@ -99,7 +98,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
-		if (msg.sender != address(vesselManagerOperations)) {
+		if (msg.sender != vesselManagerOperations) {
 			revert VesselManager__OnlyVesselManagerOperations();
 		}
 		_;
@@ -113,7 +112,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	modifier onlyVesselManagerOperationsOrBorrowerOperations() {
-		if (msg.sender != borrowerOperations && msg.sender != address(vesselManagerOperations)) {
+		if (msg.sender != borrowerOperations && msg.sender != vesselManagerOperations) {
 			revert VesselManager__OnlyVesselManagerOperationsOrBorrowerOperations();
 		}
 		_;
@@ -136,13 +135,13 @@ contract VesselManager is IVesselManager, GravitaBase {
 		isInitialized = true;
 		__Ownable_init();
 		borrowerOperations = _borrowerOperationsAddress;
+		vesselManagerOperations = _vesselManagerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		debtToken = IDebtToken(_debtTokenAddress);
 		feeCollector = IFeeCollector(_feeCollectorAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
-		vesselManagerOperations = IVesselManagerOperations(_vesselManagerOperationsAddress);
 		adminContract = IAdminContract(_adminContractAddress);
 	}
 

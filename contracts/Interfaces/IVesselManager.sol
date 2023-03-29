@@ -9,7 +9,6 @@ import "./IDefaultPool.sol";
 import "./IGravitaBase.sol";
 import "./ISortedVessels.sol";
 import "./IStabilityPool.sol";
-import "./IVesselManagerOperations.sol";
 
 interface IVesselManager is IGravitaBase {
 	enum Status {
@@ -75,8 +74,6 @@ interface IVesselManager is IGravitaBase {
 	function stabilityPool() external returns (IStabilityPool);
 
 	function debtToken() external returns (IDebtToken);
-
-	function vesselManagerOperations() external returns (IVesselManagerOperations);
 
 	function executeFullRedemption(
 		address _asset,
