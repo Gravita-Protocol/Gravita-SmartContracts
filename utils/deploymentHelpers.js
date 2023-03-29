@@ -33,7 +33,6 @@ const BorrowerWrappersScript = artifacts.require("BorrowerWrappersScript")
 const GRVTStakingScript = artifacts.require("GRVTStakingScript")
 const StabilityPoolScript = artifacts.require("StabilityPoolScript")
 const TokenScript = artifacts.require("TokenScript")
-const VesselManagerScript = artifacts.require("VesselManagerScript")
 
 const {
 	buildUserProxies,
@@ -223,13 +222,13 @@ class DeploymentHelper {
 			contracts.borrowerOperations
 		)
 
-		const vesselManagerScript = await VesselManagerScript.new(contracts.vesselManager.address)
-		contracts.vesselManager = new VesselManagerProxy(
-			owner,
-			proxies,
-			vesselManagerScript.address,
-			contracts.vesselManager
-		)
+		// const vesselManagerScript = await VesselManagerScript.new(contracts.vesselManager.address)
+		// contracts.vesselManager = new VesselManagerProxy(
+		// 	owner,
+		// 	proxies,
+		// 	vesselManagerScript.address,
+		// 	contracts.vesselManager
+		// )
 
 		const stabilityPoolScript = await StabilityPoolScript.new(contracts.stabilityPool.address)
 		contracts.stabilityPool = new StabilityPoolProxy(
