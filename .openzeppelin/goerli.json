@@ -2781,6 +2781,309 @@
           }
         }
       }
+    },
+    "6f33438aac690bf6e168a97729971ff5a7ccce07be61f3b6ba4cd98192612153": {
+      "address": "0x92181d0Fe816f006863107af655F3675C7836020",
+      "txHash": "0xf54adde490b3ea299e960132ac827a279faa9d2b9366aa0e8abc64e002c4a1d3",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "contracts\\Dependencies\\ReentrancyGuardUpgradeable.sol:21"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "contracts\\Dependencies\\ReentrancyGuardUpgradeable.sol:58"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "adminContract",
+            "type": "t_contract(IAdminContract)3598",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:28"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "activePool",
+            "type": "t_contract(IActivePool)3295",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:29"
+          },
+          {
+            "contract": "GravitaBase",
+            "label": "defaultPool",
+            "type": "t_contract(IDefaultPool)3967",
+            "src": "contracts\\Dependencies\\GravitaBase.sol:30"
+          },
+          {
+            "contract": "PoolBase",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts\\Dependencies\\PoolBase.sol:20"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "isInitialized",
+            "type": "t_bool",
+            "src": "contracts\\StabilityPool.sol:155"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "borrowerOperations",
+            "type": "t_contract(IBorrowerOperations)3756",
+            "src": "contracts\\StabilityPool.sol:157"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "vesselManager",
+            "type": "t_contract(IVesselManager)5022",
+            "src": "contracts\\StabilityPool.sol:158"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "debtToken",
+            "type": "t_contract(IDebtToken)3942",
+            "src": "contracts\\StabilityPool.sol:159"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "sortedVessels",
+            "type": "t_contract(ISortedVessels)4276",
+            "src": "contracts\\StabilityPool.sol:160"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "communityIssuance",
+            "type": "t_contract(ICommunityIssuance)3862",
+            "src": "contracts\\StabilityPool.sol:161"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "controller",
+            "type": "t_contract(IAdminContract)3598",
+            "src": "contracts\\StabilityPool.sol:162"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "totalDebtTokenDeposits",
+            "type": "t_uint256",
+            "src": "contracts\\StabilityPool.sol:165"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "totalColl",
+            "type": "t_struct(Colls)2350_storage",
+            "src": "contracts\\StabilityPool.sol:170"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "pendingCollGains",
+            "type": "t_mapping(t_address,t_struct(Colls)2350_storage)",
+            "src": "contracts\\StabilityPool.sol:174"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "deposits",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\StabilityPool.sol:186"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "depositSnapshots",
+            "type": "t_mapping(t_address,t_struct(Snapshots)5104_storage)",
+            "src": "contracts\\StabilityPool.sol:196"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "P",
+            "type": "t_uint256",
+            "src": "contracts\\StabilityPool.sol:204"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "currentScale",
+            "type": "t_uint128",
+            "src": "contracts\\StabilityPool.sol:209"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "currentEpoch",
+            "type": "t_uint128",
+            "src": "contracts\\StabilityPool.sol:212"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "epochToScaleToSum",
+            "type": "t_mapping(t_address,t_mapping(t_uint128,t_mapping(t_uint128,t_uint256)))",
+            "src": "contracts\\StabilityPool.sol:223"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "epochToScaleToG",
+            "type": "t_mapping(t_uint128,t_mapping(t_uint128,t_uint256))",
+            "src": "contracts\\StabilityPool.sol:232"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "lastGRVTError",
+            "type": "t_uint256",
+            "src": "contracts\\StabilityPool.sol:235"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "lastAssetError_Offset",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts\\StabilityPool.sol:237"
+          },
+          {
+            "contract": "StabilityPool",
+            "label": "lastDebtTokenLossError_Offset",
+            "type": "t_uint256",
+            "src": "contracts\\StabilityPool.sol:238"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IBorrowerOperations)3756": {
+            "label": "contract IBorrowerOperations"
+          },
+          "t_contract(IVesselManager)5022": {
+            "label": "contract IVesselManager"
+          },
+          "t_contract(IDebtToken)3942": {
+            "label": "contract IDebtToken"
+          },
+          "t_contract(ISortedVessels)4276": {
+            "label": "contract ISortedVessels"
+          },
+          "t_contract(ICommunityIssuance)3862": {
+            "label": "contract ICommunityIssuance"
+          },
+          "t_contract(IAdminContract)3598": {
+            "label": "contract IAdminContract"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_struct(Colls)2350_storage": {
+            "label": "struct GravitaBase.Colls",
+            "members": [
+              {
+                "label": "tokens",
+                "type": "t_array(t_address)dyn_storage"
+              },
+              {
+                "label": "amounts",
+                "type": "t_array(t_uint256)dyn_storage"
+              }
+            ]
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_address,t_struct(Colls)2350_storage)": {
+            "label": "mapping(address => struct GravitaBase.Colls)"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_address,t_struct(Snapshots)5104_storage)": {
+            "label": "mapping(address => struct StabilityPool.Snapshots)"
+          },
+          "t_struct(Snapshots)5104_storage": {
+            "label": "struct StabilityPool.Snapshots",
+            "members": [
+              {
+                "label": "S",
+                "type": "t_mapping(t_address,t_uint256)"
+              },
+              {
+                "label": "P",
+                "type": "t_uint256"
+              },
+              {
+                "label": "G",
+                "type": "t_uint256"
+              },
+              {
+                "label": "scale",
+                "type": "t_uint128"
+              },
+              {
+                "label": "epoch",
+                "type": "t_uint128"
+              }
+            ]
+          },
+          "t_uint128": {
+            "label": "uint128"
+          },
+          "t_mapping(t_address,t_mapping(t_uint128,t_mapping(t_uint128,t_uint256)))": {
+            "label": "mapping(address => mapping(uint128 => mapping(uint128 => uint256)))"
+          },
+          "t_mapping(t_uint128,t_mapping(t_uint128,t_uint256))": {
+            "label": "mapping(uint128 => mapping(uint128 => uint256))"
+          },
+          "t_mapping(t_uint128,t_uint256)": {
+            "label": "mapping(uint128 => uint256)"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_contract(IActivePool)3295": {
+            "label": "contract IActivePool"
+          },
+          "t_contract(IDefaultPool)3967": {
+            "label": "contract IDefaultPool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        }
+      }
     }
   }
 }
