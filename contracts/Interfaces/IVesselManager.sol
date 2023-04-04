@@ -52,7 +52,6 @@ interface IVesselManager is IGravitaBase {
 	error VesselManager__OnlyVesselManagerOperationsOrBorrowerOperations();
 
 	struct Vessel {
-		address asset;
 		uint256 debt;
 		uint256 coll;
 		uint256 stake;
