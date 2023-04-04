@@ -173,7 +173,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		if (mRecord.amount == 0) {
 			return;
 		}
-		if (mRecord.to < NOW) {
+		if (mRecord.to <= NOW) {
 			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, mRecord.amount);
 		} else {
 			// collect expired refund
