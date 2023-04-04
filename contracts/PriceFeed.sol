@@ -94,7 +94,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	/** Public functions --------------------------------------------------------------------------------------------- */
 
-	function fetchPrice(address _token) external override returns (uint256 lastTokenGoodPrice) {
+	function fetchPrice(address _token) public override returns (uint256 lastTokenGoodPrice) {
 		OracleRecord memory oracle = _getOracle(_token);
 		if (!oracle.exists) {
 			if (_token == rethToken) {
@@ -146,7 +146,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	}
 
 	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
-		uint256 ethPrice = this.fetchPrice(address(0));
+		uint256 ethPrice = fetchPrice(address(0));
 		return ethPrice.mul(ethAmount).div(1 ether);
 	}
 
@@ -168,7 +168,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _fetchNativeWstETHPrice() internal returns (uint256 price) {
 		uint256 wstEthToStEthValue = _getWstETH_StETHValue();
 		OracleRecord storage stEth_UsdOracle = registeredOracles[stethToken];
-		price = stEth_UsdOracle.exists ? this.fetchPrice(stethToken) : _calcEthPrice(wstEthToStEthValue);
+		price = stEth_UsdOracle.exists ? fetchPrice(stethToken) : _calcEthPrice(wstEthToStEthValue);
 		_storePrice(wstethToken, price);
 	}
 
