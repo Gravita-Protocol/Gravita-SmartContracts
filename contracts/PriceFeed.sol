@@ -26,7 +26,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	uint256 public constant ORACLE_UPDATE_TIMELOCK = 4 hours;
 
 	// Maximum deviation allowed between two consecutive Chainlink oracle prices. 18-digit precision.
-	uint256 public constant MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 5e17; // 50%
+	uint256 public constant MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 0.5 ether; // 50%
 
 	/** State -------------------------------------------------------------------------------------------------------- */
 
