@@ -909,11 +909,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		require(_initialDeposit > 0, "StabilityPool: User must have a non-zero deposit");
 	}
 
-	function _requireUserHasNoDeposit(address _address) internal view {
-		uint256 initialDeposit = deposits[_address];
-		require(initialDeposit == 0, "StabilityPool: User must have no deposit");
-	}
-
 	function _requireNonZeroAmount(uint256 _amount) internal pure {
 		require(_amount > 0, "StabilityPool: Amount must be non-zero");
 	}
