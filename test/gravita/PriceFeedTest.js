@@ -1,3 +1,4 @@
+const { time } = require("@nomicfoundation/hardhat-network-helpers")
 const AdminContract = artifacts.require("./AdminContract.sol")
 const ERC20Mock = artifacts.require("./ERC20Mock.sol")
 const MockChainlink = artifacts.require("./MockAggregator.sol")
@@ -31,13 +32,9 @@ contract("PriceFeed", async accounts => {
 	let erc20
 
 	const setAddressesAndOracle = async () => {
-		await priceFeed.setAddresses(
-			adminContract.address,
-			RETH_TOKEN_ADDRESS,
-			STETH_TOKEN_ADDRESS,
-			WSTETH_TOKEN_ADDRESS,
-			{ from: owner }
-		)
+		await priceFeed.setAddresses(adminContract.address, RETH_TOKEN_ADDRESS, STETH_TOKEN_ADDRESS, WSTETH_TOKEN_ADDRESS, {
+			from: owner,
+		})
 		await priceFeed.addOracle(ZERO_ADDRESS, mockChainlink.address, false)
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 	}
@@ -94,23 +91,15 @@ contract("PriceFeed", async accounts => {
 			assert.isTrue(txOwner.receipt.status)
 
 			await assertRevert(
-				priceFeed.setAddresses(
-					adminContract.address,
-					RETH_TOKEN_ADDRESS,
-					STETH_TOKEN_ADDRESS,
-					WSTETH_TOKEN_ADDRESS,
-					{ from: owner }
-				)
+				priceFeed.setAddresses(adminContract.address, RETH_TOKEN_ADDRESS, STETH_TOKEN_ADDRESS, WSTETH_TOKEN_ADDRESS, {
+					from: owner,
+				})
 			)
 
 			await assertRevert(
-				priceFeed.setAddresses(
-					adminContract.address,
-					CBETH_TOKEN_ADDRESS,
-					STETH_TOKEN_ADDRESS,
-					WSTETH_TOKEN_ADDRESS,
-					{ from: alice }
-				),
+				priceFeed.setAddresses(adminContract.address, CBETH_TOKEN_ADDRESS, STETH_TOKEN_ADDRESS, WSTETH_TOKEN_ADDRESS, {
+					from: alice,
+				}),
 				"OwnableUpgradeable: caller is not the owner"
 			)
 		})
@@ -154,11 +143,20 @@ contract("PriceFeed", async accounts => {
 		await newMockChainlink.setLatestRoundId(3)
 		await newMockChainlink.setPrevRoundId(2)
 		await newMockChainlink.setDecimals(8)
-		const now = await th.getLatestBlockTimestamp(web3)
-		await newMockChainlink.setUpdateTime(now)
+		await newMockChainlink.setUpdateTime(await time.latest())
 
 		await priceFeed.addOracle(ZERO_ADDRESS, newMockChainlink.address, false)
+		let queuedOracle = await priceFeed.queuedOracles(ZERO_ADDRESS)
+		assert.equal(queuedOracle.chainLinkOracle, newMockChainlink.address)
+
+		const ORACLE_UPDATE_TIMELOCK = await priceFeed.ORACLE_UPDATE_TIMELOCK()
+		await time.increase(Number(ORACLE_UPDATE_TIMELOCK) + 1)
+
+		await newMockChainlink.setUpdateTime(await time.latest()) // pretend data is fresh
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
+		queuedOracle = await priceFeed.queuedOracles(ZERO_ADDRESS)
+		assert.equal(queuedOracle.exists, false)
+
 		const newPrice = await priceFeed.lastGoodPrice(ZERO_ADDRESS)
 		assert.equal(newPrice.toString(), dec(2345, 18).toString())
 	})
@@ -315,7 +313,7 @@ contract("PriceFeed", async accounts => {
 		await th.fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const feedWorkingAfter = (await priceFeed.registeredOracles(ZERO_ADDRESS)).isFeedWorking
-		assert.equal(feedWorkingAfter, true) 
+		assert.equal(feedWorkingAfter, true)
 	})
 
 	it("chainlinkWorking: Chainlink is out of date by <3hrs: return Chainklink price", async () => {
@@ -366,7 +364,7 @@ contract("PriceFeed", async accounts => {
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		// price drops to 1: a drop of > 50% from previous
 		await mockChainlink.setPrevPrice(dec(3, 18))
-		await mockChainlink.setPrice(dec(1, 18)) 
+		await mockChainlink.setPrice(dec(1, 18))
 		const tx = await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const alertEvents = th.getAllEventsByName(tx, "PriceDeviationAlert")
 		assert.equal(alertEvents.length, 1)
@@ -381,7 +379,7 @@ contract("PriceFeed", async accounts => {
 		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await mockChainlink.setPrice(dec(4, 8)) // price increases to 4: an increase of 100% from previous
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
-		const price = await priceFeed.lastGoodPrice(ZERO_ADDRESS)		
+		const price = await priceFeed.lastGoodPrice(ZERO_ADDRESS)
 		const feedWorkingAfter = (await priceFeed.registeredOracles(ZERO_ADDRESS)).isFeedWorking
 		assert.equal(feedWorkingAfter, true)
 		assert.equal(price, dec(4, 18))
@@ -428,3 +426,4 @@ contract("PriceFeed", async accounts => {
 		assert.equal(price, dec(1234, 18).toString())
 	})
 })
+

@@ -72,7 +72,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		AggregatorV3Interface newOracle = AggregatorV3Interface(_chainlinkOracle);
 		_validateFeedResponse(newOracle);
 		if (registeredOracles[_token].exists) {
-			uint256 timelockRelease = block.timestamp.add(_getOracleUpdateTimelock());
+			uint256 timelockRelease = block.timestamp.add(ORACLE_UPDATE_TIMELOCK);
 			queuedOracles[_token] = OracleRecord(newOracle, timelockRelease, true, true, _isEthIndexed);
 		} else {
 			registeredOracles[_token] = OracleRecord(newOracle, block.timestamp, true, true, _isEthIndexed);
@@ -174,10 +174,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	function _getWstETH_StETHValue() internal view virtual returns (uint256) {
 		return IWstETHToken(wstethToken).stEthPerToken();
-	}
-
-	function _getOracleUpdateTimelock() internal view virtual returns (uint256) {
-		return ORACLE_UPDATE_TIMELOCK;
 	}
 
 	function _validateFeedResponse(AggregatorV3Interface oracle) internal view {
