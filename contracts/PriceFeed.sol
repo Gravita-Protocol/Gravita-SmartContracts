@@ -30,8 +30,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	/** State -------------------------------------------------------------------------------------------------------- */
 
-	bool public isInitialized;
-
 	address public adminContract;
 	address public rethToken;
 	address public stethToken;
@@ -57,8 +55,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		address _stethToken,
 		address _wstethToken
 	) external initializer {
-		require(!isInitialized);
-		isInitialized = true;
 		__Ownable_init();
 		adminContract = _adminContract;
 		rethToken = _rethToken;
