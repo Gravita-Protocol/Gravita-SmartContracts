@@ -312,6 +312,7 @@ class DeploymentHelper {
 		await contracts.functionCaller.setSortedVesselsAddress(contracts.sortedVessels.address)
 
 		await contracts.priceFeedTestnet.setPrice(contracts.erc20.address, dec(200, 'ether'))
+		await contracts.priceFeedTestnet.setPrice(contracts.erc20B.address, dec(100, 'ether'))
 
 		await contracts.sortedVessels.setParams(contracts.vesselManager.address, contracts.borrowerOperations.address)
 
