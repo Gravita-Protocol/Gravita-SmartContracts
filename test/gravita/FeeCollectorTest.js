@@ -450,7 +450,7 @@ contract("FeeCollector", async accounts => {
 				const status_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_STATUS_INDEX]
 
 				// status enum 3 corresponds to "Closed by liquidation"
-				assert.equal(status_Asset, 3)
+				assert.equal(status_Asset.toString(), "3")
 				assert.isFalse(await sortedVessels.contains(erc20.address, alice))
 
 				// treasury must now account for whale's minFee and alice's maxFee

@@ -141,7 +141,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 			return;
 		}
 
-		grvtToken.transfer(_account, safeAmount);
+		IERC20Upgradeable(address(grvtToken)).safeTransfer(_account, safeAmount);
 	}
 
 	function setWeeklyGrvtDistribution(uint256 _weeklyReward) external isController {
