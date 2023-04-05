@@ -918,27 +918,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		require(_amount > 0, "StabilityPool: Amount must be non-zero");
 	}
 
-	function _requireUserHasVessel(address _depositor) internal view {
-		address[] memory assets = adminContract.getValidCollateral();
-		uint256 assetsLen = assets.length;
-		for (uint256 i; i < assetsLen; ++i) {
-			if (vesselManager.getVesselStatus(assets[i], _depositor) == 1) {
-				return;
-			}
-		}
-		revert("StabilityPool: caller must have an active vessel to withdraw AssetGain to");
-	}
-
-	function _requireUserHasAssetGain(address _depositor) internal view {
-		(address[] memory assets, uint256[] memory amounts) = getDepositorGains(_depositor);
-		for (uint256 i = 0; i < assets.length; ++i) {
-			if (amounts[i] > 0) {
-				return;
-			}
-		}
-		revert("StabilityPool: caller must have non-zero gains");
-	}
-
 	// --- Fallback function ---
 
 	function receivedERC20(address _asset, uint256 _amount) external override {
