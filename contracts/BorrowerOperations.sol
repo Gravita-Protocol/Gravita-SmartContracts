@@ -212,18 +212,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		_adjustVessel(_asset, _assetSent, msg.sender, 0, 0, false, _upperHint, _lowerHint);
 	}
 
-	// Send collateral to a vessel. Called by only the Stability Pool.
-	function moveLiquidatedAssetToVessel(
-		address _asset,
-		uint256 _amountMoved,
-		address _borrower,
-		address _upperHint,
-		address _lowerHint
-	) external override {
-		_requireCallerIsStabilityPool();
-		_adjustVessel(_asset, _amountMoved, _borrower, 0, 0, false, _upperHint, _lowerHint);
-	}
-
 	// Withdraw collateral from a vessel
 	function withdrawColl(
 		address _asset,
