@@ -285,3 +285,5 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		assert.equal(NICR.toString(), dec(150, 16))
 	})
 })
+
+contract("Reset chain state", async accounts => {})

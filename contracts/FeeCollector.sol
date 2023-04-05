@@ -110,6 +110,30 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	}
 
 	/**
+	 * Simulates the refund due -if- vessel would be closed at this moment (helper function used by the UI).
+	 */
+	function simulateRefund(
+		address _borrower,
+		address _asset,
+		uint256 _paybackFraction
+	) external view override returns (uint256) {
+		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
+		require(_paybackFraction > 0, "Payback fraction cannot be zero");
+		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
+		if (mRecord.amount == 0 || mRecord.to < block.timestamp) {
+			return 0;
+		}
+		uint256 expiredAmount = _calcExpiredAmount(mRecord.from, mRecord.to, mRecord.amount);
+		if (_paybackFraction == 1e18) {
+			// full payback
+			return mRecord.amount - expiredAmount;
+		} else {
+			// calc refund amount proportional to the payment
+			return ((mRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
+		}
+	}
+
+	/**
 	 * Triggered when a vessel is liquidated; in that case, all remaining fees are collected by the platform,
 	 * and no refunds are generated.
 	 */

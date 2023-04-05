@@ -2375,3 +2375,5 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(600, 18)).toString())
 	})
 })
+
+contract("Reset chain state", async accounts => {})

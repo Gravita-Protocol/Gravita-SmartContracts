@@ -19,3 +19,5 @@ contract('GravitaSafeMath128Tester', async accounts => {
     await th.assertRevert(mathTester.sub(1, 2), 'GravitaSafeMath128Tester: subtraction overflow')
   })
 })
+
+contract("Reset chain state", async accounts => {})

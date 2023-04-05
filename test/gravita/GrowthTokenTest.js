@@ -387,3 +387,5 @@ contract("GRVT Token", async accounts => {
 		await assertRevert(tx, "GRVT: invalid signature")
 	})
 })
+
+contract("Reset chain state", async accounts => {})
