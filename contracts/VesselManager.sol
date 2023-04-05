@@ -47,8 +47,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	// State ----------------------------------------------------------------------------------------------------------
 
-	bool public isInitialized;
-
 	address public borrowerOperations;
 	address public gasPoolAddress;
 
@@ -132,8 +130,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _vesselManagerOperationsAddress,
 		address _adminContractAddress
 	) external override initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
 		__Ownable_init();
 		borrowerOperations = _borrowerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);

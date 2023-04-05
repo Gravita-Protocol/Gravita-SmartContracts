@@ -152,8 +152,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 
 	string public constant NAME = "StabilityPool";
 
-	bool public isInitialized;
-
 	IBorrowerOperations public borrowerOperations;
 	IVesselManager public vesselManager;
 	IDebtToken public debtToken;
@@ -248,9 +246,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		address _communityIssuanceAddress,
 		address _adminContractAddress
 	) external initializer override {
-		require(!isInitialized, "StabilityPool: Already initialized");
-
-		isInitialized = true;
 		__Ownable_init();
 		__ReentrancyGuard_init();
 

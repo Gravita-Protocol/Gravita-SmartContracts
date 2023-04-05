@@ -38,7 +38,6 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	bool public isInitialized;
 	IVesselManager public vesselManager;
 	ISortedVessels public sortedVessels;
 	IStabilityPool public stabilityPool;
@@ -64,7 +63,6 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		address _debtTokenAddress,
 		address _adminContractAddress
 	) external initializer {
-		require(!isInitialized, "Already initialized");
 		__Ownable_init();
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
@@ -72,7 +70,6 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		debtToken = IDebtToken(_debtTokenAddress);
 		adminContract = IAdminContract(_adminContractAddress);
-		isInitialized = true;
 	}
 
 	// Liquidation external functions -----------------------------------------------------------------------------------
