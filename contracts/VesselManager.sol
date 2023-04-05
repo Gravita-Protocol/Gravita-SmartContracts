@@ -736,9 +736,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 newDebt = oldDebt - _debtDecrease;
 		Vessels[_borrower][_asset].debt = newDebt;
 		if (paybackFraction > 0) {
-			if (paybackFraction > 1 ether) {
-				paybackFraction = 1 ether;
-			}
 			feeCollector.decreaseDebt(_borrower, _asset, paybackFraction);
 		}
 		return newDebt;
