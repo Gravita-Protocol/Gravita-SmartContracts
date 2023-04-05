@@ -35,8 +35,6 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 	ICollSurplusPool public collSurplusPool;
 	IDefaultPool public defaultPool;
 
-	bool public isInitialized;
-
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
 
@@ -89,9 +87,6 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
 	) external initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
-
 		__Ownable_init();
 		__ReentrancyGuard_init();
 
