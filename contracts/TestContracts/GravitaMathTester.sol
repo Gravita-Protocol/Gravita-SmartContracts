@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 import "../Dependencies/GravitaMath.sol";
 
 /* Tester contract for math functions in Math.sol library. */
