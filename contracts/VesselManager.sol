@@ -689,7 +689,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _borrower,
 		uint256 _num
 	) external override onlyBorrowerOperations {
-		Vessels[_borrower][_asset].asset = _asset;
 		Vessels[_borrower][_asset].status = Status(_num);
 	}
 
