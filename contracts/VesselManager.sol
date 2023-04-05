@@ -235,7 +235,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function isVesselActive(address _asset, address _borrower) public view override returns (bool) {
-		return this.getVesselStatus(_asset, _borrower) == uint256(Status.active);
+		return getVesselStatus(_asset, _borrower) == uint256(Status.active);
 	}
 
 	function getTCR(address _asset, uint256 _price) external view override returns (uint256) {
@@ -658,7 +658,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	// --- Vessel property getters --------------------------------------------------------------------------------------
 
-	function getVesselStatus(address _asset, address _borrower) external view override returns (uint256) {
+	function getVesselStatus(address _asset, address _borrower) public view override returns (uint256) {
 		return uint256(Vessels[_borrower][_asset].status);
 	}
 
