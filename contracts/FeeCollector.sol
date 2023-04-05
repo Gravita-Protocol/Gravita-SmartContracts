@@ -147,7 +147,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	/**
 	 * Batch collect fees from an array of borrowers/assets.
 	 */
-	function collectFees(address[] memory _borrowers, address[] memory _assets) external override {
+	function collectFees(address[] calldata _borrowers, address[] calldata _assets) external override {
 		uint256 borrowersLength = _borrowers.length;
 		if (borrowersLength != _assets.length || borrowersLength == 0) {
 			revert FeeCollector__ArrayMismatch();
