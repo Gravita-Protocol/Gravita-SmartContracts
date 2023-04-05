@@ -77,9 +77,21 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		_validateFeedResponse(newOracle);
 		if (registeredOracles[_token].exists) {
 			uint256 timelockRelease = block.timestamp.add(_getOracleUpdateTimelock());
-			queuedOracles[_token] = OracleRecord(newOracle, timelockRelease, true, true, _isEthIndexed);
+			queuedOracles[_token] = OracleRecord({
+				chainLinkOracle: newOracle,
+				timelockRelease: timelockRelease,
+				exists: true,
+				isFeedWorking: true,
+				isEthIndexed: _isEthIndexed
+			});
 		} else {
-			registeredOracles[_token] = OracleRecord(newOracle, block.timestamp, true, true, _isEthIndexed);
+			registeredOracles[_token] = OracleRecord({
+				chainLinkOracle: newOracle,
+				timelockRelease: block.timestamp,
+				exists: true,
+				isFeedWorking: true,
+				isEthIndexed: _isEthIndexed
+			});
 			emit NewOracleRegistered(_token, _chainlinkOracle, _isEthIndexed);
 		}
 	}
@@ -318,3 +330,4 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		}
 	}
 }
+
