@@ -19,8 +19,6 @@ contract PoolBase is GravitaBase {
 	 */
 	uint256[50] private __gap;
 
-	error PoolBase__AdminOnly();
-
 	/**
 	 * @notice More efficient version of sumColls when dealing with all whitelisted tokens.
 	 *    Used by pool accounting of tokens inside that pool.
