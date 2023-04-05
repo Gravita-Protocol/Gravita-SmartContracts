@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -30,8 +30,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	/** State -------------------------------------------------------------------------------------------------------- */
 
-	bool public isInitialized;
-
 	address public adminContract;
 	address public rethToken;
 	address public stethToken;
@@ -57,8 +55,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		address _stethToken,
 		address _wstethToken
 	) external initializer {
-		require(!isInitialized);
-		isInitialized = true;
 		__Ownable_init();
 		adminContract = _adminContract;
 		rethToken = _rethToken;
@@ -76,10 +72,22 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		AggregatorV3Interface newOracle = AggregatorV3Interface(_chainlinkOracle);
 		_validateFeedResponse(newOracle);
 		if (registeredOracles[_token].exists) {
-			uint256 timelockRelease = block.timestamp.add(_getOracleUpdateTimelock());
-			queuedOracles[_token] = OracleRecord(newOracle, timelockRelease, true, true, _isEthIndexed);
+			uint256 timelockRelease = block.timestamp.add(ORACLE_UPDATE_TIMELOCK);
+			queuedOracles[_token] = OracleRecord({
+				chainLinkOracle: newOracle,
+				timelockRelease: timelockRelease,
+				exists: true,
+				isFeedWorking: true,
+				isEthIndexed: _isEthIndexed
+			});
 		} else {
-			registeredOracles[_token] = OracleRecord(newOracle, block.timestamp, true, true, _isEthIndexed);
+			registeredOracles[_token] = OracleRecord({
+				chainLinkOracle: newOracle,
+				timelockRelease: block.timestamp,
+				exists: true,
+				isFeedWorking: true,
+				isEthIndexed: _isEthIndexed
+			});
 			emit NewOracleRegistered(_token, _chainlinkOracle, _isEthIndexed);
 		}
 	}
@@ -94,7 +102,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	/** Public functions --------------------------------------------------------------------------------------------- */
 
-	function fetchPrice(address _token) external override returns (uint256 lastTokenGoodPrice) {
+	function fetchPrice(address _token) public override returns (uint256 lastTokenGoodPrice) {
 		OracleRecord memory oracle = _getOracle(_token);
 		if (!oracle.exists) {
 			if (_token == rethToken) {
@@ -146,7 +154,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	}
 
 	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
-		uint256 ethPrice = this.fetchPrice(address(0));
+		uint256 ethPrice = fetchPrice(address(0));
 		return ethPrice.mul(ethAmount).div(1 ether);
 	}
 
@@ -168,7 +176,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _fetchNativeWstETHPrice() internal returns (uint256 price) {
 		uint256 wstEthToStEthValue = _getWstETH_StETHValue();
 		OracleRecord storage stEth_UsdOracle = registeredOracles[stethToken];
-		price = stEth_UsdOracle.exists ? this.fetchPrice(stethToken) : _calcEthPrice(wstEthToStEthValue);
+		price = stEth_UsdOracle.exists ? fetchPrice(stethToken) : _calcEthPrice(wstEthToStEthValue);
 		_storePrice(wstethToken, price);
 	}
 
@@ -178,10 +186,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	function _getWstETH_StETHValue() internal view virtual returns (uint256) {
 		return IWstETHToken(wstethToken).stEthPerToken();
-	}
-
-	function _getOracleUpdateTimelock() internal view virtual returns (uint256) {
-		return ORACLE_UPDATE_TIMELOCK;
 	}
 
 	function _validateFeedResponse(AggregatorV3Interface oracle) internal view {
@@ -318,3 +322,4 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		}
 	}
 }
+

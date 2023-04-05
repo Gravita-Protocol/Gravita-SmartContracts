@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 import "../GRVT/CommunityIssuance.sol";
 
 import "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";

@@ -2,8 +2,8 @@ const { ethers } = require("hardhat")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 const fs = require("fs")
 
-const shortDelay = 3 * 86400
-const longDelay = 7 * 86400
+const shortDelay = 3 * 86_400 // 3 days
+const longDelay = 7 * 86_400 // 7 days
 
 class MainnetDeploymentHelper {
 	constructor(configParams, deployerWallet) {
@@ -27,17 +27,6 @@ class MainnetDeploymentHelper {
 	}
 
 	async getFactory(name) {
-		// const provider = EvmRpcProvider.from('ws://localhost:9944');
-		//   await provider.isReady();
-
-		// provider.getFeeData = async () => ({
-		// 	gasPrice: ethParams.txGasPrice,
-		// 	gasLimit: ethParams.txGasLimit,
-		// });
-
-		// // Create the signer for the mnemonic, connected to the provider with hardcoded fee data
-		// const signer = ethers.Wallet.fromMnemonic(process.env.MNEMONIC).connect(provider);
-
 		return await ethers.getContractFactory(name, this.deployerWallet)
 	}
 
@@ -95,7 +84,7 @@ class MainnetDeploymentHelper {
 		const GRVTTokenFactory = await this.getFactory("GRVTToken")
 		const lockedGrvtFactory = await this.getFactory("LockedGRVT")
 		const lockedGrvt = await this.loadOrDeploy(lockedGrvtFactory, "lockedGrvt", deploymentState)
-		const GRVTToken = await this.loadOrDeploy(GRVTTokenFactory, "GRVTToken", deploymentState, false, [
+		const GRVTToken = await this.loadOrDeploy(GRVTTokenFactory, "grvtToken", deploymentState, false, [
 			treasurySigAddress,
 		])
 		if (!this.configParams.ETHERSCAN_BASE_URL) {
@@ -116,8 +105,16 @@ class MainnetDeploymentHelper {
 		return grvtContracts
 	}
 
-	async deployCoreContracts(deploymentState, multisig) {
+	async deployCoreContracts(deploymentState) {
+		const deployUpgradable = async (factory, name, params = []) => {
+			return await this.loadOrDeploy(factory, name, deploymentState, true, params)
+		}
+		const deployNonUpgradable = async (factory, name, params = []) => {
+			return await this.loadOrDeploy(factory, name, deploymentState, false, params)
+		}
+
 		console.log("Deploying core contracts...")
+
 		const activePoolFactory = await this.getFactory("ActivePool")
 		const adminContractFactory = await this.getFactory("AdminContract")
 		const borrowerOperationsFactory = await this.getFactory("BorrowerOperations")
@@ -127,19 +124,42 @@ class MainnetDeploymentHelper {
 		const feeCollectorFactory = await this.getFactory("FeeCollector")
 		const gasPoolFactory = await this.getFactory("GasPool")
 		const lockedGrvtFactory = await this.getFactory("LockedGRVT")
-		const priceFeedFactoryName = "localhost" == this.configParams.targetNetwork ? "PriceFeedTestnet" : "PriceFeed"
-		const priceFeedFactory = await this.getFactory(priceFeedFactoryName)
+		const mockAggregatorFactory = await this.getFactory("MockAggregator")
+		const mockErc20Factory = await this.getFactory("ERC20Mock")
+		const priceFeedFactory = await this.getFactory("PriceFeed")
 		const sortedVesselsFactory = await this.getFactory("SortedVessels")
 		const stabilityPoolFactory = await this.getFactory("StabilityPool")
 		const timelockFactory = await this.getFactory("Timelock")
 		const vesselManagerFactory = await this.getFactory("VesselManager")
 		const vesselMgrOperationsFactory = await this.getFactory("VesselManagerOperations")
 
-		const deployUpgradable = async (factory, name, params = []) => {
-			return await this.loadOrDeploy(factory, name, deploymentState, true, params)
-		}
-		const deployNonUpgradable = async (factory, name, params = []) => {
-			return await this.loadOrDeploy(factory, name, deploymentState, false, params)
+		let mockAggregator_debt
+		let mockAggregator_grvt
+		let mockAggregator_reth
+		let mockAggregator_weth
+		let mockAggregator_wsteth
+		let mockErc20_reth
+		let mockErc20_weth
+		let mockErc20_wsteth
+
+		// Local test contracts
+		if ("localhost" == this.configParams.targetNetwork) {
+			mockAggregator_debt = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_debt")
+			mockAggregator_grvt = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_grvt")
+			mockAggregator_reth = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_reth")
+			mockAggregator_weth = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_weth")
+			mockAggregator_wsteth = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_wsteth")
+			mockErc20_reth = await deployNonUpgradable(mockErc20Factory, "mock_reth", ["mock_reth", "mock_reth", 18])
+			mockErc20_weth = await deployNonUpgradable(mockErc20Factory, "mock_weth", ["mock_weth", "mock_weth", 18])
+			mockErc20_wsteth = await deployNonUpgradable(mockErc20Factory, "mock_wsteth", ["mock_wsteth", "mock_wsteth", 18])
+
+			const mintAmount = "100000".concat("0".repeat(18))
+			const accounts = await ethers.getSigners()
+			for (let collateral of [mockErc20_reth, mockErc20_weth, mockErc20_wsteth]) {
+				for (const { address } of accounts.slice(0, 10)) {
+					await collateral.mint(address, mintAmount)
+				}
+			}
 		}
 
 		// Upgradable (proxy-based) contracts
@@ -160,8 +180,8 @@ class MainnetDeploymentHelper {
 		const lockedGrvt = await deployNonUpgradable(lockedGrvtFactory, "lockedGrvt")
 
 		// Timelock contracts
-		const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [longDelay])
-		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [shortDelay])
+		const longTimelock = await deployNonUpgradable(timelockFactory, "longTimelock", [longDelay])
+		const shortTimelock = await deployNonUpgradable(timelockFactory, "shortTimelock", [shortDelay])
 
 		const debtTokenParams = [
 			vesselManager.address,
@@ -169,7 +189,7 @@ class MainnetDeploymentHelper {
 			borrowerOperations.address,
 			shortTimelock.address,
 		]
-		const debtToken = await deployNonUpgradable(debtTokenFactory, "DebtToken", debtTokenParams)
+		const debtToken = await deployNonUpgradable(debtTokenFactory, "debtToken", debtTokenParams)
 
 		if (!this.configParams.ETHERSCAN_BASE_URL) {
 			console.log("(No Etherscan URL defined, skipping contract verification)")
@@ -202,6 +222,14 @@ class MainnetDeploymentHelper {
 			gasPool,
 			lockedGrvt,
 			longTimelock,
+			mockAggregator_debt,
+			mockAggregator_grvt,
+			mockAggregator_reth,
+			mockAggregator_weth,
+			mockAggregator_wsteth,
+			mockErc20_reth,
+			mockErc20_weth,
+			mockErc20_wsteth,
 			priceFeed,
 			sortedVessels,
 			shortTimelock,
@@ -280,32 +308,58 @@ class MainnetDeploymentHelper {
 		}
 	}
 
+	async setupLocalCollaterals(contracts) {
+		const blockTimestamp = (await ethers.provider.getBlock("latest")).timestamp
+		for (let aggregator of [
+			contracts.mockAggregator_reth,
+			contracts.mockAggregator_wsteth,
+			contracts.mockAggregator_weth,
+			contracts.mockAggregator_debt,
+			contracts.mockAggregator_grvt,
+		]) {
+			await aggregator.setPrevRoundId(1)
+			await aggregator.setLatestRoundId(2)
+			await aggregator.setUpdateTime(blockTimestamp)
+		}
+		const setPrice = async (aggregator, price) => {
+			const price8digits = price.toString().concat("0".repeat(8))
+			await aggregator.setPrevPrice(price8digits)
+			await aggregator.setPrice(price8digits)
+		}
+		await setPrice(contracts.mockAggregator_debt, 1)
+		await setPrice(contracts.mockAggregator_grvt, 2)
+		await setPrice(contracts.mockAggregator_reth, 1952)
+		await setPrice(contracts.mockAggregator_wsteth, 1806)
+		await setPrice(contracts.mockAggregator_weth, 1830)
+
+		await contracts.priceFeed.setAddresses(
+			contracts.adminContract.address,
+			contracts.mockErc20_reth.address,
+			this.hre.ethers.constants.AddressZero,
+			contracts.mockErc20_wsteth.address
+		)
+		await contracts.priceFeed.addOracle(contracts.debtToken.address, contracts.mockAggregator_debt.address, false)
+		await contracts.priceFeed.addOracle(contracts.mockErc20_reth.address, contracts.mockAggregator_reth.address, false)
+		await contracts.priceFeed.addOracle(contracts.mockErc20_weth.address, contracts.mockAggregator_weth.address, false)
+		await contracts.priceFeed.addOracle(
+			contracts.mockErc20_wsteth.address,
+			contracts.mockAggregator_wsteth.address,
+			false
+		)
+
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_reth.address, 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_weth.address, 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_wsteth.address, 18, true)
+
+		await contracts.adminContract.setAsDefault(contracts.mockErc20_reth.address)
+		await contracts.adminContract.setAsDefault(contracts.mockErc20_weth.address)
+		await contracts.adminContract.setAsDefault(contracts.mockErc20_wsteth.address)
+	}
+
 	// Connect contracts to their dependencies
 	async connectCoreContracts(contracts, GRVTContracts, treasuryAddress) {
 		console.log("Connecting core contracts...")
 		const gasPrice = this.configParams.GAS_PRICE
-
-		const { CBETH_ERC20, RETH_ERC20, STETH_ERC20, WSTETH_ERC20 } = this.configParams.externalAddrs
-		const { CHAINLINK_ETH_USD_ORACLE, CHAINLINK_CBETH_ETH_ORACLE, CHAINLINK_STETH_USD_ORACLE } =
-			this.configParams.externalAddrs
-		;(await this.isOwnershipRenounced(contracts.priceFeed)) ||
-			(await this.sendAndWaitForTransaction(
-				contracts.priceFeed.setAddresses(contracts.adminContract.address, RETH_ERC20, STETH_ERC20, WSTETH_ERC20, {
-					gasPrice,
-				})
-			))
-		if (CHAINLINK_ETH_USD_ORACLE && CHAINLINK_ETH_USD_ORACLE != "") {
-			console.log("Adding ETH-USD Oracle...")
-			await contracts.priceFeed.addOracle(ZERO_ADDRESS, CHAINLINK_ETH_USD_ORACLE, false)
-		}
-		if (CHAINLINK_CBETH_ETH_ORACLE && CHAINLINK_CBETH_ETH_ORACLE != "") {
-			console.log("Adding cbETH-ETH Oracle...")
-			await contracts.priceFeed.addOracle(CBETH_ERC20, CHAINLINK_CBETH_ETH_ORACLE, true)
-		}
-		if (CHAINLINK_STETH_USD_ORACLE && CHAINLINK_STETH_USD_ORACLE != "") {
-			console.log("Adding stETH-USD Oracle...")
-			await contracts.priceFeed.addOracle(STETH_ERC20, CHAINLINK_STETH_USD_ORACLE, false)
-		}
 
 		;(await this.isOwnershipRenounced(contracts.activePool)) ||
 			(await this.sendAndWaitForTransaction(
@@ -418,6 +472,33 @@ class MainnetDeploymentHelper {
 					{ gasPrice }
 				)
 			))
+
+		if ("localhost" == this.configParams.targetNetwork) {
+			await this.setupLocalCollaterals(contracts)
+		} else {
+			// Mainnet and Goerli testnet Oracle setup
+			const { CBETH_ERC20, RETH_ERC20, STETH_ERC20, WSTETH_ERC20 } = this.configParams.externalAddrs
+			const { CHAINLINK_ETH_USD_ORACLE, CHAINLINK_CBETH_ETH_ORACLE, CHAINLINK_STETH_USD_ORACLE } =
+				this.configParams.externalAddrs
+			;(await this.isOwnershipRenounced(contracts.priceFeed)) ||
+				(await this.sendAndWaitForTransaction(
+					contracts.priceFeed.setAddresses(contracts.adminContract.address, RETH_ERC20, STETH_ERC20, WSTETH_ERC20, {
+						gasPrice,
+					})
+				))
+			if (CHAINLINK_ETH_USD_ORACLE && CHAINLINK_ETH_USD_ORACLE != "") {
+				console.log("Adding ETH-USD Oracle...")
+				await contracts.priceFeed.addOracle(ZERO_ADDRESS, CHAINLINK_ETH_USD_ORACLE, false)
+			}
+			if (CHAINLINK_CBETH_ETH_ORACLE && CHAINLINK_CBETH_ETH_ORACLE != "") {
+				console.log("Adding cbETH-ETH Oracle...")
+				await contracts.priceFeed.addOracle(CBETH_ERC20, CHAINLINK_CBETH_ETH_ORACLE, true)
+			}
+			if (CHAINLINK_STETH_USD_ORACLE && CHAINLINK_STETH_USD_ORACLE != "") {
+				console.log("Adding stETH-USD Oracle...")
+				await contracts.priceFeed.addOracle(STETH_ERC20, CHAINLINK_STETH_USD_ORACLE, false)
+			}
+		}
 	}
 
 	async connectGRVTTokenContractsToCore(GRVTContracts, coreContracts, treasuryAddress) {
@@ -491,4 +572,3 @@ class MainnetDeploymentHelper {
 }
 
 module.exports = MainnetDeploymentHelper
-
