@@ -10,8 +10,6 @@ import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
 
-// import "hardhat/console.sol";
-
 contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -91,7 +89,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _asset,
 		uint256 _feeAmount
 	) external override onlyBorrowerOperations {
-		// console.log(" ----- increaseDebt(%s) ----- [ts: %s]", _feeAmount, block.timestamp);
 		uint256 minFeeAmount = (MIN_FEE_FRACTION * _feeAmount) / 1 ether;
 		uint256 refundableFeeAmount = _feeAmount - minFeeAmount;
 		uint256 feeToCollect = _createOrUpdateFeeRecord(_borrower, _asset, refundableFeeAmount);
@@ -106,7 +103,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _asset,
 		uint256 _paybackFraction
 	) external override onlyBorrowerOperationsOrVesselManager {
-		// console.log(" ----- decreaseDebt(%s) -----", _paybackFraction);
 		_decreaseDebt(_borrower, _asset, _paybackFraction);
 	}
 
@@ -114,7 +110,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	 * Triggered when a debt is paid in full.
 	 */
 	function closeDebt(address _borrower, address _asset) external override onlyBorrowerOperationsOrVesselManager {
-		// console.log(" ----- closeDebt() -----");
 		_decreaseDebt(_borrower, _asset, 1 ether);
 	}
 
@@ -123,7 +118,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	 * and no refunds are generated.
 	 */
 	function liquidateDebt(address _borrower, address _asset) external override onlyVesselManager {
-		// console.log(" ----- liquidateDebt() ----- ");
 		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
 		if (mRecord.amount > 0) {
 			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, mRecord.amount);
@@ -171,21 +165,15 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 
 	/** Helper & internal methods ------------------------------------------------------------------------------------ */
 
-	function _decreaseDebt(
-		address _borrower,
-		address _asset,
-		uint256 _paybackFraction
-	) internal {
+	function _decreaseDebt(address _borrower, address _asset, uint256 _paybackFraction) internal {
 		uint256 NOW = block.timestamp;
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
 		require(_paybackFraction > 0, "Payback fraction cannot be zero");
 		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
 		if (mRecord.amount == 0) {
-			// console.log("      decreaseDebt() :: no records found");
 			return;
 		}
-		if (mRecord.to < NOW) {
-			// console.log("      decreaseDebt() :: record is expired");
+		if (mRecord.to <= NOW) {
 			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, mRecord.amount);
 		} else {
 			// collect expired refund
@@ -197,18 +185,14 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 				_refundFee(_borrower, _asset, refundAmount);
 				delete feeRecords[_borrower][_asset];
 				emit FeeRecordUpdated(_borrower, _asset, NOW, 0, 0);
-				// console.log("^^^ EVENT FeeRecordUpdated(%s, 0, 0)", NOW);
 			} else {
 				// refund amount proportional to the payment
 				uint256 refundAmount = ((mRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
-				// console.log("      decreaseDebt() :: %s = refund", f(refundAmount));
 				_refundFee(_borrower, _asset, refundAmount);
 				uint256 updatedAmount = mRecord.amount - expiredAmount - refundAmount;
 				feeRecords[_borrower][_asset].amount = updatedAmount;
 				feeRecords[_borrower][_asset].from = NOW;
-				// console.log("      decreaseDebt() :: %s left", f(updatedAmount));
 				emit FeeRecordUpdated(_borrower, _asset, NOW, mRecord.to, updatedAmount);
-				// console.log("^^^ EVENT FeeRecordUpdated(%s, %s, %s)", NOW, mRecord.to, f(updatedAmount));
 			}
 		}
 	}
@@ -220,11 +204,9 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	) internal returns (uint256 feeToCollect) {
 		FeeRecord storage sRecord = feeRecords[_borrower][_asset];
 		if (sRecord.amount == 0) {
-			// console.log("  _createFeeRecord() :: creating a new fee record");
 			_createFeeRecord(_borrower, _asset, _feeAmount, sRecord);
 		} else {
 			if (sRecord.to <= block.timestamp) {
-				// console.log("  _createFeeRecord() :: record expired, collect fees and overwrite record");
 				feeToCollect = sRecord.amount;
 				_createFeeRecord(_borrower, _asset, _feeAmount, sRecord);
 			} else {
@@ -245,7 +227,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		_sRecord.from = from;
 		_sRecord.to = to;
 		emit FeeRecordUpdated(_borrower, _asset, from, to, _feeAmount);
-		// console.log("^^^ EVENT FeeRecordUpdated(%s, %s, %s)", from, to, f(_feeAmount));
 	}
 
 	function _updateFeeRecord(
@@ -254,12 +235,10 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 _addedAmount,
 		FeeRecord storage _sRecord
 	) internal returns (uint256) {
-		// console.log("  _updateFeeRecord()");
 		FeeRecord memory mRecord = _sRecord;
 		uint256 NOW = block.timestamp;
 		if (NOW < mRecord.from) {
 			// loan is still in its first week (MIN_FEE_DAYS)
-			// console.log("  _updateFeeRecord() :: still on first week");
 			NOW = mRecord.from;
 		}
 		uint256 expiredAmount = _calcExpiredAmount(mRecord.from, mRecord.to, mRecord.amount);
@@ -271,32 +250,21 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		_sRecord.from = NOW;
 		_sRecord.to = updatedTo;
 		emit FeeRecordUpdated(_borrower, _asset, NOW, updatedTo, updatedAmount);
-		// console.log("^^^ EVENT FeeRecordUpdated(%s, %s, %s)", NOW, updatedTo, f(updatedAmount));
 		return expiredAmount;
 	}
 
-	function _closeExpiredOrLiquidatedFeeRecord(
-		address _borrower,
-		address _asset,
-		uint256 _amount
-	) internal {
+	function _closeExpiredOrLiquidatedFeeRecord(address _borrower, address _asset, uint256 _amount) internal {
 		_collectFee(_borrower, _asset, _amount);
 		delete feeRecords[_borrower][_asset];
 		emit FeeRecordUpdated(_borrower, _asset, block.timestamp, 0, 0);
 	}
 
-	function _calcExpiredAmount(
-		uint256 _from,
-		uint256 _to,
-		uint256 _amount
-	) internal view returns (uint256) {
+	function _calcExpiredAmount(uint256 _from, uint256 _to, uint256 _amount) internal view returns (uint256) {
 		uint256 NOW = block.timestamp;
 		if (_from > NOW) {
-			// console.log("_calcExpiredAmount() :: RESULT = 0 (still on first week)");
 			return 0;
 		}
 		if (NOW >= _to) {
-			// console.log("_calcExpiredAmount() :: RESULT = %s (expired)", f(_amount));
 			return _amount;
 		}
 		uint256 PRECISION = 1e9;
@@ -304,10 +272,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 elapsedTime = NOW - _from;
 		uint256 decayRate = (_amount * PRECISION) / lifeTime;
 		uint256 expiredAmount = (elapsedTime * decayRate) / PRECISION;
-		// console.log("_calcExpiredAmount() :: lifeTime: %s (~%s days)", lifeTime, lifeTime / 24 / 60 / 60);
-		// console.log("_calcExpiredAmount() :: elapsedTime: %s (~%s days)", elapsedTime, elapsedTime / 24 / 60 / 60);
-		// console.log("_calcExpiredAmount() :: decayRate: %s", decayRate);
-		// console.log("_calcExpiredAmount() :: RESULT = %s", f(expiredAmount));
 		return expiredAmount;
 	}
 
@@ -316,28 +280,16 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 remainingTimeToLive,
 		uint256 addedAmount
 	) internal pure returns (uint256) {
-		// console.log("  _calcNewDuration() :: remainingAmount = %s addedAmount = %s", f(remainingAmount), f(addedAmount));
-		// console.log(
-		// 	"  _calcNewDuration() :: remainingTimeToLive = %s (~%s days))",
-		// 	remainingTimeToLive,
-		// 	remainingTimeToLive / 24 / 60 / 60
-		// );
 		uint256 prevWeight = remainingAmount * remainingTimeToLive;
 		uint256 nextWeight = addedAmount * FEE_EXPIRATION_SECONDS;
 		uint256 newDuration = (prevWeight + nextWeight) / (remainingAmount + addedAmount);
-		// console.log("  _calcNewDuration() :: prevWeight = %s nextWeight = %s", prevWeight, nextWeight);
-		// console.log("  _calcNewDuration() :: RESULT = %s (~%s days)", newDuration, newDuration / 24 / 60 / 60);
 		return newDuration;
 	}
 
 	/**
 	 * Transfers collected (debt token) fees to either the treasury or the GRVTStaking contract, depending on a flag.
 	 */
-	function _collectFee(
-		address _borrower,
-		address _asset,
-		uint256 _feeAmount
-	) internal {
+	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount > 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IDebtToken(debtTokenAddress).transfer(collector, _feeAmount);
@@ -345,46 +297,14 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 				grvtStaking.increaseFee_DebtToken(_feeAmount);
 			}
 			emit FeeCollected(_borrower, _asset, collector, _feeAmount);
-			// console.log("       _collectFee() :: %s collected from %s", f(_feeAmount), _borrower);
 		}
 	}
 
-	function _refundFee(
-		address _borrower,
-		address _asset,
-		uint256 _refundAmount
-	) internal {
+	function _refundFee(address _borrower, address _asset, uint256 _refundAmount) internal {
 		if (_refundAmount > 0) {
 			IDebtToken(debtTokenAddress).transfer(_borrower, _refundAmount);
-			// console.log("        _refundFee() :: %s refunded to %s at %s", f(_refundAmount), _borrower, block.timestamp);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
 		}
-	}
-
-	/**
-	 * TEMPORARY formatting method to help with debugging
-	 * TODO remove for production deployment
-	 */
-	function f(uint256 value) internal pure returns (string memory) {
-		string memory sInput = Strings.toString(value);
-		bytes memory bInput = bytes(sInput);
-		uint256 len = bInput.length > 18 ? bInput.length + 1 : 20;
-		string memory sResult = new string(len);
-		bytes memory bResult = bytes(sResult);
-		if (bInput.length <= 18) {
-			bResult[0] = "0";
-			bResult[1] = ".";
-			for (uint256 i = 1; i <= 18 - bInput.length; i++) bResult[i + 1] = "0";
-			for (uint256 i = bInput.length; i > 0; i--) bResult[--len] = bInput[i - 1];
-		} else {
-			uint256 c = 0;
-			uint256 i = bInput.length;
-			while (i > 0) {
-				bResult[--len] = bInput[--i];
-				if (++c == 18) bResult[--len] = ".";
-			}
-		}
-		return string(bResult);
 	}
 
 	/** Modifiers ---------------------------------------------------------------------------------------------------- */
