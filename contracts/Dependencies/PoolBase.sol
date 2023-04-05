@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";

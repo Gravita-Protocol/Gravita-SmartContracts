@@ -51,18 +51,6 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 		}
 	})
 
-	describe("BorrowerOperations", async accounts => {
-		it("moveLiquidatedAssetToVessel(): reverts when called by an account that is not StabilityPool", async () => {
-			// Attempt call from alice
-			try {
-				await borrowerOperations.moveLiquidatedAssetToVessel(erc20.address, 0, bob, bob, bob, { from: bob })
-			} catch (err) {
-				assert.include(err.message, "revert")
-				// assert.include(err.message, "BorrowerOps: Caller is not Stability Pool")
-			}
-		})
-	})
-
 	describe("VesselManager", async accounts => {
 		it("applyPendingRewards(): reverts when called by an account that is not BorrowerOperations", async () => {
 			// Attempt call from alice

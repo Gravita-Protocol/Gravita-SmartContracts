@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -84,9 +84,5 @@ contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable {
 	) internal view {
 		uint256 feePercentage = _fee.mul(adminContract.DECIMAL_PRECISION()).div(_amount);
 		require(feePercentage <= _maxFeePercentage, "Fee exceeded provided maximum");
-	}
-
-	function _revertWrongFuncCaller() internal pure {
-		revert("WFC");
 	}
 }

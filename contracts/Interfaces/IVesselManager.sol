@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 import "./IActivePool.sol";
 import "./ICollSurplusPool.sol";
@@ -52,7 +52,6 @@ interface IVesselManager is IGravitaBase {
 	error VesselManager__OnlyVesselManagerOperationsOrBorrowerOperations();
 
 	struct Vessel {
-		address asset;
 		uint256 debt;
 		uint256 coll;
 		uint256 stake;

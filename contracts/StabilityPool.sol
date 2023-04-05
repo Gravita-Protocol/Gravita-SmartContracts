@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -152,8 +152,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 
 	string public constant NAME = "StabilityPool";
 
-	bool public isInitialized;
-
 	IBorrowerOperations public borrowerOperations;
 	IVesselManager public vesselManager;
 	IDebtToken public debtToken;
@@ -248,9 +246,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		address _communityIssuanceAddress,
 		address _adminContractAddress
 	) external initializer override {
-		require(!isInitialized, "StabilityPool: Already initialized");
-
-		isInitialized = true;
 		__Ownable_init();
 		__ReentrancyGuard_init();
 
@@ -798,7 +793,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 			}
 			address asset = assets[i];
 			// Assumes we're internally working only with the wrapped version of ERC20 tokens
-			IERC20Upgradeable(asset).safeTransferFrom(address(this), _to, amount);
+			IERC20Upgradeable(asset).safeTransfer(_to, amount);
 		}
 		totalColl.amounts = _leftSubColls(totalColl, assets, amounts);
 
@@ -909,34 +904,8 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		require(_initialDeposit > 0, "StabilityPool: User must have a non-zero deposit");
 	}
 
-	function _requireUserHasNoDeposit(address _address) internal view {
-		uint256 initialDeposit = deposits[_address];
-		require(initialDeposit == 0, "StabilityPool: User must have no deposit");
-	}
-
 	function _requireNonZeroAmount(uint256 _amount) internal pure {
 		require(_amount > 0, "StabilityPool: Amount must be non-zero");
-	}
-
-	function _requireUserHasVessel(address _depositor) internal view {
-		address[] memory assets = adminContract.getValidCollateral();
-		uint256 assetsLen = assets.length;
-		for (uint256 i; i < assetsLen; ++i) {
-			if (vesselManager.getVesselStatus(assets[i], _depositor) == 1) {
-				return;
-			}
-		}
-		revert("StabilityPool: caller must have an active vessel to withdraw AssetGain to");
-	}
-
-	function _requireUserHasAssetGain(address _depositor) internal view {
-		(address[] memory assets, uint256[] memory amounts) = getDepositorGains(_depositor);
-		for (uint256 i = 0; i < assets.length; ++i) {
-			if (amounts[i] > 0) {
-				return;
-			}
-		}
-		revert("StabilityPool: caller must have non-zero gains");
 	}
 
 	// --- Fallback function ---

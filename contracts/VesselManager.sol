@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 import "./Dependencies/GravitaBase.sol";
 
@@ -46,8 +46,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	// State ----------------------------------------------------------------------------------------------------------
-
-	bool public isInitialized;
 
 	address public borrowerOperations;
 	address public gasPoolAddress;
@@ -132,8 +130,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _vesselManagerOperationsAddress,
 		address _adminContractAddress
 	) external override initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
 		__Ownable_init();
 		borrowerOperations = _borrowerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -235,7 +231,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function isVesselActive(address _asset, address _borrower) public view override returns (bool) {
-		return this.getVesselStatus(_asset, _borrower) == uint256(Status.active);
+		return getVesselStatus(_asset, _borrower) == uint256(Status.active);
 	}
 
 	function getTCR(address _asset, uint256 _price) external view override returns (uint256) {
@@ -658,7 +654,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	// --- Vessel property getters --------------------------------------------------------------------------------------
 
-	function getVesselStatus(address _asset, address _borrower) external view override returns (uint256) {
+	function getVesselStatus(address _asset, address _borrower) public view override returns (uint256) {
 		return uint256(Vessels[_borrower][_asset].status);
 	}
 
@@ -689,7 +685,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _borrower,
 		uint256 _num
 	) external override onlyBorrowerOperations {
-		Vessels[_borrower][_asset].asset = _asset;
 		Vessels[_borrower][_asset].status = Status(_num);
 	}
 
@@ -736,9 +731,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 newDebt = oldDebt - _debtDecrease;
 		Vessels[_borrower][_asset].debt = newDebt;
 		if (paybackFraction > 0) {
-			if (paybackFraction > 1 ether) {
-				paybackFraction = 1 ether;
-			}
 			feeCollector.decreaseDebt(_borrower, _asset, paybackFraction);
 		}
 		return newDebt;
