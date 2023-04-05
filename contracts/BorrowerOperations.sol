@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -130,7 +130,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 		_requireVesselisNotActive(vars.asset, contractsCache.vesselManager, msg.sender);
 
-		vars.debtTokenFee;
 		vars.netDebt = _debtTokenAmount;
 
 		if (!isRecoveryMode) {
@@ -203,25 +202,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	// Send collateral to a vessel
-	function addColl(
-		address _asset,
-		uint256 _assetSent,
-		address _upperHint,
-		address _lowerHint
-	) external override {
+	function addColl(address _asset, uint256 _assetSent, address _upperHint, address _lowerHint) external override {
 		_adjustVessel(_asset, _assetSent, msg.sender, 0, 0, false, _upperHint, _lowerHint);
-	}
-
-	// Send collateral to a vessel. Called by only the Stability Pool.
-	function moveLiquidatedAssetToVessel(
-		address _asset,
-		uint256 _amountMoved,
-		address _borrower,
-		address _upperHint,
-		address _lowerHint
-	) external override {
-		_requireCallerIsStabilityPool();
-		_adjustVessel(_asset, _amountMoved, _borrower, 0, 0, false, _upperHint, _lowerHint);
 	}
 
 	// Withdraw collateral from a vessel
@@ -288,7 +270,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _upperHint,
 		address _lowerHint
 	) internal {
-		require(msg.value == 0, "BorrowerOps: msg.value must be zero");
 		ContractsCache memory contractsCache = ContractsCache(vesselManager, adminContract.activePool(), debtToken);
 		LocalVariables_adjustVessel memory vars;
 		vars.asset = _asset;
@@ -303,7 +284,9 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		_requireVesselisActive(vars.asset, contractsCache.vesselManager, _borrower);
 
 		// Confirm the operation is either a borrower adjusting their own vessel, or a pure asset transfer from the Stability Pool to a vessel
-		assert(msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent > 0 && _debtTokenChange == 0));
+		assert(
+			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent > 0 && _debtTokenChange == 0)
+		);
 
 		contractsCache.vesselManager.applyPendingRewards(vars.asset, _borrower);
 
@@ -464,11 +447,10 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		return _price.mul(_coll).div(DECIMAL_PRECISION);
 	}
 
-	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
-		internal
-		pure
-		returns (uint256 collChange, bool isCollIncrease)
-	{
+	function _getCollChange(
+		uint256 _collReceived,
+		uint256 _requestedCollWithdrawal
+	) internal pure returns (uint256 collChange, bool isCollIncrease) {
 		if (_collReceived != 0) {
 			collChange = _collReceived;
 			isCollIncrease = true;
@@ -521,11 +503,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	// Send asset to Active Pool and increase its recorded asset balance
-	function _activePoolAddColl(
-		address _asset,
-		IActivePool _activePool,
-		uint256 _amount
-	) internal {
+	function _activePoolAddColl(address _asset, IActivePool _activePool, uint256 _amount) internal {
 		IERC20Upgradeable(_asset).safeTransferFrom(
 			msg.sender,
 			address(_activePool),
@@ -577,27 +555,19 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _collWithdrawal,
 		uint256 _debtTokenChange,
 		uint256 _assetSent
-	) internal view {
+	) internal pure {
 		require(
-			msg.value != 0 || _collWithdrawal != 0 || _debtTokenChange != 0 || _assetSent != 0,
+			_collWithdrawal != 0 || _debtTokenChange != 0 || _assetSent != 0,
 			"BorrowerOps: There must be either a collateral change or a debt change"
 		);
 	}
 
-	function _requireVesselisActive(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _borrower
-	) internal view {
+	function _requireVesselisActive(address _asset, IVesselManager _vesselManager, address _borrower) internal view {
 		uint256 status = _vesselManager.getVesselStatus(_asset, _borrower);
 		require(status == 1, "BorrowerOps: Vessel does not exist or is closed");
 	}
 
-	function _requireVesselisNotActive(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _borrower
-	) internal view {
+	function _requireVesselisNotActive(address _asset, IVesselManager _vesselManager, address _borrower) internal view {
 		uint256 status = _vesselManager.getVesselStatus(_asset, _borrower);
 		require(status != 1, "BorrowerOps: Vessel is active");
 	}
@@ -684,11 +654,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		);
 	}
 
-	function _requireValidDebtTokenRepayment(
-		address _asset,
-		uint256 _currentDebt,
-		uint256 _debtRepayment
-	) internal view {
+	function _requireValidDebtTokenRepayment(address _asset, uint256 _currentDebt, uint256 _debtRepayment) internal view {
 		require(
 			_debtRepayment <= _currentDebt.sub(adminContract.getDebtTokenGasCompensation(_asset)),
 			"BorrowerOps: Amount repaid must not be larger than the Vessel's debt"

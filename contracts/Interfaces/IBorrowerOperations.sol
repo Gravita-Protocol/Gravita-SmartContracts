@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 interface IBorrowerOperations {
 	// --- Events ---
@@ -40,14 +40,6 @@ interface IBorrowerOperations {
 	function addColl(
 		address _asset,
 		uint256 _assetSent,
-		address _upperHint,
-		address _lowerHint
-	) external;
-
-	function moveLiquidatedAssetToVessel(
-		address _asset,
-		uint256 _amountMoved,
-		address _user,
 		address _upperHint,
 		address _lowerHint
 	) external;

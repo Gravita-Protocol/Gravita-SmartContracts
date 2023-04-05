@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (security/ReentrancyGuard.sol)
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.19;
 
 abstract contract ReentrancyGuardUpgradeable {
 	// Booleans are more expensive than uint256 or any type that takes up a full
