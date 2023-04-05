@@ -22,7 +22,6 @@ interface IAdminContract {
 	event MinNetDebtChanged(uint256 oldMinNet, uint256 newMinNet);
 	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
 	event BorrowingFeeChanged(uint256 oldBorrowingFee, uint256 newBorrowingFee);
-	event MaxBorrowingFeeChanged(uint256 oldMaxBorrowingFee, uint256 newMaxBorrowingFee);
 	event RedemptionFeeFloorChanged(
 		uint256 oldRedemptionFeeFloor,
 		uint256 newRedemptionFeeFloor
