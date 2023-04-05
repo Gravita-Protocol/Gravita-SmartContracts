@@ -113,7 +113,7 @@ contract Timelock {
 		if (msg.sender != admin) {
 			revert Timelock__AdminOnly();
 		}
-		if (eta < getBlockTimestamp() + delay) {
+		if (eta < block.timestamp + delay) {
 			revert Timelock__ETAMustSatisfyDelay();
 		}
 
@@ -148,10 +148,10 @@ contract Timelock {
 		if (!queuedTransactions[txHash]) {
 			revert Timelock__TxNoQueued();
 		}
-		if (getBlockTimestamp() < eta) {
+		if (block.timestamp < eta) {
 			revert Timelock__TxStillLocked();
 		}
-		if (getBlockTimestamp() > eta + GRACE_PERIOD) {
+		if (block.timestamp > eta + GRACE_PERIOD) {
 			revert Timelock__TxExpired();
 		}
 
@@ -174,9 +174,5 @@ contract Timelock {
 		emit ExecuteTransaction(txHash, target, value, signature, data, eta);
 
 		return returnData;
-	}
-
-	function getBlockTimestamp() internal view returns (uint) {
-		return block.timestamp;
 	}
 }
