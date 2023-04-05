@@ -157,7 +157,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	IDebtToken public debtToken;
 	ISortedVessels public sortedVessels;
 	ICommunityIssuance public communityIssuance;
-	IAdminContract public controller;
 
 	// Tracker for debtToken held in the pool. Changes when users deposit/withdraw, and when Vessel debt is offset.
 	uint256 internal totalDebtTokenDeposits;

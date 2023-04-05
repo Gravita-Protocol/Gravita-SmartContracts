@@ -26,8 +26,7 @@ contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable {
 	}
 
 	IAdminContract public adminContract;
-	IActivePool public activePool;
-	IDefaultPool internal defaultPool;
+
 
 	// --- Gas compensation functions ---
 
