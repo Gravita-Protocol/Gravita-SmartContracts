@@ -341,3 +341,5 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 		})
 	})
 })
+
+contract("Reset chain state", async accounts => {})

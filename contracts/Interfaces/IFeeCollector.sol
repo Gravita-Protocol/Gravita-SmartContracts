@@ -52,6 +52,8 @@ interface IFeeCollector {
 
 	function liquidateDebt(address _borrower, address _asset) external;
 
+	function simulateRefund(address _borrower, address _asset, uint256 _paybackFraction) external returns (uint256);
+
 	function collectFees(address[] memory _borrowers, address[] memory _assets) external;
 
 	function handleRedemptionFee(address _asset, uint256 _amount) external;

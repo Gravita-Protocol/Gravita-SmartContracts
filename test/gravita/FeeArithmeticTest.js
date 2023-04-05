@@ -872,3 +872,4 @@ contract("Fee arithmetic tests", async accounts => {
 	})
 })
 
+contract("Reset chain state", async accounts => {})
