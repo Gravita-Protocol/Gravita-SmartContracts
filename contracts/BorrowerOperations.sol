@@ -270,7 +270,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _upperHint,
 		address _lowerHint
 	) internal {
-		require(msg.value == 0, "BorrowerOps: msg.value must be zero");
 		ContractsCache memory contractsCache = ContractsCache(vesselManager, adminContract.activePool(), debtToken);
 		LocalVariables_adjustVessel memory vars;
 		vars.asset = _asset;
@@ -556,9 +555,9 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _collWithdrawal,
 		uint256 _debtTokenChange,
 		uint256 _assetSent
-	) internal view {
+	) internal pure {
 		require(
-			msg.value != 0 || _collWithdrawal != 0 || _debtTokenChange != 0 || _assetSent != 0,
+			_collWithdrawal != 0 || _debtTokenChange != 0 || _assetSent != 0,
 			"BorrowerOps: There must be either a collateral change or a debt change"
 		);
 	}
