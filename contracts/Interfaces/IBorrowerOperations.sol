@@ -44,14 +44,6 @@ interface IBorrowerOperations {
 		address _lowerHint
 	) external;
 
-	function moveLiquidatedAssetToVessel(
-		address _asset,
-		uint256 _amountMoved,
-		address _user,
-		address _upperHint,
-		address _lowerHint
-	) external;
-
 	function withdrawColl(
 		address _asset,
 		uint256 _assetAmount,

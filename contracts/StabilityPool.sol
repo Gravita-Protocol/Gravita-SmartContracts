@@ -909,34 +909,8 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		require(_initialDeposit > 0, "StabilityPool: User must have a non-zero deposit");
 	}
 
-	function _requireUserHasNoDeposit(address _address) internal view {
-		uint256 initialDeposit = deposits[_address];
-		require(initialDeposit == 0, "StabilityPool: User must have no deposit");
-	}
-
 	function _requireNonZeroAmount(uint256 _amount) internal pure {
 		require(_amount > 0, "StabilityPool: Amount must be non-zero");
-	}
-
-	function _requireUserHasVessel(address _depositor) internal view {
-		address[] memory assets = adminContract.getValidCollateral();
-		uint256 assetsLen = assets.length;
-		for (uint256 i; i < assetsLen; ++i) {
-			if (vesselManager.getVesselStatus(assets[i], _depositor) == 1) {
-				return;
-			}
-		}
-		revert("StabilityPool: caller must have an active vessel to withdraw AssetGain to");
-	}
-
-	function _requireUserHasAssetGain(address _depositor) internal view {
-		(address[] memory assets, uint256[] memory amounts) = getDepositorGains(_depositor);
-		for (uint256 i = 0; i < assets.length; ++i) {
-			if (amounts[i] > 0) {
-				return;
-			}
-		}
-		revert("StabilityPool: caller must have non-zero gains");
 	}
 
 	// --- Fallback function ---
