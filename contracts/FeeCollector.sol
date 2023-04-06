@@ -197,30 +197,29 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
 		require(_paybackFraction > 0, "Payback fraction cannot be zero");
 		FeeRecord storage sRecord = feeRecords[_borrower][_asset];
-		FeeRecord memory mRecord = sRecord;
-		if (mRecord.amount == 0) {
+		if (sRecord.amount == 0) {
 			return;
 		}
-		if (mRecord.to <= NOW) {
-			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, mRecord.amount);
+		if (sRecord.to <= NOW) {
+			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, sRecord.amount);
 		} else {
 			// collect expired refund
-			uint256 expiredAmount = _calcExpiredAmount(mRecord.from, mRecord.to, mRecord.amount);
+			uint256 expiredAmount = _calcExpiredAmount(sRecord.from, sRecord.to, sRecord.amount);
 			_collectFee(_borrower, _asset, expiredAmount);
 			if (_paybackFraction == 1e18) {
 				// full payback
-				uint256 refundAmount = mRecord.amount - expiredAmount;
+				uint256 refundAmount = sRecord.amount - expiredAmount;
 				sRecord.amount = 0;
 				_refundFee(_borrower, _asset, refundAmount);
 				emit FeeRecordUpdated(_borrower, _asset, NOW, 0, 0);
 			} else {
 				// refund amount proportional to the payment
-				uint256 refundAmount = ((mRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
+				uint256 refundAmount = ((sRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
 				_refundFee(_borrower, _asset, refundAmount);
-				uint256 updatedAmount = mRecord.amount - expiredAmount - refundAmount;
+				uint256 updatedAmount = sRecord.amount - expiredAmount - refundAmount;
 				sRecord.amount = updatedAmount;
 				sRecord.from = NOW;
-				emit FeeRecordUpdated(_borrower, _asset, NOW, mRecord.to, updatedAmount);
+				emit FeeRecordUpdated(_borrower, _asset, NOW, sRecord.to, updatedAmount);
 			}
 		}
 	}
@@ -263,15 +262,14 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 _addedAmount,
 		FeeRecord storage _sRecord
 	) internal returns (uint256) {
-		FeeRecord memory mRecord = _sRecord;
 		uint256 NOW = block.timestamp;
-		if (NOW < mRecord.from) {
+		if (NOW < _sRecord.from) {
 			// loan is still in its first week (MIN_FEE_DAYS)
-			NOW = mRecord.from;
+			NOW = _sRecord.from;
 		}
-		uint256 expiredAmount = _calcExpiredAmount(mRecord.from, mRecord.to, mRecord.amount);
-		uint256 remainingAmount = mRecord.amount - expiredAmount;
-		uint256 remainingTime = mRecord.to - NOW;
+		uint256 expiredAmount = _calcExpiredAmount(_sRecord.from, _sRecord.to, _sRecord.amount);
+		uint256 remainingAmount = _sRecord.amount - expiredAmount;
+		uint256 remainingTime = _sRecord.to - NOW;
 		uint256 updatedAmount = remainingAmount + _addedAmount;
 		uint256 updatedTo = NOW + _calcNewDuration(remainingAmount, remainingTime, _addedAmount);
 		_sRecord.amount = updatedAmount;
