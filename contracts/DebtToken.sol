@@ -19,7 +19,7 @@ contract DebtToken is IDebtToken, Ownable {
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	address public timelockAddress;
+	address public immutable timelockAddress;
 
 	bool public isInitialized;
 

@@ -913,8 +913,8 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	function receivedERC20(address _asset, uint256 _amount) external override {
 		_requireCallerIsActivePool();
 		uint256 collateralIndex = adminContract.getIndex(_asset);
-		totalColl.amounts[collateralIndex] += _amount;
-		uint256 newAssetBalance = totalColl.amounts[collateralIndex];
+		uint256 newAssetBalance = totalColl.amounts[collateralIndex] + _amount;
+		totalColl.amounts[collateralIndex] = newAssetBalance;
 		emit StabilityPoolAssetBalanceUpdated(_asset, newAssetBalance);
 	}
 }
