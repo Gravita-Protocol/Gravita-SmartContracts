@@ -109,10 +109,7 @@ contract Timelock {
 		string memory signature,
 		bytes memory data,
 		uint eta
-	) public returns (bytes32) {
-		if (msg.sender != admin) {
-			revert Timelock__AdminOnly();
-		}
+	) public adminOnly returns (bytes32) {
 		if (eta < block.timestamp + delay) {
 			revert Timelock__ETAMustSatisfyDelay();
 		}
