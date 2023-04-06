@@ -245,7 +245,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		address _sortedVesselsAddress,
 		address _communityIssuanceAddress,
 		address _adminContractAddress
-	) external initializer override {
+	) external override initializer {
 		__Ownable_init();
 		__ReentrancyGuard_init();
 
@@ -606,7 +606,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		return (
 			collateralsFromNewGains,
 			_leftSumColls(
-				Colls(collateralsFromNewGains, amountsFromNewGains),
+				Colls({ tokens: collateralsFromNewGains, amounts: amountsFromNewGains }),
 				pendingCollGains[_depositor].tokens,
 				pendingCollGains[_depositor].amounts
 			)
@@ -918,3 +918,4 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		emit StabilityPoolAssetBalanceUpdated(_asset, newAssetBalance);
 	}
 }
+
