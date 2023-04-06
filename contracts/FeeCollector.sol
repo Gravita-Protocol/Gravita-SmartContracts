@@ -147,7 +147,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	/**
 	 * Batch collect fees from an array of borrowers/assets.
 	 */
-	function collectFees(address[] memory _borrowers, address[] memory _assets) external override {
+	function collectFees(address[] calldata _borrowers, address[] calldata _assets) external override {
 		uint256 borrowersLength = _borrowers.length;
 		if (borrowersLength != _assets.length || borrowersLength == 0) {
 			revert FeeCollector__ArrayMismatch();
@@ -312,7 +312,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount > 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
-			IDebtToken(debtTokenAddress).transfer(collector, _feeAmount);
+			IERC20Upgradeable(debtTokenAddress).safeTransfer(collector, _feeAmount);
 			if (routeToGRVTStaking) {
 				grvtStaking.increaseFee_DebtToken(_feeAmount);
 			}
@@ -322,7 +322,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 
 	function _refundFee(address _borrower, address _asset, uint256 _refundAmount) internal {
 		if (_refundAmount > 0) {
-			IDebtToken(debtTokenAddress).transfer(_borrower, _refundAmount);
+			IERC20Upgradeable(debtTokenAddress).safeTransfer(_borrower, _refundAmount);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
 		}
 	}

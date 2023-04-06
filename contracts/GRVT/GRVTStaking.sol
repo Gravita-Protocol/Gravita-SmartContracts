@@ -95,7 +95,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 				if (i == 0) {
 					uint256 debtTokenGain = _getPendingDebtTokenGain(msg.sender);
-					debtToken.transfer(msg.sender, debtTokenGain);
+					IERC20Upgradeable(address(debtToken)).safeTransfer(msg.sender, debtTokenGain);
 					emit StakingGainsDebtTokensWithdrawn(msg.sender, debtTokenGain);
 				}
 
@@ -137,7 +137,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 			if (i == 0) {
 				uint256 debtTokenGain = _getPendingDebtTokenGain(msg.sender);
-				debtToken.transfer(msg.sender, debtTokenGain);
+				IERC20Upgradeable(address(debtToken)).safeTransfer(msg.sender, debtTokenGain);
 				emit StakingGainsDebtTokensWithdrawn(msg.sender, debtTokenGain);
 			}
 
@@ -156,7 +156,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			emit TotalGRVTStakedUpdated(totalGRVTStaked);
 
 			// Transfer unstaked GRVT to user
-			grvtToken.transfer(msg.sender, GRVTToWithdraw);
+			IERC20Upgradeable(address(grvtToken)).safeTransfer(msg.sender, GRVTToWithdraw);
 			emit StakeChanged(msg.sender, newStake);
 		}
 	}

@@ -1593,11 +1593,11 @@ TestHelper.maxBytes32 = "0x" + "f".repeat(64)
 TestHelper._100pct = "1000000000000000000"
 TestHelper.latestRandomSeed = 31337
 
-TestHelper.VESSEL_DEBT_INDEX = 1
-TestHelper.VESSEL_COLL_INDEX = 2
-TestHelper.VESSEL_STAKE_INDEX = 3
-TestHelper.VESSEL_STATUS_INDEX = 4
-TestHelper.VESSEL_ARRAY_INDEX = 5
+TestHelper.VESSEL_DEBT_INDEX = 0
+TestHelper.VESSEL_COLL_INDEX = 1
+TestHelper.VESSEL_STAKE_INDEX = 2
+TestHelper.VESSEL_STATUS_INDEX = 3
+TestHelper.VESSEL_ARRAY_INDEX = 4
 
 module.exports = {
 	TestHelper,
