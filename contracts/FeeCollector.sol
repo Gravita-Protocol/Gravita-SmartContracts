@@ -196,7 +196,8 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 NOW = block.timestamp;
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
 		require(_paybackFraction > 0, "Payback fraction cannot be zero");
-		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
+		FeeRecord storage sRecord = feeRecords[_borrower][_asset];
+		FeeRecord memory mRecord = sRecord;
 		if (mRecord.amount == 0) {
 			return;
 		}
@@ -209,16 +210,16 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 			if (_paybackFraction == 1e18) {
 				// full payback
 				uint256 refundAmount = mRecord.amount - expiredAmount;
+				sRecord.amount = 0;
 				_refundFee(_borrower, _asset, refundAmount);
-				delete feeRecords[_borrower][_asset];
 				emit FeeRecordUpdated(_borrower, _asset, NOW, 0, 0);
 			} else {
 				// refund amount proportional to the payment
 				uint256 refundAmount = ((mRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
 				_refundFee(_borrower, _asset, refundAmount);
 				uint256 updatedAmount = mRecord.amount - expiredAmount - refundAmount;
-				feeRecords[_borrower][_asset].amount = updatedAmount;
-				feeRecords[_borrower][_asset].from = NOW;
+				sRecord.amount = updatedAmount;
+				sRecord.from = NOW;
 				emit FeeRecordUpdated(_borrower, _asset, NOW, mRecord.to, updatedAmount);
 			}
 		}
