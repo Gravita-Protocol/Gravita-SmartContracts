@@ -485,6 +485,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			vars.user = _vesselArray[vars.i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
+				unchecked {
+					vars.i++;
+				}
 				continue;
 			}
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
@@ -492,6 +495,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			if (!vars.backToNormalMode) {
 				// Skip this vessel if ICR is greater than MCR and Stability Pool is empty
 				if (vars.ICR >= adminContract.getMcr(_asset) && vars.remainingDebtTokenInStabPool == 0) {
+					unchecked {
+						vars.i++;
+					}
 					continue;
 				}
 				uint256 TCR = GravitaMath._computeCR(vars.entireSystemColl, vars.entireSystemDebt, _price);
@@ -529,7 +535,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
-			} else continue; // In Normal Mode skip vessels with ICR >= MCR
+			} 
 			unchecked {
 				vars.i++;
 			}
