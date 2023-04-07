@@ -481,7 +481,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		for (vars.i = 0; vars.i < _vesselArray.length; vars.i++) {
+		for (vars.i = 0; vars.i < _vesselArray.length; ) {
 			vars.user = _vesselArray[vars.i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
@@ -530,6 +530,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else continue; // In Normal Mode skip vessels with ICR >= MCR
+			unchecked {
+				vars.i++;
+			}
 		}
 	}
 
@@ -544,7 +547,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _vesselArray.length; vars.i++) {
+		for (vars.i = 0; vars.i < _vesselArray.length; ) {
 			vars.user = _vesselArray[vars.i];
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -554,6 +557,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
+			}
+			unchecked {
+				vars.i++;
 			}
 		}
 	}
@@ -590,7 +596,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _n; vars.i++) {
+		for (vars.i = 0; vars.i < _n; ) {
 			vars.user = sortedVesselsCached.getLast(_asset);
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -602,6 +608,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
+			unchecked {
+				vars.i++;
+			}
 		}
 	}
 
@@ -782,7 +791,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.user = _contractsCache.sortedVessels.getLast(assetVars._asset);
 		address firstUser = _contractsCache.sortedVessels.getFirst(assetVars._asset);
-		for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
+		for (vars.i = 0; vars.i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
 			address nextUser = _contractsCache.sortedVessels.getPrev(assetVars._asset, vars.user);
 
@@ -833,6 +842,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
 
 			vars.user = nextUser;
+			unchecked {
+				vars.i++;
+			}
 		}
 	}
 
