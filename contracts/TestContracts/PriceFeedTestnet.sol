@@ -24,11 +24,12 @@ contract PriceFeedTestnet is IPriceFeed {
 		lastGoodPrice[_asset] = _price;
 	}
 
-	function addOracle(address _token, address _chainlinkOracle, bool _isEthIndexed) external override {}
-
-	function deleteOracle(address _token) external override {}
-
-	function deleteQueuedOracle(address _token) external override {}
+	function setOracle(
+		address _token,
+		address _chainlinkOracle,
+		uint256 _maxDeviationBetweenRounds,
+		bool _isEthIndexed
+	) external override {}
 
 	function fetchPrice(address _asset) external view override returns (uint256) {
 		return this.getPrice(_asset);
