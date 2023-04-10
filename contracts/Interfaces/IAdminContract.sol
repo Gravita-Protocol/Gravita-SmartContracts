@@ -85,6 +85,8 @@ interface IAdminContract {
 
 	function getIndex(address _collateral) external view returns (uint256);
 
+	function getIsActive(address _collateral) external view returns (bool);
+
 	function getValidCollateral() external view returns (address[] memory);
 
 	function getMcr(address _collateral) external view returns (uint256);

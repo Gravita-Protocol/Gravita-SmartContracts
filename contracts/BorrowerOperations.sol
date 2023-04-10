@@ -119,6 +119,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _upperHint,
 		address _lowerHint
 	) external override {
+		adminContract.getIsActive(_asset); // reverts if asset is unknown
 		adminContract.sanitizeParameters(_asset);
 
 		ContractsCache memory contractsCache = ContractsCache(vesselManager, adminContract.activePool(), debtToken);
