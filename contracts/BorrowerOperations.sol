@@ -400,21 +400,21 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		vesselManagerCached.closeVessel(_asset, msg.sender);
 
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
-
+		uint256 gasCompensation = adminContractCached.getDebtTokenGasCompensation(_asset);
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
 		_repayDebtTokens(
 			_asset,
 			activePoolCached,
 			debtTokenCached,
 			msg.sender,
-			debt.sub(adminContractCached.getDebtTokenGasCompensation(_asset))
+			debt.sub(gasCompensation)
 		);
 		_repayDebtTokens(
 			_asset,
 			activePoolCached,
 			debtTokenCached,
 			gasPoolAddress,
-			adminContractCached.getDebtTokenGasCompensation(_asset)
+			gasCompensation
 		);
 
 		// Send the collateral back to the user
