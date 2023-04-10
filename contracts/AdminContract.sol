@@ -280,14 +280,14 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		_setAsDefault(_collateral);
 	}
 
-	function setAsDefaultWithRemptionBlock(
+	function setAsDefaultWithRedemptionBlock(
 		address _collateral,
 		uint256 blockInDays
 	)
 		external
 		onlyOwner // TODO: Review if should set to controller
 	{
-		if (blockInDays > 14) {
+		if (blockInDays > REDEMPTION_BLOCK_DAY) {
 			blockInDays = REDEMPTION_BLOCK_DAY;
 		}
 

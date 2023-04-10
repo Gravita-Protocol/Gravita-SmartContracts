@@ -67,7 +67,7 @@ interface IAdminContract {
 
 	function setAsDefault(address _collateral) external;
 
-	function setAsDefaultWithRemptionBlock(address _collateral, uint256 blockInDays) external;
+	function setAsDefaultWithRedemptionBlock(address _collateral, uint256 blockInDays) external;
 
 	function setDebtTokenGasCompensation(address _collateral, uint256 gasCompensation) external;
 
