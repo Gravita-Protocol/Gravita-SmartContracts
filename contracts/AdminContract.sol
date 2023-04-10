@@ -280,7 +280,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		_setAsDefault(_collateral);
 	}
 
-	function setAsDefaultWithRemptionBlock(
+	function setAsDefaultWithRedemptionBlock(
 		address _collateral,
 		uint256 blockInDays
 	)
