@@ -4,6 +4,7 @@ const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
+const ERC20Mock = artifacts.require("./ERC20Mock.sol")
 
 const th = testHelpers.TestHelper
 
@@ -98,6 +99,16 @@ contract("BorrowerOperations", async accounts => {
 		}
 		beforeEach(async () => {
 			await loadFixture(deployContractsFixture)
+		})
+
+		it("openVessel(): invalid collateral reverts", async () => {
+			const randomErc20 = await ERC20Mock.new("RAND", "RAND", 18)
+			await assertRevert(
+				borrowerOperations.openVessel(randomErc20.address, dec(1, 18), dec(100, 18), th.ZERO_ADDRESS, th.ZERO_ADDRESS, {
+					from: alice,
+				}),
+				"collateral does not exist"
+			)
 		})
 
 		it("addColl(): reverts when top-up would leave vessel with ICR < MCR", async () => {

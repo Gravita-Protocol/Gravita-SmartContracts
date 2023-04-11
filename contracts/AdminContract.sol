@@ -220,7 +220,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return validCollateral;
 	}
 
-	function getIsActive(address _collateral) external view exists(_collateral) returns (bool) {
+	function getIsActive(address _collateral) external view override exists(_collateral) returns (bool) {
 		return collateralParams[_collateral].active;
 	}
 
