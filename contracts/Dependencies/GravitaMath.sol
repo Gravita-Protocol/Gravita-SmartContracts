@@ -100,7 +100,7 @@ library GravitaMath {
 		// Return the maximal value for uint256 if the Vessel has a debt of 0. Represents "infinite" CR.
 		else {
 			// if (_debt == 0)
-			return 2 ** 256 - 1;
+			return type(uint256).max;
 		}
 	}
 
