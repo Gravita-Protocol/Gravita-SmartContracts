@@ -56,7 +56,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	bytes32 public constant PERMIT_TYPEHASH =
 		0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
-	bytes32 public DOMAIN_SEPARATOR;
+	bytes32 public immutable DOMAIN_SEPARATOR;
 
 	constructor() {
 		uint256 chainID;

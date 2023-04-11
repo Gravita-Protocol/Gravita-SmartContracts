@@ -629,8 +629,11 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		assets = adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
 		amounts = new uint256[](assetsLen);
-		for (uint256 i = 0; i < assetsLen; ++i) {
+		for (uint256 i = 0; i < assetsLen; ) {
 			amounts[i] = _getGainFromSnapshots(initialDeposit, snapshots, assets[i]);
+			unchecked {
+				i++;
+			}
 		}
 	}
 
@@ -789,14 +792,20 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	) internal {
 		uint256 assetsLen = assets.length;
 		require(assetsLen == amounts.length, "StabilityPool: Length mismatch");
-		for (uint256 i = 0; i < assetsLen; ++i) {
+		for (uint256 i = 0; i < assetsLen; ) {
 			uint256 amount = amounts[i];
 			if (amount == 0) {
+				unchecked {
+					i++;
+				}
 				continue;
 			}
 			address asset = assets[i];
 			// Assumes we're internally working only with the wrapped version of ERC20 tokens
 			IERC20Upgradeable(asset).safeTransfer(_to, amount);
+			unchecked {
+				i++;
+			}
 		}
 		totalColl.amounts = _leftSubColls(totalColl, assets, amounts);
 
@@ -831,8 +840,11 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 
 		Snapshots storage depositorSnapshots = depositSnapshots[_depositor];
 		if (_newValue == 0) {
-			for (uint256 i = 0; i < collsLen; ++i) {
-				depositorSnapshots.S[colls[i]] = 0;
+			for (uint256 i = 0; i < collsLen; ) {
+				depositSnapshots[_depositor].S[colls[i]] = 0;
+				unchecked {
+					i++;
+				}
 			}
 			depositorSnapshots.P = 0;
 			depositorSnapshots.G = 0;
@@ -845,10 +857,13 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		uint128 currentEpochCached = currentEpoch;
 		uint256 currentP = P;
 
-		for (uint256 i = 0; i < collsLen; ++i) {
+		for (uint256 i = 0; i < collsLen; ) {
 			address asset = colls[i];
 			uint256 currentS = epochToScaleToSum[asset][currentEpochCached][currentScaleCached];
-			depositorSnapshots.S[asset] = currentS;
+			depositSnapshots[_depositor].S[asset] = currentS;
+			unchecked {
+				i++;
+			}
 		}
 
 		uint256 currentG = epochToScaleToG[currentEpochCached][currentScaleCached];
@@ -892,7 +907,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	function _requireNoUnderCollateralizedVessels() internal {
 		address[] memory assets = adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
-		for (uint256 i = 0; i < assetsLen; ++i) {
+		for (uint256 i = 0; i < assetsLen; ) {
 			address assetAddress = assets[i];
 			address lowestVessel = sortedVessels.getLast(assetAddress);
 			uint256 price = adminContract.priceFeed().fetchPrice(assetAddress);
@@ -901,6 +916,9 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 				ICR >= adminContract.getMcr(assetAddress),
 				"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
 			);
+			unchecked {
+				i++;
+			}
 		}
 	}
 
@@ -922,4 +940,3 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		emit StabilityPoolAssetBalanceUpdated(_asset, newAssetBalance);
 	}
 }
-

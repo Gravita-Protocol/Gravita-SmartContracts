@@ -159,7 +159,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		}
 
 		// Set the vessel struct's properties
-		contractsCache.vesselManager.setVesselStatus(vars.asset, msg.sender, 1);
+		contractsCache.vesselManager.setVesselStatus(vars.asset, msg.sender, 1); // Vessel Status 1 = Active
 		contractsCache.vesselManager.increaseVesselColl(vars.asset, msg.sender, _assetAmount);
 		contractsCache.vesselManager.increaseVesselDebt(vars.asset, msg.sender, vars.compositeDebt);
 

@@ -43,8 +43,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	using SafeMathUpgradeable for uint256;
 
-	bool public isInitialized;
-
 	string public constant NAME = "SortedVessels";
 	uint256 constant MAX_UINT256 = type(uint256).max;
 
@@ -79,9 +77,6 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		override
 		initializer
 	{
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
-
 		__Ownable_init();
 
 		vesselManager = IVesselManager(_vesselManagerAddress);

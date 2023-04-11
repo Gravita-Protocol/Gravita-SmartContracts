@@ -4,9 +4,10 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "./Dependencies/ERC20Permit.sol";
 import "./Interfaces/IDebtToken.sol";
 
-contract DebtToken is IDebtToken, Ownable {
+contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	using SafeMath for uint256;
 
 	string public constant NAME = "GRAI";
@@ -73,7 +74,11 @@ contract DebtToken is IDebtToken, Ownable {
 		_burn(msg.sender, _amount);
 	}
 
-	function mint(address _asset, address _account, uint256 _amount) external override {
+	function mint(
+		address _asset,
+		address _account,
+		uint256 _amount
+	) external override {
 		_requireCallerIsBorrowerOperations();
 		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
@@ -113,7 +118,7 @@ contract DebtToken is IDebtToken, Ownable {
 
 	// --- External functions ---
 
-	function transfer(address recipient, uint256 amount) public override returns (bool) {
+	function transfer(address recipient, uint256 amount) public override(IERC20, ERC20) returns (bool) {
 		_requireValidRecipient(recipient);
 		return super.transfer(recipient, amount);
 	}
@@ -122,7 +127,7 @@ contract DebtToken is IDebtToken, Ownable {
 		address sender,
 		address recipient,
 		uint256 amount
-	) public override returns (bool) {
+	) public override(IERC20, ERC20) returns (bool) {
 		_requireValidRecipient(recipient);
 		return super.transferFrom(sender, recipient, amount);
 	}
@@ -147,10 +152,7 @@ contract DebtToken is IDebtToken, Ownable {
 	}
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(
-			msg.sender == borrowerOperationsAddress,
-			"DebtToken: Caller is not BorrowerOperations"
-		);
+		require(msg.sender == borrowerOperationsAddress, "DebtToken: Caller is not BorrowerOperations");
 	}
 
 	function _requireCallerIsBOorVesselMorSP() internal view {

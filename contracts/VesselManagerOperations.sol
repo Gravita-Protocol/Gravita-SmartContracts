@@ -13,6 +13,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
+	uint256 public constant PERCENTAGE_PRECISION = 1000 ;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -385,7 +386,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
 					// Apply redemption softening
-					collLot = (collLot * REDEMPTION_SOFTENING_PARAM) / 1000;
+					collLot = (collLot * REDEMPTION_SOFTENING_PARAM) / PERCENTAGE_PRECISION;
 
 					uint256 newColl = currentVesselColl - collLot;
 					uint256 newDebt = currentVesselNetDebt.sub(maxRedeemableDebt);
@@ -980,7 +981,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
 		// Apply redemption softening
-		singleRedemption.collLot = (singleRedemption.collLot * REDEMPTION_SOFTENING_PARAM) / 1000;
+		singleRedemption.collLot = (singleRedemption.collLot * REDEMPTION_SOFTENING_PARAM) / PERCENTAGE_PRECISION;
 
 		// Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
 
