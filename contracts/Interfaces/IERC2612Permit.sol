@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.19;
+
 interface IERC2612Permit {
 	/**
 	 * @dev Sets `amount` as the allowance of `spender` over `owner`'s tokens,
