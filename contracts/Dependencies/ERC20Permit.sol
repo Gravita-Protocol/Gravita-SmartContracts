@@ -3,8 +3,9 @@
 pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./IERC2612.sol";
 
-abstract contract ERC20Permit is ERC20, IERC2612Permit {
+abstract contract ERC20Permit is ERC20, IERC2612 {
 	using Counters for Counters.Counter;
 
 	mapping(address => Counters.Counter) private _nonces;
