@@ -121,7 +121,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _lowerHint
 	) external override {
 		ContractsCache memory contractsCache = ContractsCache(adminContract, vesselManager, adminContract.activePool(), debtToken);
-		require(contractsCache.adminContract.getIsActive(_asset), "Asset must be active");
 		contractsCache.adminContract.sanitizeParameters(_asset);
 		LocalVariables_openVessel memory vars;
 		vars.asset = _asset;
