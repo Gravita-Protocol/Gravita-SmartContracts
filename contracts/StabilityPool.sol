@@ -396,8 +396,10 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		}
 		uint256 GRVTPerUnitStaked = _computeGRVTPerUnitStaked(_GRVTIssuance, cachedTotalDebtTokenDeposits);
 		uint256 marginalGRVTGain = GRVTPerUnitStaked.mul(P);
-		epochToScaleToG[currentEpoch][currentScale] = epochToScaleToG[currentEpoch][currentScale].add(marginalGRVTGain);
-		emit G_Updated(epochToScaleToG[currentEpoch][currentScale], currentEpoch, currentScale);
+		uint256 newEpochToScaleToG = epochToScaleToG[currentEpoch][currentScale];
+		newEpochToScaleToG += marginalGRVTGain;
+		epochToScaleToG[currentEpoch][currentScale] = newEpochToScaleToG;
+		emit G_Updated(newEpochToScaleToG, currentEpoch, currentScale);
 	}
 
 	function _computeGRVTPerUnitStaked(uint256 _GRVTIssuance, uint256 _totalDeposits) internal returns (uint256) {
@@ -656,8 +658,9 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		uint256 S_Snapshot = snapshots.S[asset];
 		uint256 P_Snapshot = snapshots.P;
 
-		uint256 firstPortion = epochToScaleToSum[asset][snapshots.epoch][snapshots.scale].sub(S_Snapshot);
-		uint256 secondPortion = epochToScaleToSum[asset][snapshots.epoch][snapshots.scale.add(1)].div(SCALE_FACTOR);
+		mapping(uint128 => uint256) storage scaleToSum = epochToScaleToSum[asset][snapshots.epoch];
+		uint256 firstPortion = scaleToSum[snapshots.scale].sub(S_Snapshot);
+		uint256 secondPortion = scaleToSum[snapshots.scale + 1].div(SCALE_FACTOR);
 
 		uint256 assetGain = initialDeposit.mul(firstPortion.add(secondPortion)).div(P_Snapshot).div(DECIMAL_PRECISION);
 
@@ -835,6 +838,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		address[] memory colls = adminContract.getValidCollateral();
 		uint256 collsLen = colls.length;
 
+		Snapshots storage depositorSnapshots = depositSnapshots[_depositor];
 		if (_newValue == 0) {
 			for (uint256 i = 0; i < collsLen; ) {
 				depositSnapshots[_depositor].S[colls[i]] = 0;
@@ -842,10 +846,10 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 					i++;
 				}
 			}
-			depositSnapshots[_depositor].P = 0;
-			depositSnapshots[_depositor].G = 0;
-			depositSnapshots[_depositor].epoch = 0;
-			depositSnapshots[_depositor].scale = 0;
+			depositorSnapshots.P = 0;
+			depositorSnapshots.G = 0;
+			depositorSnapshots.epoch = 0;
+			depositorSnapshots.scale = 0;
 			emit DepositSnapshotUpdated(_depositor, 0, 0);
 			return;
 		}
@@ -863,10 +867,10 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		}
 
 		uint256 currentG = epochToScaleToG[currentEpochCached][currentScaleCached];
-		depositSnapshots[_depositor].P = currentP;
-		depositSnapshots[_depositor].G = currentG;
-		depositSnapshots[_depositor].scale = currentScaleCached;
-		depositSnapshots[_depositor].epoch = currentEpochCached;
+		depositorSnapshots.P = currentP;
+		depositorSnapshots.G = currentG;
+		depositorSnapshots.scale = currentScaleCached;
+		depositorSnapshots.epoch = currentEpochCached;
 
 		emit DepositSnapshotUpdated(_depositor, currentP, currentG);
 	}
@@ -936,4 +940,3 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		emit StabilityPoolAssetBalanceUpdated(_asset, newAssetBalance);
 	}
 }
-

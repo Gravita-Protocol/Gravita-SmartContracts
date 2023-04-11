@@ -219,14 +219,11 @@ contract VesselManager is IVesselManager, GravitaBase {
 			uint256 pendingCollReward
 		)
 	{
-		debt = Vessels[_borrower][_asset].debt;
-		coll = Vessels[_borrower][_asset].coll;
-
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
-
-		debt = debt.add(pendingDebtReward);
-		coll = coll.add(pendingCollReward);
+		Vessel memory vessel = Vessels[_borrower][_asset];
+		debt = vessel.debt.add(pendingDebtReward);
+		coll = vessel.coll.add(pendingCollReward);
 	}
 
 	function isVesselActive(address _asset, address _borrower) public view override returns (bool) {
@@ -273,8 +270,9 @@ contract VesselManager is IVesselManager, GravitaBase {
 		onlyBorrowerOperations
 		returns (uint256 index)
 	{
-		VesselOwners[_asset].push(_borrower);
-		index = VesselOwners[_asset].length.sub(1);
+		address[] storage assetOwners = VesselOwners[_asset];
+		assetOwners.push(_borrower);
+		index = assetOwners.length.sub(1);
 		Vessels[_borrower][_asset].arrayIndex = uint128(index);
 		return index;
 	}
@@ -322,7 +320,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 _assetFeeAmount,
 		uint256 _assetRedeemedAmount
 	) external override onlyVesselManagerOperations {
-		IActivePool activePool = adminContract.activePool();		
+		IActivePool activePool = adminContract.activePool();
 		// Send the asset fee to the fee collector
 		activePool.sendAsset(_asset, address(feeCollector), _assetFeeAmount);
 		feeCollector.handleRedemptionFee(_asset, _assetFeeAmount);
@@ -351,7 +349,11 @@ contract VesselManager is IVesselManager, GravitaBase {
 		return newBaseRate;
 	}
 
-	function applyPendingRewards(address _asset, address _borrower) external override onlyVesselManagerOperationsOrBorrowerOperations {
+	function applyPendingRewards(address _asset, address _borrower)
+		external
+		override
+		onlyVesselManagerOperationsOrBorrowerOperations
+	{
 		return _applyPendingRewards(_asset, _borrower);
 	}
 
@@ -378,7 +380,11 @@ contract VesselManager is IVesselManager, GravitaBase {
 		return _updateStakeAndTotalStakes(_asset, _borrower);
 	}
 
-	function removeStake(address _asset, address _borrower) external override onlyVesselManagerOperationsOrBorrowerOperations {
+	function removeStake(address _asset, address _borrower)
+		external
+		override
+		onlyVesselManagerOperationsOrBorrowerOperations
+	{
 		return _removeStake(_asset, _borrower);
 	}
 
@@ -409,19 +415,19 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 debtNumerator = _debt.mul(DECIMAL_PRECISION).add(lastDebtError_Redistribution[_asset]);
 
 		// Get the per-unit-staked terms
-		uint256 collRewardPerUnitStaked = collNumerator.div(totalStakes[_asset]);
-		uint256 debtRewardPerUnitStaked = debtNumerator.div(totalStakes[_asset]);
+		uint256 assetStakes = totalStakes[_asset];
+		uint256 collRewardPerUnitStaked = collNumerator.div(assetStakes);
+		uint256 debtRewardPerUnitStaked = debtNumerator.div(assetStakes);
 
-		lastCollError_Redistribution[_asset] = collNumerator.sub(collRewardPerUnitStaked.mul(totalStakes[_asset]));
-		lastDebtError_Redistribution[_asset] = debtNumerator.sub(
-			debtRewardPerUnitStaked.mul(totalStakes[_asset])
-		);
+		lastCollError_Redistribution[_asset] = collNumerator.sub(collRewardPerUnitStaked.mul(assetStakes));
+		lastDebtError_Redistribution[_asset] = debtNumerator.sub(debtRewardPerUnitStaked.mul(assetStakes));
 
 		// Add per-unit-staked terms to the running totals
-		L_Colls[_asset] = L_Colls[_asset].add(collRewardPerUnitStaked);
-		L_Debts[_asset] = L_Debts[_asset].add(debtRewardPerUnitStaked);
-
-		emit LTermsUpdated(_asset, L_Colls[_asset], L_Debts[_asset]);
+		uint256 liquidatedColl = L_Colls[_asset] + collRewardPerUnitStaked;
+		uint256 liquidatedDebt = L_Debts[_asset] + debtRewardPerUnitStaked;
+		L_Colls[_asset] = liquidatedColl;
+		L_Debts[_asset] = liquidatedDebt;
+		emit LTermsUpdated(_asset, liquidatedColl, liquidatedDebt);
 
 		IActivePool activePool = adminContract.activePool();
 		IDefaultPool defaultPool = adminContract.defaultPool();
@@ -430,7 +436,10 @@ contract VesselManager is IVesselManager, GravitaBase {
 		activePool.sendAsset(_asset, address(defaultPool), _coll);
 	}
 
-	function updateSystemSnapshots_excludeCollRemainder(address _asset, uint256 _collRemainder) external onlyVesselManagerOperations {
+	function updateSystemSnapshots_excludeCollRemainder(address _asset, uint256 _collRemainder)
+		external
+		onlyVesselManagerOperations
+	{
 		totalStakesSnapshot[_asset] = totalStakes[_asset];
 		uint256 activeColl = adminContract.activePool().getAssetBalance(_asset);
 		uint256 liquidatedColl = adminContract.defaultPool().getAssetBalance(_asset);
@@ -438,7 +447,11 @@ contract VesselManager is IVesselManager, GravitaBase {
 		emit SystemSnapshotsUpdated(_asset, totalStakesSnapshot[_asset], totalCollateralSnapshot[_asset]);
 	}
 
-	function closeVessel(address _asset, address _borrower) external override onlyVesselManagerOperationsOrBorrowerOperations {
+	function closeVessel(address _asset, address _borrower)
+		external
+		override
+		onlyVesselManagerOperationsOrBorrowerOperations
+	{
 		return _closeVessel(_asset, _borrower, Status.closedByOwner);
 	}
 
@@ -492,14 +505,16 @@ contract VesselManager is IVesselManager, GravitaBase {
 		defaultPool.sendAssetToActivePool(_asset, _assetAmount);
 	}
 
-	function _getCurrentVesselAmounts(address _asset, address _borrower) internal view returns (uint256, uint256) {
+	function _getCurrentVesselAmounts(address _asset, address _borrower)
+		internal
+		view
+		returns (uint256 coll, uint256 debt)
+	{
 		uint256 pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
-
-		uint256 currentAsset = Vessels[_borrower][_asset].coll.add(pendingCollReward);
-		uint256 currentDebt = Vessels[_borrower][_asset].debt.add(pendingDebtReward);
-
-		return (currentAsset, currentDebt);
+		Vessel memory vessel = Vessels[_borrower][_asset];
+		coll = vessel.coll + pendingCollReward;
+		debt = vessel.debt + pendingDebtReward;
 	}
 
 	// Add the borrowers's coll and debt rewards earned from redistributions, to their Vessel
@@ -514,8 +529,9 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 
 		// Apply pending rewards to vessel's state
-		Vessels[_borrower][_asset].coll = Vessels[_borrower][_asset].coll.add(pendingCollReward);
-		Vessels[_borrower][_asset].debt = Vessels[_borrower][_asset].debt.add(pendingDebtReward);
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		vessel.coll = vessel.coll + pendingCollReward;
+		vessel.debt = vessel.debt + pendingDebtReward;
 
 		_updateVesselRewardSnapshots(_asset, _borrower);
 
@@ -525,53 +541,56 @@ contract VesselManager is IVesselManager, GravitaBase {
 		emit VesselUpdated(
 			_asset,
 			_borrower,
-			Vessels[_borrower][_asset].debt,
-			Vessels[_borrower][_asset].coll,
-			Vessels[_borrower][_asset].stake,
+			vessel.debt,
+			vessel.coll,
+			vessel.stake,
 			VesselManagerOperation.applyPendingRewards
 		);
 	}
 
 	function _updateVesselRewardSnapshots(address _asset, address _borrower) internal {
-		rewardSnapshots[_borrower][_asset].asset = L_Colls[_asset];
-		rewardSnapshots[_borrower][_asset].debt = L_Debts[_asset];
-		emit VesselSnapshotsUpdated(_asset, L_Colls[_asset], L_Debts[_asset]);
+		uint256 liquidatedColl = L_Colls[_asset];
+		uint256 liquidatedDebt = L_Debts[_asset];
+		RewardSnapshot storage snapshot = rewardSnapshots[_borrower][_asset];
+		snapshot.asset = liquidatedColl;
+		snapshot.debt = liquidatedDebt;
+		emit VesselSnapshotsUpdated(_asset, liquidatedColl, liquidatedDebt);
 	}
 
 	function _removeStake(address _asset, address _borrower) internal {
-		uint256 stake = Vessels[_borrower][_asset].stake;
-		totalStakes[_asset] = totalStakes[_asset].sub(stake);
-		Vessels[_borrower][_asset].stake = 0;
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		totalStakes[_asset] -= vessel.stake;
+		vessel.stake = 0;
 	}
 
 	// Update borrower's stake based on their latest collateral value
 	function _updateStakeAndTotalStakes(address _asset, address _borrower) internal returns (uint256) {
-		uint256 newStake = _computeNewStake(_asset, Vessels[_borrower][_asset].coll);
-		uint256 oldStake = Vessels[_borrower][_asset].stake;
-		Vessels[_borrower][_asset].stake = newStake;
-
-		totalStakes[_asset] = totalStakes[_asset].sub(oldStake).add(newStake);
-		emit TotalStakesUpdated(_asset, totalStakes[_asset]);
-
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		uint256 newStake = _computeNewStake(_asset, vessel.coll);
+		uint256 oldStake = vessel.stake;
+		vessel.stake = newStake;
+		uint256 newTotal = totalStakes[_asset] - oldStake + newStake;
+		totalStakes[_asset] = newTotal;
+		emit TotalStakesUpdated(_asset, newTotal);
 		return newStake;
 	}
 
 	// Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
-	function _computeNewStake(address _asset, uint256 _coll) internal view returns (uint256) {
-		uint256 stake;
-		if (totalCollateralSnapshot[_asset] == 0) {
+	function _computeNewStake(address _asset, uint256 _coll) internal view returns (uint256 stake) {
+		uint256 assetColl = totalCollateralSnapshot[_asset];
+		if (assetColl == 0) {
 			stake = _coll;
 		} else {
+			uint256 assetStakes = totalStakesSnapshot[_asset];
 			/*
 			 * The following assert() holds true because:
 			 * - The system always contains >= 1 vessel
 			 * - When we close or liquidate a vessel, we redistribute the pending rewards, so if all vessels were closed/liquidated,
 			 * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
 			 */
-			assert(totalStakesSnapshot[_asset] > 0);
-			stake = _coll.mul(totalStakesSnapshot[_asset]).div(totalCollateralSnapshot[_asset]);
+			assert(assetStakes > 0);
+			stake = _coll.mul(assetStakes).div(assetColl);
 		}
-		return stake;
 	}
 
 	function _closeVessel(
@@ -586,12 +605,14 @@ contract VesselManager is IVesselManager, GravitaBase {
 			revert VesselManager__OnlyOneVessel();
 		}
 
-		Vessels[_borrower][_asset].status = closedStatus;
-		Vessels[_borrower][_asset].coll = 0;
-		Vessels[_borrower][_asset].debt = 0;
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		vessel.status = closedStatus;
+		vessel.coll = 0;
+		vessel.debt = 0;
 
-		rewardSnapshots[_borrower][_asset].asset = 0;
-		rewardSnapshots[_borrower][_asset].debt = 0;
+		RewardSnapshot storage rewardSnapshot = rewardSnapshots[_borrower][_asset];
+		rewardSnapshot.asset = 0;
+		rewardSnapshot.debt = 0;
 
 		_removeVesselOwner(_asset, _borrower, VesselOwnersArrayLength);
 		sortedVessels.remove(_asset, _borrower);
@@ -602,22 +623,23 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _borrower,
 		uint256 VesselOwnersArrayLength
 	) internal {
-		Status vesselStatus = Vessels[_borrower][_asset].status;
-		assert(vesselStatus != Status.nonExistent && vesselStatus != Status.active);
+		Vessel memory vessel = Vessels[_borrower][_asset];
+		assert(vessel.status != Status.nonExistent && vessel.status != Status.active);
 
-		uint128 index = Vessels[_borrower][_asset].arrayIndex;
+		uint128 index = vessel.arrayIndex;
 		uint256 length = VesselOwnersArrayLength;
 		uint256 idxLast = length.sub(1);
 
 		assert(index <= idxLast);
 
-		address addressToMove = VesselOwners[_asset][idxLast];
+		address[] storage vesselAssetOwners = VesselOwners[_asset];
+		address addressToMove = vesselAssetOwners[idxLast];
 
-		VesselOwners[_asset][index] = addressToMove;
+		vesselAssetOwners[index] = addressToMove;
 		Vessels[addressToMove][_asset].arrayIndex = index;
 		emit VesselIndexUpdated(_asset, addressToMove, index);
 
-		VesselOwners[_asset].pop();
+		vesselAssetOwners.pop();
 	}
 
 	function _calcRedemptionRate(address _asset, uint256 _baseRate) internal view returns (uint256) {
@@ -691,30 +713,30 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _asset,
 		address _borrower,
 		uint256 _collIncrease
-	) external override onlyBorrowerOperations returns (uint256) {
-		uint256 newColl = Vessels[_borrower][_asset].coll.add(_collIncrease);
-		Vessels[_borrower][_asset].coll = newColl;
-		return newColl;
+	) external override onlyBorrowerOperations returns (uint256 newColl) {
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		newColl = vessel.coll + _collIncrease;
+		vessel.coll = newColl;
 	}
 
 	function decreaseVesselColl(
 		address _asset,
 		address _borrower,
 		uint256 _collDecrease
-	) external override onlyBorrowerOperations returns (uint256) {
-		uint256 newColl = Vessels[_borrower][_asset].coll.sub(_collDecrease);
-		Vessels[_borrower][_asset].coll = newColl;
-		return newColl;
+	) external override onlyBorrowerOperations returns (uint256 newColl) {
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		newColl = vessel.coll - _collDecrease;
+		vessel.coll = newColl;
 	}
 
 	function increaseVesselDebt(
 		address _asset,
 		address _borrower,
 		uint256 _debtIncrease
-	) external override onlyBorrowerOperations returns (uint256) {
-		uint256 newDebt = Vessels[_borrower][_asset].debt.add(_debtIncrease);
-		Vessels[_borrower][_asset].debt = newDebt;
-		return newDebt;
+	) external override onlyBorrowerOperations returns (uint256 newDebt) {
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		newDebt = vessel.debt + _debtIncrease;
+		vessel.debt = newDebt;
 	}
 
 	function decreaseVesselDebt(
@@ -722,13 +744,14 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _borrower,
 		uint256 _debtDecrease
 	) external override onlyBorrowerOperations returns (uint256) {
-		uint256 oldDebt = Vessels[_borrower][_asset].debt;
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		uint256 oldDebt = vessel.debt;
 		if (_debtDecrease == 0) {
 			return oldDebt; // no changes
 		}
 		uint256 paybackFraction = (_debtDecrease * 1 ether) / oldDebt;
 		uint256 newDebt = oldDebt - _debtDecrease;
-		Vessels[_borrower][_asset].debt = newDebt;
+		vessel.debt = newDebt;
 		if (paybackFraction > 0) {
 			feeCollector.decreaseDebt(_borrower, _asset, paybackFraction);
 		}
