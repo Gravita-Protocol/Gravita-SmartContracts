@@ -70,10 +70,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 	let contracts
 
-	let REDEMPTION_SOFTENING_PARAM
+	let REDEMPTION_SOFTENING_PERCENT
 
 	const openVessel = async params => th.openVessel(contracts, params)
-	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
+	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PERCENT).div(toBN(1000)).div(price)
 
 	async function deployContractsFixture() {
 		contracts = await deploymentHelper.deployGravitaCore()
@@ -103,7 +103,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
 		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 
-		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
+		REDEMPTION_SOFTENING_PERCENT = await vesselManagerOperations.REDEMPTION_SOFTENING_PERCENT()
 	}
 
 	beforeEach(async () => {

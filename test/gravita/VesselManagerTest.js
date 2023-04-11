@@ -65,13 +65,13 @@ contract("VesselManager", async accounts => {
 	let vesselManager
 	let vesselManagerOperations
 
-	let REDEMPTION_SOFTENING_PARAM
+	let REDEMPTION_SOFTENING_PERCENT
 
 	const getOpenVesselVUSDAmount = async (totalDebt, asset) => th.getOpenVesselVUSDAmount(contracts, totalDebt, asset)
 	const getNetBorrowingAmount = async (debtWithFee, asset) => th.getNetBorrowingAmount(contracts, debtWithFee, asset)
 	const openVessel = async params => th.openVessel(contracts, params)
 	const withdrawVUSD = async params => th.withdrawVUSD(contracts, params)
-	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
+	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PERCENT).div(toBN(1000)).div(price)
 
 	describe("Vessel Manager", async () => {
 		async function deployContractsFixture() {
@@ -118,7 +118,7 @@ contract("VesselManager", async accounts => {
 			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts, treasury)
 			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 
-			REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
+			REDEMPTION_SOFTENING_PERCENT = await vesselManagerOperations.REDEMPTION_SOFTENING_PERCENT()
 		}
 
 		beforeEach(async () => {
