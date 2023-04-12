@@ -27,7 +27,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 percentDivisor; // dividing by 200 yields 0.5%
 		uint256 borrowingFee;
 		uint256 redemptionFeeFloor;
-		uint256 redemptionBlock;
+		uint256 redemptionBlockTimestamp;
 		uint256 mintCap;
 		bool hasCollateralConfigured;
 	}
@@ -40,7 +40,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	string public constant NAME = "AdminContract";
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
 	uint256 public constant _100pct = 1 ether; // 1e18 == 100%
-	uint256 public constant REDEMPTION_BLOCK_DAY = 14;
+	uint256 public constant REDEMPTION_BLOCK_DAYS = 14;
 	uint256 public constant MCR_DEFAULT = 1.1 ether; // 110%
 	uint256 public constant CCR_DEFAULT = 1.5 ether; // 150%
 	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 0.5%
@@ -183,7 +183,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			percentDivisor: 0,
 			borrowingFee: 0,
 			redemptionFeeFloor: 0,
-			redemptionBlock: 0,
+			redemptionBlockTimestamp: 0,
 			mintCap: type(uint256).max,
 			hasCollateralConfigured: false
 		});
@@ -278,17 +278,18 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		_setAsDefault(_collateral);
 	}
 
-	function setAsDefaultWithRedemptionBlock(address _collateral, uint256 blockInDays)
+	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays)
 		external
+		override
 		onlyOwner // TODO: Review if should set to controller
 	{
-		if (blockInDays > REDEMPTION_BLOCK_DAY) {
-			blockInDays = REDEMPTION_BLOCK_DAY;
+		if (blockInDays > REDEMPTION_BLOCK_DAYS) {
+			blockInDays = REDEMPTION_BLOCK_DAYS;
 		}
 
 		CollateralParams storage collParams = collateralParams[_collateral];
-		if (collParams.redemptionBlock == 0) {
-			collParams.redemptionBlock = block.timestamp + (blockInDays * 1 days);
+		if (collParams.redemptionBlockTimestamp == 0) {
+			collParams.redemptionBlockTimestamp = block.timestamp + (blockInDays * 1 days);
 		}
 
 		_setAsDefault(_collateral);
@@ -401,9 +402,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit MintCapChanged(oldMintCap, newMintCap);
 	}
 
-	function setRedemptionBlock(address _collateral, uint256 _block) external override shortTimelockOnly {
-		collateralParams[_collateral].redemptionBlock = _block;
-		emit RedemptionBlockChanged(_collateral, _block);
+	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp) external override shortTimelockOnly {
+		collateralParams[_collateral].redemptionBlockTimestamp = _blockTimestamp;
+		emit RedemptionBlockTimestampChanged(_collateral, _blockTimestamp);
 	}
 
 	function getMcr(address _collateral) external view override returns (uint256) {
@@ -434,8 +435,8 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return collateralParams[_collateral].redemptionFeeFloor;
 	}
 
-	function getRedemptionBlock(address _collateral) external view override returns (uint256) {
-		return collateralParams[_collateral].redemptionBlock;
+	function getRedemptionBlockTimestamp(address _collateral) external view override returns (uint256) {
+		return collateralParams[_collateral].redemptionBlockTimestamp;
 	}
 
 	function getMintCap(address _collateral) external view override returns (uint256) {
