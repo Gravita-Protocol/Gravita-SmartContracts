@@ -286,8 +286,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			blockInDays = REDEMPTION_BLOCK_DAY;
 		}
 
-		if (collateralParams[_collateral].redemptionBlock == 0) {
-			collateralParams[_collateral].redemptionBlock = block.timestamp + (blockInDays * 1 days);
+		CollateralParams storage collParams = collateralParams[_collateral];
+		if (collParams.redemptionBlock == 0) {
+			collParams.redemptionBlock = block.timestamp + (blockInDays * 1 days);
 		}
 
 		_setAsDefault(_collateral);
@@ -312,9 +313,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		shortTimelockOnly
 		safeCheck("MCR", _collateral, newMCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
 	{
-		uint256 oldMCR = collateralParams[_collateral].mcr;
-		collateralParams[_collateral].mcr = newMCR;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldMCR = collParams.mcr;
+		collParams.mcr = newMCR;
 		emit MCRChanged(oldMCR, newMCR);
 	}
 
@@ -324,9 +325,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		shortTimelockOnly
 		safeCheck("CCR", _collateral, newCCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
 	{
-		uint256 oldCCR = collateralParams[_collateral].ccr;
-		collateralParams[_collateral].ccr = newCCR;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldCCR = collParams.ccr;
+		collParams.ccr = newCCR;
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
@@ -336,9 +337,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		onlyOwner
 		safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200)
 	{
-		uint256 oldPercent = collateralParams[_collateral].percentDivisor;
-		collateralParams[_collateral].percentDivisor = percentDivisor;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldPercent = collParams.percentDivisor;
+		collParams.percentDivisor = percentDivisor;
 		emit PercentDivisorChanged(oldPercent, percentDivisor);
 	}
 
@@ -348,11 +349,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		onlyOwner
 		safeCheck("Borrowing Fee Floor", _collateral, borrowingFee, 0, 1000) /// 0% - 10%
 	{
-		uint256 oldBorrowing = collateralParams[_collateral].borrowingFee;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldBorrowing = collParams.borrowingFee;
 		uint256 newBorrowingFee = (DECIMAL_PRECISION / 10000) * borrowingFee;
-
-		collateralParams[_collateral].borrowingFee = newBorrowingFee;
-
+		collParams.borrowingFee = newBorrowingFee;
 		emit BorrowingFeeChanged(oldBorrowing, newBorrowingFee);
 	}
 
@@ -362,8 +362,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		longTimelockOnly
 		safeCheck("Gas Compensation", _collateral, gasCompensation, 1 ether, 400 ether)
 	{
-		uint256 oldGasComp = collateralParams[_collateral].debtTokenGasCompensation;
-		collateralParams[_collateral].debtTokenGasCompensation = gasCompensation;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldGasComp = collParams.debtTokenGasCompensation;
+		collParams.debtTokenGasCompensation = gasCompensation;
 		emit GasCompensationChanged(oldGasComp, gasCompensation);
 	}
 
@@ -373,9 +374,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		longTimelockOnly
 		safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether)
 	{
-		uint256 oldMinNet = collateralParams[_collateral].minNetDebt;
-		collateralParams[_collateral].minNetDebt = minNetDebt;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldMinNet = collParams.minNetDebt;
+		collParams.minNetDebt = minNetDebt;
 		emit MinNetDebtChanged(oldMinNet, minNetDebt);
 	}
 
@@ -385,18 +386,18 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		onlyOwner
 		safeCheck("Redemption Fee Floor", _collateral, redemptionFeeFloor, 10, 1000) /// 0.10% - 10%
 	{
-		uint256 oldRedemptionFeeFloor = collateralParams[_collateral].redemptionFeeFloor;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldRedemptionFeeFloor = collParams.redemptionFeeFloor;
 		uint256 newRedemptionFeeFloor = (DECIMAL_PRECISION / 10000) * redemptionFeeFloor;
-
-		collateralParams[_collateral].redemptionFeeFloor = newRedemptionFeeFloor;
+		collParams.redemptionFeeFloor = newRedemptionFeeFloor;
 		emit RedemptionFeeFloorChanged(oldRedemptionFeeFloor, newRedemptionFeeFloor);
 	}
 
 	function setMintCap(address _collateral, uint256 mintCap) public override shortTimelockOnly {
-		uint256 oldMintCap = collateralParams[_collateral].mintCap;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldMintCap = collParams.mintCap;
 		uint256 newMintCap = mintCap;
-
-		collateralParams[_collateral].mintCap = newMintCap;
+		collParams.mintCap = newMintCap;
 		emit MintCapChanged(oldMintCap, newMintCap);
 	}
 
