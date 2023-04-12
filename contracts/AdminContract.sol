@@ -66,7 +66,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		@dev Cannot be public as struct has too many variables for the stack. 
 		@dev Create special view structs/getters instead.
 	 */
-	mapping(address => CollateralParams) collateralParams;
+	mapping(address => CollateralParams) internal collateralParams;
 
 	// list of all collateral types in collateralParams (active and deprecated)
 	// Addresses for easy access
