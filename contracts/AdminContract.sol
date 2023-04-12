@@ -27,7 +27,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 percentDivisor; // dividing by 200 yields 0.5%
 		uint256 borrowingFee;
 		uint256 redemptionFeeFloor;
-		uint256 redemptionBlock;
+		uint256 redemptionBlockTimestamp;
 		uint256 mintCap;
 		bool hasCollateralConfigured;
 	}
@@ -40,7 +40,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	string public constant NAME = "AdminContract";
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
 	uint256 public constant _100pct = 1 ether; // 1e18 == 100%
-	uint256 public constant REDEMPTION_BLOCK_DAY = 14;
+	uint256 public constant REDEMPTION_BLOCK_DAYS = 14;
 	uint256 public constant MCR_DEFAULT = 1.1 ether; // 110%
 	uint256 public constant CCR_DEFAULT = 1.5 ether; // 150%
 	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 0.5%
@@ -141,7 +141,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		address _shortTimelock,
 		address _longTimelock
 	) external onlyOwner {
-		require(!isInitialized);
+		require(!isInitialized, "Already initialized");
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 		activePool = IActivePool(_activePoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
@@ -183,7 +183,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			percentDivisor: 0,
 			borrowingFee: 0,
 			redemptionFeeFloor: 0,
-			redemptionBlock: 0,
+			redemptionBlockTimestamp: 0,
 			mintCap: type(uint256).max,
 			hasCollateralConfigured: false
 		});
@@ -207,12 +207,13 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return collateralParams[_collateral].isWrapped;
 	}
 
-	function isWrappedMany(
-		address[] memory _collaterals
-	) external view returns (bool[] memory wrapped) {
+	function isWrappedMany(address[] calldata _collaterals) external view returns (bool[] memory wrapped) {
 		wrapped = new bool[](_collaterals.length);
-		for (uint256 i = 0; i < _collaterals.length; i++) {
+		for (uint256 i = 0; i < _collaterals.length; ) {
 			wrapped[i] = collateralParams[_collaterals[i]].isWrapped;
+			unchecked {
+				i++;
+			}
 		}
 	}
 
@@ -224,27 +225,24 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return collateralParams[_collateral].active;
 	}
 
-	function getDecimals(
-		address _collateral
-	) external view exists(_collateral) returns (uint256) {
+	function getDecimals(address _collateral) external view exists(_collateral) returns (uint256) {
 		return collateralParams[_collateral].decimals;
 	}
 
-	function getIndex(
-		address _collateral
-	) external view override exists(_collateral) returns (uint256) {
+	function getIndex(address _collateral) external view override exists(_collateral) returns (uint256) {
 		return (collateralParams[_collateral].index);
 	}
 
-	function getIndices(
-		address[] memory _colls
-	) external view returns (uint256[] memory indices) {
+	function getIndices(address[] memory _colls) external view returns (uint256[] memory indices) {
 		uint256 len = _colls.length;
 		indices = new uint256[](len);
 
-		for (uint256 i; i < len; ++i) {
+		for (uint256 i; i < len; ) {
 			_exists(_colls[i]);
 			indices[i] = collateralParams[_colls[i]].index;
+			unchecked {
+				i++;
+			}
 		}
 	}
 
@@ -280,19 +278,18 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		_setAsDefault(_collateral);
 	}
 
-	function setAsDefaultWithRedemptionBlock(
-		address _collateral,
-		uint256 blockInDays
-	)
+	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays)
 		external
+		override
 		onlyOwner // TODO: Review if should set to controller
 	{
-		if (blockInDays > REDEMPTION_BLOCK_DAY) {
-			blockInDays = REDEMPTION_BLOCK_DAY;
+		if (blockInDays > REDEMPTION_BLOCK_DAYS) {
+			blockInDays = REDEMPTION_BLOCK_DAYS;
 		}
 
-		if (collateralParams[_collateral].redemptionBlock == 0) {
-			collateralParams[_collateral].redemptionBlock = block.timestamp + (blockInDays * 1 days);
+		CollateralParams storage collParams = collateralParams[_collateral];
+		if (collParams.redemptionBlockTimestamp == 0) {
+			collParams.redemptionBlockTimestamp = block.timestamp + (blockInDays * 1 days);
 		}
 
 		_setAsDefault(_collateral);
@@ -311,127 +308,103 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		collateralParam.mintCap = MINT_CAP_DEFAULT;
 	}
 
-	function setMCR(
-		address _collateral,
-		uint256 newMCR
-	)
+	function setMCR(address _collateral, uint256 newMCR)
 		public
 		override
 		shortTimelockOnly
 		safeCheck("MCR", _collateral, newMCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
 	{
-		uint256 oldMCR = collateralParams[_collateral].mcr;
-		collateralParams[_collateral].mcr = newMCR;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldMCR = collParams.mcr;
+		collParams.mcr = newMCR;
 		emit MCRChanged(oldMCR, newMCR);
 	}
 
-	function setCCR(
-		address _collateral,
-		uint256 newCCR
-	)
+	function setCCR(address _collateral, uint256 newCCR)
 		public
 		override
 		shortTimelockOnly
 		safeCheck("CCR", _collateral, newCCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
 	{
-		uint256 oldCCR = collateralParams[_collateral].ccr;
-		collateralParams[_collateral].ccr = newCCR;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldCCR = collParams.ccr;
+		collParams.ccr = newCCR;
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
-	function setPercentDivisor(
-		address _collateral,
-		uint256 percentDivisor
-	)
+	function setPercentDivisor(address _collateral, uint256 percentDivisor)
 		public
 		override
 		onlyOwner
 		safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200)
 	{
-		uint256 oldPercent = collateralParams[_collateral].percentDivisor;
-		collateralParams[_collateral].percentDivisor = percentDivisor;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldPercent = collParams.percentDivisor;
+		collParams.percentDivisor = percentDivisor;
 		emit PercentDivisorChanged(oldPercent, percentDivisor);
 	}
 
-	function setBorrowingFee(
-		address _collateral,
-		uint256 borrowingFee
-	)
+	function setBorrowingFee(address _collateral, uint256 borrowingFee)
 		public
 		override
 		onlyOwner
 		safeCheck("Borrowing Fee Floor", _collateral, borrowingFee, 0, 1000) /// 0% - 10%
 	{
-		uint256 oldBorrowing = collateralParams[_collateral].borrowingFee;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldBorrowing = collParams.borrowingFee;
 		uint256 newBorrowingFee = (DECIMAL_PRECISION / 10000) * borrowingFee;
-
-		collateralParams[_collateral].borrowingFee = newBorrowingFee;
-
+		collParams.borrowingFee = newBorrowingFee;
 		emit BorrowingFeeChanged(oldBorrowing, newBorrowingFee);
 	}
 
-	function setDebtTokenGasCompensation(
-		address _collateral,
-		uint256 gasCompensation
-	)
+	function setDebtTokenGasCompensation(address _collateral, uint256 gasCompensation)
 		public
 		override
 		longTimelockOnly
 		safeCheck("Gas Compensation", _collateral, gasCompensation, 1 ether, 400 ether)
 	{
-		uint256 oldGasComp = collateralParams[_collateral].debtTokenGasCompensation;
-		collateralParams[_collateral].debtTokenGasCompensation = gasCompensation;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldGasComp = collParams.debtTokenGasCompensation;
+		collParams.debtTokenGasCompensation = gasCompensation;
 		emit GasCompensationChanged(oldGasComp, gasCompensation);
 	}
 
-	function setMinNetDebt(
-		address _collateral,
-		uint256 minNetDebt
-	)
+	function setMinNetDebt(address _collateral, uint256 minNetDebt)
 		public
 		override
 		longTimelockOnly
 		safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether)
 	{
-		uint256 oldMinNet = collateralParams[_collateral].minNetDebt;
-		collateralParams[_collateral].minNetDebt = minNetDebt;
-
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldMinNet = collParams.minNetDebt;
+		collParams.minNetDebt = minNetDebt;
 		emit MinNetDebtChanged(oldMinNet, minNetDebt);
 	}
 
-	function setRedemptionFeeFloor(
-		address _collateral,
-		uint256 redemptionFeeFloor
-	)
+	function setRedemptionFeeFloor(address _collateral, uint256 redemptionFeeFloor)
 		public
 		override
 		onlyOwner
 		safeCheck("Redemption Fee Floor", _collateral, redemptionFeeFloor, 10, 1000) /// 0.10% - 10%
 	{
-		uint256 oldRedemptionFeeFloor = collateralParams[_collateral].redemptionFeeFloor;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldRedemptionFeeFloor = collParams.redemptionFeeFloor;
 		uint256 newRedemptionFeeFloor = (DECIMAL_PRECISION / 10000) * redemptionFeeFloor;
-
-		collateralParams[_collateral].redemptionFeeFloor = newRedemptionFeeFloor;
+		collParams.redemptionFeeFloor = newRedemptionFeeFloor;
 		emit RedemptionFeeFloorChanged(oldRedemptionFeeFloor, newRedemptionFeeFloor);
 	}
 
 	function setMintCap(address _collateral, uint256 mintCap) public override shortTimelockOnly {
-		uint256 oldMintCap = collateralParams[_collateral].mintCap;
+		CollateralParams storage collParams = collateralParams[_collateral];
+		uint256 oldMintCap = collParams.mintCap;
 		uint256 newMintCap = mintCap;
-
-		collateralParams[_collateral].mintCap = newMintCap;
+		collParams.mintCap = newMintCap;
 		emit MintCapChanged(oldMintCap, newMintCap);
 	}
 
-	function setRedemptionBlock(
-		address _collateral,
-		uint256 _block
-	) external override shortTimelockOnly {
-		collateralParams[_collateral].redemptionBlock = _block;
-		emit RedemptionBlockChanged(_collateral, _block);
+	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp) external override shortTimelockOnly {
+		collateralParams[_collateral].redemptionBlockTimestamp = _blockTimestamp;
+		emit RedemptionBlockTimestampChanged(_collateral, _blockTimestamp);
 	}
 
 	function getMcr(address _collateral) external view override returns (uint256) {
@@ -442,9 +415,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return collateralParams[_collateral].ccr;
 	}
 
-	function getDebtTokenGasCompensation(
-		address _collateral
-	) external view override returns (uint256) {
+	function getDebtTokenGasCompensation(address _collateral) external view override returns (uint256) {
 		return collateralParams[_collateral].debtTokenGasCompensation;
 	}
 
@@ -460,14 +431,12 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return collateralParams[_collateral].borrowingFee;
 	}
 
-	function getRedemptionFeeFloor(
-		address _collateral
-	) external view override returns (uint256) {
+	function getRedemptionFeeFloor(address _collateral) external view override returns (uint256) {
 		return collateralParams[_collateral].redemptionFeeFloor;
 	}
 
-	function getRedemptionBlock(address _collateral) external view override returns (uint256) {
-		return collateralParams[_collateral].redemptionBlock;
+	function getRedemptionBlockTimestamp(address _collateral) external view override returns (uint256) {
+		return collateralParams[_collateral].redemptionBlockTimestamp;
 	}
 
 	function getMintCap(address _collateral) external view override returns (uint256) {
