@@ -141,7 +141,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		address _shortTimelock,
 		address _longTimelock
 	) external onlyOwner {
-		require(!isInitialized);
+		require(!isInitialized, "Already initialized");
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 		activePool = IActivePool(_activePoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
