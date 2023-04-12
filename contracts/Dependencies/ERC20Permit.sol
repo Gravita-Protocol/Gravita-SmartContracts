@@ -17,11 +17,6 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	bytes32 public immutable DOMAIN_SEPARATOR;
 
 	constructor() {
-		uint256 chainID;
-		assembly {
-			chainID := chainid()
-		}
-
 		DOMAIN_SEPARATOR = keccak256(
 			abi.encode(
 				keccak256(
@@ -29,7 +24,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 				),
 				keccak256(bytes(name())),
 				keccak256(bytes("1")), // Version
-				chainID,
+				block.chainid,
 				address(this)
 			)
 		);
@@ -68,11 +63,5 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	 */
 	function nonces(address owner) public view override returns (uint256) {
 		return _nonces[owner].current();
-	}
-
-	function chainId() public view returns (uint256 chainID) {
-		assembly {
-			chainID := chainid()
-		}
 	}
 }
