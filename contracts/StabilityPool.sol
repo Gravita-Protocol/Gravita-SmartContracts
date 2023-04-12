@@ -169,7 +169,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 
 	// Mapping from user address => pending collaterals to claim still
 	// Must always be sorted by whitelist to keep leftSumColls functionality
-	mapping(address => Colls) pendingCollGains;
+	mapping(address => Colls) internal pendingCollGains;
 
 	// --- Data structures ---
 
