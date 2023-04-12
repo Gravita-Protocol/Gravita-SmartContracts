@@ -44,7 +44,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	using SafeMathUpgradeable for uint256;
 
 	string public constant NAME = "SortedVessels";
-	uint256 constant MAX_UINT256 = type(uint256).max;
+	uint256 internal constant MAX_UINT256 = type(uint256).max;
 
 	address public borrowerOperationsAddress;
 
