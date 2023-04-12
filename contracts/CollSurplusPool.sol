@@ -22,9 +22,8 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 
 	bool public isInitialized;
 
-	// Deposited collateral trackers
-	mapping(address => uint256) balances;
-
+	// deposited ether tracker
+	mapping(address => uint256) internal balances;
 	// Collateral surplus claimable by vessel owners
 	mapping(address => mapping(address => uint256)) internal userBalances;
 

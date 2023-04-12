@@ -57,9 +57,7 @@ contract DebtTokenTester is DebtToken {
 	}
 
 	function getChainId() external view returns (uint256 chainID) {
-		assembly {
-			chainID := chainid()
-		}
+		chainID = block.chainid;
 	}
 
 	function getDigest(

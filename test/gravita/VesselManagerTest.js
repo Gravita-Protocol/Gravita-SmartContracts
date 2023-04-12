@@ -3530,7 +3530,7 @@ contract("VesselManager", async accounts => {
 					const redemptionWait = 14 * 24 * 60 * 60 // 14 days
 					const redemptionBlock = (await time.latest()) + redemptionWait
 					// turn off redemptions for 2 weeks
-					await adminContract.setRedemptionBlock(erc20.address, redemptionBlock)
+					await adminContract.setRedemptionBlockTimestamp(erc20.address, redemptionBlock)
 
 					const { netDebt: aliceDebt } = await openVessel({
 						asset: erc20.address,

@@ -13,7 +13,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
-	uint256 public constant PERCENTAGE_PRECISION = 1000 ;
+	uint256 public constant PERCENTAGE_PRECISION = 1000;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -536,7 +536,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
-			} 
+			}
 			unchecked {
 				vars.i++;
 			}
@@ -937,8 +937,8 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		uint256 _debtTokenAmount,
 		uint256 _price
 	) internal view {
-		uint256 redemptionBlock = contractsCache.adminContract.getRedemptionBlock(_asset);
-		if (redemptionBlock > block.timestamp) {
+		uint256 redemptionBlockTimestamp = contractsCache.adminContract.getRedemptionBlockTimestamp(_asset);
+		if (redemptionBlockTimestamp > block.timestamp) {
 			revert VesselManagerOperations__RedemptionIsBlocked();
 		}
 		uint256 redemptionFeeFloor = contractsCache.adminContract.getRedemptionFeeFloor(_asset);
@@ -1018,4 +1018,3 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		return singleRedemption;
 	}
 }
-
