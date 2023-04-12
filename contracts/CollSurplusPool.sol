@@ -67,21 +67,23 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 	) external override {
 		_requireCallerIsVesselManager();
 
-		uint256 newAmount = userBalances[_account][_asset].add(_amount);
-		userBalances[_account][_asset] = newAmount;
+		mapping(address => uint256) storage userBalance = userBalances[_account]; 
+		uint256 newAmount = userBalance[_asset] + _amount;
+		userBalance[_asset] = newAmount;
 
 		emit CollBalanceUpdated(_account, newAmount);
 	}
 
 	function claimColl(address _asset, address _account) external override {
 		_requireCallerIsBorrowerOperations();
-		uint256 claimableCollEther = userBalances[_account][_asset];
+		mapping(address => uint256) storage userBalance = userBalances[_account]; 
+		uint256 claimableCollEther = userBalance[_asset];
 
-		uint256 safetyTransferclaimableColl = SafetyTransfer.decimalsCorrection(_asset, userBalances[_account][_asset]);
+		uint256 safetyTransferclaimableColl = SafetyTransfer.decimalsCorrection(_asset, claimableCollEther);
 
 		require(safetyTransferclaimableColl > 0, "CollSurplusPool: No collateral available to claim");
 
-		userBalances[_account][_asset] = 0;
+		userBalance[_asset] = 0;
 		emit CollBalanceUpdated(_account, 0);
 
 		balances[_asset] = balances[_asset].sub(claimableCollEther);
