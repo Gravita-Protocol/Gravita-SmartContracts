@@ -20,12 +20,15 @@ library SafetyTransfer {
 			return 0;
 		}
 		uint8 decimals = IERC20Decimals(_token).decimals();
-		uint256 divisor = 10**(18 - decimals);
-		if (_amount % divisor != 0) {
-			revert InvalidAmountError();
-		}
 		if (decimals < 18) {
+			uint256 divisor = 10**(18 - decimals);
+			if (_amount % divisor != 0) {
+				revert InvalidAmountError();
+			}
 			return _amount / divisor;
+		} else if (decimals > 18) {
+			uint256 multiplier = 10**(decimals - 18);
+			return _amount * multiplier;
 		}
 		return _amount;
 	}
