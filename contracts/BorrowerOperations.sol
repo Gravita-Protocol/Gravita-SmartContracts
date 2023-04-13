@@ -15,7 +15,6 @@ import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
 contract BorrowerOperations is GravitaBase, IBorrowerOperations {
-	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "BorrowerOperations";
@@ -144,7 +143,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 				contractsCache.debtToken,
 				_debtTokenAmount
 			);
-			vars.netDebt = vars.netDebt.add(vars.debtTokenFee);
+			vars.netDebt = vars.netDebt + vars.debtTokenFee;
 		}
 		_requireAtLeastMinNetDebt(vars.asset, vars.netDebt);
 
@@ -318,7 +317,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 				contractsCache.debtToken,
 				_debtTokenChange
 			);
-			vars.netDebtChange = vars.netDebtChange.add(vars.debtTokenFee); // The raw debt change includes the fee
+			vars.netDebtChange = vars.netDebtChange + vars.debtTokenFee; // The raw debt change includes the fee
 		}
 
 		vars.debt = contractsCache.vesselManager.getVesselDebt(vars.asset, _borrower);
@@ -342,7 +341,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 		// When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough debt tokens
 		if (!_isDebtIncrease && _debtTokenChange > 0) {
-			_requireAtLeastMinNetDebt(vars.asset, _getNetDebt(vars.asset, vars.debt).sub(vars.netDebtChange));
+			_requireAtLeastMinNetDebt(vars.asset, _getNetDebt(vars.asset, vars.debt) - vars.netDebtChange);
 			_requireValidDebtTokenRepayment(vars.asset, vars.debt, vars.netDebtChange);
 			_requireSufficientDebtTokenBalance(contractsCache.debtToken, _borrower, vars.netDebtChange);
 		}
@@ -404,7 +403,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		_requireSufficientDebtTokenBalance(
 			debtTokenCached,
 			msg.sender,
-			debt.sub(adminContractCached.getDebtTokenGasCompensation(_asset))
+			debt - adminContractCached.getDebtTokenGasCompensation(_asset)
 		);
 
 		uint256 newTCR = _getNewTCRFromVesselChange(_asset, coll, false, debt, false, price);
@@ -416,7 +415,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
 		uint256 gasCompensation = adminContractCached.getDebtTokenGasCompensation(_asset);
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, activePoolCached, debtTokenCached, msg.sender, debt.sub(gasCompensation));
+		_repayDebtTokens(_asset, activePoolCached, debtTokenCached, msg.sender, debt - gasCompensation);
 		_repayDebtTokens(_asset, activePoolCached, debtTokenCached, gasPoolAddress, gasCompensation);
 
 		// Send the collateral back to the user
@@ -448,7 +447,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	function _getUSDValue(uint256 _coll, uint256 _price) internal pure returns (uint256) {
-		return _price.mul(_coll).div(DECIMAL_PRECISION);
+		return _price * _coll / DECIMAL_PRECISION;
 	}
 
 	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
@@ -677,7 +676,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _debtRepayment
 	) internal view {
 		require(
-			_debtRepayment <= _currentDebt.sub(adminContract.getDebtTokenGasCompensation(_asset)),
+			_debtRepayment <= _currentDebt - adminContract.getDebtTokenGasCompensation(_asset),
 			"BorrowerOps: Amount repaid must not be larger than the Vessel's debt"
 		);
 	}
@@ -755,8 +754,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 newColl = _coll;
 		uint256 newDebt = _debt;
 
-		newColl = _isCollIncrease ? _coll.add(_collChange) : _coll.sub(_collChange);
-		newDebt = _isDebtIncrease ? _debt.add(_debtChange) : _debt.sub(_debtChange);
+		newColl = _isCollIncrease ? _coll + _collChange : _coll - _collChange;
+		newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
 
 		return (newColl, newDebt);
 	}
@@ -772,8 +771,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 totalColl = getEntireSystemColl(_asset);
 		uint256 totalDebt = getEntireSystemDebt(_asset);
 
-		totalColl = _isCollIncrease ? totalColl.add(_collChange) : totalColl.sub(_collChange);
-		totalDebt = _isDebtIncrease ? totalDebt.add(_debtChange) : totalDebt.sub(_debtChange);
+		totalColl = _isCollIncrease ? totalColl + _collChange : totalColl - _collChange;
+		totalDebt = _isDebtIncrease ? totalDebt + _debtChange : totalDebt - _debtChange;
 
 		uint256 newTCR = GravitaMath._computeCR(totalColl, totalDebt, _price);
 		return newTCR;

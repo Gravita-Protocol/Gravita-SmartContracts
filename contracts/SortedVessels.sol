@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import "./Interfaces/ISortedVessels.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /*
@@ -41,7 +40,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
 contract SortedVessels is OwnableUpgradeable, ISortedVessels {
-	using SafeMathUpgradeable for uint256;
 
 	string public constant NAME = "SortedVessels";
 	uint256 internal constant MAX_UINT256 = type(uint256).max;
@@ -159,7 +157,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			data[_asset].nodes[nextId].prevId = _id;
 		}
 
-		data[_asset].size = data[_asset].size.add(1);
+		data[_asset].size = data[_asset].size + 1;
 		emit NodeAdded(_asset, _id, _NICR);
 	}
 
@@ -209,7 +207,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		}
 
 		delete data[_asset].nodes[_id];
-		data[_asset].size = data[_asset].size.sub(1);
+		data[_asset].size = data[_asset].size - 1;
 		emit NodeRemoved(_asset, _id);
 	}
 

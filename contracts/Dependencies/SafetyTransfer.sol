@@ -2,11 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Interfaces/IERC20Decimals.sol";
 
 library SafetyTransfer {
-	using SafeMathUpgradeable for uint256;
 
 	//_amount is in ether (1e18) and we want to convert it to the token decimal
 	function decimalsCorrection(address _token, uint256 _amount) internal view returns (uint256) {
@@ -15,7 +13,7 @@ library SafetyTransfer {
 
 		uint8 decimals = IERC20Decimals(_token).decimals();
 		if (decimals < 18) {
-			return _amount.div(10**(18 - decimals));
+			return _amount / (10**(18 - decimals));
 		}
 
 		return _amount;
