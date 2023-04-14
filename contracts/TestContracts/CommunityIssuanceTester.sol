@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 import "../GRVT/CommunityIssuance.sol";
 
 contract CommunityIssuanceTester is CommunityIssuance {
-	using SafeMathUpgradeable for uint256;
 
 	function obtainGRVT(uint256 _amount) external {
 		grvtToken.transfer(msg.sender, _amount);
