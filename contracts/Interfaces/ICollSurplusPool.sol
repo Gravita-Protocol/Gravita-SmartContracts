@@ -11,14 +11,7 @@ interface ICollSurplusPool is IDeposit {
 	event CollBalanceUpdated(address indexed _account, uint256 _newBalance);
 	event AssetSent(address _to, uint256 _amount);
 
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _activePoolAddress,
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _vesselManagerOperationsAddress
-	) external;
+	// --- Functions ---
 
 	function getAssetBalance(address _asset) external view returns (uint256);
 

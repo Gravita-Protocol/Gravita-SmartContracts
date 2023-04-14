@@ -20,8 +20,6 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 	address public vesselManagerAddress;
 	address public vesselManagerOperationsAddress;
 
-	bool public isInitialized;
-
 	// deposited ether tracker
 	mapping(address => uint256) internal balances;
 	// Collateral surplus claimable by vessel owners
@@ -34,18 +32,12 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 		address _borrowerOperationsAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external override initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
-
+	) external initializer {
 		__Ownable_init();
-
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-
-		renounceOwnership();
 	}
 
 	/* Returns the Asset state variable at ActivePool address.

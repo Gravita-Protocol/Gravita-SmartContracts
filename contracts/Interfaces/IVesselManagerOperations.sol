@@ -120,15 +120,6 @@ interface IVesselManagerOperations is IGravitaBase {
 
 	// Functions --------------------------------------------------------------------------------------------------------
 
-	function setAddresses(
-		address _vesselManagerAddress,
-		address _sortedVesselsAddress,
-		address _stabilityPoolAddress,
-		address _collSurplusPoolAddress,
-		address _debtToken,
-		address _adminContractAddress
-	) external;
-
 	function liquidate(address _asset, address _borrower) external;
 
 	function liquidateVessels(address _asset, uint256 _n) external;

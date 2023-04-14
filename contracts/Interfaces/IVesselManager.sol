@@ -11,6 +11,8 @@ import "./ISortedVessels.sol";
 import "./IStabilityPool.sol";
 
 interface IVesselManager is IGravitaBase {
+	// Enums ------------------------------------------------------------------------------------------------------------
+
 	enum Status {
 		nonExistent,
 		active,
@@ -25,6 +27,8 @@ interface IVesselManager is IGravitaBase {
 		liquidateInRecoveryMode,
 		redeemCollateral
 	}
+
+	// Events -----------------------------------------------------------------------------------------------------------
 
 	event BaseRateUpdated(address indexed _asset, uint256 _baseRate);
 	event LastFeeOpTimeUpdated(address indexed _asset, uint256 _lastFeeOpTime);
@@ -43,12 +47,16 @@ interface IVesselManager is IGravitaBase {
 		VesselManagerOperation _operation
 	);
 
+	// Custom Errors ----------------------------------------------------------------------------------------------------
+
 	error VesselManager__FeeBiggerThanAssetDraw();
 	error VesselManager__OnlyOneVessel();
 
 	error VesselManager__OnlyVesselManagerOperations();
 	error VesselManager__OnlyBorrowerOperations();
 	error VesselManager__OnlyVesselManagerOperationsOrBorrowerOperations();
+
+	// Structs ----------------------------------------------------------------------------------------------------------
 
 	struct Vessel {
 		uint256 debt;
@@ -58,17 +66,7 @@ interface IVesselManager is IGravitaBase {
 		uint128 arrayIndex;
 	}
 
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _stabilityPoolAddress,
-		address _gasPoolAddress,
-		address _collSurplusPoolAddress,
-		address _debtTokenAddress,
-		address _feeCollectorAddress,
-		address _sortedVesselsAddress,
-		address _vesselManagerOperations,
-		address _adminContractAddress
-	) external;
+	// Functions --------------------------------------------------------------------------------------------------------
 
 	function stabilityPool() external returns (IStabilityPool);
 
@@ -234,4 +232,3 @@ interface IVesselManager is IGravitaBase {
 		uint256 _assetAmount
 	) external;
 }
-

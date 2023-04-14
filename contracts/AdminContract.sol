@@ -3,8 +3,6 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IDefaultPool.sol";
@@ -15,28 +13,9 @@ import "./Interfaces/ICommunityIssuance.sol";
 import "./Interfaces/IAdminContract.sol";
 
 contract AdminContract is IAdminContract, ProxyAdmin {
-	struct CollateralParams {
-		uint256 decimals;
-		uint256 index; //Maps to token address in validCollateral[]
-		bool active;
-		bool isWrapped;
-		uint256 mcr;
-		uint256 ccr;
-		uint256 debtTokenGasCompensation; // Amount of debtToken to be locked in gas pool on opening vessels
-		uint256 minNetDebt; // Minimum amount of net debtToken a vessel must have
-		uint256 percentDivisor; // dividing by 200 yields 0.5%
-		uint256 borrowingFee;
-		uint256 redemptionFeeFloor;
-		uint256 redemptionBlockTimestamp;
-		uint256 mintCap;
-		bool hasCollateralConfigured;
-	}
 
-	error AdminContract__ShortTimelockOnly();
-	error AdminContract__LongTimelockOnly();
-	error AdminContract__OnlyOwner();
+	// Constants --------------------------------------------------------------------------------------------------------
 
-	// ---------- Default Parameters ---------- //
 	string public constant NAME = "AdminContract";
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
 	uint256 public constant _100pct = 1 ether; // 1e18 == 100%
@@ -49,6 +28,8 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	uint256 public constant MIN_NET_DEBT_DEFAULT = 300 ether;
 	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
 	uint256 public constant MINT_CAP_DEFAULT = 1_000_000 ether; // 1 million
+
+	// State ------------------------------------------------------------------------------------------------------------
 
 	bool public isInitialized;
 
@@ -71,6 +52,8 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	// list of all collateral types in collateralParams (active and deprecated)
 	// Addresses for easy access
 	address[] public validCollateral; // index maps to token address.
+
+	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	// Require that the collateral exists in the controller. If it is not the 0th index, and the
 	// index is still 0 then it does not exist in the mapping.
@@ -124,12 +107,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		_;
 	}
 
-	// Calling from here makes it not inline, reducing contract size significantly.
-	function _exists(address _collateral) internal view {
-		if (validCollateral[0] != _collateral) {
-			require(collateralParams[_collateral].index != 0, "collateral does not exist");
-		}
-	}
+	// External Functions -----------------------------------------------------------------------------------------------
 
 	function setAddresses(
 		address _communityIssuanceAddress,
@@ -152,6 +130,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		longTimelock = _longTimelock;
 	}
 
+	/**
+	 * @dev The deployment script will call this function after all collaterals have been configured. 
+	 */
 	function setInitialized() external onlyOwner {
 		isInitialized = true;
 	}
@@ -445,5 +426,13 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 
 	function getTotalAssetDebt(address _asset) external view override returns (uint256) {
 		return activePool.getDebtTokenBalance(_asset) + defaultPool.getDebtTokenBalance(_asset);
+	}
+
+	// Internal Functions -----------------------------------------------------------------------------------------------
+
+	function _exists(address _collateral) internal view {
+		if (validCollateral[0] != _collateral) {
+			require(collateralParams[_collateral].index != 0, "collateral does not exist");
+		}
 	}
 }

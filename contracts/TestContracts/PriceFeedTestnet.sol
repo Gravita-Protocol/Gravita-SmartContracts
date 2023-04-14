@@ -12,7 +12,6 @@ contract PriceFeedTestnet is IPriceFeed {
 	using SafeMath for uint256;
 
 	string public constant NAME = "PriceFeedTestnet";
-	bool public constant isInitialized = true;
 
 	mapping(address => uint256) public lastGoodPrice;
 

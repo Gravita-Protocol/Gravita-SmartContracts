@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.19;
+
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../Dependencies/ERC20Permit.sol";
 
-contract GRVTToken is ERC20Permit {
+contract GRVTToken is ERC20Permit, Ownable {
 	using SafeMath for uint256;
 
 	string public constant NAME = "GRVTToken";

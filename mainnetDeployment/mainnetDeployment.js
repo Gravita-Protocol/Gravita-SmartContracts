@@ -47,6 +47,8 @@ async function mainnetDeploy(configParams) {
 	if ("mainnet" == configParams.targetNetwork) {
 		await addCollaterals()
 		await coreContracts.adminContract.setInitialized()
+		await coreContracts.debtToken.setInitialized()
+		// TODO set the admin address for the timelock contracts
 	}
 
 	helper.saveDeployment(deploymentState)
@@ -92,6 +94,7 @@ async function addCollateral(name, configKey) {
 }
 
 async function transferContractsOwnerships() {
+	// TODO review contracts owners and update this function
 	const adminOwnedContracts = [
 		coreContracts.adminContract, 
 		coreContracts.debtToken,

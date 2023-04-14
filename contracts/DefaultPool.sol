@@ -22,30 +22,18 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 
 	string public constant NAME = "DefaultPool";
 
-
 	address public vesselManagerAddress;
 	address public activePoolAddress;
-
-	bool public isInitialized;
 
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
 
 	// --- Dependency setters ---
 
-	function setAddresses(address _vesselManagerAddress, address _activePoolAddress)
-		external
-		initializer
-	{
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
-
+	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external initializer {
 		__Ownable_init();
-
 		vesselManagerAddress = _vesselManagerAddress;
 		activePoolAddress = _activePoolAddress;
-
-		renounceOwnership();
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -60,11 +48,7 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 
 	// --- Pool functionality ---
 
-	function sendAssetToActivePool(address _asset, uint256 _amount)
-		external
-		override
-		callerIsVesselManager
-	{
+	function sendAssetToActivePool(address _asset, uint256 _amount) external override callerIsVesselManager {
 		address activePool = activePoolAddress; // cache to save an SLOAD
 
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
@@ -72,28 +56,19 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 
 		assetsBalances[_asset] = assetsBalances[_asset].sub(_amount);
 
-			IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
-			IDeposit(activePool).receivedERC20(_asset, _amount);
-
+		IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
+		IDeposit(activePool).receivedERC20(_asset, _amount);
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, assetsBalances[_asset]);
 		emit AssetSent(activePool, _asset, safetyTransferAmount);
 	}
 
-	function increaseDebt(address _asset, uint256 _amount)
-		external
-		override
-		callerIsVesselManager
-	{
+	function increaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
 		debtTokenBalances[_asset] = debtTokenBalances[_asset].add(_amount);
 		emit DefaultPoolDebtUpdated(_asset, debtTokenBalances[_asset]);
 	}
 
-	function decreaseDebt(address _asset, uint256 _amount)
-		external
-		override
-		callerIsVesselManager
-	{
+	function decreaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
 		debtTokenBalances[_asset] = debtTokenBalances[_asset].sub(_amount);
 		emit DefaultPoolDebtUpdated(_asset, debtTokenBalances[_asset]);
 	}
@@ -110,13 +85,8 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 		_;
 	}
 
-	function receivedERC20(address _asset, uint256 _amount)
-		external
-		override
-		callerIsActivePool
-	{
+	function receivedERC20(address _asset, uint256 _amount) external override callerIsActivePool {
 		assetsBalances[_asset] = assetsBalances[_asset].add(_amount);
 		emit DefaultPoolAssetBalanceUpdated(_asset, assetsBalances[_asset]);
 	}
-
 }

@@ -1,18 +1,15 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 
-const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
+const BorrowerOperationsTester = artifacts.require("BorrowerOperationsTester")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
-const ERC20Mock = artifacts.require("./ERC20Mock.sol")
+const ERC20Mock = artifacts.require("ERC20Mock")
+
+const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const testHelpers = require("../../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
-
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN, assertRevert } = th
 const timeValues = testHelpers.TimeValues
-
-const assertRevert = th.assertRevert
 
 /* NOTE: Some of the borrowing tests do not test for specific VUSD fee values. They only test that the
  * fees are non-zero when they should occur, and that they decay over time.
@@ -52,9 +49,8 @@ contract("BorrowerOperations", async accounts => {
 	let VUSD_GAS_COMPENSATION_ERC20
 	let MIN_NET_DEBT_ERC20
 
-	before(async () => {})
-
 	withProxy = false
+	
 	describe("BorrowerOperations Mechanisms", async () => {
 		async function deployContractsFixture() {
 			contracts = await deploymentHelper.deployGravitaCore()
@@ -88,15 +84,14 @@ contract("BorrowerOperations", async accounts => {
 
 			await grvtToken.unprotectedMint(multisig, dec(5, 24))
 
-			let index = 0
-			for (const acc of accounts) {
+			for (const acc of accounts.slice(0, 20)) {
 				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), {
 					from: acc,
 				})
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
 			}
 		}
+
 		beforeEach(async () => {
 			await loadFixture(deployContractsFixture)
 		})

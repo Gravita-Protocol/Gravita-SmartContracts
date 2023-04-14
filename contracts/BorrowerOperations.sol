@@ -29,7 +29,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	IFeeCollector public feeCollector;
 	IDebtToken public debtToken;
 	ISortedVessels public sortedVessels; // double-linked list, sorted by their collateral ratios
-	bool public isInitialized;
 
 	/* --- Variable container structs  ---
 
@@ -98,9 +97,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _debtTokenAddress,
 		address _feeCollectorAddress,
 		address _adminContractAddress
-	) external override {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
+	) external initializer {
+		__Ownable_init();
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;

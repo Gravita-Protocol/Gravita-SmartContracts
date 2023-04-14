@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-// Common interface for the SortedVessels Doubly Linked List.
 interface ISortedVessels {
 	// --- Events ---
 
@@ -10,9 +9,6 @@ interface ISortedVessels {
 	event NodeRemoved(address indexed _asset, address _id);
 
 	// --- Functions ---
-
-	function setParams(address _VesselManagerAddress, address _borrowerOperationsAddress)
-		external;
 
 	function insert(
 		address _asset,

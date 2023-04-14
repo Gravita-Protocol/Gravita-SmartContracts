@@ -18,8 +18,6 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	bool public isInitialized;
-
 	// --- Data ---
 	string public constant NAME = "GRVTStaking";
 	address constant ETH_REF_ADDRESS = address(0);
@@ -57,10 +55,8 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		address _feeCollectorAddress,
 		address _vesselManagerAddress,
 		address _treasury
-	) external override initializer {
-		require(!isInitialized, "Already Initialized");
-		require(_treasury != address(0), "Invalid Treausry Address");
-		isInitialized = true;
+	) external initializer {
+		require(_treasury != address(0), "Invalid Treasury Address");
 
 		__Pausable_init();
 		__ReentrancyGuard_init();

@@ -72,17 +72,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	// --- Dependency setters ---
 
-	function setParams(address _vesselManagerAddress, address _borrowerOperationsAddress)
-		external
-		override
-		initializer
-	{
+	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external initializer {
 		__Ownable_init();
-
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
-
-		renounceOwnership();
 	}
 
 	/*
@@ -193,13 +186,9 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			} else {
 				// The removed node is neither the head nor the tail
 				// Set next pointer of previous node to the next node
-				data[_asset].nodes[data[_asset].nodes[_id].prevId].nextId = data[_asset]
-					.nodes[_id]
-					.nextId;
+				data[_asset].nodes[data[_asset].nodes[_id].prevId].nextId = data[_asset].nodes[_id].nextId;
 				// Set prev pointer of next node to the previous node
-				data[_asset].nodes[data[_asset].nodes[_id].nextId].prevId = data[_asset]
-					.nodes[_id]
-					.prevId;
+				data[_asset].nodes[data[_asset].nodes[_id].nextId].prevId = data[_asset].nodes[_id].prevId;
 			}
 		} else {
 			// List contains a single node
@@ -333,12 +322,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			return isEmpty(_asset);
 		} else if (_prevId == address(0)) {
 			// `(null, _nextId)` is a valid insert position if `_nextId` is the head of the list
-			return
-				data[_asset].head == _nextId && _NICR >= _vesselManager.getNominalICR(_asset, _nextId);
+			return data[_asset].head == _nextId && _NICR >= _vesselManager.getNominalICR(_asset, _nextId);
 		} else if (_nextId == address(0)) {
 			// `(_prevId, null)` is a valid insert position if `_prevId` is the tail of the list
-			return
-				data[_asset].tail == _prevId && _NICR <= _vesselManager.getNominalICR(_asset, _prevId);
+			return data[_asset].tail == _prevId && _NICR <= _vesselManager.getNominalICR(_asset, _prevId);
 		} else {
 			// `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
 			return
@@ -361,9 +348,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address _startId
 	) internal view returns (address, address) {
 		// If `_startId` is the head, check if the insert position is before the head
-		if (
-			data[_asset].head == _startId && _NICR >= _vesselManager.getNominalICR(_asset, _startId)
-		) {
+		if (data[_asset].head == _startId && _NICR >= _vesselManager.getNominalICR(_asset, _startId)) {
 			return (address(0), _startId);
 		}
 
@@ -371,10 +356,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address nextId = data[_asset].nodes[prevId].nextId;
 
 		// Descend the list until we reach the end or until we find a valid insert position
-		while (
-			prevId != address(0) &&
-			!_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)
-		) {
+		while (prevId != address(0) && !_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
 			prevId = data[_asset].nodes[prevId].nextId;
 			nextId = data[_asset].nodes[prevId].nextId;
 		}
@@ -395,9 +377,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address _startId
 	) internal view returns (address, address) {
 		// If `_startId` is the tail, check if the insert position is after the tail
-		if (
-			data[_asset].tail == _startId && _NICR <= _vesselManager.getNominalICR(_asset, _startId)
-		) {
+		if (data[_asset].tail == _startId && _NICR <= _vesselManager.getNominalICR(_asset, _startId)) {
 			return (_startId, address(0));
 		}
 
@@ -405,10 +385,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address prevId = data[_asset].nodes[nextId].prevId;
 
 		// Ascend the list until we reach the end or until we find a valid insertion point
-		while (
-			nextId != address(0) &&
-			!_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)
-		) {
+		while (nextId != address(0) && !_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
 			nextId = data[_asset].nodes[nextId].prevId;
 			prevId = data[_asset].nodes[nextId].prevId;
 		}
@@ -473,10 +450,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	// --- 'require' functions ---
 
 	function _requireCallerIsVesselManager() internal view {
-		require(
-			msg.sender == address(vesselManager),
-			"SortedVessels: Caller is not the VesselManager"
-		);
+		require(msg.sender == address(vesselManager), "SortedVessels: Caller is not the VesselManager");
 	}
 
 	function _requireCallerIsBOorVesselM(IVesselManager _vesselManager) internal view {

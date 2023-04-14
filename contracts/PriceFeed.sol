@@ -322,4 +322,3 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		}
 	}
 }
-
