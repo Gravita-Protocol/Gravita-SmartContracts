@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.19;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./Dependencies/ERC20Permit.sol";
 import "./Interfaces/IDebtToken.sol";
 
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
-	using SafeMath for uint256;
 
 	string public constant NAME = "GRAI";
 	address public immutable vesselManagerAddress;

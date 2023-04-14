@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -12,7 +11,6 @@ This contract is reserved for Linear Vesting to the Team members and the Advisor
 */
 contract LockedGRVT is Ownable, Initializable {
 	using SafeERC20 for IERC20;
-	using SafeMath for uint256;
 
 	struct Rule {
 		uint256 createdDate;
@@ -50,26 +48,19 @@ contract LockedGRVT is Ownable, Initializable {
 		entitiesVesting[_entity] = Rule(
 			block.timestamp,
 			_totalSupply,
-			block.timestamp.add(SIX_MONTHS),
-			block.timestamp.add(TWO_YEARS),
+			block.timestamp + SIX_MONTHS,
+			block.timestamp + TWO_YEARS,
 			0
 		);
 
 		grvtToken.safeTransferFrom(msg.sender, address(this), _totalSupply);
 	}
 
-	function lowerEntityVesting(address _entity, uint256 newTotalSupply)
-		public
-		onlyOwner
-		entityRuleExists(_entity)
-	{
+	function lowerEntityVesting(address _entity, uint256 newTotalSupply) public onlyOwner entityRuleExists(_entity) {
 		sendGRVTTokenToEntity(_entity);
 		Rule storage vestingRule = entitiesVesting[_entity];
 
-		require(
-			newTotalSupply > vestingRule.claimed,
-			"Total Supply goes lower or equal than the claimed total."
-		);
+		require(newTotalSupply > vestingRule.claimed, "Total Supply goes lower or equal than the claimed total.");
 
 		vestingRule.totalSupply = newTotalSupply;
 	}
@@ -78,9 +69,7 @@ contract LockedGRVT is Ownable, Initializable {
 		sendGRVTTokenToEntity(_entity);
 		Rule memory vestingRule = entitiesVesting[_entity];
 
-		assignedGRVTTokens = assignedGRVTTokens.sub(
-			vestingRule.totalSupply.sub(vestingRule.claimed)
-		);
+		assignedGRVTTokens = assignedGRVTTokens - (vestingRule.totalSupply - vestingRule.claimed);
 
 		delete entitiesVesting[_entity];
 	}
@@ -96,7 +85,7 @@ contract LockedGRVT is Ownable, Initializable {
 		Rule storage entityRule = entitiesVesting[_entity];
 		entityRule.claimed += unclaimedAmount;
 
-		assignedGRVTTokens = assignedGRVTTokens.sub(unclaimedAmount);
+		assignedGRVTTokens = assignedGRVTTokens - unclaimedAmount;
 		grvtToken.safeTransfer(_entity, unclaimedAmount);
 	}
 
@@ -115,20 +104,18 @@ contract LockedGRVT is Ownable, Initializable {
 		if (entityRule.startVestingDate > block.timestamp) return claimable;
 
 		if (block.timestamp >= entityRule.endVestingDate) {
-			claimable = entityRule.totalSupply.sub(entityRule.claimed);
+			claimable = entityRule.totalSupply - entityRule.claimed;
 		} else {
-			claimable = entityRule
-				.totalSupply
-				.div(TWO_YEARS)
-				.mul(block.timestamp.sub(entityRule.createdDate))
-				.sub(entityRule.claimed);
+			claimable =
+				((entityRule.totalSupply / TWO_YEARS) * (block.timestamp - entityRule.createdDate)) -
+				entityRule.claimed;
 		}
 
 		return claimable;
 	}
 
 	function getUnassignGRVTTokensAmount() public view returns (uint256) {
-		return grvtToken.balanceOf(address(this)).sub(assignedGRVTTokens);
+		return grvtToken.balanceOf(address(this)) - assignedGRVTTokens;
 	}
 
 	function isEntityExits(address _entity) public view returns (bool) {

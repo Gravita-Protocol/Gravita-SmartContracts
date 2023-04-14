@@ -2,13 +2,11 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
-import "./Dependencies/GravitaSafeMath128.sol";
 import "./Dependencies/PoolBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
@@ -146,8 +144,6 @@ import "./Interfaces/IVesselManager.sol";
  *
  */
 contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
-	using SafeMathUpgradeable for uint256;
-	using GravitaSafeMath128 for uint128;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
@@ -315,7 +311,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 
 		(address[] memory gainAssets, uint256[] memory gainAmounts) = getDepositorGains(msg.sender);
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
-		uint256 loss = initialDeposit.sub(compoundedDeposit); // Needed only for event log
+		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
 		// First pay out any GRVT gains
 		_payOutGRVTGains(communityIssuanceCached, msg.sender);
@@ -323,7 +319,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		// just pulls debtTokens into the pool, updates totalDeposits variable for the stability pool and throws an event
 		_sendToStabilityPool(msg.sender, _amount);
 
-		uint256 newDeposit = compoundedDeposit.add(_amount);
+		uint256 newDeposit = compoundedDeposit + _amount;
 		_updateDepositAndSnapshots(msg.sender, newDeposit);
 		emit UserDepositChanged(msg.sender, newDeposit);
 
@@ -359,14 +355,14 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
 
 		uint256 debtTokensToWithdraw = GravitaMath._min(_amount, compoundedDeposit);
-		uint256 loss = initialDeposit.sub(compoundedDeposit); // Needed only for event log
+		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
 		// First pay out any GRVT gains
 		_payOutGRVTGains(communityIssuanceCached, msg.sender);
 		_sendToDepositor(msg.sender, debtTokensToWithdraw);
 
 		// Update deposit
-		uint256 newDeposit = compoundedDeposit.sub(debtTokensToWithdraw);
+		uint256 newDeposit = compoundedDeposit - debtTokensToWithdraw;
 		_updateDepositAndSnapshots(msg.sender, newDeposit);
 		emit UserDepositChanged(msg.sender, newDeposit);
 
@@ -393,7 +389,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 			return;
 		}
 		uint256 GRVTPerUnitStaked = _computeGRVTPerUnitStaked(_GRVTIssuance, cachedTotalDebtTokenDeposits);
-		uint256 marginalGRVTGain = GRVTPerUnitStaked.mul(P);
+		uint256 marginalGRVTGain = GRVTPerUnitStaked * P;
 		uint256 newEpochToScaleToG = epochToScaleToG[currentEpoch][currentScale];
 		newEpochToScaleToG += marginalGRVTGain;
 		epochToScaleToG[currentEpoch][currentScale] = newEpochToScaleToG;
@@ -412,9 +408,9 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		 * 4) Store this error for use in the next correction when this function is called.
 		 * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
 		 */
-		uint256 GRVTNumerator = _GRVTIssuance.mul(DECIMAL_PRECISION).add(lastGRVTError);
-		uint256 GRVTPerUnitStaked = GRVTNumerator.div(_totalDeposits);
-		lastGRVTError = GRVTNumerator.sub(GRVTPerUnitStaked.mul(_totalDeposits));
+		uint256 GRVTNumerator = (_GRVTIssuance * DECIMAL_PRECISION) + lastGRVTError;
+		uint256 GRVTPerUnitStaked = GRVTNumerator / _totalDeposits;
+		lastGRVTError = GRVTNumerator - (GRVTPerUnitStaked * _totalDeposits);
 		return GRVTPerUnitStaked;
 	}
 
@@ -476,22 +472,22 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	) internal returns (uint256 collGainPerUnitStaked, uint256 debtLossPerUnitStaked) {
 		uint256 currentP = P;
 		uint256 index = adminContract.getIndex(_asset);
-		uint256 collateralNumerator = _amountAdded.mul(DECIMAL_PRECISION).add(lastAssetError_Offset[index]);
+		uint256 collateralNumerator = (_amountAdded * DECIMAL_PRECISION) + lastAssetError_Offset[index];
 		require(_debtToOffset <= _totalDeposits, "StabilityPool: Debt is larger than totalDeposits");
 		if (_debtToOffset == _totalDeposits) {
 			debtLossPerUnitStaked = DECIMAL_PRECISION; // When the Pool depletes to 0, so does each deposit
 			lastDebtTokenLossError_Offset = 0;
 		} else {
-			uint256 lossNumerator = _debtToOffset.mul(DECIMAL_PRECISION).sub(lastDebtTokenLossError_Offset);
+			uint256 lossNumerator = (_debtToOffset * DECIMAL_PRECISION) - lastDebtTokenLossError_Offset;
 			/*
 			 * Add 1 to make error in quotient positive. We want "slightly too much" loss,
 			 * which ensures the error in any given compoundedDeposit favors the Stability Pool.
 			 */
-			debtLossPerUnitStaked = (lossNumerator.div(_totalDeposits)).add(1);
-			lastDebtTokenLossError_Offset = (debtLossPerUnitStaked.mul(_totalDeposits)).sub(lossNumerator);
+			debtLossPerUnitStaked = (lossNumerator / _totalDeposits) + 1;
+			lastDebtTokenLossError_Offset = (debtLossPerUnitStaked * _totalDeposits) - lossNumerator;
 		}
-		collGainPerUnitStaked = collateralNumerator.mul(currentP).div(_totalDeposits);
-		lastAssetError_Offset[index] = collateralNumerator.sub(collGainPerUnitStaked.mul(_totalDeposits).div(currentP));
+		collGainPerUnitStaked = (collateralNumerator * currentP) / _totalDeposits;
+		lastAssetError_Offset[index] = collateralNumerator - (collGainPerUnitStaked * _totalDeposits / currentP);
 	}
 
 	/**
@@ -520,29 +516,29 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		 * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool debt tokens in the liquidation.
 		 * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - lossPerUnitStaked)
 		 */
-		uint256 newProductFactor = uint256(DECIMAL_PRECISION).sub(_lossPerUnitStaked);
+		uint256 newProductFactor = DECIMAL_PRECISION - _lossPerUnitStaked;
 		uint128 currentScaleCached = currentScale;
 		uint128 currentEpochCached = currentEpoch;
 		uint256 currentS = epochToScaleToSum[_asset][currentEpochCached][currentScaleCached];
-		uint256 newS = currentS.add(_AssetGainPerUnitStaked);
+		uint256 newS = currentS + _AssetGainPerUnitStaked;
 		epochToScaleToSum[_asset][currentEpochCached][currentScaleCached] = newS;
 		emit S_Updated(_asset, newS, currentEpochCached, currentScaleCached);
 
 		// If the Stability Pool was emptied, increment the epoch, and reset the scale and product P
 		if (newProductFactor == 0) {
-			currentEpoch = currentEpochCached.add(1);
+			currentEpoch = currentEpochCached + 1;
 			emit EpochUpdated(currentEpoch);
 			currentScale = 0;
 			emit ScaleUpdated(currentScale);
 			newP = DECIMAL_PRECISION;
 
 			// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
-		} else if (currentP.mul(newProductFactor).div(DECIMAL_PRECISION) < SCALE_FACTOR) {
-			newP = currentP.mul(newProductFactor).mul(SCALE_FACTOR).div(DECIMAL_PRECISION);
-			currentScale = currentScaleCached.add(1);
+		} else if (currentP * newProductFactor / DECIMAL_PRECISION < SCALE_FACTOR) {
+			newP = currentP * newProductFactor * SCALE_FACTOR / DECIMAL_PRECISION;
+			currentScale = currentScaleCached + 1;
 			emit ScaleUpdated(currentScale);
 		} else {
-			newP = currentP.mul(newProductFactor).div(DECIMAL_PRECISION);
+			newP = currentP * newProductFactor / DECIMAL_PRECISION;
 		}
 
 		require(newP != 0, "StabilityPool: P = 0");
@@ -572,7 +568,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	}
 
 	function _decreaseDebtTokens(uint256 _amount) internal {
-		uint256 newTotalDeposits = totalDebtTokenDeposits.sub(_amount);
+		uint256 newTotalDeposits = totalDebtTokenDeposits -_amount;
 		totalDebtTokenDeposits = newTotalDeposits;
 		emit StabilityPoolDebtTokenBalanceUpdated(newTotalDeposits);
 	}
@@ -657,10 +653,10 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		uint256 P_Snapshot = snapshots.P;
 
 		mapping(uint128 => uint256) storage scaleToSum = epochToScaleToSum[asset][snapshots.epoch];
-		uint256 firstPortion = scaleToSum[snapshots.scale].sub(S_Snapshot);
-		uint256 secondPortion = scaleToSum[snapshots.scale + 1].div(SCALE_FACTOR);
+		uint256 firstPortion = scaleToSum[snapshots.scale] - S_Snapshot;
+		uint256 secondPortion = scaleToSum[snapshots.scale + 1] / SCALE_FACTOR;
 
-		uint256 assetGain = initialDeposit.mul(firstPortion.add(secondPortion)).div(P_Snapshot).div(DECIMAL_PRECISION);
+		uint256 assetGain = initialDeposit * (firstPortion + secondPortion) / P_Snapshot / DECIMAL_PRECISION;
 
 		return assetGain;
 	}
@@ -696,10 +692,10 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		uint256 G_Snapshot = snapshots.G;
 		uint256 P_Snapshot = snapshots.P;
 
-		uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot].sub(G_Snapshot);
-		uint256 secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot.add(1)].div(SCALE_FACTOR);
+		uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - G_Snapshot;
+		uint256 secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot + 1] / SCALE_FACTOR;
 
-		uint256 GRVTGain = initialStake.mul(firstPortion.add(secondPortion)).div(P_Snapshot).div(DECIMAL_PRECISION);
+		uint256 GRVTGain = initialStake * (firstPortion + secondPortion) / P_Snapshot / DECIMAL_PRECISION;
 
 		return GRVTGain;
 	}
@@ -735,16 +731,16 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		}
 
 		uint256 compoundedStake;
-		uint128 scaleDiff = currentScale.sub(scaleSnapshot);
+		uint128 scaleDiff = currentScale - scaleSnapshot;
 
 		/* Compute the compounded stake. If a scale change in P was made during the stake's lifetime,
 		 * account for it. If more than one scale change was made, then the stake has decreased by a factor of
 		 * at least 1e-9 -- so return 0.
 		 */
 		if (scaleDiff == 0) {
-			compoundedStake = initialStake.mul(P).div(snapshot_P);
+			compoundedStake = initialStake * P / snapshot_P;
 		} else if (scaleDiff == 1) {
-			compoundedStake = initialStake.mul(P).div(snapshot_P).div(SCALE_FACTOR);
+			compoundedStake = initialStake * P / snapshot_P / SCALE_FACTOR;
 		} else {
 			compoundedStake = 0;
 		}
@@ -758,7 +754,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		 *
 		 * Thus it's unclear whether this line is still really needed.
 		 */
-		if (compoundedStake < initialStake.div(1e9)) {
+		if (compoundedStake < initialStake / 1e9) {
 			return 0;
 		}
 
@@ -770,7 +766,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 	// Transfer the tokens from the user to the Stability Pool's address, and update its recorded deposits
 	function _sendToStabilityPool(address _address, uint256 _amount) internal {
 		debtToken.sendToPool(_address, address(this), _amount);
-		uint256 newTotalDeposits = totalDebtTokenDeposits.add(_amount);
+		uint256 newTotalDeposits = totalDebtTokenDeposits + _amount;
 		totalDebtTokenDeposits = newTotalDeposits;
 		emit StabilityPoolDebtTokenBalanceUpdated(newTotalDeposits);
 	}

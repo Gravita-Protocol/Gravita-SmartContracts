@@ -11,7 +11,6 @@ import "./GravitaBase.sol";
  * and contains additional array operation functions and _requireCallerIsYetiController()
  */
 contract PoolBase is GravitaBase {
-	using SafeMathUpgradeable for uint256;
 	/**
 	 * @dev This empty reserved space is put in place to allow future versions to add new
 	 * variables without shifting down storage in the inheritance chain.
@@ -52,7 +51,7 @@ contract PoolBase is GravitaBase {
 		while (i < tokensLen && j < coll1Len) {
 			// If tokens match up then sum them together.
 			if (_tokens[i] == _coll1.tokens[j]) {
-				sumAmounts[j] = _coll1.amounts[j].add(_amounts[i]);
+				sumAmounts[j] = _coll1.amounts[j] + _amounts[i];
 				++i;
 			}
 			// Otherwise just take the left side.
@@ -101,7 +100,7 @@ contract PoolBase is GravitaBase {
 		while (i < tokensLen && j < coll1Len) {
 			// If tokens match up then subtract them
 			if (_subTokens[i] == _coll1.tokens[j]) {
-				diffAmounts[j] = _coll1.amounts[j].sub(_subAmounts[i]);
+				diffAmounts[j] = _coll1.amounts[j] - _subAmounts[i];
 				++i;
 			}
 			// Otherwise just take the left side.

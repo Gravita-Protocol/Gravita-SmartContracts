@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -17,7 +16,6 @@ import "./Interfaces/IDefaultPool.sol";
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is OwnableUpgradeable, IDefaultPool {
-	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "DefaultPool";
@@ -52,25 +50,30 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 		address activePool = activePoolAddress; // cache to save an SLOAD
 
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
-		if (safetyTransferAmount == 0) return;
+		if (safetyTransferAmount == 0) {
+			return;
+		}
 
-		assetsBalances[_asset] = assetsBalances[_asset].sub(_amount);
+		uint256 newBalance = assetsBalances[_asset] - _amount;
+		assetsBalances[_asset] = newBalance;
 
 		IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
 		IDeposit(activePool).receivedERC20(_asset, _amount);
 
-		emit DefaultPoolAssetBalanceUpdated(_asset, assetsBalances[_asset]);
+		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
 		emit AssetSent(activePool, _asset, safetyTransferAmount);
 	}
 
 	function increaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
-		debtTokenBalances[_asset] = debtTokenBalances[_asset].add(_amount);
-		emit DefaultPoolDebtUpdated(_asset, debtTokenBalances[_asset]);
+		uint256 newDebt = debtTokenBalances[_asset] + _amount;
+		debtTokenBalances[_asset] = newDebt;
+		emit DefaultPoolDebtUpdated(_asset, newDebt);
 	}
 
 	function decreaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
-		debtTokenBalances[_asset] = debtTokenBalances[_asset].sub(_amount);
-		emit DefaultPoolDebtUpdated(_asset, debtTokenBalances[_asset]);
+		uint256 newDebt = debtTokenBalances[_asset] - _amount;
+		debtTokenBalances[_asset] = newDebt;
+		emit DefaultPoolDebtUpdated(_asset, newDebt);
 	}
 
 	// --- 'require' functions ---
@@ -86,7 +89,8 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 	}
 
 	function receivedERC20(address _asset, uint256 _amount) external override callerIsActivePool {
-		assetsBalances[_asset] = assetsBalances[_asset].add(_amount);
-		emit DefaultPoolAssetBalanceUpdated(_asset, assetsBalances[_asset]);
+		uint256 newBalance = assetsBalances[_asset] + _amount;
+		assetsBalances[_asset] = newBalance;
+		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
 	}
 }

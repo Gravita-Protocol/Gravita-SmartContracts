@@ -3,7 +3,6 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
@@ -13,7 +12,6 @@ import "./Interfaces/IRETHToken.sol";
 import "./Interfaces/IWstETHToken.sol";
 
 contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
-	using SafeMathUpgradeable for uint256;
 
 	/** Constants ---------------------------------------------------------------------------------------------------- */
 
@@ -72,7 +70,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		AggregatorV3Interface newOracle = AggregatorV3Interface(_chainlinkOracle);
 		_validateFeedResponse(newOracle);
 		if (registeredOracles[_token].exists) {
-			uint256 timelockRelease = block.timestamp.add(ORACLE_UPDATE_TIMELOCK);
+			uint256 timelockRelease = block.timestamp + ORACLE_UPDATE_TIMELOCK;
 			queuedOracles[_token] = OracleRecord({
 				chainLinkOracle: newOracle,
 				timelockRelease: timelockRelease,
@@ -155,7 +153,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
 		uint256 ethPrice = fetchPrice(address(0));
-		return ethPrice.mul(ethAmount).div(1 ether);
+		return ethPrice * ethAmount / 1 ether;
 	}
 
 	/**
@@ -206,7 +204,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	}
 
 	function _isFeedFrozen(FeedResponse memory _response) internal view returns (bool) {
-		return block.timestamp.sub(_response.timestamp) > TIMEOUT;
+		return block.timestamp - _response.timestamp > TIMEOUT;
 	}
 
 	function _isFeedWorking(FeedResponse memory _currentResponse, FeedResponse memory _prevResponse)
@@ -242,7 +240,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		 * - If price decreased, the percentage deviation is in relation to the the previous price.
 		 * - If price increased, the percentage deviation is in relation to the current price.
 		 */
-		uint256 percentDeviation = maxPrice.sub(minPrice).mul(DECIMAL_PRECISION).div(maxPrice);
+		uint256 percentDeviation = (maxPrice - minPrice) * DECIMAL_PRECISION / maxPrice;
 
 		// Return true if price has more than doubled, or more than halved.
 		isAboveDeviation = percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
@@ -254,10 +252,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _scalePriceByDigits(uint256 _price, uint256 _answerDigits) internal pure returns (uint256 price) {
 		if (_answerDigits >= TARGET_DIGITS) {
 			// Scale the returned price value down to Gravita's target precision
-			price = _price.div(10**(_answerDigits - TARGET_DIGITS));
+			price = _price / (10**(_answerDigits - TARGET_DIGITS));
 		} else if (_answerDigits < TARGET_DIGITS) {
 			// Scale the returned price value up to Gravita's target precision
-			price = _price.mul(10**(TARGET_DIGITS - _answerDigits));
+			price = _price * (10**(TARGET_DIGITS - _answerDigits));
 		}
 	}
 

@@ -2,11 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Interfaces/IERC20Decimals.sol";
 
 library SafetyTransfer {
-	using SafeMathUpgradeable for uint256;
 
 	error EthUnsupportedError();
 	error InvalidAmountError();
