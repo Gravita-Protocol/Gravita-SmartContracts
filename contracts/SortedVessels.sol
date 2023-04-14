@@ -70,13 +70,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	// --- Dependency setters ---
 
-	function setParams(address _vesselManagerAddress, address _borrowerOperationsAddress) external override initializer {
+	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external initializer {
 		__Ownable_init();
-
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
-
-		renounceOwnership();
 	}
 
 	/*

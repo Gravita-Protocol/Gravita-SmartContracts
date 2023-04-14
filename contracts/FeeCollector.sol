@@ -44,6 +44,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		bool _routeToGRVTStaking
 	) external initializer {
 		require(_treasuryAddress != address(0));
+		__Ownable_init();
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		grvtStaking = IGRVTStaking(_grvtStakingAddress);
@@ -53,7 +54,6 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		if (_routeToGRVTStaking && address(grvtStaking) == address(0)) {
 			revert FeeCollector__InvalidGRVTStakingAddress();
 		}
-		__Ownable_init();
 	}
 
 	/** Config setters ----------------------------------------------------------------------------------------------- */

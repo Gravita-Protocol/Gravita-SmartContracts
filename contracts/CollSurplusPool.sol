@@ -30,15 +30,12 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 		address _borrowerOperationsAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external override initializer {
+	) external initializer {
 		__Ownable_init();
-
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-
-		renounceOwnership();
 	}
 
 	/* Returns the Asset state variable at ActivePool address.

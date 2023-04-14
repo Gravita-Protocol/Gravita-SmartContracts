@@ -23,23 +23,15 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 	address public vesselManagerAddress;
 	address public activePoolAddress;
 
-	bool public isInitialized;
-
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
 
 	// --- Dependency setters ---
 
 	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
-
 		__Ownable_init();
-
 		vesselManagerAddress = _vesselManagerAddress;
 		activePoolAddress = _activePoolAddress;
-
-		renounceOwnership();
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---

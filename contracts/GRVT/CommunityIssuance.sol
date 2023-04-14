@@ -28,8 +28,6 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 	address public adminContract;
 
-	bool public isInitialized;
-
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
 		_;
@@ -50,13 +48,9 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		address _grvtTokenAddress,
 		address _stabilityPoolAddress,
 		address _adminContract
-	) external override initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
+	) external initializer {
 		__Ownable_init();
-
 		adminContract = _adminContract;
-
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 	}

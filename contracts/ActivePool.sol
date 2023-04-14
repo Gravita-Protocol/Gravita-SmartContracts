@@ -94,8 +94,6 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		stabilityPoolAddress = _stabilityPoolAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-
-		renounceOwnership();
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---

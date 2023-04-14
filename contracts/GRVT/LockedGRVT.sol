@@ -4,11 +4,12 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /*
 This contract is reserved for Linear Vesting to the Team members and the Advisors team.
 */
-contract LockedGRVT is Ownable {
+contract LockedGRVT is Ownable, Initializable {
 	using SafeERC20 for IERC20;
 
 	struct Rule {
@@ -23,8 +24,6 @@ contract LockedGRVT is Ownable {
 	uint256 public constant SIX_MONTHS = 26 weeks;
 	uint256 public constant TWO_YEARS = 730 days;
 
-	bool public isInitialized;
-
 	IERC20 private grvtToken;
 	uint256 private assignedGRVTTokens;
 
@@ -35,10 +34,7 @@ contract LockedGRVT is Ownable {
 		_;
 	}
 
-	function setAddresses(address _grvtAddress) public onlyOwner {
-		require(!isInitialized, "Already Initialized");
-		isInitialized = true;
-
+	function setAddresses(address _grvtAddress) public initializer onlyOwner {
 		grvtToken = IERC20(_grvtAddress);
 	}
 

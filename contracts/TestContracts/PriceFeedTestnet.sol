@@ -10,7 +10,6 @@ import "../Interfaces/IPriceFeed.sol";
 contract PriceFeedTestnet is IPriceFeed {
 
 	string public constant NAME = "PriceFeedTestnet";
-	bool public constant isInitialized = true;
 
 	mapping(address => uint256) public lastGoodPrice;
 

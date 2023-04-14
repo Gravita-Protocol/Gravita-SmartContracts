@@ -419,7 +419,7 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
 
-			await sortedVessels.setParams(sortedVesselsTester.address, sortedVesselsTester.address)
+			await sortedVessels.setAddresses(sortedVesselsTester.address, sortedVesselsTester.address)
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})
 

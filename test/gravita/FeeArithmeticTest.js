@@ -17,8 +17,6 @@ contract("Fee arithmetic tests", async accounts => {
 	let vesselManagerTester
 	let mathTester
 
-	const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
-
 	// see: https://docs.google.com/spreadsheets/d/1RbD8VGzq7xFgeK1GOkz_9bbKVIx-xkOz0VsVelnUFdc/edit#gid=0
 	// Results array, maps seconds to expected hours passed output (rounded down to nearest hour).
 
@@ -210,16 +208,12 @@ contract("Fee arithmetic tests", async accounts => {
 
 	beforeEach(async () => {
 		contracts = await deploymentHelper.deployGravitaCore()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, [])
 	})
 
 	it("minutesPassedSinceLastFeeOp(): returns minutes passed for no time increase", async () => {
 		await vesselManagerTester.setLastFeeOpTimeToNow(ZERO_ADDRESS)
 		const minutesPassed = await vesselManagerTester.minutesPassedSinceLastFeeOp(ZERO_ADDRESS)
-
 		assert.equal(minutesPassed, "0")
 	})
 
@@ -322,19 +316,9 @@ contract("Fee arithmetic tests", async accounts => {
 			await vesselManagerTester.unprotectedDecayBaseRateFromBorrowing(ZERO_ADDRESS)
 			const decayedBaseRate = await vesselManagerTester.baseRate(ZERO_ADDRESS)
 
-			const minutesPassed = secondsPassed / 60
-
-			const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-			// console.log(
-			//   `starting baseRate: ${startBaseRate},
-			//   minutesPassed: ${minutesPassed},
-			//   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-			//   decayedBaseRate: ${decayedBaseRate},
-			//   error: ${error}`
-			// )
 			assert.isAtMost(
 				getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()),
-				100000
+				100_000
 			) // allow absolute error tolerance of 1e-13
 		}
 	})
@@ -347,8 +331,6 @@ contract("Fee arithmetic tests", async accounts => {
 			const contractBaseRate = await vesselManagerTester.baseRate(ZERO_ADDRESS)
 			assert.equal(contractBaseRate, dec(1, 17))
 
-			const startBaseRate = "0.1"
-
 			const secondsPassed = decayBaseRateResults.seconds[i]
 			const expectedDecayedBaseRate = decayBaseRateResults["0.1"][i]
 			await vesselManagerTester.setLastFeeOpTimeToNow(ZERO_ADDRESS)
@@ -359,19 +341,9 @@ contract("Fee arithmetic tests", async accounts => {
 			await vesselManagerTester.unprotectedDecayBaseRateFromBorrowing(ZERO_ADDRESS)
 			const decayedBaseRate = await vesselManagerTester.baseRate(ZERO_ADDRESS)
 
-			const minutesPassed = secondsPassed / 60
-
-			const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-			// console.log(
-			//   `starting baseRate: ${startBaseRate},
-			//   minutesPassed: ${minutesPassed},
-			//   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-			//   decayedBaseRate: ${decayedBaseRate},
-			//   error: ${error}`
-			// )
 			assert.isAtMost(
 				getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()),
-				1000000
+				1_000_000
 			) // allow absolute error tolerance of 1e-12
 		}
 	})
@@ -396,20 +368,9 @@ contract("Fee arithmetic tests", async accounts => {
 			await vesselManagerTester.unprotectedDecayBaseRateFromBorrowing(ZERO_ADDRESS)
 			const decayedBaseRate = await vesselManagerTester.baseRate(ZERO_ADDRESS)
 
-			const minutesPassed = secondsPassed / 60
-
-			const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-			// console.log(
-			//   `starting baseRate: ${startBaseRate},
-			//   minutesPassed: ${minutesPassed},
-			//   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-			//   decayedBaseRate: ${decayedBaseRate},
-			//   error: ${error}`
-			// )
-
 			assert.isAtMost(
 				getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()),
-				1000000
+				1_000_000
 			) // allow absolute error tolerance of 1e-12
 		}
 	})
@@ -433,21 +394,9 @@ contract("Fee arithmetic tests", async accounts => {
 			await vesselManagerTester.unprotectedDecayBaseRateFromBorrowing(ZERO_ADDRESS)
 			const decayedBaseRate = await vesselManagerTester.baseRate(ZERO_ADDRESS)
 
-			const minutesPassed = secondsPassed / 60
-
-			const error = decayedBaseRate.sub(toBN(expectedDecayedBaseRate))
-
-			// console.log(
-			//   `starting baseRate: ${startBaseRate},
-			//   minutesPassed: ${minutesPassed},
-			//   expectedDecayedBaseRate: ${expectedDecayedBaseRate},
-			//   decayedBaseRate: ${decayedBaseRate},
-			//   error: ${error}`
-			// )
-
 			assert.isAtMost(
 				getDifference(expectedDecayedBaseRate.toString(), decayedBaseRate.toString()),
-				10000000
+				10_000_000
 			) // allow absolute error tolerance of 1e-11
 		}
 	})

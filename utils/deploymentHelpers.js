@@ -268,7 +268,7 @@ class DeploymentHelper {
 		)
 
 		await contracts.adminContract.setAddresses(
-			GRVTContracts.communityIssuance.address,
+			GRVTContracts.communityIssuance?.address || ZERO_ADDRESS,
 			contracts.activePool.address,
 			contracts.defaultPool.address,
 			contracts.stabilityPool.address,
@@ -301,7 +301,7 @@ class DeploymentHelper {
 		await contracts.feeCollector.setAddresses(
 			contracts.borrowerOperations.address,
 			contracts.vesselManager.address,
-			GRVTContracts.grvtStaking.address,
+			GRVTContracts.grvtStaking?.address || ZERO_ADDRESS,
 			contracts.debtToken.address,
 			treasury,
 			false
@@ -313,7 +313,7 @@ class DeploymentHelper {
 		await contracts.priceFeedTestnet.setPrice(contracts.erc20.address, dec(200, 'ether'))
 		await contracts.priceFeedTestnet.setPrice(contracts.erc20B.address, dec(100, 'ether'))
 
-		await contracts.sortedVessels.setParams(contracts.vesselManager.address, contracts.borrowerOperations.address)
+		await contracts.sortedVessels.setAddresses(contracts.vesselManager.address, contracts.borrowerOperations.address)
 
 		await contracts.stabilityPool.setAddresses(
 			contracts.borrowerOperations.address,
@@ -321,7 +321,7 @@ class DeploymentHelper {
 			contracts.activePool.address,
 			contracts.debtToken.address,
 			contracts.sortedVessels.address,
-			GRVTContracts.communityIssuance.address,
+			GRVTContracts.communityIssuance?.address || ZERO_ADDRESS,
 			contracts.adminContract.address
 		)
 

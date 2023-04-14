@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 interface IFeeCollector {
 
-	/** Events ------------------------------------------------------------------------------------------------------- */
+	// Events -----------------------------------------------------------------------------------------------------------
 
 	event FeeRecordUpdated(address borrower, address asset, uint256 from, uint256 to, uint256 amount);
 	event FeeCollected(address borrower, address asset, address collector, uint256 amount);
@@ -13,7 +13,7 @@ interface IFeeCollector {
 	event RedemptionFeeCollected(address asset, uint256 amount);
 	event RouteToGRVTStakingChanged(bool routeToGRVTStaking);
 
-	/** Structs ------------------------------------------------------------------------------------------------------ */
+	// Structs ----------------------------------------------------------------------------------------------------------
 
 	struct FeeRecord {
 		uint256 from; // timestamp in seconds
@@ -21,7 +21,7 @@ interface IFeeCollector {
 		uint256 amount; // refundable fee amount
 	}
 
-	/** Custom Errors ------------------------------------------------------------------------------------------------ */
+	// Custom Errors ----------------------------------------------------------------------------------------------------
 
 	error FeeCollector__ArrayMismatch();
 	error FeeCollector__BorrowerOperationsOnly(address sender, address expected);
@@ -29,8 +29,7 @@ interface IFeeCollector {
 	error FeeCollector__InvalidGRVTStakingAddress();
 	error FeeCollector__VesselManagerOnly(address sender, address expected);
 
-	/** Methods ------------------------------------------------------------------------------------------------------ */
-
+	// Functions --------------------------------------------------------------------------------------------------------
 
 	function setGRVTStakingAddress(address _grvtStakingAddress) external;
 	

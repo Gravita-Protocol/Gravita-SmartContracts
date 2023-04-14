@@ -40,7 +40,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 		IStabilityPool stabilityPoolCached = vesselManagerCached.stabilityPool();
 		stabilityPool = stabilityPoolCached;
 
-		IPriceFeed priceFeedCached = vesselManagerCached.adminContract().priceFeed(); // TODO: Get from AdminContract instead if this script is active.
+		IPriceFeed priceFeedCached = vesselManagerCached.adminContract().priceFeed();
 		priceFeed = priceFeedCached;
 
 		address debtTokenCached = address(vesselManagerCached.debtToken());

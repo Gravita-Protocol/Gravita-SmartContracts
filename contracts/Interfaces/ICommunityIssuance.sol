@@ -9,12 +9,6 @@ interface ICommunityIssuance {
 
 	// --- Functions ---
 
-	function setAddresses(
-		address _GRVTTokenAddress,
-		address _stabilityPoolAddress,
-		address _adminContract
-	) external;
-
 	function issueGRVT() external returns (uint256);
 
 	function sendGRVT(address _account, uint256 _GRVTamount) external;

@@ -241,7 +241,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		address _sortedVesselsAddress,
 		address _communityIssuanceAddress,
 		address _adminContractAddress
-	) external override initializer {
+	) external initializer {
 		__Ownable_init();
 		__ReentrancyGuard_init();
 
@@ -254,8 +254,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		adminContract = IAdminContract(_adminContractAddress);
 
 		P = DECIMAL_PRECISION;
-
-		renounceOwnership();
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---

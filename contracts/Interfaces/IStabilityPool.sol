@@ -32,20 +32,6 @@ interface IStabilityPool is IDeposit {
 	// --- Functions ---
 
 	/*
-	 * Called only once on init, to set addresses of other Gravita contracts
-	 * Callable only by owner, renounces ownership at the end
-	 */
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _activePoolAddress,
-		address _debtTokenAddress,
-		address _sortedVesselsAddress,
-		address _communityIssuanceAddress,
-		address _adminContractAddress
-	) external;
-
-	/*
 	 * Initial checks:
 	 * - Frontend is registered or zero address
 	 * - Sender is not a registered frontend

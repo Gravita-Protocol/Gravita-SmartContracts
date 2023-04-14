@@ -7,9 +7,35 @@ import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 
 interface IAdminContract {
-	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
 
-	// --- Events ---
+	// Structs ----------------------------------------------------------------------------------------------------------
+
+	struct CollateralParams {
+		uint256 decimals;
+		uint256 index; //Maps to token address in validCollateral[]
+		bool active;
+		bool isWrapped;
+		uint256 mcr;
+		uint256 ccr;
+		uint256 debtTokenGasCompensation; // Amount of debtToken to be locked in gas pool on opening vessels
+		uint256 minNetDebt; // Minimum amount of net debtToken a vessel must have
+		uint256 percentDivisor; // dividing by 200 yields 0.5%
+		uint256 borrowingFee;
+		uint256 redemptionFeeFloor;
+		uint256 redemptionBlockTimestamp;
+		uint256 mintCap;
+		bool hasCollateralConfigured;
+	}
+
+	// Custom Errors ----------------------------------------------------------------------------------------------------
+
+	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
+	error AdminContract__ShortTimelockOnly();
+	error AdminContract__LongTimelockOnly();
+	error AdminContract__OnlyOwner();
+
+	// Events -----------------------------------------------------------------------------------------------------------
+
 	event CollateralAdded(address _collateral);
 	event MCRChanged(uint256 oldMCR, uint256 newMCR);
 	event CCRChanged(uint256 oldCCR, uint256 newCCR);
@@ -23,7 +49,8 @@ interface IAdminContract {
 	event RedemptionBlockTimestampChanged(address _collateral, uint256 _blockTimestamp);
 	event PriceFeedChanged(address indexed addr);
 
-	// --- Functions ---
+	// Functions --------------------------------------------------------------------------------------------------------
+
 	function DECIMAL_PRECISION() external view returns (uint256);
 
 	function _100pct() external view returns (uint256);
@@ -38,17 +65,6 @@ interface IAdminContract {
 		address _collateral,
 		uint256 _decimals,
 		bool _isWrapped
-	) external;
-
-	function setAddresses(
-		address _communityIssuanceAddress,
-		address _activePoolAddress,
-		address _defaultPoolAddress,
-		address _stabilityPoolAddress,
-		address _collSurplusPoolAddress,
-		address _priceFeedAddress,
-		address _shortTimelock,
-		address _longTimelock
 	) external;
 
 	function setMCR(address _collateral, uint256 newMCR) external;

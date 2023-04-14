@@ -429,7 +429,7 @@ class MainnetDeploymentHelper {
 			))
 		;(await this.isOwnershipRenounced(contracts.sortedVessels)) ||
 			(await this.sendAndWaitForTransaction(
-				contracts.sortedVessels.setParams(contracts.vesselManager.address, contracts.borrowerOperations.address, {
+				contracts.sortedVessels.setAddresses(contracts.vesselManager.address, contracts.borrowerOperations.address, {
 					gasPrice,
 				})
 			))

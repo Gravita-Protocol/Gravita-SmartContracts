@@ -127,7 +127,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _sortedVesselsAddress,
 		address _vesselManagerOperationsAddress,
 		address _adminContractAddress
-	) external override initializer {
+	) external initializer {
 		__Ownable_init();
 		borrowerOperations = _borrowerOperationsAddress;
 		vesselManagerOperations = _vesselManagerOperationsAddress;
