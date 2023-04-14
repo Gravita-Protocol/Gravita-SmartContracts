@@ -70,11 +70,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	// --- Dependency setters ---
 
-	function setParams(address _vesselManagerAddress, address _borrowerOperationsAddress)
-		external
-		override
-		initializer
-	{
+	function setParams(address _vesselManagerAddress, address _borrowerOperationsAddress) external override initializer {
 		__Ownable_init();
 
 		vesselManager = IVesselManager(_vesselManagerAddress);
@@ -111,8 +107,9 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address _prevId,
 		address _nextId
 	) internal {
-		if (data[_asset].maxSize == 0) {
-			data[_asset].maxSize = MAX_UINT256;
+		Data storage assetData = data[_asset];
+		if (assetData.maxSize == 0) {
+			assetData.maxSize = MAX_UINT256;
 		}
 
 		// List must not be full
@@ -133,28 +130,29 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			(prevId, nextId) = _findInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId);
 		}
 
-		data[_asset].nodes[_id].exists = true;
+		Node storage node = assetData.nodes[_id];
+		node.exists = true;
 
 		if (prevId == address(0) && nextId == address(0)) {
 			// Insert as head and tail
-			data[_asset].head = _id;
-			data[_asset].tail = _id;
+			assetData.head = _id;
+			assetData.tail = _id;
 		} else if (prevId == address(0)) {
 			// Insert before `prevId` as the head
-			data[_asset].nodes[_id].nextId = data[_asset].head;
-			data[_asset].nodes[data[_asset].head].prevId = _id;
-			data[_asset].head = _id;
+			node.nextId = assetData.head;
+			assetData.nodes[assetData.head].prevId = _id;
+			assetData.head = _id;
 		} else if (nextId == address(0)) {
 			// Insert after `nextId` as the tail
-			data[_asset].nodes[_id].prevId = data[_asset].tail;
-			data[_asset].nodes[data[_asset].tail].nextId = _id;
-			data[_asset].tail = _id;
+			node.prevId = assetData.tail;
+			assetData.nodes[assetData.tail].nextId = _id;
+			assetData.tail = _id;
 		} else {
 			// Insert at insert position between `prevId` and `nextId`
-			data[_asset].nodes[_id].nextId = nextId;
-			data[_asset].nodes[_id].prevId = prevId;
-			data[_asset].nodes[prevId].nextId = _id;
-			data[_asset].nodes[nextId].prevId = _id;
+			node.nextId = nextId;
+			node.prevId = prevId;
+			assetData.nodes[prevId].nextId = _id;
+			assetData.nodes[nextId].prevId = _id;
 		}
 
 		data[_asset].size = data[_asset].size + 1;
@@ -174,36 +172,34 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		// List must contain the node
 		require(contains(_asset, _id), "SortedVessels: List does not contain the id");
 
-		if (data[_asset].size > 1) {
+		Data storage assetData = data[_asset];
+		Node storage node = assetData.nodes[_id];
+		if (assetData.size > 1) {
 			// List contains more than a single node
-			if (_id == data[_asset].head) {
+			if (_id == assetData.head) {
 				// The removed node is the head
 				// Set head to next node
-				data[_asset].head = data[_asset].nodes[_id].nextId;
+				assetData.head = node.nextId;
 				// Set prev pointer of new head to null
-				data[_asset].nodes[data[_asset].head].prevId = address(0);
-			} else if (_id == data[_asset].tail) {
+				assetData.nodes[assetData.head].prevId = address(0);
+			} else if (_id == assetData.tail) {
 				// The removed node is the tail
 				// Set tail to previous node
-				data[_asset].tail = data[_asset].nodes[_id].prevId;
+				assetData.tail = node.prevId;
 				// Set next pointer of new tail to null
-				data[_asset].nodes[data[_asset].tail].nextId = address(0);
+				assetData.nodes[assetData.tail].nextId = address(0);
 			} else {
 				// The removed node is neither the head nor the tail
 				// Set next pointer of previous node to the next node
-				data[_asset].nodes[data[_asset].nodes[_id].prevId].nextId = data[_asset]
-					.nodes[_id]
-					.nextId;
+				assetData.nodes[node.prevId].nextId = node.nextId;
 				// Set prev pointer of next node to the previous node
-				data[_asset].nodes[data[_asset].nodes[_id].nextId].prevId = data[_asset]
-					.nodes[_id]
-					.prevId;
+				assetData.nodes[node.nextId].prevId = node.prevId;
 			}
 		} else {
 			// List contains a single node
 			// Set the head and tail to null
-			data[_asset].head = address(0);
-			data[_asset].tail = address(0);
+			assetData.head = address(0);
+			assetData.tail = address(0);
 		}
 
 		delete data[_asset].nodes[_id];
@@ -331,12 +327,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			return isEmpty(_asset);
 		} else if (_prevId == address(0)) {
 			// `(null, _nextId)` is a valid insert position if `_nextId` is the head of the list
-			return
-				data[_asset].head == _nextId && _NICR >= _vesselManager.getNominalICR(_asset, _nextId);
+			return data[_asset].head == _nextId && _NICR >= _vesselManager.getNominalICR(_asset, _nextId);
 		} else if (_nextId == address(0)) {
 			// `(_prevId, null)` is a valid insert position if `_prevId` is the tail of the list
-			return
-				data[_asset].tail == _prevId && _NICR <= _vesselManager.getNominalICR(_asset, _prevId);
+			return data[_asset].tail == _prevId && _NICR <= _vesselManager.getNominalICR(_asset, _prevId);
 		} else {
 			// `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
 			return
@@ -358,23 +352,20 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		uint256 _NICR,
 		address _startId
 	) internal view returns (address, address) {
+		Data storage assetData = data[_asset];
+
 		// If `_startId` is the head, check if the insert position is before the head
-		if (
-			data[_asset].head == _startId && _NICR >= _vesselManager.getNominalICR(_asset, _startId)
-		) {
+		if (assetData.head == _startId && _NICR >= _vesselManager.getNominalICR(_asset, _startId)) {
 			return (address(0), _startId);
 		}
 
 		address prevId = _startId;
-		address nextId = data[_asset].nodes[prevId].nextId;
+		address nextId = assetData.nodes[prevId].nextId;
 
 		// Descend the list until we reach the end or until we find a valid insert position
-		while (
-			prevId != address(0) &&
-			!_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)
-		) {
-			prevId = data[_asset].nodes[prevId].nextId;
-			nextId = data[_asset].nodes[prevId].nextId;
+		while (prevId != address(0) && !_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
+			prevId = assetData.nodes[prevId].nextId;
+			nextId = assetData.nodes[prevId].nextId;
 		}
 
 		return (prevId, nextId);
@@ -392,23 +383,20 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		uint256 _NICR,
 		address _startId
 	) internal view returns (address, address) {
+		Data storage assetData = data[_asset];
+
 		// If `_startId` is the tail, check if the insert position is after the tail
-		if (
-			data[_asset].tail == _startId && _NICR <= _vesselManager.getNominalICR(_asset, _startId)
-		) {
+		if (assetData.tail == _startId && _NICR <= _vesselManager.getNominalICR(_asset, _startId)) {
 			return (_startId, address(0));
 		}
 
 		address nextId = _startId;
-		address prevId = data[_asset].nodes[nextId].prevId;
+		address prevId = assetData.nodes[nextId].prevId;
 
 		// Ascend the list until we reach the end or until we find a valid insertion point
-		while (
-			nextId != address(0) &&
-			!_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)
-		) {
-			nextId = data[_asset].nodes[nextId].prevId;
-			prevId = data[_asset].nodes[nextId].prevId;
+		while (nextId != address(0) && !_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
+			nextId = assetData.nodes[nextId].prevId;
+			prevId = assetData.nodes[nextId].prevId;
 		}
 
 		return (prevId, nextId);
@@ -471,10 +459,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	// --- 'require' functions ---
 
 	function _requireCallerIsVesselManager() internal view {
-		require(
-			msg.sender == address(vesselManager),
-			"SortedVessels: Caller is not the VesselManager"
-		);
+		require(msg.sender == address(vesselManager), "SortedVessels: Caller is not the VesselManager");
 	}
 
 	function _requireCallerIsBOorVesselM(IVesselManager _vesselManager) internal view {
