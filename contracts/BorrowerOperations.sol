@@ -123,7 +123,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 			activePool: adminContract.activePool(),
 			debtToken: debtToken
 		});
-		contractsCache.adminContract.sanitizeParameters(_asset);
+		require(contractsCache.adminContract.getIsActive(_asset), "BorrowerOps: Asset is not active");
 		LocalVariables_openVessel memory vars;
 		vars.asset = _asset;
 

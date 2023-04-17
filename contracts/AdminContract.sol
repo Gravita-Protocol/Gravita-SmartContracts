@@ -97,7 +97,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 max
 	) {
 		require(
-			collateralParams[_collateral].hasCollateralConfigured,
+			collateralParams[_collateral].active,
 			"Collateral is not configured, use setAsDefault or setCollateralParameters"
 		);
 
@@ -137,27 +137,19 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		isInitialized = true;
 	}
 
-	//Needs to approve Community Issuance to use this fonction.
 	function addNewCollateral(
 		address _collateral,
 		uint256 _decimals,
 		bool _isWrapped
 	) external longTimelockOnly {
-		// If collateral list is not 0, and if the 0th index is not equal to this collateral,
-		// then if index is 0 that means it is not set yet.
-		if (validCollateral.length != 0) {
-			require(
-				validCollateral[0] != _collateral && collateralParams[_collateral].index == 0,
-				"collateral already exists"
-			);
-		}
+		require(collateralParams[_collateral].mcr == 0, "collateral already exists");
 		validCollateral.push(_collateral);
 		collateralParams[_collateral] = CollateralParams({
 			decimals: _decimals,
 			index: validCollateral.length - 1,
-			active: true,
+			active: false,
 			isWrapped: _isWrapped,
-			mcr: 0,
+			mcr: MCR_DEFAULT,
 			ccr: 0,
 			debtTokenGasCompensation: 0,
 			minNetDebt: 0,
@@ -165,18 +157,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			borrowingFee: 0,
 			redemptionFeeFloor: 0,
 			redemptionBlockTimestamp: 0,
-			mintCap: type(uint256).max,
-			hasCollateralConfigured: false
+			mintCap: type(uint256).max
 		});
 
-		// defaultPool.addCollateralType(_collateral);
 		stabilityPool.addCollateralType(_collateral);
-		// collSurplusPool.addCollateralType(_collateral);
-
-		// 	address proxyAddress = address(proxy);
-		// 	stabilityPoolManager.addStabilityPool(_collateral, proxyAddress);
-		// 	communityIssuance.addFundToStabilityPoolFrom(proxyAddress, assignedToken, msg.sender);
-		// 	communityIssuance.setWeeklyGrvtDistribution(proxyAddress, _tokenPerWeekDistributed);
 
 		// throw event
 		emit CollateralAdded(_collateral);
@@ -238,7 +222,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 redemptionFeeFloor,
 		uint256 mintCap
 	) public onlyOwner {
-		collateralParams[_collateral].hasCollateralConfigured = true;
+		collateralParams[_collateral].active = true;
 		setMCR(_collateral, newMCR);
 		setCCR(_collateral, newCCR);
 		setDebtTokenGasCompensation(_collateral, gasCompensation);
@@ -247,12 +231,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		setBorrowingFee(_collateral, borrowingFee);
 		setRedemptionFeeFloor(_collateral, redemptionFeeFloor);
 		setMintCap(_collateral, mintCap);
-	}
-
-	function sanitizeParameters(address _collateral) external {
-		if (!collateralParams[_collateral].hasCollateralConfigured) {
-			_setAsDefault(_collateral);
-		}
 	}
 
 	function setAsDefault(address _collateral) external onlyOwner {
@@ -278,7 +256,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 
 	function _setAsDefault(address _collateral) private {
 		CollateralParams storage collateralParam = collateralParams[_collateral];
-		collateralParam.hasCollateralConfigured = true;
+		collateralParam.active = true;
 		collateralParam.mcr = MCR_DEFAULT;
 		collateralParam.ccr = CCR_DEFAULT;
 		collateralParam.debtTokenGasCompensation = DEBT_TOKEN_GAS_COMPENSATION_DEFAULT;
@@ -431,8 +409,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	// Internal Functions -----------------------------------------------------------------------------------------------
 
 	function _exists(address _collateral) internal view {
-		if (validCollateral[0] != _collateral) {
-			require(collateralParams[_collateral].index != 0, "collateral does not exist");
-		}
+		require(collateralParams[_collateral].mcr != 0, "collateral does not exist");
 	}
 }
