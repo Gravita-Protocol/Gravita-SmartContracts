@@ -62,6 +62,7 @@ interface IAdminContract {
 
 	function addNewCollateral(
 		address _collateral,
+		uint256 _debtTokenGasCompensation,
 		uint256 _decimals,
 		bool _isWrapped
 	) external;
@@ -73,8 +74,6 @@ interface IAdminContract {
 	function setAsDefault(address _collateral) external;
 
 	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays) external;
-
-	function setDebtTokenGasCompensation(address _collateral, uint256 gasCompensation) external;
 
 	function setMinNetDebt(address _collateral, uint256 minNetDebt) external;
 

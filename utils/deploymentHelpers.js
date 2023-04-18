@@ -382,10 +382,9 @@ class DeploymentHelper {
 
 		await GRVTContracts.grvtToken.unprotectedMint(treasurySig, supply)
 
-		await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, 18, false, { from: treasurySig })
-		await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, 18, false, { from: treasurySig })
-		await coreContracts.adminContract.addNewCollateral(coreContracts.erc20B.address, 18, false, { from: treasurySig })
-
+		await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30, 18), 18, false, { from: treasurySig })
+		await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, dec(30, 18), 18, false, { from: treasurySig })
+		await coreContracts.adminContract.addNewCollateral(coreContracts.erc20B.address, dec(30, 18), 18, false, { from: treasurySig })
 		await GRVTContracts.communityIssuance.addFundToStabilityPool(weeklyReward)
 		await GRVTContracts.communityIssuance.setWeeklyGrvtDistribution(weeklyReward)
 
@@ -397,7 +396,6 @@ class DeploymentHelper {
 			"1100000000000000000",
 			"1500000000000000000",
 			dec(30, 18),
-			dec(300, 18),
 			100,
 			50,
 			50,
@@ -409,7 +407,6 @@ class DeploymentHelper {
 			"1100000000000000000",
 			"1500000000000000000",
 			dec(200, 18),
-			dec(1800, 18),
 			200,
 			50,
 			50,
