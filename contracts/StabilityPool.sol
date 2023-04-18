@@ -713,7 +713,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 		return _getCompoundedStakeFromSnapshots(initialDeposit, depositSnapshots[_depositor]);
 	}
 
-	// Internal function, used to calculcate compounded deposits and compounded stakes.
+	// Internal function, used to calculate compounded deposits and compounded stakes.
 	function _getCompoundedStakeFromSnapshots(uint256 initialStake, Snapshots storage snapshots)
 		internal
 		view
