@@ -152,7 +152,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 	IDebtToken public debtToken;
 	ISortedVessels public sortedVessels;
 	ICommunityIssuance public communityIssuance;
-	IAdminContract public controller;
 
 	// Tracker for debtToken held in the pool. Changes when users deposit/withdraw, and when Vessel debt is offset.
 	uint256 internal totalDebtTokenDeposits;
@@ -161,10 +160,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 	// always be the same length as adminContract.validCollaterals().
 	// Anytime a new collateral is added to AdminContract, both lists are lengthened
 	Colls internal totalColl;
-
-	// Mapping from user address => pending collaterals to claim still
-	// Must always be sorted by whitelist to keep leftSumColls functionality
-	mapping(address => Colls) internal pendingCollGains;
 
 	// --- Data structures ---
 
@@ -596,15 +591,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 			initialDeposit,
 			snapshots
 		);
-		// Add pending gains to the current gains
-		return (
-			collateralsFromNewGains,
-			_leftSumColls(
-				Colls({ tokens: collateralsFromNewGains, amounts: amountsFromNewGains }),
-				pendingCollGains[_depositor].tokens,
-				pendingCollGains[_depositor].amounts
-			)
-		);
+		return (collateralsFromNewGains, amountsFromNewGains);
 	}
 
 	/**
@@ -800,10 +787,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 			}
 		}
 		totalColl.amounts = _leftSubColls(totalColl, assets, amounts);
-
-		// Reset pendingCollGains since those were all sent to the borrower
-		Colls memory tempPendingCollGains;
-		pendingCollGains[_to] = tempPendingCollGains;
 	}
 
 	// Send debt tokens to user and decrease deposits in Pool
