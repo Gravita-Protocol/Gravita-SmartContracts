@@ -237,7 +237,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 		/*
 		 * Use the larger price as the denominator:
-		 * - If price decreased, the percentage deviation is in relation to the the previous price.
+		 * - If price decreased, the percentage deviation is in relation to the previous price.
 		 * - If price increased, the percentage deviation is in relation to the current price.
 		 */
 		uint256 percentDeviation = (maxPrice - minPrice) * DECIMAL_PRECISION / maxPrice;
