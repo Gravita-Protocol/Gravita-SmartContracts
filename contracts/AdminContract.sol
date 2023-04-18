@@ -256,6 +256,9 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 
 	function _setAsDefault(address _collateral) private {
 		CollateralParams storage collateralParam = collateralParams[_collateral];
+		if (collateralParam.active) {
+			revert AdminContract__CollateralAlreadyInitialized();
+		}
 		collateralParam.active = true;
 		collateralParam.mcr = MCR_DEFAULT;
 		collateralParam.ccr = CCR_DEFAULT;

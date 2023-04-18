@@ -32,6 +32,7 @@ interface IAdminContract {
 	error AdminContract__ShortTimelockOnly();
 	error AdminContract__LongTimelockOnly();
 	error AdminContract__OnlyOwner();
+	error AdminContract__CollateralAlreadyInitialized();
 
 	// Events -----------------------------------------------------------------------------------------------------------
 
