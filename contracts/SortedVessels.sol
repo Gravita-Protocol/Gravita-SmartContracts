@@ -42,7 +42,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	string public constant NAME = "SortedVessels";
-	uint256 internal constant MAX_UINT256 = type(uint256).max;
 
 	address public borrowerOperationsAddress;
 
@@ -105,14 +104,9 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address _nextId
 	) internal {
 		Data storage assetData = data[_asset];
-		if (assetData.maxSize == 0) {
-			assetData.maxSize = MAX_UINT256;
-		}
 
-		// List must not be full
-		require(!isFull(_asset), "SortedVessels: List is full");
 		// List must not already contain node
-		require(!contains(_asset, _id), "SortedVessels: List already contains the node");
+		require(!_contains(assetData, _id), "SortedVessels: List already contains the node");
 		// Node id must not be null
 		require(_id != address(0), "SortedVessels: Id cannot be zero");
 		// NICR must be non-zero
@@ -152,7 +146,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			assetData.nodes[nextId].prevId = _id;
 		}
 
-		data[_asset].size = data[_asset].size + 1;
+		assetData.size = assetData.size + 1;
 		emit NodeAdded(_asset, _id, _NICR);
 	}
 
@@ -166,10 +160,11 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 * @param _id Node's id
 	 */
 	function _remove(address _asset, address _id) internal {
-		// List must contain the node
-		require(contains(_asset, _id), "SortedVessels: List does not contain the id");
-
 		Data storage assetData = data[_asset];
+		
+		// List must contain the node
+		require(_contains(assetData, _id), "SortedVessels: List does not contain the id");
+		
 		Node storage node = assetData.nodes[_id];
 		if (assetData.size > 1) {
 			// List contains more than a single node
@@ -199,8 +194,8 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			assetData.tail = address(0);
 		}
 
-		delete data[_asset].nodes[_id];
-		data[_asset].size = data[_asset].size - 1;
+		delete assetData.nodes[_id];
+		assetData.size = assetData.size - 1;
 		emit NodeRemoved(_asset, _id);
 	}
 
@@ -237,6 +232,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 */
 	function contains(address _asset, address _id) public view override returns (bool) {
 		return data[_asset].nodes[_id].exists;
+	}
+
+	function _contains(Data storage _dataAsset, address _id) internal view returns (bool) {
+		return _dataAsset.nodes[_id].exists;
 	}
 
 	/*

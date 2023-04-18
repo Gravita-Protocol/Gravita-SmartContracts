@@ -24,7 +24,6 @@ interface IAdminContract {
 		uint256 redemptionFeeFloor;
 		uint256 redemptionBlockTimestamp;
 		uint256 mintCap;
-		bool hasCollateralConfigured;
 	}
 
 	// Custom Errors ----------------------------------------------------------------------------------------------------
@@ -70,8 +69,6 @@ interface IAdminContract {
 	function setMCR(address _collateral, uint256 newMCR) external;
 
 	function setCCR(address _collateral, uint256 newCCR) external;
-
-	function sanitizeParameters(address _collateral) external;
 
 	function setAsDefault(address _collateral) external;
 
