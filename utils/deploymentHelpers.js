@@ -346,10 +346,10 @@ class DeploymentHelper {
 			contracts.adminContract.address
 		)
 
-		await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20.address, 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, 18, false)
-
+		await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30,18), 18, false)
+		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(30,18),18, false)
+		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30,18), 18, false)
+		
 		await contracts.adminContract.setAsDefault(ZERO_ADDRESS)
 		await contracts.adminContract.setAsDefault(contracts.erc20.address)
 		await contracts.adminContract.setAsDefault(contracts.erc20B.address)
@@ -389,9 +389,6 @@ class DeploymentHelper {
 
 		await GRVTContracts.grvtToken.unprotectedMint(treasurySig, supply)
 
-		await coreContracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30, 18), 18, false, { from: treasurySig })
-		await coreContracts.adminContract.addNewCollateral(coreContracts.erc20.address, dec(30, 18), 18, false, { from: treasurySig })
-		await coreContracts.adminContract.addNewCollateral(coreContracts.erc20B.address, dec(30, 18), 18, false, { from: treasurySig })
 		await GRVTContracts.communityIssuance.addFundToStabilityPool(weeklyReward)
 		await GRVTContracts.communityIssuance.setWeeklyGrvtDistribution(weeklyReward)
 
