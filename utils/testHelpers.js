@@ -822,8 +822,6 @@ class TestHelper {
 		if (!upperHint) upperHint = this.ZERO_ADDRESS
 		if (!lowerHint) lowerHint = this.ZERO_ADDRESS
 
-		await contracts.adminContract.setAsDefault(asset)
-
 		const MIN_DEBT = (
 			await this.getNetBorrowingAmount(
 				contracts,

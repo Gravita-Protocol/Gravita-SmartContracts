@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -143,7 +142,7 @@ import "./Interfaces/IVesselManager.sol";
  * The product P (and snapshot P_t) is re-used, as the ratio P/P_t tracks a deposit's depletion due to liquidations.
  *
  */
-contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
+contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
@@ -242,7 +241,6 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		address _communityIssuanceAddress,
 		address _adminContractAddress
 	) external initializer {
-		__Ownable_init();
 		__ReentrancyGuard_init();
 
 		borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
@@ -715,7 +713,7 @@ contract StabilityPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, PoolBa
 		return _getCompoundedStakeFromSnapshots(initialDeposit, depositSnapshots[_depositor]);
 	}
 
-	// Internal function, used to calculcate compounded deposits and compounded stakes.
+	// Internal function, used to calculate compounded deposits and compounded stakes.
 	function _getCompoundedStakeFromSnapshots(uint256 initialStake, Snapshots storage snapshots)
 		internal
 		view

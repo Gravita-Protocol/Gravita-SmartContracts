@@ -37,6 +37,7 @@ contract Timelock {
 	error Timelock__AdminOnly();
 	error Timelock__ETAMustSatisfyDelay();
 	error Timelock__TxNoQueued();
+	error Timelock__TxAlreadyQueued();
 	error Timelock__TxStillLocked();
 	error Timelock__TxExpired();
 	error Timelock__TxReverted();
@@ -115,6 +116,9 @@ contract Timelock {
 		}
 
 		bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
+		if (queuedTransactions[txHash]) {
+			revert Timelock__TxAlreadyQueued();
+		}
 		queuedTransactions[txHash] = true;
 
 		emit QueueTransaction(txHash, target, value, signature, data, eta);
@@ -129,6 +133,9 @@ contract Timelock {
 		uint eta
 	) public adminOnly {
 		bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
+		if (!queuedTransactions[txHash]) {
+			revert Timelock__TxNoQueued();
+		}
 		queuedTransactions[txHash] = false;
 
 		emit CancelTransaction(txHash, target, value, signature, data, eta);
