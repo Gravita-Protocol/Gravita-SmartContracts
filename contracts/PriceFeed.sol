@@ -31,34 +31,39 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	/** State -------------------------------------------------------------------------------------------------------- */
 
-	address public adminContract;
-	address public rethToken;
-	address public stethToken;
-	address public wstethToken;
+	address public adminContractAddress;
+	address public timelockAddress;
+	address public rethTokenAddress;
+	address public stethTokenAddress;
+	address public wstethTokenAddress;
 
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;
 
 	/** Modifiers ---------------------------------------------------------------------------------------------------- */
 
-	modifier isController() {
-		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
+	modifier onlyTimelock() {
+		if (msg.sender != timelockAddress) {
+			revert TimelockOnly();
+		}
 		_;
 	}
 
 	/** Initializer -------------------------------------------------------------------------------------------------- */
 
 	function setAddresses(
-		address _adminContract,
-		address _rethToken,
-		address _stethToken,
-		address _wstethToken
+		address _adminContractAddress,
+		address _timelockAddress,
+		address _rethTokenAddress,
+		address _stethTokenAddress,
+		address _wstethTokenAddress
 	) external initializer {
 		__Ownable_init();
-		adminContract = _adminContract;
-		rethToken = _rethToken;
-		stethToken = _stethToken;
-		wstethToken = _wstethToken;
+		timelockAddress = _timelockAddress;
+		adminContractAddress = _adminContractAddress;
+		rethTokenAddress = _rethTokenAddress;
+		stethTokenAddress = _stethTokenAddress;
+		wstethTokenAddress = _wstethTokenAddress;
 	}
 
 	/** Admin routines ----------------------------------------------------------------------------------------------- */
@@ -68,7 +73,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		address _chainlinkOracle,
 		uint256 _maxDeviationBetweenRounds,
 		bool _isEthIndexed
-	) external override isController {
+	) external override onlyTimelock {
 		if (
 			_maxDeviationBetweenRounds < MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT ||
 			_maxDeviationBetweenRounds > MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT
@@ -113,9 +118,9 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		OracleRecord storage oracle = oracleRecords[_token];
 
 		if (!oracle.exists) {
-			if (_token == rethToken) {
+			if (_token == rethTokenAddress) {
 				return _fetchNativeRETHPrice();
-			} else if (_token == wstethToken) {
+			} else if (_token == wstethTokenAddress) {
 				return _fetchNativeWstETHPrice();
 			}
 			revert UnknownFeedError(_token);
@@ -172,7 +177,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _fetchNativeRETHPrice() internal returns (uint256 price) {
 		uint256 rethToEthValue = _getRETH_ETHValue();
 		price = _calcEthPrice(rethToEthValue);
-		_storePrice(rethToken, price, block.timestamp);
+		_storePrice(rethTokenAddress, price, block.timestamp);
 	}
 
 	/**
@@ -182,17 +187,17 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	 */
 	function _fetchNativeWstETHPrice() internal returns (uint256 price) {
 		uint256 wstEthToStEthValue = _getWstETH_StETHValue();
-		OracleRecord storage stEth_UsdOracle = oracleRecords[stethToken];
-		price = stEth_UsdOracle.exists ? fetchPrice(stethToken) : _calcEthPrice(wstEthToStEthValue);
-		_storePrice(wstethToken, price, block.timestamp);
+		OracleRecord storage stEth_UsdOracle = oracleRecords[stethTokenAddress];
+		price = stEth_UsdOracle.exists ? fetchPrice(stethTokenAddress) : _calcEthPrice(wstEthToStEthValue);
+		_storePrice(wstethTokenAddress, price, block.timestamp);
 	}
 
 	function _getRETH_ETHValue() internal view virtual returns (uint256) {
-		return IRETHToken(rethToken).getEthValue(1 ether);
+		return IRETHToken(rethTokenAddress).getEthValue(1 ether);
 	}
 
 	function _getWstETH_StETHValue() internal view virtual returns (uint256) {
-		return IWstETHToken(wstethToken).stEthPerToken();
+		return IWstETHToken(wstethTokenAddress).stEthPerToken();
 	}
 
 	function _fetchFeedResponses(AggregatorV3Interface oracle)

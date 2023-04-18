@@ -35,6 +35,7 @@ interface IPriceFeed {
 	error FeedFrozenError(address token);
 	error PriceDeviationError(address token);
 	error UnknownFeedError(address token);
+	error TimelockOnly();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
