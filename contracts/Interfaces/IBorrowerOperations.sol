@@ -18,17 +18,6 @@ interface IBorrowerOperations {
 
 	// --- Functions ---
 
-	function setAddresses(
-		address _vesselManagerAddress,
-		address _stabilityPoolAddress,
-		address _gasPoolAddress,
-		address _collSurplusPoolAddress,
-		address _sortedVesselsAddress,
-		address _debtTokenAddress,
-		address _feeCollectorAddress,
-		address _adminContractAddress
-	) external;
-
 	function openVessel(
 		address _asset,
 		uint256 _assetAmount,

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.19;
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Dependencies/GravitaMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../Interfaces/IBorrowerOperations.sol";
@@ -13,13 +12,7 @@ import "./BorrowerOperationsScript.sol";
 import "./ETHTransferScript.sol";
 import "./GRVTStakingScript.sol";
 
-contract BorrowerWrappersScript is
-	BorrowerOperationsScript,
-	ETHTransferScript,
-	GRVTStakingScript
-{
-	using SafeMathUpgradeable for uint256;
-
+contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, GRVTStakingScript {
 	struct Local_var {
 		address _asset;
 		uint256 _maxFee;
@@ -40,17 +33,14 @@ contract BorrowerWrappersScript is
 		address _borrowerOperationsAddress,
 		address _vesselManagerAddress,
 		address _GRVTStakingAddress
-	)
-		BorrowerOperationsScript(IBorrowerOperations(_borrowerOperationsAddress))
-		GRVTStakingScript(_GRVTStakingAddress)
-	{
+	) BorrowerOperationsScript(IBorrowerOperations(_borrowerOperationsAddress)) GRVTStakingScript(_GRVTStakingAddress) {
 		IVesselManager vesselManagerCached = IVesselManager(_vesselManagerAddress);
 		vesselManager = vesselManagerCached;
 
 		IStabilityPool stabilityPoolCached = vesselManagerCached.stabilityPool();
 		stabilityPool = stabilityPoolCached;
 
-		IPriceFeed priceFeedCached = vesselManagerCached.adminContract().priceFeed(); // TODO: Get from AdminContract instead if this script is active.
+		IPriceFeed priceFeedCached = vesselManagerCached.adminContract().priceFeed();
 		priceFeed = priceFeedCached;
 
 		address debtTokenCached = address(vesselManagerCached.debtToken());
@@ -82,16 +72,10 @@ contract BorrowerWrappersScript is
 		// already checked in CollSurplusPool
 		assert(balanceAfter > balanceBefore);
 
-		uint256 totalCollateral = balanceAfter.sub(balanceBefore).add(msg.value);
+		uint256 totalCollateral = balanceAfter - balanceBefore + msg.value;
 
 		// Open vessel with obtained collateral, plus collateral sent by user
-		borrowerOperations.openVessel(
-			_asset,
-			totalCollateral,
-			_VUSDAmount,
-			_upperHint,
-			_lowerHint
-		);
+		borrowerOperations.openVessel(_asset, totalCollateral, _VUSDAmount, _upperHint, _lowerHint);
 	}
 
 	function claimSPRewardsAndRecycle(
@@ -109,7 +93,7 @@ contract BorrowerWrappersScript is
 
 		uint256 collBalanceAfter = address(this).balance;
 		uint256 GRVTBalanceAfter = grvtToken.balanceOf(address(this));
-		uint256 claimedCollateral = collBalanceAfter.sub(collBalanceBefore);
+		uint256 claimedCollateral = collBalanceAfter - collBalanceBefore;
 
 		// Add claimed ETH to vessel, get more VUSD and stake it into the Stability Pool
 		if (claimedCollateral > 0) {
@@ -131,7 +115,7 @@ contract BorrowerWrappersScript is
 		}
 
 		// Stake claimed GRVT
-		uint256 claimedGRVT = GRVTBalanceAfter.sub(GRVTBalanceBefore);
+		uint256 claimedGRVT = GRVTBalanceAfter - GRVTBalanceBefore;
 		if (claimedGRVT > 0) {
 			grvtStaking.stake(claimedGRVT);
 		}
@@ -152,8 +136,8 @@ contract BorrowerWrappersScript is
 		// Claim gains
 		grvtStaking.unstake(0);
 
-		uint256 gainedCollateral = address(this).balance.sub(collBalanceBefore); // stack too deep issues :'(
-		uint256 gainedVUSD = debtToken.balanceOf(address(this)).sub(VUSDBalanceBefore);
+		uint256 gainedCollateral = address(this).balance - collBalanceBefore; // stack too deep issues :'(
+		uint256 gainedVUSD = debtToken.balanceOf(address(this)) - VUSDBalanceBefore;
 
 		// Top up vessel and get more VUSD, keeping ICR constant
 		if (gainedCollateral > 0) {
@@ -170,13 +154,13 @@ contract BorrowerWrappersScript is
 			);
 		}
 
-		uint256 totalVUSD = gainedVUSD.add(vars.netVUSDAmount);
+		uint256 totalVUSD = gainedVUSD + vars.netVUSDAmount;
 		if (totalVUSD > 0) {
 			stabilityPool.provideToSP(totalVUSD);
 
 			// Providing to Stability Pool also triggers GRVT claim, so stake it if any
 			uint256 GRVTBalanceAfter = grvtToken.balanceOf(address(this));
-			uint256 claimedGRVT = GRVTBalanceAfter.sub(GRVTBalanceBefore);
+			uint256 claimedGRVT = GRVTBalanceAfter - GRVTBalanceBefore;
 			if (claimedGRVT > 0) {
 				grvtStaking.stake(claimedGRVT);
 			}
@@ -187,11 +171,9 @@ contract BorrowerWrappersScript is
 		uint256 price = priceFeed.fetchPrice(_asset);
 		uint256 ICR = vesselManager.getCurrentICR(_asset, address(this), price);
 
-		uint256 VUSDAmount = _collateral.mul(price).div(ICR);
+		uint256 VUSDAmount = (_collateral * price) / ICR;
 		uint256 borrowingRate = vesselManager.adminContract().getBorrowingFee(_asset);
-		uint256 netDebt = VUSDAmount.mul(GravitaMath.DECIMAL_PRECISION).div(
-			GravitaMath.DECIMAL_PRECISION.add(borrowingRate)
-		);
+		uint256 netDebt = (VUSDAmount * GravitaMath.DECIMAL_PRECISION) / (GravitaMath.DECIMAL_PRECISION + borrowingRate);
 
 		return netDebt;
 	}

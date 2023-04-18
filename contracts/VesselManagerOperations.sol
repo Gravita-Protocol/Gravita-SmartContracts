@@ -9,10 +9,9 @@ import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
 
 contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
-	using SafeMathUpgradeable for uint256;
-
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
+	uint256 public constant PERCENTAGE_PRECISION = 1000;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -134,7 +133,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		vesselManager.updateSystemSnapshots_excludeCollRemainder(_asset, totals.totalCollGasCompensation);
 
 		vars.liquidatedDebt = totals.totalDebtInSequence;
-		vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation).sub(totals.totalCollSurplus);
+		vars.liquidatedColl = totals.totalCollInSequence - totals.totalCollGasCompensation - totals.totalCollSurplus;
 		emit Liquidation(
 			_asset,
 			vars.liquidatedDebt,
@@ -193,7 +192,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		vesselManager.updateSystemSnapshots_excludeCollRemainder(_asset, totals.totalCollGasCompensation);
 
 		vars.liquidatedDebt = totals.totalDebtInSequence;
-		vars.liquidatedColl = totals.totalCollInSequence.sub(totals.totalCollGasCompensation).sub(totals.totalCollSurplus);
+		vars.liquidatedColl = totals.totalCollInSequence - totals.totalCollGasCompensation - totals.totalCollSurplus;
 		emit Liquidation(
 			_asset,
 			vars.liquidatedDebt,
@@ -270,10 +269,10 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 			if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last vessel
 
-			totals.totalDebtToRedeem = totals.totalDebtToRedeem.add(singleRedemption.debtLot);
-			totals.totalCollDrawn = totals.totalCollDrawn.add(singleRedemption.collLot);
+			totals.totalDebtToRedeem = totals.totalDebtToRedeem + singleRedemption.debtLot;
+			totals.totalCollDrawn = totals.totalCollDrawn + singleRedemption.collLot;
 
-			totals.remainingDebt = totals.remainingDebt.sub(singleRedemption.debtLot);
+			totals.remainingDebt = totals.remainingDebt - singleRedemption.debtLot;
 			currentBorrower = nextUserToCheck;
 		}
 		if (totals.totalCollDrawn == 0) {
@@ -367,32 +366,32 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		while (currentVesselBorrower != address(0) && remainingDebt > 0 && vars.maxIterations-- > 0) {
 			uint256 currentVesselNetDebt = _getNetDebt(
 				vars.asset,
-				vesselManager.getVesselDebt(vars.asset, currentVesselBorrower)
-			).add(vesselManager.getPendingDebtTokenReward(vars.asset, currentVesselBorrower));
+				vesselManager.getVesselDebt(vars.asset, currentVesselBorrower) +
+					vesselManager.getPendingDebtTokenReward(vars.asset, currentVesselBorrower)
+			);
 
 			if (currentVesselNetDebt <= remainingDebt) {
-				remainingDebt = remainingDebt.sub(currentVesselNetDebt);
+				remainingDebt = remainingDebt - currentVesselNetDebt;
 			} else {
 				if (currentVesselNetDebt > adminContract.getMinNetDebt(vars.asset)) {
 					uint256 maxRedeemableDebt = GravitaMath._min(
 						remainingDebt,
-						currentVesselNetDebt.sub(adminContract.getMinNetDebt(vars.asset))
+						currentVesselNetDebt - adminContract.getMinNetDebt(vars.asset)
 					);
 
-					uint256 currentVesselColl = vesselManager.getVesselColl(vars.asset, currentVesselBorrower).add(
-						vesselManager.getPendingAssetReward(vars.asset, currentVesselBorrower)
-					);
+					uint256 currentVesselColl = vesselManager.getVesselColl(vars.asset, currentVesselBorrower) +
+						vesselManager.getPendingAssetReward(vars.asset, currentVesselBorrower);
 
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
 					// Apply redemption softening
-					collLot = (collLot * REDEMPTION_SOFTENING_PARAM) / 1000;
+					collLot = (collLot * REDEMPTION_SOFTENING_PARAM) / PERCENTAGE_PRECISION;
 
 					uint256 newColl = currentVesselColl - collLot;
-					uint256 newDebt = currentVesselNetDebt.sub(maxRedeemableDebt);
+					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
 					uint256 compositeDebt = _getCompositeDebt(vars.asset, newDebt);
 
 					partialRedemptionHintNewICR = GravitaMath._computeNominalCR(newColl, compositeDebt);
-					remainingDebt = remainingDebt.sub(maxRedeemableDebt);
+					remainingDebt = remainingDebt - maxRedeemableDebt;
 				}
 
 				break;
@@ -401,7 +400,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			currentVesselBorrower = sortedVesselsCached.getPrev(vars.asset, currentVesselBorrower);
 		}
 
-		truncatedDebtTokenAmount = _debtTokenAmount.sub(remainingDebt);
+		truncatedDebtTokenAmount = _debtTokenAmount - remainingDebt;
 	}
 
 	/* getApproxHint() - return address of a Vessel that is, on average, (length / numTrials) positions away in the 
@@ -481,10 +480,13 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		for (vars.i = 0; vars.i < _vesselArray.length; vars.i++) {
+		for (vars.i = 0; vars.i < _vesselArray.length; ) {
 			vars.user = _vesselArray[vars.i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
+				unchecked {
+					vars.i++;
+				}
 				continue;
 			}
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
@@ -492,6 +494,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			if (!vars.backToNormalMode) {
 				// Skip this vessel if ICR is greater than MCR and Stability Pool is empty
 				if (vars.ICR >= adminContract.getMcr(_asset) && vars.remainingDebtTokenInStabPool == 0) {
+					unchecked {
+						vars.i++;
+					}
 					continue;
 				}
 				uint256 TCR = GravitaMath._computeCR(vars.entireSystemColl, vars.entireSystemDebt, _price);
@@ -506,13 +511,13 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 				);
 
 				// Update aggregate trackers
-				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool.sub(singleLiquidation.debtToOffset);
-				vars.entireSystemDebt = vars.entireSystemDebt.sub(singleLiquidation.debtToOffset);
-				vars.entireSystemColl = vars
-					.entireSystemColl
-					.sub(singleLiquidation.collToSendToSP)
-					.sub(singleLiquidation.collGasCompensation)
-					.sub(singleLiquidation.collSurplus);
+				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
+				vars.entireSystemDebt = vars.entireSystemDebt - singleLiquidation.debtToOffset;
+				vars.entireSystemColl =
+					vars.entireSystemColl -
+					singleLiquidation.collToSendToSP -
+					singleLiquidation.collGasCompensation -
+					singleLiquidation.collSurplus;
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -525,11 +530,14 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 				);
 			} else if (vars.backToNormalMode && vars.ICR < adminContract.getMcr(_asset)) {
 				singleLiquidation = _liquidateNormalMode(_asset, vars.user, vars.remainingDebtTokenInStabPool);
-				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool.sub(singleLiquidation.debtToOffset);
+				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
-			} else continue; // In Normal Mode skip vessels with ICR >= MCR
+			}
+			unchecked {
+				vars.i++;
+			}
 		}
 	}
 
@@ -544,16 +552,19 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _vesselArray.length; vars.i++) {
+		for (vars.i = 0; vars.i < _vesselArray.length; ) {
 			vars.user = _vesselArray[vars.i];
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (vars.ICR < adminContract.getMcr(_asset)) {
 				singleLiquidation = _liquidateNormalMode(_asset, vars.user, vars.remainingDebtTokenInStabPool);
-				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool.sub(singleLiquidation.debtToOffset);
+				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
+			}
+			unchecked {
+				vars.i++;
 			}
 		}
 	}
@@ -564,17 +575,17 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		returns (LiquidationTotals memory newTotals)
 	{
 		// Tally all the values with their respective running totals
-		newTotals.totalCollGasCompensation = oldTotals.totalCollGasCompensation.add(singleLiquidation.collGasCompensation);
-		newTotals.totalDebtTokenGasCompensation = oldTotals.totalDebtTokenGasCompensation.add(
-			singleLiquidation.debtTokenGasCompensation
-		);
-		newTotals.totalDebtInSequence = oldTotals.totalDebtInSequence.add(singleLiquidation.entireVesselDebt);
-		newTotals.totalCollInSequence = oldTotals.totalCollInSequence.add(singleLiquidation.entireVesselColl);
-		newTotals.totalDebtToOffset = oldTotals.totalDebtToOffset.add(singleLiquidation.debtToOffset);
-		newTotals.totalCollToSendToSP = oldTotals.totalCollToSendToSP.add(singleLiquidation.collToSendToSP);
-		newTotals.totalDebtToRedistribute = oldTotals.totalDebtToRedistribute.add(singleLiquidation.debtToRedistribute);
-		newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute.add(singleLiquidation.collToRedistribute);
-		newTotals.totalCollSurplus = oldTotals.totalCollSurplus.add(singleLiquidation.collSurplus);
+		newTotals.totalCollGasCompensation = oldTotals.totalCollGasCompensation + singleLiquidation.collGasCompensation;
+		newTotals.totalDebtTokenGasCompensation =
+			oldTotals.totalDebtTokenGasCompensation +
+			singleLiquidation.debtTokenGasCompensation;
+		newTotals.totalDebtInSequence = oldTotals.totalDebtInSequence + singleLiquidation.entireVesselDebt;
+		newTotals.totalCollInSequence = oldTotals.totalCollInSequence + singleLiquidation.entireVesselColl;
+		newTotals.totalDebtToOffset = oldTotals.totalDebtToOffset + singleLiquidation.debtToOffset;
+		newTotals.totalCollToSendToSP = oldTotals.totalCollToSendToSP + singleLiquidation.collToSendToSP;
+		newTotals.totalDebtToRedistribute = oldTotals.totalDebtToRedistribute + singleLiquidation.debtToRedistribute;
+		newTotals.totalCollToRedistribute = oldTotals.totalCollToRedistribute + singleLiquidation.collToRedistribute;
+		newTotals.totalCollSurplus = oldTotals.totalCollSurplus + singleLiquidation.collSurplus;
 		return newTotals;
 	}
 
@@ -590,18 +601,21 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _n; vars.i++) {
+		for (vars.i = 0; vars.i < _n; ) {
 			vars.user = sortedVesselsCached.getLast(_asset);
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (vars.ICR < adminContract.getMcr(_asset)) {
 				singleLiquidation = _liquidateNormalMode(_asset, vars.user, vars.remainingDebtTokenInStabPool);
 
-				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool.sub(singleLiquidation.debtToOffset);
+				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
+			unchecked {
+				vars.i++;
+			}
 		}
 	}
 
@@ -624,7 +638,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, singleLiquidation.entireVesselColl);
 		singleLiquidation.debtTokenGasCompensation = adminContract.getDebtTokenGasCompensation(_asset);
-		uint256 collToLiquidate = singleLiquidation.entireVesselColl.sub(singleLiquidation.collGasCompensation);
+		uint256 collToLiquidate = singleLiquidation.entireVesselColl - singleLiquidation.collGasCompensation;
 
 		(
 			singleLiquidation.debtToOffset,
@@ -667,7 +681,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, singleLiquidation.entireVesselColl);
 		singleLiquidation.debtTokenGasCompensation = adminContractCached.getDebtTokenGasCompensation(_asset);
-		vars.collToLiquidate = singleLiquidation.entireVesselColl.sub(singleLiquidation.collGasCompensation);
+		vars.collToLiquidate = singleLiquidation.entireVesselColl - singleLiquidation.collGasCompensation;
 
 		// If ICR <= 100%, purely redistribute the Vessel across all active Vessels
 		if (_ICR <= adminContract._100pct()) {
@@ -782,7 +796,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.user = _contractsCache.sortedVessels.getLast(assetVars._asset);
 		address firstUser = _contractsCache.sortedVessels.getFirst(assetVars._asset);
-		for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
+		for (vars.i = 0; vars.i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
 			address nextUser = _contractsCache.sortedVessels.getPrev(assetVars._asset, vars.user);
 
@@ -806,13 +820,13 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 				);
 
 				// Update aggregate trackers
-				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool.sub(singleLiquidation.debtToOffset);
-				vars.entireSystemDebt = vars.entireSystemDebt.sub(singleLiquidation.debtToOffset);
-				vars.entireSystemColl = vars
-					.entireSystemColl
-					.sub(singleLiquidation.collToSendToSP)
-					.sub(singleLiquidation.collGasCompensation)
-					.sub(singleLiquidation.collSurplus);
+				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
+				vars.entireSystemDebt = vars.entireSystemDebt - singleLiquidation.debtToOffset;
+				vars.entireSystemColl =
+					vars.entireSystemColl -
+					singleLiquidation.collToSendToSP -
+					singleLiquidation.collGasCompensation -
+					singleLiquidation.collSurplus;
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
@@ -826,13 +840,16 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			} else if (vars.backToNormalMode && vars.ICR < adminContract.getMcr(_asset)) {
 				singleLiquidation = _liquidateNormalMode(assetVars._asset, vars.user, vars.remainingDebtTokenInStabPool);
 
-				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool.sub(singleLiquidation.debtToOffset);
+				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
 
 				// Add liquidation values to their respective running totals
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
 
 			vars.user = nextUser;
+			unchecked {
+				vars.i++;
+			}
 		}
 	}
 
@@ -865,9 +882,9 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			 *
 			 */
 			debtToOffset = GravitaMath._min(_debt, _debtTokenInStabPool);
-			collToSendToSP = _coll.mul(debtToOffset).div(_debt);
-			debtToRedistribute = _debt.sub(debtToOffset);
-			collToRedistribute = _coll.sub(collToSendToSP);
+			collToSendToSP = _coll * debtToOffset / _debt;
+			debtToRedistribute = _debt - debtToOffset;
+			collToRedistribute = _coll - collToSendToSP;
 		} else {
 			debtToOffset = 0;
 			collToSendToSP = 0;
@@ -887,14 +904,14 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	) internal view returns (LiquidationValues memory singleLiquidation) {
 		singleLiquidation.entireVesselDebt = _entireVesselDebt;
 		singleLiquidation.entireVesselColl = _entireVesselColl;
-		uint256 cappedCollPortion = _entireVesselDebt.mul(adminContract.getMcr(_asset)).div(_price);
+		uint256 cappedCollPortion = _entireVesselDebt * adminContract.getMcr(_asset) / _price;
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, cappedCollPortion);
 		singleLiquidation.debtTokenGasCompensation = adminContract.getDebtTokenGasCompensation(_asset);
 
 		singleLiquidation.debtToOffset = _entireVesselDebt;
-		singleLiquidation.collToSendToSP = cappedCollPortion.sub(singleLiquidation.collGasCompensation);
-		singleLiquidation.collSurplus = _entireVesselColl.sub(cappedCollPortion);
+		singleLiquidation.collToSendToSP = cappedCollPortion - singleLiquidation.collGasCompensation;
+		singleLiquidation.collSurplus = _entireVesselColl - cappedCollPortion;
 		singleLiquidation.debtToRedistribute = 0;
 		singleLiquidation.collToRedistribute = 0;
 	}
@@ -918,8 +935,8 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		uint256 _debtTokenAmount,
 		uint256 _price
 	) internal view {
-		uint256 redemptionBlock = contractsCache.adminContract.getRedemptionBlock(_asset);
-		if (redemptionBlock > block.timestamp) {
+		uint256 redemptionBlockTimestamp = contractsCache.adminContract.getRedemptionBlockTimestamp(_asset);
+		if (redemptionBlockTimestamp > block.timestamp) {
 			revert VesselManagerOperations__RedemptionIsBlocked();
 		}
 		uint256 redemptionFeeFloor = contractsCache.adminContract.getRedemptionFeeFloor(_asset);
@@ -962,12 +979,12 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
 		// Apply redemption softening
-		singleRedemption.collLot = (singleRedemption.collLot * REDEMPTION_SOFTENING_PARAM) / 1000;
+		singleRedemption.collLot = (singleRedemption.collLot * REDEMPTION_SOFTENING_PARAM) / PERCENTAGE_PRECISION;
 
 		// Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
 
-		uint256 newDebt = (vesselDebt).sub(singleRedemption.debtLot);
-		uint256 newColl = (vesselColl).sub(singleRedemption.collLot);
+		uint256 newDebt = vesselDebt - singleRedemption.debtLot;
+		uint256 newColl = vesselColl - singleRedemption.collLot;
 
 		if (newDebt == adminContract.getDebtTokenGasCompensation(_asset)) {
 			vesselManager.executeFullRedemption(_asset, _borrower, newColl);
@@ -999,4 +1016,3 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		return singleRedemption;
 	}
 }
-

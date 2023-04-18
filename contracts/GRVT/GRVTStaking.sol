@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -15,10 +14,7 @@ import "../Interfaces/IDeposit.sol";
 import "../Interfaces/IGRVTStaking.sol";
 
 contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, BaseMath, ReentrancyGuardUpgradeable {
-	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
-
-	bool public isInitialized;
 
 	// --- Data ---
 	string public constant NAME = "GRVTStaking";
@@ -57,10 +53,8 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		address _feeCollectorAddress,
 		address _vesselManagerAddress,
 		address _treasury
-	) external override initializer {
-		require(!isInitialized, "Already Initialized");
-		require(_treasury != address(0), "Invalid Treausry Address");
-		isInitialized = true;
+	) external initializer {
+		require(_treasury != address(0), "Invalid Treasury Address");
 
 		__Pausable_init();
 		__ReentrancyGuard_init();
@@ -106,11 +100,11 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			_updateUserSnapshots(asset, msg.sender);
 		}
 
-		uint256 newStake = currentStake.add(_GRVTamount);
+		uint256 newStake = currentStake + _GRVTamount;
 
 		// Increase user’s stake and total GRVT staked
 		stakes[msg.sender] = newStake;
-		totalGRVTStaked = totalGRVTStaked.add(_GRVTamount);
+		totalGRVTStaked = totalGRVTStaked + _GRVTamount;
 		emit TotalGRVTStakedUpdated(totalGRVTStaked);
 
 		// Transfer GRVT from caller to this contract
@@ -148,11 +142,11 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 		if (_GRVTamount > 0) {
 			uint256 GRVTToWithdraw = GravitaMath._min(_GRVTamount, currentStake);
-			uint256 newStake = currentStake.sub(GRVTToWithdraw);
+			uint256 newStake = currentStake - GRVTToWithdraw;
 
 			// Decrease user's stake and total GRVT staked
 			stakes[msg.sender] = newStake;
-			totalGRVTStaked = totalGRVTStaked.sub(GRVTToWithdraw);
+			totalGRVTStaked = totalGRVTStaked - GRVTToWithdraw;
 			emit TotalGRVTStakedUpdated(totalGRVTStaked);
 
 			// Transfer unstaked GRVT to user
@@ -190,10 +184,10 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		uint256 assetFeePerGRVTStaked;
 
 		if (totalGRVTStaked > 0) {
-			assetFeePerGRVTStaked = _assetFee.mul(DECIMAL_PRECISION).div(totalGRVTStaked);
+			assetFeePerGRVTStaked = _assetFee * DECIMAL_PRECISION / totalGRVTStaked;
 		}
 
-		F_ASSETS[_asset] = F_ASSETS[_asset].add(assetFeePerGRVTStaked);
+		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerGRVTStaked;
 		emit Fee_AssetUpdated(_asset, F_ASSETS[_asset]);
 	}
 
@@ -205,10 +199,10 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 		uint256 feePerGRVTStaked;
 		if (totalGRVTStaked > 0) {
-			feePerGRVTStaked = _debtTokenFee.mul(DECIMAL_PRECISION).div(totalGRVTStaked);
+			feePerGRVTStaked = _debtTokenFee * DECIMAL_PRECISION / totalGRVTStaked;
 		}
 
-		F_DEBT_TOKENS = F_DEBT_TOKENS.add(feePerGRVTStaked);
+		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerGRVTStaked;
 		emit Fee_DebtTokenUpdated(F_DEBT_TOKENS);
 	}
 
@@ -226,7 +220,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function _getPendingAssetGain(address _asset, address _user) internal view returns (uint256) {
 		uint256 F_ASSET_Snapshot = snapshots[_user].F_ASSETS_Snapshot[_asset];
-		uint256 AssetGain = stakes[_user].mul(F_ASSETS[_asset].sub(F_ASSET_Snapshot)).div(DECIMAL_PRECISION);
+		uint256 AssetGain = stakes[_user] * (F_ASSETS[_asset] - F_ASSET_Snapshot) / DECIMAL_PRECISION;
 		return AssetGain;
 	}
 
@@ -236,7 +230,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function _getPendingDebtTokenGain(address _user) internal view returns (uint256) {
 		uint256 debtTokenSnapshot = snapshots[_user].F_DEBT_TOKENS_Snapshot;
-		return stakes[_user].mul(F_DEBT_TOKENS.sub(debtTokenSnapshot)).div(DECIMAL_PRECISION);
+		return stakes[_user] * (F_DEBT_TOKENS - debtTokenSnapshot) / DECIMAL_PRECISION;
 	}
 
 	// --- Internal helper functions ---

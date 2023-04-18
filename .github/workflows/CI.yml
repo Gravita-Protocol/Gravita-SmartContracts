@@ -1,0 +1,24 @@
+name: CI
+on: [push, pull_request]
+env:
+  SECRETS_FILE: ${{secrets.SECRETS_FILE}}
+
+jobs:
+  run-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - run: echo "$SECRETS_FILE" | base64 -d > .env
+
+      - name: Install Components
+        run: yarn install
+
+      - name: Run Gravita tests
+        run: yarn test test/gravita/*.js
+        #run: yarn test
+

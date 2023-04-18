@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -13,7 +12,6 @@ import "../Interfaces/ICommunityIssuance.sol";
 import "../Interfaces/IStabilityPool.sol";
 
 contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
-	using SafeMathUpgradeable for uint256;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CommunityIssuance";
@@ -29,8 +27,6 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	uint256 public grvtDistribution;
 
 	address public adminContract;
-
-	bool public isInitialized;
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
@@ -52,13 +48,9 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		address _grvtTokenAddress,
 		address _stabilityPoolAddress,
 		address _adminContract
-	) external override initializer {
-		require(!isInitialized, "Already initialized");
-		isInitialized = true;
+	) external initializer {
 		__Ownable_init();
-
 		adminContract = _adminContract;
-
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 	}
@@ -73,7 +65,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	}
 
 	function removeFundFromStabilityPool(uint256 _fundToRemove) external onlyOwner {
-		uint256 newCap = GRVTSupplyCap.sub(_fundToRemove);
+		uint256 newCap = GRVTSupplyCap - _fundToRemove;
 		require(
 			totalGRVTIssued <= newCap,
 			"CommunityIssuance: Stability Pool doesn't have enough supply."
@@ -107,10 +99,10 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		if (totalGRVTIssued >= maxPoolSupply) return 0;
 
 		uint256 issuance = _getLastUpdateTokenDistribution();
-		uint256 totalIssuance = issuance.add(totalGRVTIssued);
+		uint256 totalIssuance = issuance + totalGRVTIssued;
 
 		if (totalIssuance > maxPoolSupply) {
-			issuance = maxPoolSupply.sub(totalGRVTIssued);
+			issuance = maxPoolSupply - totalGRVTIssued;
 			totalIssuance = maxPoolSupply;
 		}
 
@@ -123,8 +115,8 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 	function _getLastUpdateTokenDistribution() internal view returns (uint256) {
 		require(lastUpdateTime != 0, "Stability pool hasn't been assigned");
-		uint256 timePassed = block.timestamp.sub(lastUpdateTime).div(SECONDS_IN_ONE_MINUTE);
-		uint256 totalDistribuedSinceBeginning = grvtDistribution.mul(timePassed);
+		uint256 timePassed = (block.timestamp - lastUpdateTime) / SECONDS_IN_ONE_MINUTE;
+		uint256 totalDistribuedSinceBeginning = grvtDistribution * timePassed;
 
 		return totalDistribuedSinceBeginning;
 	}
@@ -145,6 +137,6 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	}
 
 	function setWeeklyGrvtDistribution(uint256 _weeklyReward) external isController {
-		grvtDistribution = _weeklyReward.div(DISTRIBUTION_DURATION);
+		grvtDistribution = _weeklyReward / DISTRIBUTION_DURATION;
 	}
 }

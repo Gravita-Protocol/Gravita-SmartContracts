@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.19;
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -23,7 +22,6 @@ import "./Interfaces/IStabilityPool.sol";
  */
 contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
-	using SafeMathUpgradeable for uint256;
 
 	string public constant NAME = "ActivePool";
 
@@ -96,8 +94,6 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		stabilityPoolAddress = _stabilityPoolAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-
-		renounceOwnership();
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -120,7 +116,8 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) return;
 
-		assetsBalances[_asset] = assetsBalances[_asset].sub(_amount);
+		uint256 newBalance = assetsBalances[_asset] - _amount;
+		assetsBalances[_asset] = newBalance;
 
 		IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
 
@@ -128,7 +125,7 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 			IDeposit(_account).receivedERC20(_asset, _amount);
 		}
 
-		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalances[_asset]);
+		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
 		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
@@ -139,9 +136,9 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 	}
 
 	function increaseDebt(address _collateral, uint256 _amount) external override callerIsBorrowerOpsOrVesselMgr {
-		uint256 newDebt = debtTokenBalances[_collateral].add(_amount);
+		uint256 newDebt = debtTokenBalances[_collateral] + _amount;
 		debtTokenBalances[_collateral] = newDebt;
-		emit ActivePoolDebtUpdated(_collateral, debtTokenBalances[_collateral]);
+		emit ActivePoolDebtUpdated(_collateral, newDebt);
 	}
 
 	function decreaseDebt(address _asset, uint256 _amount)
@@ -149,12 +146,14 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		override
 		callerIsBorrowerOpsOrStabilityPoolOrVesselMgr
 	{
-		debtTokenBalances[_asset] = debtTokenBalances[_asset].sub(_amount);
-		emit ActivePoolDebtUpdated(_asset, debtTokenBalances[_asset]);
+		uint256 newDebt = debtTokenBalances[_asset] - _amount;
+		debtTokenBalances[_asset] = newDebt;
+		emit ActivePoolDebtUpdated(_asset, newDebt);
 	}
 
 	function receivedERC20(address _asset, uint256 _amount) external override callerIsBorrowerOpsOrDefaultPool {
-		assetsBalances[_asset] = assetsBalances[_asset].add(_amount);
-		emit ActivePoolAssetBalanceUpdated(_asset, assetsBalances[_asset]);
+		uint256 newBalance = assetsBalances[_asset] + _amount;
+		assetsBalances[_asset] = newBalance;
+		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
 	}
 }

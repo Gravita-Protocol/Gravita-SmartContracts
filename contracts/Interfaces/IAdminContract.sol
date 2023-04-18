@@ -7,14 +7,34 @@ import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 
 interface IAdminContract {
-	error SafeCheckError(
-		string parameter,
-		uint256 valueEntered,
-		uint256 minValue,
-		uint256 maxValue
-	);
 
-	// --- Events ---
+	// Structs ----------------------------------------------------------------------------------------------------------
+
+	struct CollateralParams {
+		uint256 decimals;
+		uint256 index; //Maps to token address in validCollateral[]
+		bool active;
+		bool isWrapped;
+		uint256 mcr;
+		uint256 ccr;
+		uint256 debtTokenGasCompensation; // Amount of debtToken to be locked in gas pool on opening vessels
+		uint256 minNetDebt; // Minimum amount of net debtToken a vessel must have
+		uint256 percentDivisor; // dividing by 200 yields 0.5%
+		uint256 borrowingFee;
+		uint256 redemptionFeeFloor;
+		uint256 redemptionBlockTimestamp;
+		uint256 mintCap;
+	}
+
+	// Custom Errors ----------------------------------------------------------------------------------------------------
+
+	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
+	error AdminContract__ShortTimelockOnly();
+	error AdminContract__LongTimelockOnly();
+	error AdminContract__OnlyOwner();
+
+	// Events -----------------------------------------------------------------------------------------------------------
+
 	event CollateralAdded(address _collateral);
 	event MCRChanged(uint256 oldMCR, uint256 newMCR);
 	event CCRChanged(uint256 oldCCR, uint256 newCCR);
@@ -23,15 +43,13 @@ interface IAdminContract {
 	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
 	event BorrowingFeeChanged(uint256 oldBorrowingFee, uint256 newBorrowingFee);
 	event MaxBorrowingFeeChanged(uint256 oldMaxBorrowingFee, uint256 newMaxBorrowingFee);
-	event RedemptionFeeFloorChanged(
-		uint256 oldRedemptionFeeFloor,
-		uint256 newRedemptionFeeFloor
-	);
+	event RedemptionFeeFloorChanged(uint256 oldRedemptionFeeFloor, uint256 newRedemptionFeeFloor);
 	event MintCapChanged(uint256 oldMintCap, uint256 newMintCap);
-	event RedemptionBlockChanged(address _collateral, uint256 _block);
+	event RedemptionBlockTimestampChanged(address _collateral, uint256 _blockTimestamp);
 	event PriceFeedChanged(address indexed addr);
 
-	// --- Functions ---
+	// Functions --------------------------------------------------------------------------------------------------------
+
 	function DECIMAL_PRECISION() external view returns (uint256);
 
 	function _100pct() external view returns (uint256);
@@ -48,26 +66,13 @@ interface IAdminContract {
 		bool _isWrapped
 	) external;
 
-	function setAddresses(
-		address _communityIssuanceAddress,
-		address _activePoolAddress,
-		address _defaultPoolAddress,
-		address _stabilityPoolAddress,
-		address _collSurplusPoolAddress,
-		address _priceFeedAddress,
-		address _shortTimelock,
-		address _longTimelock
-	) external;
-
 	function setMCR(address _collateral, uint256 newMCR) external;
 
 	function setCCR(address _collateral, uint256 newCCR) external;
 
-	function sanitizeParameters(address _collateral) external;
-
 	function setAsDefault(address _collateral) external;
 
-	function setAsDefaultWithRemptionBlock(address _collateral, uint256 blockInDays) external;
+	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays) external;
 
 	function setDebtTokenGasCompensation(address _collateral, uint256 gasCompensation) external;
 
@@ -81,9 +86,11 @@ interface IAdminContract {
 
 	function setMintCap(address _collateral, uint256 mintCap) external;
 
-	function setRedemptionBlock(address _collateral, uint256 _block) external;
+	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp) external;
 
 	function getIndex(address _collateral) external view returns (uint256);
+
+	function getIsActive(address _collateral) external view returns (bool);
 
 	function getValidCollateral() external view returns (address[] memory);
 
@@ -101,7 +108,7 @@ interface IAdminContract {
 
 	function getRedemptionFeeFloor(address _collateral) external view returns (uint256);
 
-	function getRedemptionBlock(address _collateral) external view returns (uint256);
+	function getRedemptionBlockTimestamp(address _collateral) external view returns (uint256);
 
 	function getMintCap(address _collateral) external view returns (uint256);
 

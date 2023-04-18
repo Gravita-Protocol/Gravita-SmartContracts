@@ -14,7 +14,7 @@ const VesselManagerTester = artifacts.require("VesselManagerTester.sol")
 
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
-const { ethers } = require("hardhat")
+const { ethers, assert } = require("hardhat")
 
 const ERROR_MARGIN = 1e9
 const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
@@ -271,7 +271,7 @@ contract("FeeCollector", async accounts => {
 				assert.equal(amount1.toString(), maxFee1.sub(minFee1).toString())
 				// move forward in time to half life of first loan, take a second loan
 				const t1 = t0 + Number(MIN_FEE_SECONDS) + Math.floor(Number(FEE_EXPIRATION_SECONDS) / 2)
-				time.increaseTo(t1)
+				await time.increaseTo(t1)
 				const borrowAmount2 = toBN(dec(500_000, 18))
 				const tx2 = await openOrAjustVessel(alice, asset, borrowAmount2)
 				const tx2Time = await time.latest()
@@ -292,9 +292,9 @@ contract("FeeCollector", async accounts => {
 				th.assertIsApproximatelyEqual(to2, expectedTo2, 1)
 				th.assertIsApproximatelyEqual(amount2.toString(), expectedNewAmount.toString(), ERROR_MARGIN)
 				// move forward to 75% of time left on refund
-				const newTimeToLive = to2 - from2
-				const t2 = from2 + (newTimeToLive / 4) * 3
-				time.increaseTo(t2)
+				const newTimeToLive = Number(to2.sub(from2))
+				const t2 = Math.floor(Number(from2) + (newTimeToLive / 4) * 3)
+				await time.increaseTo(t2)
 				// payback in full
 				const tx3 = await closeVessel(alice, asset)
 				const { amount: collectedAmount3 } = th.getAllEventsByName(tx3, "FeeCollected")[0].args

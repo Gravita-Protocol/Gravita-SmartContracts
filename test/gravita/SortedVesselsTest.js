@@ -266,21 +266,6 @@ contract("SortedVessels", async accounts => {
 			assert.isFalse(await sortedVessels.contains(erc20.address, bob))
 		})
 
-		// --- getMaxSize ---
-
-		it("getMaxSize(): Returns the maximum list size", async () => {
-			// const max = await sortedVessels.getMaxSize(ZERO_ADDRESS)
-			// assert.equal(web3.utils.toHex(max), th.maxBytes32)
-			// Added an openVessel to set the maxsize to the maximum
-			await openVessel({
-				asset: erc20.address,
-				ICR: toBN(dec(500, 18)),
-				extraParams: { from: whale },
-			})
-			const maxERC20 = await sortedVessels.getMaxSize(erc20.address)
-			assert.equal(web3.utils.toHex(maxERC20), th.maxBytes32)
-		})
-
 		// --- findInsertPosition ---
 
 		it("Finds the correct insert position given two addresses that loosely bound the correct position", async () => {
@@ -419,7 +404,7 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
 
-			await sortedVessels.setParams(sortedVesselsTester.address, sortedVesselsTester.address)
+			await sortedVessels.setAddresses(sortedVesselsTester.address, sortedVesselsTester.address)
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})
 

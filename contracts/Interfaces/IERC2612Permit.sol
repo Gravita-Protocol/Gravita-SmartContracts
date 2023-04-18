@@ -2,18 +2,7 @@
 
 pragma solidity 0.8.19;
 
-/**
- * @dev Interface of the ERC2612 standard as defined in the EIP.
- *
- * Adds the {permit} method, which can be used to change one's
- * {IERC20-allowance} without having to send a transaction, by signing a
- * message. This allows users to spend tokens without having to hold Ether.
- *
- * See https://eips.ethereum.org/EIPS/eip-2612.
- *
- * Code adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/pull/2237/
- */
-interface IERC2612 {
+interface IERC2612Permit {
 	/**
 	 * @dev Sets `amount` as the allowance of `spender` over `owner`'s tokens,
 	 * given `owner`'s signed approval.
@@ -50,18 +39,8 @@ interface IERC2612 {
 	 * @dev Returns the current ERC2612 nonce for `owner`. This value must be
 	 * included whenever a signature is generated for {permit}.
 	 *
-	 * Every successful call to {permit} increases `owner`'s nonce by one. This
+	 * Every successful call to {permit} increases ``owner``'s nonce by one. This
 	 * prevents a signature from being used multiple times.
-	 *
-	 * `owner` can limit the time a Permit is valid for by setting `deadline` to
-	 * a value in the near future. The deadline argument can be set to uint(-1) to
-	 * create Permits that effectively never expire.
 	 */
 	function nonces(address owner) external view returns (uint256);
-
-	function version() external view returns (string memory);
-
-	function permitTypeHash() external view returns (bytes32);
-
-	function domainSeparator() external view returns (bytes32);
 }
