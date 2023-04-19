@@ -416,10 +416,11 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		_repayDebtTokens(_asset, activePoolCached, debtTokenCached, msg.sender, debt - gasCompensation);
 		_repayDebtTokens(_asset, activePoolCached, debtTokenCached, gasPoolAddress, gasCompensation);
 
-		// Send the collateral back to the user
-		activePoolCached.sendAsset(_asset, msg.sender, coll);
 		// Signal to the fee collector that debt has been paid in full
 		feeCollector.closeDebt(msg.sender, _asset);
+
+		// Send the collateral back to the user
+		activePoolCached.sendAsset(_asset, msg.sender, coll);
 	}
 
 	/**
@@ -510,12 +511,12 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		IActivePool _activePool,
 		uint256 _amount
 	) internal {
+		_activePool.receivedERC20(_asset, _amount);
 		IERC20Upgradeable(_asset).safeTransferFrom(
 			msg.sender,
 			address(_activePool),
 			SafetyTransfer.decimalsCorrection(_asset, _amount)
 		);
-		_activePool.receivedERC20(_asset, _amount);
 	}
 
 	// Issue the specified amount of debt tokens to _account and increases the total active debt (_netDebtIncrease potentially includes a debtTokenFee)
