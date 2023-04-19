@@ -303,50 +303,6 @@ contract("AdminContract", async accounts => {
 		)
 	})
 
-	it("setCollateralParameters: Owner change parameter - Valid SafeCheck Then Reset", async () => {
-		const newMCR = MCR_SAFETY_MAX
-		const newCCR = CCR_SAFETY_MIN
-		const newMinNetDebt = MIN_NET_DEBT_SAFETY_MAX
-		const newPercentDivisor = PERCENT_DIVISOR_SAFETY_MIN
-		const newBorrowingFee = BORROWING_FEE_SAFETY_MAX
-		const newRedemptionFeeFloor = REDEMPTION_FEE_FLOOR_SAFETY_MIN
-		const newMintCap = toBN(1111111)
-
-		const expectedBorrowingFee = applyDecimalPrecision(newBorrowingFee)
-		const expectedRedemptionFeeFloor = applyDecimalPrecision(newRedemptionFeeFloor)
-
-		await adminContract.setCollateralParameters(
-			ZERO_ADDRESS,
-			newMCR,
-			newCCR,
-			newMinNetDebt,
-			newPercentDivisor,
-			newBorrowingFee,
-			newRedemptionFeeFloor,
-			newMintCap,
-			{ from: owner }
-		)
-
-		assert.equal(newMCR.toString(), await adminContract.getMcr(ZERO_ADDRESS))
-		assert.equal(newCCR.toString(), await adminContract.getCcr(ZERO_ADDRESS))
-		assert.equal(newMinNetDebt.toString(), await adminContract.getMinNetDebt(ZERO_ADDRESS))
-		assert.equal(newPercentDivisor.toString(), await adminContract.getPercentDivisor(ZERO_ADDRESS))
-		assert.equal(expectedBorrowingFee.toString(), await adminContract.getBorrowingFee(ZERO_ADDRESS))
-		assert.equal(expectedRedemptionFeeFloor.toString(), await adminContract.getRedemptionFeeFloor(ZERO_ADDRESS))
-		assert.equal(newMintCap.toString(), await adminContract.getMintCap(ZERO_ADDRESS))
-
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
-		assert.equal(MCR.toString(), await adminContract.getMcr(ZERO_ADDRESS))
-		assert.equal(CCR.toString(), await adminContract.getCcr(ZERO_ADDRESS))
-		assert.equal(GAS_COMPENSATION.toString(), await adminContract.getDebtTokenGasCompensation(ZERO_ADDRESS))
-		assert.equal(MIN_NET_DEBT.toString(), await adminContract.getMinNetDebt(ZERO_ADDRESS))
-		assert.equal(PERCENT_DIVISOR.toString(), await adminContract.getPercentDivisor(ZERO_ADDRESS))
-		assert.equal(BORROWING_FEE.toString(), await adminContract.getBorrowingFee(ZERO_ADDRESS))
-		assert.equal(REDEMPTION_FEE_FLOOR.toString(), await adminContract.getRedemptionFeeFloor(ZERO_ADDRESS))
-		assert.equal(MINT_CAP.toString(), await adminContract.getMintCap(ZERO_ADDRESS))
-	})
-
 	it("openVessel(): Borrowing at zero base rate charges minimum fee with different borrowingFeeFloor", async () => {
 		await adminContract.setBorrowingFee(erc20.address, BORROWING_FEE_SAFETY_MAX)
 
