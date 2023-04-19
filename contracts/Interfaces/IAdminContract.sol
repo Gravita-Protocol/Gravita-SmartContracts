@@ -32,6 +32,7 @@ interface IAdminContract {
 	error AdminContract__ShortTimelockOnly();
 	error AdminContract__LongTimelockOnly();
 	error AdminContract__OnlyOwner();
+	error AdminContract__CollateralAlreadyInitialized();
 
 	// Events -----------------------------------------------------------------------------------------------------------
 
@@ -41,7 +42,6 @@ interface IAdminContract {
 	event MinNetDebtChanged(uint256 oldMinNet, uint256 newMinNet);
 	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
 	event BorrowingFeeChanged(uint256 oldBorrowingFee, uint256 newBorrowingFee);
-	event MaxBorrowingFeeChanged(uint256 oldMaxBorrowingFee, uint256 newMaxBorrowingFee);
 	event RedemptionFeeFloorChanged(uint256 oldRedemptionFeeFloor, uint256 newRedemptionFeeFloor);
 	event MintCapChanged(uint256 oldMintCap, uint256 newMintCap);
 	event RedemptionBlockTimestampChanged(address _collateral, uint256 _blockTimestamp);

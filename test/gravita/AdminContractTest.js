@@ -83,8 +83,6 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("Formula Checks: Call every function with default value, Should match default values", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS) // Set initial values
-
 		await adminContract.setMCR(ZERO_ADDRESS, "1100000000000000000")
 		await adminContract.setCCR(ZERO_ADDRESS, "1500000000000000000")
 		await adminContract.setPercentDivisor(ZERO_ADDRESS, 100)
@@ -126,16 +124,16 @@ contract("AdminContract", async accounts => {
 		await assertRevert(adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, REDEMPTION_FEE_FLOOR, { from: user }))
 	})
 
-	it("setMCR: Owner change parameter - Failing SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
+	it("setAsDefault: Double initialization with default values should revert", async () => {
+		await assertRevert(adminContract.setAsDefault(ZERO_ADDRESS))
+	})
 
+	it("setMCR: Owner change parameter - Failing SafeCheck", async () => {
 		await assertRevert(adminContract.setMCR(ZERO_ADDRESS, MCR_SAFETY_MIN.sub(toBN(1))))
 		await assertRevert(adminContract.setMCR(ZERO_ADDRESS, MCR_SAFETY_MAX.add(toBN(1))))
 	})
 
 	it("setMCR: Owner change parameter - Valid SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await adminContract.setMCR(ZERO_ADDRESS, MCR_SAFETY_MIN)
 		assert.equal(MCR_SAFETY_MIN.toString(), await adminContract.getMcr(ZERO_ADDRESS))
 
@@ -144,15 +142,11 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("setCCR: Owner change parameter - Failing SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await assertRevert(adminContract.setCCR(ZERO_ADDRESS, CCR_SAFETY_MIN.sub(toBN(1))))
 		await assertRevert(adminContract.setCCR(ZERO_ADDRESS, CCR_SAFETY_MAX.add(toBN(1))))
 	})
 
 	it("setCCR: Owner change parameter - Valid SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await adminContract.setCCR(ZERO_ADDRESS, CCR_SAFETY_MIN)
 		assert.equal(CCR_SAFETY_MIN.toString(), await adminContract.getCcr(ZERO_ADDRESS))
 
@@ -161,13 +155,10 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("setMinNetDebt: Owner change parameter - Failing SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
 		await assertRevert(adminContract.setMinNetDebt(ZERO_ADDRESS, MIN_NET_DEBT_SAFETY_MAX.add(toBN(1))))
 	})
 
 	it("setMinNetDebt: Owner change parameter - Valid SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await adminContract.setMinNetDebt(ZERO_ADDRESS, MIN_NET_DEBT_SAFETY_MIN)
 		assert.equal(MIN_NET_DEBT_SAFETY_MIN.toString(), await adminContract.getMinNetDebt(ZERO_ADDRESS))
 
@@ -176,14 +167,11 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("setPercentDivisor: Owner change parameter - Failing SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await assertRevert(adminContract.setPercentDivisor(ZERO_ADDRESS, PERCENT_DIVISOR_SAFETY_MIN.sub(toBN(1))))
 		await assertRevert(adminContract.setPercentDivisor(ZERO_ADDRESS, PERCENT_DIVISOR_SAFETY_MAX.add(toBN(1))))
 	})
 
 	it("setPercentDivisor: Owner change parameter - Valid SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
 		await adminContract.setPercentDivisor(ZERO_ADDRESS, PERCENT_DIVISOR_SAFETY_MIN)
 		assert.equal(PERCENT_DIVISOR_SAFETY_MIN.toString(), await adminContract.getPercentDivisor(ZERO_ADDRESS))
 
@@ -192,16 +180,12 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("setBorrowingFee: Owner change parameter - Failing SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await assertRevert(adminContract.setBorrowingFee(ZERO_ADDRESS, BORROWING_FEE_SAFETY_MAX.add(toBN(1))))
 	})
 
 	it("setBorrowingFeeFloor: Owner change parameter - Valid SafeCheck", async () => {
 		const expectedMin = applyDecimalPrecision(BORROWING_FEE_SAFETY_MIN)
 		const expectedMax = applyDecimalPrecision(BORROWING_FEE_SAFETY_MAX)
-
-		await adminContract.setAsDefault(ZERO_ADDRESS)
 
 		await adminContract.setBorrowingFee(ZERO_ADDRESS, BORROWING_FEE_SAFETY_MIN)
 		assert.equal(expectedMin.toString(), await adminContract.getBorrowingFee(ZERO_ADDRESS))
@@ -211,8 +195,6 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("setRedemptionFeeFloor: Owner change parameter - Failing SafeCheck", async () => {
-		await adminContract.setAsDefault(ZERO_ADDRESS)
-
 		await assertRevert(adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, REDEMPTION_FEE_FLOOR_SAFETY_MIN.sub(toBN(1))))
 		await assertRevert(adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, REDEMPTION_FEE_FLOOR_SAFETY_MAX.add(toBN(1))))
 	})
@@ -220,8 +202,6 @@ contract("AdminContract", async accounts => {
 	it("setRedemptionFeeFloor: Owner change parameter - Valid SafeCheck", async () => {
 		const expectedMin = applyDecimalPrecision(REDEMPTION_FEE_FLOOR_SAFETY_MIN)
 		const expectedMax = applyDecimalPrecision(REDEMPTION_FEE_FLOOR_SAFETY_MAX)
-
-		await adminContract.setAsDefault(ZERO_ADDRESS)
 
 		await adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, REDEMPTION_FEE_FLOOR_SAFETY_MIN)
 		assert.equal(expectedMin.toString(), await adminContract.getRedemptionFeeFloor(ZERO_ADDRESS))
@@ -368,8 +348,6 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("openVessel(): Borrowing at zero base rate charges minimum fee with different borrowingFeeFloor", async () => {
-		await adminContract.setAsDefault(erc20.address)
-
 		await adminContract.setBorrowingFee(erc20.address, BORROWING_FEE_SAFETY_MAX)
 
 		assert.equal(
