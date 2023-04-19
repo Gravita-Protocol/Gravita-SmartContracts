@@ -89,7 +89,7 @@ async function addCollateral(name, configKey) {
 		throw `No address found for collateral ${name} using config var externalAddrs.${configKey}`
 	}
 	console.log(`Collateral added: ${address} -> ${name}`)
-	await helper.sendAndWaitForTransaction(coreContracts.adminContract.addNewCollateral(address, 18, true))
+	await helper.sendAndWaitForTransaction(coreContracts.adminContract.addNewCollateral(address, dec(30, 18), 18, true))
 	await helper.sendAndWaitForTransaction(coreContracts.adminContract.setAsDefault(address))
 }
 

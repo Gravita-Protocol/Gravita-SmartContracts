@@ -38,9 +38,6 @@ contract("AdminContract", async accounts => {
 	const BORROWING_FEE_SAFETY_MAX = toBN(1000) //10%
 	const BORROWING_FEE_SAFETY_MIN = toBN(0)
 
-	const GRVT_GAS_COMPENSATION_SAFETY_MAX = toBN(dec(400, 18))
-	const GRVT_GAS_COMPENSATION_SAFETY_MIN = toBN(dec(1, 18))
-
 	const MIN_NET_DEBT_SAFETY_MAX = toBN(dec(1800, 18))
 	const MIN_NET_DEBT_SAFETY_MIN = toBN(0)
 
@@ -58,7 +55,7 @@ contract("AdminContract", async accounts => {
 		adminContract = await AdminContract.new()
 		MCR = await adminContract.MCR_DEFAULT()
 		CCR = await adminContract.CCR_DEFAULT()
-		GAS_COMPENSATION = await adminContract.DEBT_TOKEN_GAS_COMPENSATION_DEFAULT()
+		GAS_COMPENSATION = toBN(dec(30, 18))
 		MIN_NET_DEBT = await adminContract.MIN_NET_DEBT_DEFAULT()
 		PERCENT_DIVISOR = await adminContract.PERCENT_DIVISOR_DEFAULT()
 		BORROWING_FEE = await adminContract.BORROWING_FEE_DEFAULT()
@@ -69,8 +66,9 @@ contract("AdminContract", async accounts => {
 	beforeEach(async () => {
 		contracts = await deploymentHelper.deployGravitaCore()
 		contracts.vesselManager = await VesselManagerTester.new()
-		await deploymentHelper.connectCoreContracts(contracts, []) // send empty GRVT contracts as they are not used here
-
+		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts) 
+		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 		priceFeed = contracts.priceFeedTestnet
 		vesselManager = contracts.vesselManager
 		activePool = contracts.activePool
@@ -89,7 +87,6 @@ contract("AdminContract", async accounts => {
 		await adminContract.setCCR(ZERO_ADDRESS, "1500000000000000000")
 		await adminContract.setPercentDivisor(ZERO_ADDRESS, 100)
 		await adminContract.setBorrowingFee(ZERO_ADDRESS, 50)
-		await adminContract.setDebtTokenGasCompensation(ZERO_ADDRESS, dec(30, 18))
 		await adminContract.setMinNetDebt(ZERO_ADDRESS, dec(300, 18))
 		await adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, 50)
 		await adminContract.setMintCap(ZERO_ADDRESS, dec(1000000, 18))
@@ -98,7 +95,6 @@ contract("AdminContract", async accounts => {
 		assert.equal((await adminContract.getCcr(ZERO_ADDRESS)).toString(), CCR)
 		assert.equal((await adminContract.getPercentDivisor(ZERO_ADDRESS)).toString(), PERCENT_DIVISOR)
 		assert.equal((await adminContract.getBorrowingFee(ZERO_ADDRESS)).toString(), BORROWING_FEE)
-		assert.equal((await adminContract.getDebtTokenGasCompensation(ZERO_ADDRESS)).toString(), GAS_COMPENSATION)
 		assert.equal((await adminContract.getMinNetDebt(ZERO_ADDRESS)).toString(), MIN_NET_DEBT)
 		assert.equal((await adminContract.getRedemptionFeeFloor(ZERO_ADDRESS)).toString(), REDEMPTION_FEE_FLOOR)
 		assert.equal((await adminContract.getMintCap(ZERO_ADDRESS)).toString(), MINT_CAP)
@@ -111,7 +107,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR,
-				GAS_COMPENSATION,
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR,
 				BORROWING_FEE,
@@ -123,7 +118,6 @@ contract("AdminContract", async accounts => {
 
 		await assertRevert(adminContract.setMCR(ZERO_ADDRESS, MCR, { from: user }))
 		await assertRevert(adminContract.setCCR(ZERO_ADDRESS, CCR, { from: user }))
-		await assertRevert(adminContract.setDebtTokenGasCompensation(ZERO_ADDRESS, GAS_COMPENSATION, { from: user }))
 		await assertRevert(adminContract.setMinNetDebt(ZERO_ADDRESS, MIN_NET_DEBT, { from: user }))
 		await assertRevert(adminContract.setPercentDivisor(ZERO_ADDRESS, PERCENT_DIVISOR, { from: user }))
 		await assertRevert(adminContract.setBorrowingFee(ZERO_ADDRESS, BORROWING_FEE, { from: user }))
@@ -158,29 +152,6 @@ contract("AdminContract", async accounts => {
 
 		await adminContract.setCCR(ZERO_ADDRESS, CCR_SAFETY_MAX)
 		assert.equal(CCR_SAFETY_MAX.toString(), await adminContract.getCcr(ZERO_ADDRESS))
-	})
-
-	it("setDebtTokenGasCompensation: Owner change parameter - Failing SafeCheck", async () => {
-		await assertRevert(
-			adminContract.setDebtTokenGasCompensation(ZERO_ADDRESS, GRVT_GAS_COMPENSATION_SAFETY_MIN.sub(toBN(1)))
-		)
-		await assertRevert(
-			adminContract.setDebtTokenGasCompensation(ZERO_ADDRESS, GRVT_GAS_COMPENSATION_SAFETY_MAX.add(toBN(1)))
-		)
-	})
-
-	it("setDebtTokenGasCompensation: Owner change parameter - Valid SafeCheck", async () => {
-		await adminContract.setDebtTokenGasCompensation(ZERO_ADDRESS, GRVT_GAS_COMPENSATION_SAFETY_MIN)
-		assert.equal(
-			GRVT_GAS_COMPENSATION_SAFETY_MIN.toString(),
-			await adminContract.getDebtTokenGasCompensation(ZERO_ADDRESS)
-		)
-
-		await adminContract.setDebtTokenGasCompensation(ZERO_ADDRESS, GRVT_GAS_COMPENSATION_SAFETY_MAX)
-		assert.equal(
-			GRVT_GAS_COMPENSATION_SAFETY_MAX.toString(),
-			await adminContract.getDebtTokenGasCompensation(ZERO_ADDRESS)
-		)
 	})
 
 	it("setMinNetDebt: Owner change parameter - Failing SafeCheck", async () => {
@@ -245,7 +216,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR_SAFETY_MAX.add(toBN(1)),
 				CCR,
-				GAS_COMPENSATION,
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR,
 				BORROWING_FEE,
@@ -259,7 +229,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR_SAFETY_MAX.add(toBN(1)),
-				GAS_COMPENSATION,
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR,
 				BORROWING_FEE,
@@ -273,7 +242,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR,
-				GRVT_GAS_COMPENSATION_SAFETY_MAX.add(toBN(1)),
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR,
 				BORROWING_FEE,
@@ -287,7 +255,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR,
-				GAS_COMPENSATION,
 				MIN_NET_DEBT_SAFETY_MAX.add(toBN(1)),
 				PERCENT_DIVISOR,
 				BORROWING_FEE,
@@ -301,7 +268,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR,
-				GAS_COMPENSATION,
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR_SAFETY_MAX.add(toBN(1)),
 				BORROWING_FEE,
@@ -315,7 +281,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR,
-				GAS_COMPENSATION,
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR,
 				BORROWING_FEE_SAFETY_MAX.add(toBN(1)),
@@ -329,7 +294,6 @@ contract("AdminContract", async accounts => {
 				ZERO_ADDRESS,
 				MCR,
 				CCR,
-				GAS_COMPENSATION,
 				MIN_NET_DEBT,
 				PERCENT_DIVISOR,
 				BORROWING_FEE,

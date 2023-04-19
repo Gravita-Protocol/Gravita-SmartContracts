@@ -24,7 +24,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	uint256 public constant CCR_DEFAULT = 1.5 ether; // 150%
 	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 1%
 	uint256 public constant BORROWING_FEE_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
-	uint256 public constant DEBT_TOKEN_GAS_COMPENSATION_DEFAULT = 30 ether;
 	uint256 public constant MIN_NET_DEBT_DEFAULT = 300 ether;
 	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
 	uint256 public constant MINT_CAP_DEFAULT = 1_000_000 ether; // 1 million
@@ -139,6 +138,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 
 	function addNewCollateral(
 		address _collateral,
+		uint256 _debtTokenGasCompensation, // the gas compensation is initialized here as it won't be changed
 		uint256 _decimals,
 		bool _isWrapped
 	) external longTimelockOnly {
@@ -151,7 +151,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			isWrapped: _isWrapped,
 			mcr: MCR_DEFAULT,
 			ccr: 0,
-			debtTokenGasCompensation: 0,
+			debtTokenGasCompensation: _debtTokenGasCompensation,
 			minNetDebt: 0,
 			percentDivisor: 0,
 			borrowingFee: 0,
@@ -215,7 +215,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		address _collateral,
 		uint256 newMCR,
 		uint256 newCCR,
-		uint256 gasCompensation,
 		uint256 minNetDebt,
 		uint256 percentDivisor,
 		uint256 borrowingFee,
@@ -225,7 +224,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		collateralParams[_collateral].active = true;
 		setMCR(_collateral, newMCR);
 		setCCR(_collateral, newCCR);
-		setDebtTokenGasCompensation(_collateral, gasCompensation);
 		setMinNetDebt(_collateral, minNetDebt);
 		setPercentDivisor(_collateral, percentDivisor);
 		setBorrowingFee(_collateral, borrowingFee);
@@ -262,7 +260,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		collateralParam.active = true;
 		collateralParam.mcr = MCR_DEFAULT;
 		collateralParam.ccr = CCR_DEFAULT;
-		collateralParam.debtTokenGasCompensation = DEBT_TOKEN_GAS_COMPENSATION_DEFAULT;
 		collateralParam.minNetDebt = MIN_NET_DEBT_DEFAULT;
 		collateralParam.percentDivisor = PERCENT_DIVISOR_DEFAULT;
 		collateralParam.borrowingFee = BORROWING_FEE_DEFAULT;
@@ -317,18 +314,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 newBorrowingFee = (DECIMAL_PRECISION / 10000) * borrowingFee;
 		collParams.borrowingFee = newBorrowingFee;
 		emit BorrowingFeeChanged(oldBorrowing, newBorrowingFee);
-	}
-
-	function setDebtTokenGasCompensation(address _collateral, uint256 gasCompensation)
-		public
-		override
-		longTimelockOnly
-		safeCheck("Gas Compensation", _collateral, gasCompensation, 1 ether, 400 ether)
-	{
-		CollateralParams storage collParams = collateralParams[_collateral];
-		uint256 oldGasComp = collParams.debtTokenGasCompensation;
-		collParams.debtTokenGasCompensation = gasCompensation;
-		emit GasCompensationChanged(oldGasComp, gasCompensation);
 	}
 
 	function setMinNetDebt(address _collateral, uint256 minNetDebt)
