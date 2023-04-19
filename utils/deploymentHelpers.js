@@ -347,7 +347,7 @@ class DeploymentHelper {
 
 		await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30, 18), 18, false)
 		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(30, 18), 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18, false)
+		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(200, 18), 18, false)
 
 		await contracts.adminContract.setAsDefault(ZERO_ADDRESS)
 		await contracts.adminContract.setAsDefault(contracts.erc20.address)
@@ -398,7 +398,7 @@ class DeploymentHelper {
 			ZERO_ADDRESS,
 			"1100000000000000000",
 			"1500000000000000000",
-			dec(30, 18),
+			dec(300, 18),
 			100,
 			50,
 			50,
@@ -409,7 +409,7 @@ class DeploymentHelper {
 			coreContracts.erc20.address,
 			"1100000000000000000",
 			"1500000000000000000",
-			dec(200, 18),
+			dec(1800, 18),
 			200,
 			50,
 			50,
