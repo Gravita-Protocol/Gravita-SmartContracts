@@ -10,6 +10,7 @@ interface IDebtToken is IERC20 {
 
 	event TokenBalanceUpdated(address _user, uint256 _amount);
 	event EmergencyStopMintingCollateral(address _asset, bool state);
+	event WhitelistChanged(address _whitelisted, bool whitelisted);
 
 	function emergencyStopMinting(address _asset, bool status) external;
 
