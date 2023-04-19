@@ -112,7 +112,7 @@ class DeploymentHelper {
 		Timelock.setAsDeployed(longTimelock)
 		VesselManager.setAsDeployed(vesselManager)
 		VesselManagerOperations.setAsDeployed(vesselManagerOperations)
-		
+
 		await erc20.setDecimals(18)
 		await erc20B.setDecimals(18)
 
@@ -257,7 +257,6 @@ class DeploymentHelper {
 
 	// Connect contracts to their dependencies
 	static async connectCoreContracts(contracts, GRVTContracts, treasury = "0x1" + "0".repeat(39)) {
-
 		await contracts.activePool.setAddresses(
 			contracts.borrowerOperations.address,
 			contracts.collSurplusPool.address,
@@ -310,8 +309,8 @@ class DeploymentHelper {
 		await contracts.functionCaller.setVesselManagerAddress(contracts.vesselManager.address)
 		await contracts.functionCaller.setSortedVesselsAddress(contracts.sortedVessels.address)
 
-		await contracts.priceFeedTestnet.setPrice(contracts.erc20.address, dec(200, 'ether'))
-		await contracts.priceFeedTestnet.setPrice(contracts.erc20B.address, dec(100, 'ether'))
+		await contracts.priceFeedTestnet.setPrice(contracts.erc20.address, dec(200, "ether"))
+		await contracts.priceFeedTestnet.setPrice(contracts.erc20B.address, dec(100, "ether"))
 
 		await contracts.sortedVessels.setAddresses(contracts.vesselManager.address, contracts.borrowerOperations.address)
 
@@ -346,10 +345,10 @@ class DeploymentHelper {
 			contracts.adminContract.address
 		)
 
-		await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30,18), 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(30,18),18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30,18), 18, false)
-		
+		await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30, 18), 18, false)
+		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(30, 18), 18, false)
+		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18, false)
+
 		await contracts.adminContract.setAsDefault(ZERO_ADDRESS)
 		await contracts.adminContract.setAsDefault(contracts.erc20.address)
 		await contracts.adminContract.setAsDefault(contracts.erc20B.address)

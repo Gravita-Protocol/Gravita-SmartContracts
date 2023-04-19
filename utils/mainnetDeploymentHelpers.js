@@ -347,9 +347,9 @@ class MainnetDeploymentHelper {
 			false
 		)
 
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_reth.address, 18, true)
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_weth.address, 18, true)
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_wsteth.address, 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_reth.address, dec(30, 18), 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_weth.address, dec(30, 18), 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_wsteth.address, dec(30, 18), 18, true)
 
 		await contracts.adminContract.setAsDefault(contracts.mockErc20_reth.address)
 		await contracts.adminContract.setAsDefault(contracts.mockErc20_weth.address)
