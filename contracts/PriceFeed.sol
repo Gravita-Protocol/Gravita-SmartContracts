@@ -282,7 +282,12 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		view
 		returns (FeedResponse memory response)
 	{
-		response.decimals = _priceAggregator.decimals();
+		try _priceAggregator.decimals() returns (uint8 decimals) {
+			// If call to Chainlink succeeds, record the current decimal precision
+			response.decimals = decimals;
+		} catch {
+			// If call to Chainlink aggregator reverts, return a zero response with success = false
+			return response;}
 		try _priceAggregator.latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
@@ -290,11 +295,15 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			uint256 timestamp,
 			uint80 /* answeredInRound */
 		) {
+			// If call to Chainlink succeeds, return the response and success = true
 			response.roundId = roundId;
 			response.answer = answer;
 			response.timestamp = timestamp;
 			response.success = true;
-		} catch {}
+		} catch {
+			// If call to Chainlink aggregator reverts, return a zero response with success = false
+			return response;
+		}
 	}
 
 	function _fetchPrevFeedResponse(
