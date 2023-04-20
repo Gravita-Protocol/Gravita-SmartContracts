@@ -187,9 +187,9 @@ yarn deploy-local
 yarn install
 
 # copy secrets file
-cp secrets.js.template secrets.js
+cp secrets.env.template secrets.env
 
-# edit secrets.js and provide the Alchemy API key for Goerli
+# edit secrets.env (only GOERLI_DEPLOYER_PRIVATEKEY is required)
 
 # run tests 
 yarn test 
