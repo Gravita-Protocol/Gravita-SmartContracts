@@ -13,7 +13,6 @@ import "./Interfaces/ICommunityIssuance.sol";
 import "./Interfaces/IAdminContract.sol";
 
 contract AdminContract is IAdminContract, ProxyAdmin {
-
 	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "AdminContract";
@@ -95,10 +94,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 min,
 		uint256 max
 	) {
-		require(
-			collateralParams[_collateral].active,
-			"Collateral is not configured, use setAsDefault or setCollateralParameters"
-		);
+		require(collateralParams[_collateral].active, "Collateral is not configured, use setCollateralParameters");
 
 		if (enteredValue < min || enteredValue > max) {
 			revert SafeCheckError(parameter, enteredValue, min, max);
@@ -130,7 +126,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	}
 
 	/**
-	 * @dev The deployment script will call this function after all collaterals have been configured. 
+	 * @dev The deployment script will call this function after all collaterals have been configured.
 	 */
 	function setInitialized() external onlyOwner {
 		isInitialized = true;
@@ -150,14 +146,14 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			active: false,
 			isWrapped: _isWrapped,
 			mcr: MCR_DEFAULT,
-			ccr: 0,
+			ccr: CCR_DEFAULT,
 			debtTokenGasCompensation: _debtTokenGasCompensation,
-			minNetDebt: 0,
-			percentDivisor: 0,
-			borrowingFee: 0,
-			redemptionFeeFloor: 0,
+			minNetDebt: MIN_NET_DEBT_DEFAULT,
+			percentDivisor: PERCENT_DIVISOR_DEFAULT,
+			borrowingFee: BORROWING_FEE_DEFAULT,
+			redemptionFeeFloor: REDEMPTION_FEE_FLOOR_DEFAULT,
 			redemptionBlockTimestamp: 0,
-			mintCap: type(uint256).max
+			mintCap: MINT_CAP_DEFAULT
 		});
 
 		stabilityPool.addCollateralType(_collateral);
@@ -231,43 +227,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		setMintCap(_collateral, mintCap);
 	}
 
-	function setAsDefault(address _collateral) external onlyOwner {
-		_setAsDefault(_collateral);
-	}
-
-	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays)
-		external
-		override
-		onlyOwner // TODO: Review if should set to controller
-	{
-		if (blockInDays > REDEMPTION_BLOCK_DAYS) {
-			blockInDays = REDEMPTION_BLOCK_DAYS;
-		}
-
-		CollateralParams storage collParams = collateralParams[_collateral];
-		if (collParams.redemptionBlockTimestamp == 0) {
-			collParams.redemptionBlockTimestamp = block.timestamp + (blockInDays * 1 days);
-		}
-
-		_setAsDefault(_collateral);
-	}
-
-	function _setAsDefault(address _collateral) private {
-		CollateralParams storage collateralParam = collateralParams[_collateral];
-		if (collateralParam.active) {
-			revert AdminContract__CollateralAlreadyInitialized();
-		}
-		collateralParam.active = true;
-		collateralParam.mcr = MCR_DEFAULT;
-		collateralParam.ccr = CCR_DEFAULT;
-		collateralParam.minNetDebt = MIN_NET_DEBT_DEFAULT;
-		collateralParam.percentDivisor = PERCENT_DIVISOR_DEFAULT;
-		collateralParam.borrowingFee = BORROWING_FEE_DEFAULT;
-		collateralParam.redemptionFeeFloor = REDEMPTION_FEE_FLOOR_DEFAULT;
-		collateralParam.mintCap = MINT_CAP_DEFAULT;
-	}
-
-	function setMCR(address _collateral, uint256 newMCR)
+	function setMCR(
+		address _collateral,
+		uint256 newMCR
+	)
 		public
 		override
 		shortTimelockOnly
@@ -279,7 +242,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit MCRChanged(oldMCR, newMCR);
 	}
 
-	function setCCR(address _collateral, uint256 newCCR)
+	function setCCR(
+		address _collateral,
+		uint256 newCCR
+	)
 		public
 		override
 		shortTimelockOnly
@@ -292,23 +258,24 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	}
 
 	function setActive(address _collateral, bool _active) public onlyOwner {
-		CollateralParams storage collParams = collateralParams[_collateral];	
+		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}
 
-	function setPercentDivisor(address _collateral, uint256 percentDivisor)
-		public
-		override
-		onlyOwner
-		safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200)
-	{
+	function setPercentDivisor(
+		address _collateral,
+		uint256 percentDivisor
+	) public override onlyOwner safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200) {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldPercent = collParams.percentDivisor;
 		collParams.percentDivisor = percentDivisor;
 		emit PercentDivisorChanged(oldPercent, percentDivisor);
 	}
 
-	function setBorrowingFee(address _collateral, uint256 borrowingFee)
+	function setBorrowingFee(
+		address _collateral,
+		uint256 borrowingFee
+	)
 		public
 		override
 		onlyOwner
@@ -321,19 +288,20 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit BorrowingFeeChanged(oldBorrowing, newBorrowingFee);
 	}
 
-	function setMinNetDebt(address _collateral, uint256 minNetDebt)
-		public
-		override
-		longTimelockOnly
-		safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether)
-	{
+	function setMinNetDebt(
+		address _collateral,
+		uint256 minNetDebt
+	) public override longTimelockOnly safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether) {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldMinNet = collParams.minNetDebt;
 		collParams.minNetDebt = minNetDebt;
 		emit MinNetDebtChanged(oldMinNet, minNetDebt);
 	}
 
-	function setRedemptionFeeFloor(address _collateral, uint256 redemptionFeeFloor)
+	function setRedemptionFeeFloor(
+		address _collateral,
+		uint256 redemptionFeeFloor
+	)
 		public
 		override
 		onlyOwner
@@ -354,7 +322,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit MintCapChanged(oldMintCap, newMintCap);
 	}
 
-	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp) external override shortTimelockOnly {
+	function setRedemptionBlockTimestamp(
+		address _collateral,
+		uint256 _blockTimestamp
+	) external override shortTimelockOnly {
 		collateralParams[_collateral].redemptionBlockTimestamp = _blockTimestamp;
 		emit RedemptionBlockTimestampChanged(_collateral, _blockTimestamp);
 	}

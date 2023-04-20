@@ -70,10 +70,6 @@ interface IAdminContract {
 
 	function setCCR(address _collateral, uint256 newCCR) external;
 
-	function setAsDefault(address _collateral) external;
-
-	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays) external;
-
 	function setMinNetDebt(address _collateral, uint256 minNetDebt) external;
 
 	function setPercentDivisor(address _collateral, uint256 precentDivisor) external;
