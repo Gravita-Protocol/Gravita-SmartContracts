@@ -11,14 +11,14 @@ contract PriceFeedTestnet is IPriceFeed {
 
 	string public constant NAME = "PriceFeedTestnet";
 
-	mapping(address => uint256) public lastGoodPrice;
+	mapping(address => uint256) public prices;
 
 	function getPrice(address _asset) external view returns (uint256) {
-		return lastGoodPrice[_asset];
+		return prices[_asset];
 	}
 
 	function setPrice(address _asset, uint256 _price) external {
-		lastGoodPrice[_asset] = _price;
+		prices[_asset] = _price;
 	}
 
 	function setOracle(

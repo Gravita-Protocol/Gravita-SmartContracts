@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import "../PriceFeed.sol";
 
 contract PriceFeedTester is PriceFeed {
-	function setLastGoodPrice(address _asset, uint256 _lastGoodPrice) external {
-		priceRecords[_asset] = PriceRecord({ scaledPrice: _lastGoodPrice, timestamp: block.timestamp });
+	function setPrice(address _asset, uint256 _price) external {
+		priceRecords[_asset] = PriceRecord({ scaledPrice: _price, timestamp: block.timestamp });
 	}
 
 	function _getRETH_ETHValue() internal pure override returns (uint256) {

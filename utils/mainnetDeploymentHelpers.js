@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@nomicfoundation/hardhat-network-helpers")
 const fs = require("fs")
 
 const shortDelay = 3 * 86_400 // 3 days
@@ -334,22 +335,53 @@ class MainnetDeploymentHelper {
 
 		await contracts.priceFeed.setAddresses(
 			contracts.adminContract.address,
+			contracts.shortTimelock.address,
 			contracts.mockErc20_reth.address,
 			this.hre.ethers.constants.AddressZero,
 			contracts.mockErc20_wsteth.address
 		)
-		await contracts.priceFeed.addOracle(contracts.debtToken.address, contracts.mockAggregator_debt.address, false)
-		await contracts.priceFeed.addOracle(contracts.mockErc20_reth.address, contracts.mockAggregator_reth.address, false)
-		await contracts.priceFeed.addOracle(contracts.mockErc20_weth.address, contracts.mockAggregator_weth.address, false)
-		await contracts.priceFeed.addOracle(
-			contracts.mockErc20_wsteth.address,
-			contracts.mockAggregator_wsteth.address,
-			false
-		)
+		const maxDeviationBetweenRounds = "500000000000000000" // 0.5 ether
+		const debtTokenGasCompensation = "30000000000000000000" // 30 ether
+		setBalance(contracts.shortTimelock.address, 1e18)
+		await impersonateAccount(contracts.shortTimelock.address)
+		const timelockSigner = await ethers.getSigner(contracts.shortTimelock.address)
+		await contracts.priceFeed
+			.connect(timelockSigner)
+			.setOracle(contracts.debtToken.address, contracts.mockAggregator_debt.address, maxDeviationBetweenRounds, false)
+		await contracts.priceFeed
+			.connect(timelockSigner)
+			.setOracle(
+				contracts.mockErc20_reth.address,
+				contracts.mockAggregator_reth.address,
+				maxDeviationBetweenRounds,
+				false
+			)
+		await contracts.priceFeed
+			.connect(timelockSigner)
+			.setOracle(
+				contracts.mockErc20_weth.address,
+				contracts.mockAggregator_weth.address,
+				maxDeviationBetweenRounds,
+				false
+			)
+		await contracts.priceFeed
+			.connect(timelockSigner)
+			.setOracle(
+				contracts.mockErc20_wsteth.address,
+				contracts.mockAggregator_wsteth.address,
+				maxDeviationBetweenRounds,
+				false
+			)
+		await stopImpersonatingAccount(contracts.shortTimelock.address)
 
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_reth.address, dec(30, 18), 18, true)
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_weth.address, dec(30, 18), 18, true)
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_wsteth.address, dec(30, 18), 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_reth.address, debtTokenGasCompensation, 18, true)
+		await contracts.adminContract.addNewCollateral(contracts.mockErc20_weth.address, debtTokenGasCompensation, 18, true)
+		await contracts.adminContract.addNewCollateral(
+			contracts.mockErc20_wsteth.address,
+			debtTokenGasCompensation,
+			18,
+			true
+		)
 
 		await contracts.adminContract.setAsDefault(contracts.mockErc20_reth.address)
 		await contracts.adminContract.setAsDefault(contracts.mockErc20_weth.address)
@@ -476,27 +508,41 @@ class MainnetDeploymentHelper {
 		if ("localhost" == this.configParams.targetNetwork) {
 			await this.setupLocalCollaterals(contracts)
 		} else {
-			// Mainnet and Goerli testnet Oracle setup
+			// Mainnet and Goerli -- Oracle setup
 			const { CBETH_ERC20, RETH_ERC20, STETH_ERC20, WSTETH_ERC20 } = this.configParams.externalAddrs
 			const { CHAINLINK_ETH_USD_ORACLE, CHAINLINK_CBETH_ETH_ORACLE, CHAINLINK_STETH_USD_ORACLE } =
 				this.configParams.externalAddrs
 			;(await this.isOwnershipRenounced(contracts.priceFeed)) ||
 				(await this.sendAndWaitForTransaction(
-					contracts.priceFeed.setAddresses(contracts.adminContract.address, RETH_ERC20, STETH_ERC20, WSTETH_ERC20, {
-						gasPrice,
-					})
+					contracts.priceFeed.setAddresses(
+						contracts.adminContract.address,
+						contracts.shortTimelock.address,
+						RETH_ERC20,
+						STETH_ERC20,
+						WSTETH_ERC20,
+						{
+							gasPrice,
+						}
+					)
 				))
+			const maxDeviationBetweenRounds = "500000000000000000" // 0.5 ether
 			if (CHAINLINK_ETH_USD_ORACLE && CHAINLINK_ETH_USD_ORACLE != "") {
 				console.log("Adding ETH-USD Oracle...")
-				await contracts.priceFeed.addOracle(ZERO_ADDRESS, CHAINLINK_ETH_USD_ORACLE, false)
+				await contracts.priceFeed.setOracle(ZERO_ADDRESS, CHAINLINK_ETH_USD_ORACLE, maxDeviationBetweenRounds, false, {
+					from: contracts.shortTimelock.address,
+				})
 			}
 			if (CHAINLINK_CBETH_ETH_ORACLE && CHAINLINK_CBETH_ETH_ORACLE != "") {
 				console.log("Adding cbETH-ETH Oracle...")
-				await contracts.priceFeed.addOracle(CBETH_ERC20, CHAINLINK_CBETH_ETH_ORACLE, true)
+				await contracts.priceFeed.setOracle(CBETH_ERC20, CHAINLINK_CBETH_ETH_ORACLE, maxDeviationBetweenRounds, true, {
+					from: contracts.shortTimelock.address,
+				})
 			}
 			if (CHAINLINK_STETH_USD_ORACLE && CHAINLINK_STETH_USD_ORACLE != "") {
 				console.log("Adding stETH-USD Oracle...")
-				await contracts.priceFeed.addOracle(STETH_ERC20, CHAINLINK_STETH_USD_ORACLE, false)
+				await contracts.priceFeed.setOracle(STETH_ERC20, CHAINLINK_STETH_USD_ORACLE, maxDeviationBetweenRounds, false, {
+					from: contracts.shortTimelock.address,
+				})
 			}
 		}
 	}
