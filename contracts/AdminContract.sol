@@ -291,6 +291,11 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
+	function setActive(address _collateral, bool _active) public onlyOwner {
+		CollateralParams storage collParams = collateralParams[_collateral];	
+		collParams.active = _active;
+	}
+
 	function setPercentDivisor(address _collateral, uint256 percentDivisor)
 		public
 		override
