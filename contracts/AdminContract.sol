@@ -97,7 +97,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	) {
 		require(
 			collateralParams[_collateral].active,
-			"Collateral is not configured, use setAsDefault or setCollateralParameters"
+			"Collateral is not configured, use setCollateralParameters"
 		);
 
 		if (enteredValue < min || enteredValue > max) {
@@ -150,14 +150,14 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 			active: false,
 			isWrapped: _isWrapped,
 			mcr: MCR_DEFAULT,
-			ccr: 0,
+			ccr: CCR_DEFAULT,
 			debtTokenGasCompensation: _debtTokenGasCompensation,
-			minNetDebt: 0,
-			percentDivisor: 0,
-			borrowingFee: 0,
-			redemptionFeeFloor: 0,
+			minNetDebt: MIN_NET_DEBT_DEFAULT,
+			percentDivisor: PERCENT_DIVISOR_DEFAULT,
+			borrowingFee: BORROWING_FEE_DEFAULT,
+			redemptionFeeFloor: REDEMPTION_FEE_FLOOR_DEFAULT,
 			redemptionBlockTimestamp: 0,
-			mintCap: type(uint256).max
+			mintCap: MINT_CAP_DEFAULT
 		});
 
 		stabilityPool.addCollateralType(_collateral);
@@ -229,42 +229,6 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		setBorrowingFee(_collateral, borrowingFee);
 		setRedemptionFeeFloor(_collateral, redemptionFeeFloor);
 		setMintCap(_collateral, mintCap);
-	}
-
-	function setAsDefault(address _collateral) external onlyOwner {
-		_setAsDefault(_collateral);
-	}
-
-	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays)
-		external
-		override
-		onlyOwner // TODO: Review if should set to controller
-	{
-		if (blockInDays > REDEMPTION_BLOCK_DAYS) {
-			blockInDays = REDEMPTION_BLOCK_DAYS;
-		}
-
-		CollateralParams storage collParams = collateralParams[_collateral];
-		if (collParams.redemptionBlockTimestamp == 0) {
-			collParams.redemptionBlockTimestamp = block.timestamp + (blockInDays * 1 days);
-		}
-
-		_setAsDefault(_collateral);
-	}
-
-	function _setAsDefault(address _collateral) private {
-		CollateralParams storage collateralParam = collateralParams[_collateral];
-		if (collateralParam.active) {
-			revert AdminContract__CollateralAlreadyInitialized();
-		}
-		collateralParam.active = true;
-		collateralParam.mcr = MCR_DEFAULT;
-		collateralParam.ccr = CCR_DEFAULT;
-		collateralParam.minNetDebt = MIN_NET_DEBT_DEFAULT;
-		collateralParam.percentDivisor = PERCENT_DIVISOR_DEFAULT;
-		collateralParam.borrowingFee = BORROWING_FEE_DEFAULT;
-		collateralParam.redemptionFeeFloor = REDEMPTION_FEE_FLOOR_DEFAULT;
-		collateralParam.mintCap = MINT_CAP_DEFAULT;
 	}
 
 	function setMCR(address _collateral, uint256 newMCR)

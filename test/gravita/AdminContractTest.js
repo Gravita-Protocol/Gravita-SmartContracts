@@ -67,7 +67,7 @@ contract("AdminContract", async accounts => {
 		contracts = await deploymentHelper.deployGravitaCore()
 		contracts.vesselManager = await VesselManagerTester.new()
 		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts) 
+		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
 		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 		priceFeed = contracts.priceFeedTestnet
 		vesselManager = contracts.vesselManager
@@ -101,7 +101,6 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("Try to edit Parameters as User, Revert Transactions", async () => {
-		await assertRevert(adminContract.setAsDefault(ZERO_ADDRESS, { from: user }))
 		await assertRevert(
 			adminContract.setCollateralParameters(
 				ZERO_ADDRESS,
@@ -122,10 +121,6 @@ contract("AdminContract", async accounts => {
 		await assertRevert(adminContract.setPercentDivisor(ZERO_ADDRESS, PERCENT_DIVISOR, { from: user }))
 		await assertRevert(adminContract.setBorrowingFee(ZERO_ADDRESS, BORROWING_FEE, { from: user }))
 		await assertRevert(adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, REDEMPTION_FEE_FLOOR, { from: user }))
-	})
-
-	it("setAsDefault: Double initialization with default values should revert", async () => {
-		await assertRevert(adminContract.setAsDefault(ZERO_ADDRESS))
 	})
 
 	it("setMCR: Owner change parameter - Failing SafeCheck", async () => {

@@ -90,7 +90,6 @@ async function addCollateral(name, configKey) {
 	}
 	console.log(`Collateral added: ${address} -> ${name}`)
 	await helper.sendAndWaitForTransaction(coreContracts.adminContract.addNewCollateral(address, dec(30, 18), 18, true))
-	await helper.sendAndWaitForTransaction(coreContracts.adminContract.setAsDefault(address))
 }
 
 async function transferContractsOwnerships() {
