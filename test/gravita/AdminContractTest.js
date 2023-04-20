@@ -67,7 +67,7 @@ contract("AdminContract", async accounts => {
 		contracts = await deploymentHelper.deployGravitaCore()
 		contracts.vesselManager = await VesselManagerTester.new()
 		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts) 
+		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
 		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 		priceFeed = contracts.priceFeedTestnet
 		vesselManager = contracts.vesselManager

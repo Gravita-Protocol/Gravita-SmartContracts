@@ -94,7 +94,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 min,
 		uint256 max
 	) {
-		require(collateralParams[_collateral].active, "Collateral is not configured, use setCollateralParameters");
+		require(
+			collateralParams[_collateral].active,
+			"Collateral is not configured, use setCollateralParameters"
+		);
 
 		if (enteredValue < min || enteredValue > max) {
 			revert SafeCheckError(parameter, enteredValue, min, max);
@@ -227,10 +230,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		setMintCap(_collateral, mintCap);
 	}
 
-	function setMCR(
-		address _collateral,
-		uint256 newMCR
-	)
+	function setMCR(address _collateral, uint256 newMCR)
 		public
 		override
 		shortTimelockOnly
