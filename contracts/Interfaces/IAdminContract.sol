@@ -32,17 +32,16 @@ interface IAdminContract {
 	error AdminContract__ShortTimelockOnly();
 	error AdminContract__LongTimelockOnly();
 	error AdminContract__OnlyOwner();
+	error AdminContract__CollateralAlreadyInitialized();
 
 	// Events -----------------------------------------------------------------------------------------------------------
 
 	event CollateralAdded(address _collateral);
 	event MCRChanged(uint256 oldMCR, uint256 newMCR);
 	event CCRChanged(uint256 oldCCR, uint256 newCCR);
-	event GasCompensationChanged(uint256 oldGasComp, uint256 newGasComp);
 	event MinNetDebtChanged(uint256 oldMinNet, uint256 newMinNet);
 	event PercentDivisorChanged(uint256 oldPercentDiv, uint256 newPercentDiv);
 	event BorrowingFeeChanged(uint256 oldBorrowingFee, uint256 newBorrowingFee);
-	event MaxBorrowingFeeChanged(uint256 oldMaxBorrowingFee, uint256 newMaxBorrowingFee);
 	event RedemptionFeeFloorChanged(uint256 oldRedemptionFeeFloor, uint256 newRedemptionFeeFloor);
 	event MintCapChanged(uint256 oldMintCap, uint256 newMintCap);
 	event RedemptionBlockTimestampChanged(address _collateral, uint256 _blockTimestamp);
@@ -62,6 +61,7 @@ interface IAdminContract {
 
 	function addNewCollateral(
 		address _collateral,
+		uint256 _debtTokenGasCompensation,
 		uint256 _decimals,
 		bool _isWrapped
 	) external;
@@ -73,8 +73,6 @@ interface IAdminContract {
 	function setAsDefault(address _collateral) external;
 
 	function setAsDefaultWithRedemptionBlockTimestamp(address _collateral, uint256 blockInDays) external;
-
-	function setDebtTokenGasCompensation(address _collateral, uint256 gasCompensation) external;
 
 	function setMinNetDebt(address _collateral, uint256 minNetDebt) external;
 
