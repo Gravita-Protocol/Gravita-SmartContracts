@@ -30,12 +30,12 @@ interface IPriceFeed {
 
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
-	error InvalidFeedResponseError(address token);
-	error InvalidPriceDeviationParamError();
-	error FeedFrozenError(address token);
-	error PriceDeviationError(address token);
-	error UnknownFeedError(address token);
-	error TimelockOnly();
+	error PriceFeed__InvalidFeedResponseError(address token);
+	error PriceFeed__InvalidPriceDeviationParamError();
+	error PriceFeed__FeedFrozenError(address token);
+	error PriceFeed__PriceDeviationError(address token);
+	error PriceFeed__UnknownFeedError(address token);
+	error PriceFeed__TimelockOnly();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 

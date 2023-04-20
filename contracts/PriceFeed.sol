@@ -42,7 +42,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	modifier onlyTimelock() {
 		if (msg.sender != timelockAddress) {
-			revert TimelockOnly();
+			revert PriceFeed__TimelockOnly();
 		}
 		_;
 	}
@@ -76,17 +76,17 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			_maxDeviationBetweenRounds < MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT ||
 			_maxDeviationBetweenRounds > MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT
 		) {
-			revert InvalidPriceDeviationParamError();
+			revert PriceFeed__InvalidPriceDeviationParamError();
 		}
 
 		AggregatorV3Interface newFeed = AggregatorV3Interface(_chainlinkOracle);
 		(FeedResponse memory currResponse, FeedResponse memory prevResponse) = _fetchFeedResponses(newFeed);
 
 		if (!_isFeedWorking(currResponse, prevResponse)) {
-			revert InvalidFeedResponseError(_token);
+			revert PriceFeed__InvalidFeedResponseError(_token);
 		}
 		if (_isPriceStale(currResponse.timestamp)) {
-			revert FeedFrozenError(_token);
+			revert PriceFeed__FeedFrozenError(_token);
 		}
 		oracleRecords[_token] = OracleRecord({
 			chainLinkOracle: newFeed,
@@ -121,7 +121,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			} else if (_token == wstethTokenAddress) {
 				return _fetchNativeWstETHPrice();
 			}
-			revert UnknownFeedError(_token);
+			revert PriceFeed__UnknownFeedError(_token);
 		}
 
 		(FeedResponse memory currResponse, FeedResponse memory prevResponse) = _fetchFeedResponses(oracle.chainLinkOracle);
@@ -157,7 +157,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			}
 			PriceRecord memory priceRecord = priceRecords[_token];
 			if (_isPriceStale(priceRecord.timestamp)) {
-				revert FeedFrozenError(_token);
+				revert PriceFeed__FeedFrozenError(_token);
 			}
 			return priceRecord.scaledPrice;
 		}
