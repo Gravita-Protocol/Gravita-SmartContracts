@@ -8,8 +8,6 @@ import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
 
 import "./Interfaces/IPriceFeed.sol";
-import "./Interfaces/IRETHToken.sol";
-import "./Interfaces/IWstETHToken.sol";
 
 contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
@@ -31,9 +29,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	address public adminContractAddress;
 	address public timelockAddress;
-	address public rethTokenAddress;
-	address public stethTokenAddress;
-	address public wstethTokenAddress;
 
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;
@@ -51,17 +46,11 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	function setAddresses(
 		address _adminContractAddress,
-		address _timelockAddress,
-		address _rethTokenAddress,
-		address _stethTokenAddress,
-		address _wstethTokenAddress
+		address _timelockAddress
 	) external initializer {
 		__Ownable_init();
 		timelockAddress = _timelockAddress;
 		adminContractAddress = _adminContractAddress;
-		rethTokenAddress = _rethTokenAddress;
-		stethTokenAddress = _stethTokenAddress;
-		wstethTokenAddress = _wstethTokenAddress;
 	}
 
 	/** Admin routines ----------------------------------------------------------------------------------------------- */
@@ -116,11 +105,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		OracleRecord storage oracle = oracleRecords[_token];
 
 		if (!oracle.exists) {
-			if (_token == rethTokenAddress) {
-				return _fetchNativeRETHPrice();
-			} else if (_token == wstethTokenAddress) {
-				return _fetchNativeWstETHPrice();
-			}
 			revert PriceFeed__UnknownFeedError(_token);
 		}
 
@@ -166,36 +150,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
 		uint256 ethPrice = fetchPrice(address(0));
 		return ethPrice * ethAmount / 1 ether;
-	}
-
-	/**
-	 * Queries the rETH token contract for its current ETH value, then queries the ETH/USD oracle for the price.
-	 * Requires that an oracle has been added for ETH/USD.
-	 */
-	function _fetchNativeRETHPrice() internal returns (uint256 price) {
-		uint256 rethToEthValue = _getRETH_ETHValue();
-		price = _calcEthPrice(rethToEthValue);
-		_storePrice(rethTokenAddress, price, block.timestamp);
-	}
-
-	/**
-	 * Queries the wstETH token contract for its current stETH value, then either queries the stETH/USD oracle (if there is one),
-	 * or the ETH/USD oracle for the price.
-	 * Requires that an oracle has been added for stETH/USD (preferably) or the ETH/USD price.
-	 */
-	function _fetchNativeWstETHPrice() internal returns (uint256 price) {
-		uint256 wstEthToStEthValue = _getWstETH_StETHValue();
-		OracleRecord storage stEth_UsdOracle = oracleRecords[stethTokenAddress];
-		price = stEth_UsdOracle.exists ? fetchPrice(stethTokenAddress) : _calcEthPrice(wstEthToStEthValue);
-		_storePrice(wstethTokenAddress, price, block.timestamp);
-	}
-
-	function _getRETH_ETHValue() internal view virtual returns (uint256) {
-		return IRETHToken(rethTokenAddress).getEthValue(1 ether);
-	}
-
-	function _getWstETH_StETHValue() internal view virtual returns (uint256) {
-		return IWstETHToken(wstethTokenAddress).stEthPerToken();
 	}
 
 	function _fetchFeedResponses(AggregatorV3Interface oracle)

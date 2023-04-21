@@ -336,9 +336,6 @@ class MainnetDeploymentHelper {
 		await contracts.priceFeed.setAddresses(
 			contracts.adminContract.address,
 			contracts.shortTimelock.address,
-			contracts.mockErc20_reth.address,
-			this.hre.ethers.constants.AddressZero,
-			contracts.mockErc20_wsteth.address
 		)
 		const maxDeviationBetweenRounds = "500000000000000000" // 0.5 ether
 		const debtTokenGasCompensation = "30000000000000000000" // 30 ether

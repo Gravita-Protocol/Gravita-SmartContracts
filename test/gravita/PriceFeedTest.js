@@ -43,9 +43,6 @@ contract("PriceFeed", async accounts => {
 		await priceFeed.setAddresses(
 			adminContract.address,
 			shortTimelock.address,
-			RETH_TOKEN_ADDRESS,
-			STETH_TOKEN_ADDRESS,
-			WSTETH_TOKEN_ADDRESS,
 			{
 				from: owner,
 			}
@@ -116,9 +113,6 @@ contract("PriceFeed", async accounts => {
 			const txOwner = await priceFeed.setAddresses(
 				adminContract.address,
 				shortTimelock.address,
-				RETH_TOKEN_ADDRESS,
-				STETH_TOKEN_ADDRESS,
-				WSTETH_TOKEN_ADDRESS,
 				{ from: owner }
 			)
 			assert.isTrue(txOwner.receipt.status)
@@ -127,9 +121,6 @@ contract("PriceFeed", async accounts => {
 				priceFeed.setAddresses(
 					adminContract.address,
 					shortTimelock.address,
-					RETH_TOKEN_ADDRESS,
-					STETH_TOKEN_ADDRESS,
-					WSTETH_TOKEN_ADDRESS,
 					{
 						from: owner,
 					}
@@ -140,9 +131,6 @@ contract("PriceFeed", async accounts => {
 				priceFeed.setAddresses(
 					adminContract.address,
 					shortTimelock.address,
-					CBETH_TOKEN_ADDRESS,
-					STETH_TOKEN_ADDRESS,
-					WSTETH_TOKEN_ADDRESS,
 					{
 						from: alice,
 					}
@@ -270,7 +258,8 @@ contract("PriceFeed", async accounts => {
 		assert.equal(price, DEFAULT_PRICE.toString())
 	})
 
-	it("chainlinkWorking: rETH and wstETH prices", async () => {
+	// Removed as we don't use the native feed anymore
+	it.skip("chainlinkWorking: rETH and wstETH prices", async () => {
 		const ethers = require("ethers")
 		const ETH_USD_PRICE_18_DIGITS = "1341616900000000000000"
 		await setAddressesAndOracle()
@@ -284,6 +273,7 @@ contract("PriceFeed", async accounts => {
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const ethPrice = await getPrice()
 		assert.equal(ethPrice.toString(), ETH_USD_PRICE_18_DIGITS)
+
 
 		const RETH_ETH_RATIO_18_DIGITS = "1054021266924449498"
 		await priceFeed.fetchPrice(RETH_TOKEN_ADDRESS)
