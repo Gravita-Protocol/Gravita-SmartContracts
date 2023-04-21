@@ -26,6 +26,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	uint256 public constant MIN_NET_DEBT_DEFAULT = 300 ether;
 	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT = (DECIMAL_PRECISION / 1000) * 5; // 0.5%
 	uint256 public constant MINT_CAP_DEFAULT = 1_000_000 ether; // 1 million
+	uint256 private constant DEFAULT_DECIMALS = 18;
 
 	// State ------------------------------------------------------------------------------------------------------------
 
@@ -142,6 +143,8 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		bool _isWrapped
 	) external longTimelockOnly {
 		require(collateralParams[_collateral].mcr == 0, "collateral already exists");
+		// for the moment, require collaterals to have 18 decimals
+		require(_decimals == DEFAULT_DECIMALS, "collaterals must have the default decimals");
 		validCollateral.push(_collateral);
 		collateralParams[_collateral] = CollateralParams({
 			decimals: _decimals,
