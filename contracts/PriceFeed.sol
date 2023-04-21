@@ -20,135 +20,147 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	// Used to convert a chainlink price answer to an 18-digit precision uint
 	uint256 public constant TARGET_DIGITS = 18;
 
-	uint256 public constant TIMEOUT = 4 hours;
-	uint256 public constant ORACLE_UPDATE_TIMELOCK = 4 hours;
+	// After this timeout, responses will be considered stale and revert
+	uint256 public constant RESPONSE_TIMEOUT = 4 hours;
 
-	// Maximum deviation allowed between two consecutive Chainlink oracle prices. 18-digit precision.
-	uint256 public constant MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND = 0.5 ether; // 50%
+	// Lower/Upper limits for setting the max price deviation per round, per asset
+	uint256 public constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT = 0.2 ether;
+	uint256 public constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT = 0.5 ether;
 
 	/** State -------------------------------------------------------------------------------------------------------- */
 
-	address public adminContract;
-	address public rethToken;
-	address public stethToken;
-	address public wstethToken;
+	address public adminContractAddress;
+	address public timelockAddress;
+	address public rethTokenAddress;
+	address public stethTokenAddress;
+	address public wstethTokenAddress;
 
-	mapping(address => OracleRecord) public queuedOracles;
-	mapping(address => OracleRecord) public registeredOracles;
-
-	mapping(address => uint256) public lastGoodPrice;
+	mapping(address => OracleRecord) public oracleRecords;
+	mapping(address => PriceRecord) public priceRecords;
 
 	/** Modifiers ---------------------------------------------------------------------------------------------------- */
 
-	modifier isController() {
-		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
+	modifier onlyTimelock() {
+		if (msg.sender != timelockAddress) {
+			revert PriceFeed__TimelockOnly();
+		}
 		_;
 	}
 
 	/** Initializer -------------------------------------------------------------------------------------------------- */
 
 	function setAddresses(
-		address _adminContract,
-		address _rethToken,
-		address _stethToken,
-		address _wstethToken
+		address _adminContractAddress,
+		address _timelockAddress,
+		address _rethTokenAddress,
+		address _stethTokenAddress,
+		address _wstethTokenAddress
 	) external initializer {
 		__Ownable_init();
-		adminContract = _adminContract;
-		rethToken = _rethToken;
-		stethToken = _stethToken;
-		wstethToken = _wstethToken;
+		timelockAddress = _timelockAddress;
+		adminContractAddress = _adminContractAddress;
+		rethTokenAddress = _rethTokenAddress;
+		stethTokenAddress = _stethTokenAddress;
+		wstethTokenAddress = _wstethTokenAddress;
 	}
 
 	/** Admin routines ----------------------------------------------------------------------------------------------- */
 
-	function addOracle(
+	function setOracle(
 		address _token,
 		address _chainlinkOracle,
+		uint256 _maxDeviationBetweenRounds,
 		bool _isEthIndexed
-	) external override isController {
-		AggregatorV3Interface newOracle = AggregatorV3Interface(_chainlinkOracle);
-		_validateFeedResponse(newOracle);
-		if (registeredOracles[_token].exists) {
-			uint256 timelockRelease = block.timestamp + ORACLE_UPDATE_TIMELOCK;
-			queuedOracles[_token] = OracleRecord({
-				chainLinkOracle: newOracle,
-				timelockRelease: timelockRelease,
-				exists: true,
-				isFeedWorking: true,
-				isEthIndexed: _isEthIndexed
-			});
-		} else {
-			registeredOracles[_token] = OracleRecord({
-				chainLinkOracle: newOracle,
-				timelockRelease: block.timestamp,
-				exists: true,
-				isFeedWorking: true,
-				isEthIndexed: _isEthIndexed
-			});
-			emit NewOracleRegistered(_token, _chainlinkOracle, _isEthIndexed);
+	) external override onlyTimelock {
+		if (
+			_maxDeviationBetweenRounds < MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT ||
+			_maxDeviationBetweenRounds > MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT
+		) {
+			revert PriceFeed__InvalidPriceDeviationParamError();
 		}
-	}
 
-	function deleteOracle(address _token) external override isController {
-		delete registeredOracles[_token];
-	}
+		AggregatorV3Interface newFeed = AggregatorV3Interface(_chainlinkOracle);
+		(FeedResponse memory currResponse, FeedResponse memory prevResponse) = _fetchFeedResponses(newFeed);
 
-	function deleteQueuedOracle(address _token) external override isController {
-		delete queuedOracles[_token];
+		if (!_isFeedWorking(currResponse, prevResponse)) {
+			revert PriceFeed__InvalidFeedResponseError(_token);
+		}
+		if (_isPriceStale(currResponse.timestamp)) {
+			revert PriceFeed__FeedFrozenError(_token);
+		}
+		oracleRecords[_token] = OracleRecord({
+			chainLinkOracle: newFeed,
+			maxDeviationBetweenRounds: _maxDeviationBetweenRounds,
+			exists: true,
+			isFeedWorking: true,
+			isEthIndexed: _isEthIndexed
+		});
+
+		_processFeedResponses(_token, oracleRecords[_token], currResponse, prevResponse);
+		emit NewOracleRegistered(_token, _chainlinkOracle, _isEthIndexed);
 	}
 
 	/** Public functions --------------------------------------------------------------------------------------------- */
 
-	function fetchPrice(address _token) public override returns (uint256 lastTokenGoodPrice) {
-		OracleRecord memory oracle = _getOracle(_token);
+	/**
+	 * Callers:
+	 *   - BorrowerOperations.openVessel()
+	 *   - BorrowerOperations.adjustVessel()
+	 *   - BorrowerOperations.closeVessel()
+	 *   - StabilityPool.withdrawFromSP()
+	 *   - VesselManagerOperations.liquidateVessels()
+	 *   - VesselManagerOperations.batchLiquidateVessels()
+	 *   - VesselManagerOperations.redeemCollateral()
+	 */
+	function fetchPrice(address _token) public override returns (uint256) {
+		OracleRecord storage oracle = oracleRecords[_token];
+
 		if (!oracle.exists) {
-			if (_token == rethToken) {
+			if (_token == rethTokenAddress) {
 				return _fetchNativeRETHPrice();
-			} else if (_token == wstethToken) {
+			} else if (_token == wstethTokenAddress) {
 				return _fetchNativeWstETHPrice();
 			}
-			revert UnknownOracleError(_token);
+			revert PriceFeed__UnknownFeedError(_token);
 		}
-
-		lastTokenGoodPrice = lastGoodPrice[_token];
 
 		(FeedResponse memory currResponse, FeedResponse memory prevResponse) = _fetchFeedResponses(oracle.chainLinkOracle);
-
-		bool isValidResponse = _isFeedWorking(currResponse, prevResponse) &&
-			!_isFeedFrozen(currResponse) &&
-			!_isPriceChangeAboveMaxDeviation(_token, currResponse, prevResponse);
-
-		if (isValidResponse) {
-			uint256 scaledPrice = _scalePriceByDigits(uint256(currResponse.answer), currResponse.decimals);
-			if (oracle.isEthIndexed) {
-				// Oracle returns ETH price, need to convert to USD
-				lastTokenGoodPrice = _calcEthPrice(scaledPrice);
-			} else {
-				lastTokenGoodPrice = scaledPrice;
-			}
-			_storePrice(_token, lastTokenGoodPrice);
-			if (!oracle.isFeedWorking) {
-				_updateFeedStatus(_token, oracle, true);
-			}
-		} else {
-			if (oracle.isFeedWorking) {
-				_updateFeedStatus(_token, oracle, false);
-			}
-		}
+		return _processFeedResponses(_token, oracle, currResponse, prevResponse);
 	}
 
 	/** Internal functions ------------------------------------------------------------------------------------------- */
 
-	function _getOracle(address _token) internal returns (OracleRecord memory) {
-		OracleRecord memory queuedOracle = queuedOracles[_token];
-		if (queuedOracle.exists && queuedOracle.timelockRelease < block.timestamp) {
-			registeredOracles[_token] = queuedOracle;
-			emit NewOracleRegistered(_token, address(queuedOracle.chainLinkOracle), queuedOracle.isEthIndexed);
-			delete queuedOracles[_token];
-			return queuedOracle;
+	function _processFeedResponses(
+		address _token,
+		OracleRecord storage oracle,
+		FeedResponse memory _currResponse,
+		FeedResponse memory _prevResponse
+	) internal returns (uint256) {
+		bool isValidResponse = _isFeedWorking(_currResponse, _prevResponse) &&
+			!_isPriceStale(_currResponse.timestamp) &&
+			!_isPriceChangeAboveMaxDeviation(oracle.maxDeviationBetweenRounds, _currResponse, _prevResponse);
+
+		if (isValidResponse) {
+			uint256 scaledPrice = _scalePriceByDigits(uint256(_currResponse.answer), _currResponse.decimals);
+			if (oracle.isEthIndexed) {
+				// Oracle returns ETH price, need to convert to USD
+				scaledPrice = _calcEthPrice(scaledPrice);
+			}
+			if (!oracle.isFeedWorking) {
+				_updateFeedStatus(_token, oracle, true);
+			}
+			_storePrice(_token, scaledPrice, _currResponse.timestamp);
+			return scaledPrice;
+		} else {
+			if (oracle.isFeedWorking) {
+				_updateFeedStatus(_token, oracle, false);
+			}
+			PriceRecord memory priceRecord = priceRecords[_token];
+			if (_isPriceStale(priceRecord.timestamp)) {
+				revert PriceFeed__FeedFrozenError(_token);
+			}
+			return priceRecord.scaledPrice;
 		}
-		return registeredOracles[_token];
 	}
 
 	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
@@ -163,7 +175,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _fetchNativeRETHPrice() internal returns (uint256 price) {
 		uint256 rethToEthValue = _getRETH_ETHValue();
 		price = _calcEthPrice(rethToEthValue);
-		_storePrice(rethToken, price);
+		_storePrice(rethTokenAddress, price, block.timestamp);
 	}
 
 	/**
@@ -173,25 +185,17 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	 */
 	function _fetchNativeWstETHPrice() internal returns (uint256 price) {
 		uint256 wstEthToStEthValue = _getWstETH_StETHValue();
-		OracleRecord storage stEth_UsdOracle = registeredOracles[stethToken];
-		price = stEth_UsdOracle.exists ? fetchPrice(stethToken) : _calcEthPrice(wstEthToStEthValue);
-		_storePrice(wstethToken, price);
+		OracleRecord storage stEth_UsdOracle = oracleRecords[stethTokenAddress];
+		price = stEth_UsdOracle.exists ? fetchPrice(stethTokenAddress) : _calcEthPrice(wstEthToStEthValue);
+		_storePrice(wstethTokenAddress, price, block.timestamp);
 	}
 
 	function _getRETH_ETHValue() internal view virtual returns (uint256) {
-		return IRETHToken(rethToken).getEthValue(1 ether);
+		return IRETHToken(rethTokenAddress).getEthValue(1 ether);
 	}
 
 	function _getWstETH_StETHValue() internal view virtual returns (uint256) {
-		return IWstETHToken(wstethToken).stEthPerToken();
-	}
-
-	function _validateFeedResponse(AggregatorV3Interface oracle) internal view {
-		(FeedResponse memory chainlinkResponse, FeedResponse memory prevFeedResponse) = _fetchFeedResponses(oracle);
-		require(
-			_isFeedWorking(chainlinkResponse, prevFeedResponse) && !_isFeedFrozen(chainlinkResponse),
-			"PriceFeed: Chainlink must be working and current"
-		);
+		return IWstETHToken(wstethTokenAddress).stEthPerToken();
 	}
 
 	function _fetchFeedResponses(AggregatorV3Interface oracle)
@@ -203,8 +207,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		prevResponse = _fetchPrevFeedResponse(oracle, currResponse.roundId, currResponse.decimals);
 	}
 
-	function _isFeedFrozen(FeedResponse memory _response) internal view returns (bool) {
-		return block.timestamp - _response.timestamp > TIMEOUT;
+	function _isPriceStale(uint256 _priceTimestamp) internal view returns (bool) {
+		return block.timestamp - _priceTimestamp > RESPONSE_TIMEOUT;
 	}
 
 	function _isFeedWorking(FeedResponse memory _currentResponse, FeedResponse memory _prevResponse)
@@ -225,10 +229,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	}
 
 	function _isPriceChangeAboveMaxDeviation(
-		address _token,
+		uint256 _maxDeviationBetweenRounds,
 		FeedResponse memory _currResponse,
 		FeedResponse memory _prevResponse
-	) internal returns (bool isAboveDeviation) {
+	) internal pure returns (bool) {
 		uint256 currentScaledPrice = _scalePriceByDigits(uint256(_currResponse.answer), _currResponse.decimals);
 		uint256 prevScaledPrice = _scalePriceByDigits(uint256(_prevResponse.answer), _prevResponse.decimals);
 
@@ -242,11 +246,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		 */
 		uint256 percentDeviation = (maxPrice - minPrice) * DECIMAL_PRECISION / maxPrice;
 
-		// Return true if price has more than doubled, or more than halved.
-		isAboveDeviation = percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
-		if (isAboveDeviation) {
-			emit PriceDeviationAlert(_token, currentScaledPrice, prevScaledPrice);
-		}
+		return percentDeviation > _maxDeviationBetweenRounds;
 	}
 
 	function _scalePriceByDigits(uint256 _price, uint256 _answerDigits) internal pure returns (uint256 price) {
@@ -264,13 +264,17 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		OracleRecord memory _oracle,
 		bool _isWorking
 	) internal {
-		registeredOracles[_token].isFeedWorking = _isWorking;
+		oracleRecords[_token].isFeedWorking = _isWorking;
 		emit PriceFeedStatusUpdated(_token, address(_oracle.chainLinkOracle), _isWorking);
 	}
 
-	function _storePrice(address _token, uint256 _currentPrice) internal {
-		lastGoodPrice[_token] = _currentPrice;
-		emit LastGoodPriceUpdated(_token, _currentPrice);
+	function _storePrice(
+		address _token,
+		uint256 _price,
+		uint256 _timestamp
+	) internal {
+		priceRecords[_token] = PriceRecord({ scaledPrice: _price, timestamp: _timestamp });
+		emit PriceRecordUpdated(_token, _price);
 	}
 
 	function _fetchCurrentFeedResponse(AggregatorV3Interface _priceAggregator)
@@ -279,8 +283,11 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		returns (FeedResponse memory response)
 	{
 		try _priceAggregator.decimals() returns (uint8 decimals) {
+			// If call to Chainlink succeeds, record the current decimal precision
 			response.decimals = decimals;
-		} catch {}
+		} catch {
+			// If call to Chainlink aggregator reverts, return a zero response with success = false
+			return response;}
 		try _priceAggregator.latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
@@ -288,11 +295,15 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			uint256 timestamp,
 			uint80 /* answeredInRound */
 		) {
+			// If call to Chainlink succeeds, return the response and success = true
 			response.roundId = roundId;
 			response.answer = answer;
 			response.timestamp = timestamp;
 			response.success = true;
-		} catch {}
+		} catch {
+			// If call to Chainlink aggregator reverts, return a zero response with success = false
+			return response;
+		}
 	}
 
 	function _fetchPrevFeedResponse(

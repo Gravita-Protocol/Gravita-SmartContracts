@@ -4,15 +4,20 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 pragma solidity 0.8.19;
 
 interface IPriceFeed {
-
 	// Structs --------------------------------------------------------------------------------------------------------
 
 	struct OracleRecord {
 		AggregatorV3Interface chainLinkOracle;
-		uint256 timelockRelease;
+		// Maximum price deviation allowed between two consecutive Chainlink oracle prices. 18-digit precision.
+		uint256 maxDeviationBetweenRounds;
 		bool exists;
 		bool isFeedWorking;
 		bool isEthIndexed;
+	}
+
+	struct PriceRecord {
+		uint256 scaledPrice;
+		uint256 timestamp;
 	}
 
 	struct FeedResponse {
@@ -25,23 +30,27 @@ interface IPriceFeed {
 
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
-	error UnknownOracleError(address _token);
+	error PriceFeed__InvalidFeedResponseError(address token);
+	error PriceFeed__InvalidPriceDeviationParamError();
+	error PriceFeed__FeedFrozenError(address token);
+	error PriceFeed__PriceDeviationError(address token);
+	error PriceFeed__UnknownFeedError(address token);
+	error PriceFeed__TimelockOnly();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
-	event LastGoodPriceUpdated(address indexed token, uint256 _lastGoodPrice);
 	event NewOracleRegistered(address token, address chainlinkAggregator, bool isEthIndexed);
-	event OracleDeleted(address token, address chainlinkAggregator);
 	event PriceFeedStatusUpdated(address token, address oracle, bool isWorking);
-	event PriceDeviationAlert(address _token, uint256 _currPrice, uint256 _prevPrice);
+	event PriceRecordUpdated(address indexed token, uint256 _price);
 
 	// Functions ------------------------------------------------------------------------------------------------------
 
-	function addOracle(address _token, address _chainlinkOracle, bool _isEthIndexed) external;
-
-	function deleteQueuedOracle(address _token) external;
-
-	function deleteOracle(address _token) external;
+	function setOracle(
+		address _token,
+		address _chainlinkOracle,
+		uint256 _maxPriceDeviationFromPreviousRound,
+		bool _isEthIndexed
+	) external;
 
 	function fetchPrice(address _token) external returns (uint256);
 }

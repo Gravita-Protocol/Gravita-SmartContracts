@@ -415,6 +415,16 @@ class DeploymentHelper {
 			50,
 			"10000000000000000000000000000"
 		)
+		await coreContracts.adminContract.setCollateralParameters(
+			coreContracts.erc20B.address,
+			"1100000000000000000",
+			"1500000000000000000",
+			dec(1800, 18),
+			200,
+			50,
+			50,
+			"10000000000000000000000000000"
+		)
 	}
 }
 module.exports = DeploymentHelper
