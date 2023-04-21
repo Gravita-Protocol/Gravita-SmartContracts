@@ -106,8 +106,6 @@ The general changes in the design are the following:
 
 `GravitaMath` - no changes
 
-`PoolBase` - added from Yeti's implementation, to manage multiple collaterals on the StabilityPool
-
 `PriceFeed` - major rewrite to add and update the price feed of all collateral types
 
 `SortedVessels` - no changes
