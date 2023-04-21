@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
-import "./Dependencies/PoolBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
 import "./Interfaces/IAdminContract.sol";
@@ -142,7 +141,7 @@ import "./Interfaces/IVesselManager.sol";
  * The product P (and snapshot P_t) is re-used, as the ratio P/P_t tracks a deposit's depletion due to liquidations.
  *
  */
-contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
+contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
@@ -480,7 +479,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 			lastDebtTokenLossError_Offset = (debtLossPerUnitStaked * _totalDeposits) - lossNumerator;
 		}
 		collGainPerUnitStaked = (collateralNumerator * currentP) / _totalDeposits;
-		lastAssetError_Offset[index] = collateralNumerator - (collGainPerUnitStaked * _totalDeposits / currentP);
+		lastAssetError_Offset[index] = collateralNumerator - ((collGainPerUnitStaked * _totalDeposits) / currentP);
 	}
 
 	/**
@@ -526,12 +525,12 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 			newP = DECIMAL_PRECISION;
 
 			// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
-		} else if (currentP * newProductFactor / DECIMAL_PRECISION < SCALE_FACTOR) {
-			newP = currentP * newProductFactor * SCALE_FACTOR / DECIMAL_PRECISION;
+		} else if ((currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR) {
+			newP = (currentP * newProductFactor * SCALE_FACTOR) / DECIMAL_PRECISION;
 			currentScale = currentScaleCached + 1;
 			emit ScaleUpdated(currentScale);
 		} else {
-			newP = currentP * newProductFactor / DECIMAL_PRECISION;
+			newP = (currentP * newProductFactor) / DECIMAL_PRECISION;
 		}
 
 		require(newP != 0, "StabilityPool: P = 0");
@@ -561,7 +560,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 	}
 
 	function _decreaseDebtTokens(uint256 _amount) internal {
-		uint256 newTotalDeposits = totalDebtTokenDeposits -_amount;
+		uint256 newTotalDeposits = totalDebtTokenDeposits - _amount;
 		totalDebtTokenDeposits = newTotalDeposits;
 		emit StabilityPoolDebtTokenBalanceUpdated(newTotalDeposits);
 	}
@@ -641,7 +640,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 		uint256 firstPortion = scaleToSum[snapshots.scale] - S_Snapshot;
 		uint256 secondPortion = scaleToSum[snapshots.scale + 1] / SCALE_FACTOR;
 
-		uint256 assetGain = initialDeposit * (firstPortion + secondPortion) / P_Snapshot / DECIMAL_PRECISION;
+		uint256 assetGain = (initialDeposit * (firstPortion + secondPortion)) / P_Snapshot / DECIMAL_PRECISION;
 
 		return assetGain;
 	}
@@ -680,7 +679,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 		uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - G_Snapshot;
 		uint256 secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot + 1] / SCALE_FACTOR;
 
-		uint256 GRVTGain = initialStake * (firstPortion + secondPortion) / P_Snapshot / DECIMAL_PRECISION;
+		uint256 GRVTGain = (initialStake * (firstPortion + secondPortion)) / P_Snapshot / DECIMAL_PRECISION;
 
 		return GRVTGain;
 	}
@@ -723,9 +722,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 		 * at least 1e-9 -- so return 0.
 		 */
 		if (scaleDiff == 0) {
-			compoundedStake = initialStake * P / snapshot_P;
+			compoundedStake = (initialStake * P) / snapshot_P;
 		} else if (scaleDiff == 1) {
-			compoundedStake = initialStake * P / snapshot_P / SCALE_FACTOR;
+			compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;
 		} else {
 			compoundedStake = 0;
 		}
@@ -860,6 +859,60 @@ contract StabilityPool is ReentrancyGuardUpgradeable, PoolBase, IStabilityPool {
 			_communityIssuance.sendGRVT(_depositor, depositorGRVTGain);
 			emit GRVTPaidToDepositor(_depositor, depositorGRVTGain);
 		}
+	}
+
+	function _leftSumColls(
+		Colls memory _coll1,
+		address[] memory _tokens,
+		uint256[] memory _amounts
+	) internal pure returns (uint256[] memory) {
+		if (_amounts.length == 0) {
+			return _coll1.amounts;
+		}
+
+		uint256 coll1Len = _coll1.amounts.length;
+		uint256 tokensLen = _tokens.length;
+
+		for (uint256 i = 0; i < coll1Len; ) {
+			for (uint256 j = 0; j < tokensLen; ) {
+				if (_coll1.tokens[i] == _tokens[j]) {
+					_coll1.amounts[i] += _amounts[j];
+				}
+				unchecked {
+					j++;
+				}
+			}
+			unchecked {
+				i++;
+			}
+		}
+
+		return _coll1.amounts;
+	}
+
+	function _leftSubColls(
+		Colls memory _coll1,
+		address[] memory _tokens,
+		uint256[] memory _amounts
+	) internal pure returns (uint256[] memory) {
+		uint256 coll1Len = _coll1.amounts.length;
+		uint256 tokensLen = _tokens.length;
+
+		for (uint256 i = 0; i < coll1Len; ) {
+			for (uint256 j = 0; j < tokensLen; ) {
+				if (_coll1.tokens[i] == _tokens[j]) {
+					_coll1.amounts[i] -= _amounts[j];
+				}
+				unchecked {
+					j++;
+				}
+			}
+			unchecked {
+				i++;
+			}
+		}
+
+		return _coll1.amounts;
 	}
 
 	// --- 'require' functions ---

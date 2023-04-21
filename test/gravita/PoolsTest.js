@@ -1,7 +1,66 @@
 const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@nomicfoundation/hardhat-network-helpers")
+const StabilityPoolTester = artifacts.require("StabilityPoolTester")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
-const th = testHelpers.TestHelper
+
+contract("PoolBase", async accounts => {
+	const [token1, token2, token3] = accounts
+	const tokens = [token1, token2, token3]
+	let poolBase
+
+	before(async () => {
+		poolBase = await StabilityPoolTester.new()
+	})
+
+	describe("leftSumColls addition tests", async () => {
+		it("_leftSumColls(): increase balances of all of the tokens", async () => {
+			const colls1 = [tokens, [1, 2, 3]]
+			const sumAmounts = [10, 20, 30]
+			const result = await poolBase.leftSumColls(colls1, tokens, sumAmounts)
+			assert.equal(result[0], 11)
+			assert.equal(result[1], 22)
+			assert.equal(result[2], 33)
+		})
+
+		it("_leftSumColls(): increase balances of some of the tokens", async () => {
+			const colls1 = [tokens, [1, 2, 3]]
+			const result = await poolBase.leftSumColls(colls1, [token2, token3], [20, 30])
+			assert.equal(result[0], 1)
+			assert.equal(result[1], 22)
+			assert.equal(result[2], 33)
+		})
+
+		it("_leftSumColls(): balances of tokens unknown to left side should not be added", async () => {
+			const colls1 = [[token2], [0]]
+			const result = await poolBase.leftSumColls(colls1, tokens, [10, 20, 30])
+			assert.equal(result[0], 20)
+		})
+	})
+
+	describe("leftSubColls subtraction tests", async () => {
+		it("_leftSubColls(): decrease balances of all of the tokens", async () => {
+			const colls1 = [tokens, [100, 100, 100]]
+			const subAmounts = [10, 20, 30]
+			const result = await poolBase.leftSubColls(colls1, tokens, subAmounts)
+			assert.equal(result[0], 90)
+			assert.equal(result[1], 80)
+			assert.equal(result[2], 70)
+		})
+
+		it("_leftSubColls(): decrease balances of some of the tokens", async () => {
+			const colls1 = [tokens, [100, 100, 100]]
+			const result = await poolBase.leftSubColls(colls1, [token2, token3], [20, 30])
+			assert.equal(result[0], 100)
+			assert.equal(result[1], 80)
+			assert.equal(result[2], 70)
+		})
+
+		it("_leftSubColls(): balances of tokens unknown to left side should not be modified", async () => {
+			const colls1 = [[token2], [100]]
+			const result = await poolBase.leftSubColls(colls1, tokens, [10, 20, 30])
+			assert.equal(result[0], 80)
+		})
+	})
+})
 
 contract("StabilityPool", async accounts => {
 	beforeEach(async () => {
@@ -94,7 +153,7 @@ contract("DefaultPool", async accounts => {
 		assert.equal(balanceAfter, debtTokenAmount)
 	})
 	it("decreaseDebt(): decreases the recorded debt token balance by the correct amount", async () => {
-    const debtTokenAmount = 100
+		const debtTokenAmount = 100
 		const vesselManagerAddress = contracts.vesselManager.address
 		await impersonateAccount(vesselManagerAddress)
 		await defaultPool.increaseDebt(erc20.address, debtTokenAmount, { from: vesselManagerAddress })
