@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../Interfaces/IERC2612Permit.sol";
 
@@ -53,7 +54,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 
 		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
 
-		address signer = ecrecover(_hash, v, r, s);
+		address signer = ECDSA.recover(_hash, v, r, s);
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
 
 		nonce.increment();
