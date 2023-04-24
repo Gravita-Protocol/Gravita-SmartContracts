@@ -15,20 +15,13 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	bytes32 public constant PERMIT_TYPEHASH =
 		0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
-	bytes32 public immutable DOMAIN_SEPARATOR;
+	uint256 internal immutable INITIAL_CHAIN_ID;
+
+	bytes32 public immutable INITIAL_DOMAIN_SEPARATOR;
 
 	constructor() {
-		DOMAIN_SEPARATOR = keccak256(
-			abi.encode(
-				keccak256(
-					"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-				),
-				keccak256(bytes(name())),
-				keccak256(bytes("1")), // Version
-				block.chainid,
-				address(this)
-			)
-		);
+		INITIAL_CHAIN_ID = block.chainid;
+		INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();
 	}
 
 	/**
@@ -52,14 +45,30 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
 		);
 
-		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
+		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR(), hashStruct));
 
 		address signer = ECDSA.recover(_hash, v, r, s);
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
 
 		nonce.increment();
-		
+
 		_approve(owner, spender, amount);
+	}
+
+	function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
+		return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator();
+	}
+
+	function computeDomainSeparator() internal view virtual returns (bytes32) {
+		return keccak256(
+				abi.encode(
+				keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+				keccak256(bytes(name())),
+				keccak256("1"), // Version
+				block.chainid,
+				address(this)
+			)
+		);
 	}
 
 	/**
