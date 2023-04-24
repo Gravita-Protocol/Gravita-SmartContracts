@@ -6,7 +6,7 @@ let helper
 let config
 let deployerWallet
 let coreContracts
-let grvtTokenContracts
+let grvtTokenContracts = []
 let deploymentState
 
 let ADMIN_WALLET
@@ -19,31 +19,37 @@ async function mainnetDeploy(configParams) {
 	TREASURY_WALLET = config.gravityAddresses.TREASURY_WALLET
 	deployerWallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, ethers.provider)
 	// deployerWallet = (await ethers.getSigners())[0]
+	assert.equal(deployerWallet.address, config.gravityAddresses.DEPLOYER_WALLET)
+
 	const initialBalance = await ethers.provider.getBalance(deployerWallet.address)
 	console.log(`Deployer: ${deployerWallet.address}`)
 	console.log(`Initial balance: ${ethers.utils.formatUnits(initialBalance)}`)
+	console.log(`GRVT contracts only: ${config.DEPLOY_GRVT_CONTRACTS}`)
 
 	helper = new MainnetDeploymentHelper(config, deployerWallet)
 	deploymentState = helper.loadPreviousDeployment()
-
-	assert.equal(deployerWallet.address, config.gravityAddresses.DEPLOYER_WALLET)
-
-	if (config.GRVT_TOKEN_ONLY) {
-		await deployOnlyGRVTContract()
-		return
-	}
-
 	coreContracts = await helper.deployCoreContracts(deploymentState)
-	grvtTokenContracts = await helper.deployGRVTTokenContracts(
-		TREASURY_WALLET, // multisig GRVT endowment address
-		deploymentState
-	)
 
-	await helper.connectCoreContracts(coreContracts, grvtTokenContracts, TREASURY_WALLET)
-	await helper.connectGRVTTokenContractsToCore(grvtTokenContracts, coreContracts, TREASURY_WALLET)
+	if (config.DEPLOY_GRVT_CONTRACTS) {
+		grvtTokenContracts = await helper.deployGRVTTokenContracts(
+			TREASURY_WALLET, // multisig GRVT endowment address
+			deploymentState
+		)
 
-	await approveGRVTTokenAllowanceForCommunityIssuance()
+
+		await deployOnlyGRVTContracts()
+
+	// await helper.connectGRVTTokenContractsToCore(grvtTokenContracts, coreContracts, TREASURY_WALLET)
+
+	// await approveGRVTTokenAllowanceForCommunityIssuance()
 	
+	return
+	} 
+
+		await helper.connectCoreContracts(coreContracts, grvtTokenContracts, TREASURY_WALLET)
+	
+	
+
 	if ("mainnet" == configParams.targetNetwork) {
 		await addCollaterals()
 		await coreContracts.adminContract.setInitialized()
@@ -134,7 +140,7 @@ async function transferOwnership(contract, newOwner) {
 	if ((await contract.owner()) != newOwner) await contract.transferOwnership(newOwner)
 }
 
-async function deployOnlyGRVTContract() {
+async function deployOnlyGRVTContracts() {
 	console.log("INIT GRVT ONLY")
 	const partialContracts = await helper.deployPartially(TREASURY_WALLET, deploymentState)
 	// create vesting rule to beneficiaries

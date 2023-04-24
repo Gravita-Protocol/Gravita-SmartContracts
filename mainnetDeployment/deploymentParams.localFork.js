@@ -1,5 +1,5 @@
 const targetNetwork = "localhost"
-const GRVT_TOKEN_ONLY = false
+const DEPLOY_GRVT_CONTRACTS = false
 const OUTPUT_FILE = "./mainnetDeployment/localForkDeploymentOutput.json"
 const GAS_PRICE = 20000000000 // 20 Gwei
 const TX_CONFIRMATIONS = 1
@@ -41,6 +41,6 @@ module.exports = {
 	TX_CONFIRMATIONS,
 	ETHERSCAN_BASE_URL,
 	targetNetwork,
-	GRVT_TOKEN_ONLY,
+	DEPLOY_GRVT_CONTRACTS,
 }
 

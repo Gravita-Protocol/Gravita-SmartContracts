@@ -192,8 +192,8 @@ contract("PriceFeed", async accounts => {
 	it("fetchPrice of ETH-indexed Oracle", async () => {
 		await setAddressesAndOracle()
 		const ETH_TO_USD = dec(1600, 18)
-		mockChainlink.setPrevPrice(ETH_TO_USD)
 		mockChainlink.setPrice(ETH_TO_USD)
+		mockChainlink.setPrevPrice(ETH_TO_USD)
 		mockChainlink.setDecimals(18)
 		const ERC20_TO_ETH = dec(11, 17) // MOCK:ETH = 1,1
 		const erc20MockChainlink = await MockChainlink.new()
@@ -218,6 +218,7 @@ contract("PriceFeed", async accounts => {
 
 	it("fetchPrice of stale aggregator, reverts", async () => {
 		await setAddressesAndOracle()
+		await mockChainlink.setPriceIsAlwaysUpToDate(false)
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const stalePriceTimeout = Number(await priceFeed.RESPONSE_TIMEOUT())
 		await time.increase(stalePriceTimeout + 1)
@@ -228,8 +229,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 
-		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await mockChainlink.setPrice(dec(1234, 8))
+		await mockChainlink.setPrevPrice(dec(1234, 8))
 
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
@@ -243,8 +244,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 
-		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await mockChainlink.setPrice(dec(1234, 8))
+		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await mockChainlink.setLatestRoundId(0)
 
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
@@ -265,8 +266,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 
 		await mockChainlink.setDecimals(18)
-		await mockChainlink.setPrevPrice(ETH_USD_PRICE_18_DIGITS)
 		await mockChainlink.setPrice(ETH_USD_PRICE_18_DIGITS)
+		await mockChainlink.setPrevPrice(ETH_USD_PRICE_18_DIGITS)
 		await mockChainlink.setLatestRoundId("92233720368547797825")
 
 		await setOracle(ZERO_ADDRESS, mockChainlink.address)
@@ -296,32 +297,32 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		// Oracle price price is 10.00000000
 		await mockChainlink.setDecimals(8)
-		await mockChainlink.setPrevPrice(dec(1, 9))
 		await mockChainlink.setPrice(dec(1, 9))
+		await mockChainlink.setPrevPrice(dec(1, 9))
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		let price = await getPrice()
 		// Check PriceFeed gives 10, with 18 digit precision
 		assert.equal(price, dec(10, 18))
 		// Oracle price is 1e9
 		await mockChainlink.setDecimals(0)
-		await mockChainlink.setPrevPrice(dec(1, 9))
 		await mockChainlink.setPrice(dec(1, 9))
+		await mockChainlink.setPrevPrice(dec(1, 9))
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		price = await getPrice()
 		// Check PriceFeed gives 1e9, with 18 digit precision
 		assert.isTrue(price.eq(toBN(dec(1, 27))))
 		// Oracle price is 0.0001
 		await mockChainlink.setDecimals(18)
-		await mockChainlink.setPrevPrice(dec(1, 14))
 		await mockChainlink.setPrice(dec(1, 14))
+		await mockChainlink.setPrevPrice(dec(1, 14))
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		price = await getPrice()
 		// Check PriceFeed gives 0.0001 with 18 digit precision
 		assert.isTrue(price.eq(toBN(dec(1, 14))))
 		// Oracle price is 1234.56789
 		await mockChainlink.setDecimals(5)
-		await mockChainlink.setPrevPrice(dec(123456789))
 		await mockChainlink.setPrice(dec(123456789))
+		await mockChainlink.setPrevPrice(dec(123456789))
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		price = await getPrice()
 		// Check PriceFeed gives 0.0001 with 18 digit precision
@@ -334,8 +335,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 		assert.equal(feedWorkingBefore, true)
-		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await mockChainlink.setPrice(dec(1234, 8))
+		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await th.fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
@@ -346,8 +347,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 		assert.equal(feedWorkingBefore, true)
-		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await mockChainlink.setPrice(dec(1234, 8))
+		await mockChainlink.setPrevPrice(dec(1234, 8))
 		await th.fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
@@ -360,8 +361,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 		assert.equal(feedWorkingBefore, true)
-		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await mockChainlink.setPrice(dec(100000001)) // price drops to 1.00000001: a drop of < 50% from previous
+		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
@@ -373,8 +374,8 @@ contract("PriceFeed", async accounts => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 		assert.equal(feedWorkingBefore, true)
-		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await mockChainlink.setPrice(dec(1, 8)) // price drops to 1
+		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
@@ -385,12 +386,12 @@ contract("PriceFeed", async accounts => {
 	it("chainlinkWorking: Chainlink price drop of >50%, feedWorking turns false, return previous price", async () => {
 		await setAddressesAndOracle()
 		await mockChainlink.setDecimals(18)
-		await mockChainlink.setPrevPrice(dec(3, 18)) // price = 3
 		await mockChainlink.setPrice(dec(3, 18))
+		await mockChainlink.setPrevPrice(dec(3, 18)) // price = 3
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		// price drops to 1: a drop of > 50% from previous
-		await mockChainlink.setPrevPrice(dec(3, 18))
 		await mockChainlink.setPrice(dec(1, 18))
+		await mockChainlink.setPrevPrice(dec(3, 18))
 		const tx = await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
@@ -400,8 +401,8 @@ contract("PriceFeed", async accounts => {
 
 	it("chainlinkWorking: Chainlink price increase of 100%, remain feedWorking and return oracle price", async () => {
 		await setAddressesAndOracle()
-		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await mockChainlink.setPrice(dec(4, 8)) // price increases to 4: an increase of 100% from previous
+		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
@@ -411,8 +412,8 @@ contract("PriceFeed", async accounts => {
 
 	it("chainlinkWorking: Chainlink price increase of <100%, remain feedWorking and return oracle price", async () => {
 		await setAddressesAndOracle()
-		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await mockChainlink.setPrice(399999999) // price increases to 3.99999999: an increase of < 100% from previous
+		await mockChainlink.setPrevPrice(dec(2, 8)) // price = 2
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking

@@ -84,7 +84,7 @@ const beneficiaries = {
 
 
 const REDEMPTION_SAFETY = 14;
-const GRVT_TOKEN_ONLY = false;
+const DEPLOY_GRVT_CONTRACTS = false;
 
 const OUTPUT_FILE = './mainnetDeployment/mainnetDeploymentOutput.json'
 
@@ -108,7 +108,7 @@ module.exports = {
   TX_CONFIRMATIONS,
   ETHERSCAN_BASE_URL,
   REDEMPTION_SAFETY,
-  GRVT_TOKEN_ONLY,
+  DEPLOY_GRVT_CONTRACTS,
   WETHParameters: WETHParameters,
   targetNetwork
 };
