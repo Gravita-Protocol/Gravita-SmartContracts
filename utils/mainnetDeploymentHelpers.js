@@ -106,7 +106,7 @@ class MainnetDeploymentHelper {
 		return grvtContracts
 	}
 
-	async deployCoreContracts(deploymentState) {
+	async loadOrDeployCoreContracts(deploymentState) {
 		const deployUpgradable = async (factory, name, params = []) => {
 			return await this.loadOrDeploy(factory, name, deploymentState, true, params)
 		}
@@ -245,8 +245,8 @@ class MainnetDeploymentHelper {
 	/**
 	 * GRVT Token related contracts deployment
 	 */
-	async deployGRVTTokenContracts(treasurySigAddress, deploymentState) {
-		console.log("Deploying GRVT token contracts...")
+	async deployGrvtContracts(treasurySigAddress, deploymentState) {
+		console.log("Deploying GRVT contracts...")
 		const GRVTStakingFactory = await this.getFactory("GRVTStaking")
 		const communityIssuanceFactory = await this.getFactory("CommunityIssuance")
 		const GRVTTokenFactory = await this.getFactory("GRVTToken")
@@ -274,24 +274,6 @@ class MainnetDeploymentHelper {
 		}
 		await this.logContractObjects(grvtTokenContracts)
 		return grvtTokenContracts
-	}
-
-	async deployMultiVesselGetterContract(liquityCore, deploymentState) {
-		const multiVesselGetterFactory = await this.getFactory("MultiVesselGetter")
-		const multiVesselGetterParams = [liquityCore.vesselManager.address, liquityCore.sortedVessels.address]
-		const multiVesselGetter = await this.loadOrDeploy(
-			multiVesselGetterFactory,
-			"multiVesselGetter",
-			deploymentState,
-			false,
-			multiVesselGetterParams
-		)
-		if (!this.configParams.ETHERSCAN_BASE_URL) {
-			console.log("(No Etherscan URL defined, skipping contract verification)")
-		} else {
-			await this.verifyContract("multiVesselGetter", deploymentState, multiVesselGetterParams)
-		}
-		return multiVesselGetter
 	}
 
 	async isOwnershipRenounced(contract) {
@@ -333,10 +315,7 @@ class MainnetDeploymentHelper {
 		await setPrice(contracts.mockAggregator_wsteth, 1806)
 		await setPrice(contracts.mockAggregator_weth, 1830)
 
-		await contracts.priceFeed.setAddresses(
-			contracts.adminContract.address,
-			contracts.shortTimelock.address,
-		)
+		await contracts.priceFeed.setAddresses(contracts.adminContract.address, contracts.shortTimelock.address)
 		const maxDeviationBetweenRounds = "500000000000000000" // 0.5 ether
 		const debtTokenGasCompensation = "30000000000000000000" // 30 ether
 		setBalance(contracts.shortTimelock.address, 1e18)
@@ -615,4 +594,3 @@ class MainnetDeploymentHelper {
 }
 
 module.exports = MainnetDeploymentHelper
-

@@ -16,7 +16,7 @@ const externalAddrs = {
 	WSTETH_ERC20: undefined, // mock ERC20s are deployed on local env
 }
 
-const gravityAddresses = {
+const gravitaAddresses = {
 	ADMIN_WALLET: "0x19596e1D6cd97916514B5DBaA4730781eFE49975",
 	TREASURY_WALLET: "0x19596e1D6cd97916514B5DBaA4730781eFE49975",
 	DEPLOYER_WALLET: "0x19596e1D6cd97916514B5DBaA4730781eFE49975",
@@ -34,7 +34,7 @@ const beneficiaries = {
 
 module.exports = {
 	externalAddrs,
-	gravityAddresses,
+	gravitaAddresses,
 	beneficiaries,
 	OUTPUT_FILE,
 	GAS_PRICE,

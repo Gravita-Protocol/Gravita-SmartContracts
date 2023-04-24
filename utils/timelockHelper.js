@@ -40,18 +40,28 @@ async function queueTransaction(targetAddress, methodSignature, argTypes, argVal
 	console.log(`queuedTxHash: ${queuedTxHash} success: ${queued}`)
 }
 
+async function executeTransaction(targetAddress, methodSignature, argTypes, argValues) {
+	const timelockContract = await getTimelockContract()
+	const eta = await getBlockTimestamp()
+	const value = 0
+	const data = encodeParameters(argTypes, argValues)
+	const tx = await timelockContract.executeTransaction(targetAddress, value, methodSignature, data, eta)
+	await tx.wait(1)
+}
+
 async function getTimelockContract() {
 	const deployerWallet = new ethers.Wallet(DEPLOYER_PRIVATEKEY, ethers.provider)
 	return await ethers.getContractAt("Timelock", TIMELOCK_ADDRESS, deployerWallet)
 }
 
 async function calcETA(timelockContract) {
-	console.log(timelockContract)
 	const delay = await timelockContract.delay()
+	return getBlockTimestamp() + delay
+}
+
+async function getBlockTimestamp() {
 	const currentBlock = await ethers.provider.getBlockNumber()
-	const blockTimestamp = (await ethers.provider.getBlock(currentBlock)).timestamp
-	const eta = blockTimestamp + delay
-	return eta
+	return (await ethers.provider.getBlock(currentBlock)).timestamp
 }
 
 function encodeParameters(types, values) {
