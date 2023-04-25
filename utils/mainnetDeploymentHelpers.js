@@ -3,14 +3,24 @@ const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@n
 const fs = require("fs")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 
-const shortDelay = 3 * 86_400 // 3 days
-const longDelay = 7 * 86_400 // 7 days
-
 class MainnetDeploymentHelper {
+	
 	constructor(configParams, deployerWallet) {
+		
 		this.configParams = configParams
 		this.deployerWallet = deployerWallet
 		this.hre = require("hardhat")
+
+		if ("localhost" == this.configParams.targetNetwork) {
+			this.shortDelay = 300 // 5 minutes
+			this.longDelay = 900 // 15 minutes
+		} else if ("goerli" == this.configParams.targetNetwork) {
+			this.shortDelay = 600 // 10 minutes
+			this.longDelay = 1800 // 30 minutes
+		} else { // mainnet
+			this.shortDelay = 3 * 86_400 // 3 days
+			this.longDelay = 7 * 86_400 // 7 days
+		}
 	}
 
 	async loadOrDeployCoreContracts(deploymentState) {
@@ -39,24 +49,24 @@ class MainnetDeploymentHelper {
 		const vesselMgrOperationsFactory = await this.getFactory("VesselManagerOperations")
 
 		// Upgradable (proxy-based) contracts
-		const activePool = await deployUpgradable(activePoolFactory, "activePool")
-		const borrowerOperations = await deployUpgradable(borrowerOperationsFactory, "borrowerOperations")
-		const collSurplusPool = await deployUpgradable(collSurplusPoolFactory, "collSurplusPool")
-		const defaultPool = await deployUpgradable(defaultPoolFactory, "defaultPool")
-		const feeCollector = await deployUpgradable(feeCollectorFactory, "feeCollector")
-		const priceFeed = await deployUpgradable(priceFeedFactory, "priceFeed")
-		const sortedVessels = await deployUpgradable(sortedVesselsFactory, "sortedVessels")
-		const stabilityPool = await deployUpgradable(stabilityPoolFactory, "stabilityPool")
-		const vesselManager = await deployUpgradable(vesselManagerFactory, "vesselManager")
-		const vesselManagerOperations = await deployUpgradable(vesselMgrOperationsFactory, "vesselManagerOperations")
+		const activePool = await deployUpgradable(activePoolFactory, "ActivePool")
+		const borrowerOperations = await deployUpgradable(borrowerOperationsFactory, "BorrowerOperations")
+		const collSurplusPool = await deployUpgradable(collSurplusPoolFactory, "CollSurplusPool")
+		const defaultPool = await deployUpgradable(defaultPoolFactory, "DefaultPool")
+		const feeCollector = await deployUpgradable(feeCollectorFactory, "FeeCollector")
+		const priceFeed = await deployUpgradable(priceFeedFactory, "PriceFeed")
+		const sortedVessels = await deployUpgradable(sortedVesselsFactory, "SortedVessels")
+		const stabilityPool = await deployUpgradable(stabilityPoolFactory, "StabilityPool")
+		const vesselManager = await deployUpgradable(vesselManagerFactory, "VesselManager")
+		const vesselManagerOperations = await deployUpgradable(vesselMgrOperationsFactory, "VesselManagerOperations")
 
 		// Non-upgradable contracts
-		const adminContract = await deployNonUpgradable(adminContractFactory, "adminContract")
-		const gasPool = await deployNonUpgradable(gasPoolFactory, "gasPool")
+		const adminContract = await deployNonUpgradable(adminContractFactory, "AdminContract")
+		const gasPool = await deployNonUpgradable(gasPoolFactory, "GasPool")
 
 		// Timelock contracts
-		const longTimelock = await deployNonUpgradable(timelockFactory, "longTimelock", [longDelay])
-		const shortTimelock = await deployNonUpgradable(timelockFactory, "shortTimelock", [shortDelay])
+		const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longDelay])
+		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortDelay])
 
 		const debtTokenParams = [
 			vesselManager.address,
@@ -64,9 +74,9 @@ class MainnetDeploymentHelper {
 			borrowerOperations.address,
 			shortTimelock.address,
 		]
-		const debtToken = await deployNonUpgradable(debtTokenFactory, "debtToken", debtTokenParams)
+		const debtToken = await deployNonUpgradable(debtTokenFactory, "DebtToken", debtTokenParams)
 
-		await this.verifyCoreContracts(deploymentState)
+		await this.verifyCoreContracts(deploymentState, debtTokenParams)
 
 		const coreContracts = {
 			activePool,
@@ -91,145 +101,99 @@ class MainnetDeploymentHelper {
 
 	async connectCoreContracts(contracts, grvtContracts, treasuryAddress) {
 		console.log("Connecting core contracts...")
-		const gasPrice = this.configParams.GAS_PRICE
 
-		if (!(await this.isInitialized(contracts.activePool))) {
-			console.log(`ActivePool.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.activePool.setAddresses(
-					contracts.borrowerOperations.address,
-					contracts.collSurplusPool.address,
-					contracts.defaultPool.address,
-					contracts.stabilityPool.address,
-					contracts.vesselManager.address,
-					contracts.vesselManagerOperations.address,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.adminContract))) {
-			console.log(`AdminContract.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.adminContract.setAddresses(
-					grvtContracts.communityIssuance?.address || ZERO_ADDRESS,
-					contracts.activePool.address,
-					contracts.defaultPool.address,
-					contracts.stabilityPool.address,
-					contracts.collSurplusPool.address,
-					contracts.priceFeed.address,
-					contracts.shortTimelock.address,
-					contracts.longTimelock.address,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.borrowerOperations))) {
-			console.log(`BorrowerOperations.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.borrowerOperations.setAddresses(
-					contracts.vesselManager.address,
-					contracts.stabilityPool.address,
-					contracts.gasPool.address,
-					contracts.collSurplusPool.address,
-					contracts.sortedVessels.address,
-					contracts.debtToken.address,
-					contracts.feeCollector.address,
-					contracts.adminContract.address,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.collSurplusPool))) {
-			console.log(`CollSurplusPool.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.collSurplusPool.setAddresses(
-					contracts.activePool.address,
-					contracts.borrowerOperations.address,
-					contracts.vesselManager.address,
-					contracts.vesselManagerOperations.address,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.defaultPool))) {
-			console.log(`DefaultPool.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.defaultPool.setAddresses(contracts.vesselManager.address, contracts.activePool.address, { gasPrice })
-			)
-		}
-		if (!(await this.isInitialized(contracts.feeCollector))) {
-			console.log(`FeeCollector.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.feeCollector.setAddresses(
-					contracts.borrowerOperations.address,
-					contracts.vesselManager.address,
-					grvtContracts.GRVTStaking?.address || ZERO_ADDRESS,
-					contracts.debtToken.address,
-					treasuryAddress,
-					false,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.sortedVessels))) {
-			console.log(`SortedVessels.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.sortedVessels.setAddresses(contracts.vesselManager.address, contracts.borrowerOperations.address, {
-					gasPrice,
-				})
-			)
-		}
-		if (!(await this.isInitialized(contracts.stabilityPool))) {
-			console.log(`StabilityPool.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.stabilityPool.setAddresses(
-					contracts.borrowerOperations.address,
-					contracts.vesselManager.address,
-					contracts.activePool.address,
-					contracts.debtToken.address,
-					contracts.sortedVessels.address,
-					grvtContracts.communityIssuance?.address || ZERO_ADDRESS,
-					contracts.adminContract.address
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.vesselManager))) {
-			console.log(`VesselManager.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.vesselManager.setAddresses(
-					contracts.borrowerOperations.address,
-					contracts.stabilityPool.address,
-					contracts.gasPool.address,
-					contracts.collSurplusPool.address,
-					contracts.debtToken.address,
-					contracts.feeCollector.address,
-					contracts.sortedVessels.address,
-					contracts.vesselManagerOperations.address,
-					contracts.adminContract.address,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.vesselManagerOperations))) {
-			console.log(`VesselManagerOperations.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.vesselManagerOperations.setAddresses(
-					contracts.vesselManager.address,
-					contracts.sortedVessels.address,
-					contracts.stabilityPool.address,
-					contracts.collSurplusPool.address,
-					contracts.debtToken.address,
-					contracts.adminContract.address,
-					{ gasPrice }
-				)
-			)
-		}
-		if (!(await this.isInitialized(contracts.priceFeed))) {
-			console.log(`PriceFeed.setAddresses() ...`)
-			await this.sendAndWaitForTransaction(
-				contracts.priceFeed.setAddresses(contracts.adminContract.address, contracts.shortTimelock.address, { gasPrice })
-			)
-		}
+		await this.setAddresses("ActivePool", contracts.activePool, [
+			contracts.borrowerOperations.address,
+			contracts.collSurplusPool.address,
+			contracts.defaultPool.address,
+			contracts.stabilityPool.address,
+			contracts.vesselManager.address,
+			contracts.vesselManagerOperations.address,
+		])
+
+		await this.setAddresses("AdminContract", contracts.adminContract, [
+			grvtContracts.communityIssuance?.address || ZERO_ADDRESS,
+			contracts.activePool.address,
+			contracts.defaultPool.address,
+			contracts.stabilityPool.address,
+			contracts.collSurplusPool.address,
+			contracts.priceFeed.address,
+			contracts.shortTimelock.address,
+			contracts.longTimelock.address,
+		])
+
+		await this.setAddresses("BorrowerOperations", contracts.borrowerOperations, [
+			contracts.vesselManager.address,
+			contracts.stabilityPool.address,
+			contracts.gasPool.address,
+			contracts.collSurplusPool.address,
+			contracts.sortedVessels.address,
+			contracts.debtToken.address,
+			contracts.feeCollector.address,
+			contracts.adminContract.address,
+		])
+
+		await this.setAddresses("CollSurplusPool", contracts.collSurplusPool, [
+			contracts.activePool.address,
+			contracts.borrowerOperations.address,
+			contracts.vesselManager.address,
+			contracts.vesselManagerOperations.address,
+		])
+
+		await this.setAddresses("DefaultPool", contracts.defaultPool, [
+			contracts.vesselManager.address,
+			contracts.activePool.address,
+		])
+
+		await this.setAddresses("FeeCollector", contracts.feeCollector, [
+			contracts.borrowerOperations.address,
+			contracts.vesselManager.address,
+			grvtContracts.GRVTStaking?.address || ZERO_ADDRESS,
+			contracts.debtToken.address,
+			treasuryAddress,
+			false,
+		])
+
+		await this.setAddresses("PriceFeed", contracts.priceFeed, [
+			contracts.adminContract.address,
+			contracts.shortTimelock.address,
+		])
+
+		await this.setAddresses("SortedVessels", contracts.sortedVessels, [
+			contracts.vesselManager.address,
+			contracts.borrowerOperations.address,
+		])
+
+		await this.setAddresses("StabilityPool", contracts.stabilityPool, [
+			contracts.borrowerOperations.address,
+			contracts.vesselManager.address,
+			contracts.activePool.address,
+			contracts.debtToken.address,
+			contracts.sortedVessels.address,
+			grvtContracts.communityIssuance?.address || ZERO_ADDRESS,
+			contracts.adminContract.address,
+		])
+
+		await this.setAddresses("VesselManager", contracts.vesselManager, [
+			contracts.borrowerOperations.address,
+			contracts.stabilityPool.address,
+			contracts.gasPool.address,
+			contracts.collSurplusPool.address,
+			contracts.debtToken.address,
+			contracts.feeCollector.address,
+			contracts.sortedVessels.address,
+			contracts.vesselManagerOperations.address,
+			contracts.adminContract.address,
+		])
+
+		await this.setAddresses("VesselManagerOperations", contracts.vesselManagerOperations, [
+			contracts.vesselManager.address,
+			contracts.sortedVessels.address,
+			contracts.stabilityPool.address,
+			contracts.collSurplusPool.address,
+			contracts.debtToken.address,
+			contracts.adminContract.address,
+		])
 	}
 
 	// TODO refactor
@@ -489,6 +453,22 @@ class MainnetDeploymentHelper {
 		throw Error(`ERROR: Unable to deploy contract after ${maxRetries} attempts.`)
 	}
 
+	async setAddresses(contractName, contract, addressList) {
+		const gasPrice = this.configParams.GAS_PRICE
+		try {
+			console.log(` - ${contractName}.setAddresses()`)
+			await this.sendAndWaitForTransaction(contract.setAddresses(...addressList, { gasPrice }))
+			console.log(` - ${contractName}.setAddresses() -> ok`)
+		} catch (e) {
+			const msg = e.message || ""
+			if (msg.toLowerCase().includes("already initialized")) {
+				console.log(` - ${contractName}.setAddresses() -> failed (contract was already initialized)`)
+			} else {
+				console.log(e)
+			}
+		}
+	}
+
 	async isInitialized(contract) {
 		let name = "?"
 		try {
@@ -517,24 +497,25 @@ class MainnetDeploymentHelper {
 		}
 	}
 
-	async verifyCoreContracts(deploymentState) {
+	async verifyCoreContracts(deploymentState, debtTokenParams) {
 		if (!this.configParams.ETHERSCAN_BASE_URL) {
 			console.log("(No Etherscan URL defined, skipping contract verification)")
 		} else {
-			await this.verifyContract("activePool", deploymentState)
-			await this.verifyContract("adminContract", deploymentState)
-			await this.verifyContract("borrowerOperations", deploymentState)
-			await this.verifyContract("collSurplusPool", deploymentState)
-			await this.verifyContract("debtToken", deploymentState, debtTokenParams)
-			await this.verifyContract("defaultPool", deploymentState)
-			await this.verifyContract("feeCollector", deploymentState)
-			await this.verifyContract("gasPool", deploymentState)
-			await this.verifyContract("priceFeed", deploymentState)
-			await this.verifyContract("sortedVessels", deploymentState)
-			await this.verifyContract("shortTimelockContract", deploymentState)
-			await this.verifyContract("stabilityPool", deploymentState)
-			await this.verifyContract("vesselManager", deploymentState)
-			await this.verifyContract("vesselManagerOperations", deploymentState)
+			await this.verifyContract("ActivePool", deploymentState)
+			await this.verifyContract("AdminContract", deploymentState)
+			await this.verifyContract("BorrowerOperations", deploymentState)
+			await this.verifyContract("CollSurplusPool", deploymentState)
+			await this.verifyContract("DebtToken", deploymentState, debtTokenParams)
+			await this.verifyContract("DefaultPool", deploymentState)
+			await this.verifyContract("FeeCollector", deploymentState)
+			await this.verifyContract("GasPool", deploymentState)
+			await this.verifyContract("LongTimelock", deploymentState)
+			await this.verifyContract("PriceFeed", deploymentState)
+			await this.verifyContract("SortedVessels", deploymentState)
+			await this.verifyContract("ShortTimelock", deploymentState)
+			await this.verifyContract("StabilityPool", deploymentState)
+			await this.verifyContract("VesselManager", deploymentState)
+			await this.verifyContract("VesselManagerOperations", deploymentState)
 		}
 	}
 
@@ -567,4 +548,3 @@ class MainnetDeploymentHelper {
 }
 
 module.exports = MainnetDeploymentHelper
-

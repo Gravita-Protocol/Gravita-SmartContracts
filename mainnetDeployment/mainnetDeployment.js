@@ -32,8 +32,8 @@ async function mainnetDeploy(configParams) {
 
 	await addCollaterals()
 
-	await toggleContractInitialization(coreContracts.adminContract)
-	await toggleContractInitialization(coreContracts.debtToken)
+	// await toggleContractInitialization(coreContracts.adminContract)
+	// await toggleContractInitialization(coreContracts.debtToken)
 
 	// TODO shortTimelock.setPendingAdmin() via queueTransaction()
 	// TODO longTimelock.setPendingAdmin() via queueTransaction()
@@ -51,7 +51,7 @@ async function addCollaterals() {
 	console.log("Adding Collaterals...")
 	const cfg = config.externalAddrs
 	// await addCollateral("cbETH", cfg.CBETH_ERC20, cfg.CHAINLINK_CBETH_USD_ORACLE)
-	// await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE)
+	await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE)
 	await addCollateral("wETH", cfg.WETH_ERC20, cfg.CHAINLINK_WETH_USD_ORACLE)
 	// await addCollateral("wstETH", cfg.WSTETH_ERC20, cfg.CHAINLINK_WSTETH_USD_ORACLE)
 }
@@ -61,16 +61,23 @@ async function addCollateral(name, address, chainlinkPriceFeedAddress) {
 		console.log(`[${name}] WARNING: No address found for collateral`)
 		return
 	}
+
 	if (!chainlinkPriceFeedAddress || chainlinkPriceFeedAddress == "") {
 		console.log(`[${name}] WARNING: No chainlink price feed address found for collateral`)
 		return
 	}
-	if ((await coreContracts.adminContract.getDecimals(address)) > 0) {
+
+	const collExists = async address => {
+		const mcr = await coreContracts.adminContract.getMcr(address)
+		return mcr.gt(0)
+	}
+
+	if (await collExists(address)) {
 		console.log(`[${name}] NOTICE: collateral has already been added before`)
 	} else {
 		const decimals = 18
 		const isWrapped = true
-		const gasCompensation = dec(30, 18)
+		const gasCompensation = th.dec(30, 18)
 		await helper.sendAndWaitForTransaction(
 			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
 		)
@@ -186,13 +193,13 @@ async function transferOwnership(contract, newOwner) {
 // Timelock functions -------------------------------------------------------------------------------------------------
 
 async function queueTimelockTransaction(timelockContract, targetAddress, methodSignature, argTypes, argValues) {
-	const { encode: abiEncode } = new ethers.utils.AbiCoder()
+	const abi = new ethers.utils.AbiCoder()
 	const eta = await calcTimelockETA(timelockContract)
 	const value = 0
-	const data = abiEncode(argTypes, argValues)
+	const data = abi.encode(argTypes, argValues)
 
 	const txHash = ethers.utils.keccak256(
-		abiEncode(
+		abi.encode(
 			["address", "uint256", "string", "bytes", "uint256"],
 			[targetAddress, value.toString(), methodSignature, data, eta.toString()]
 		)
@@ -206,17 +213,16 @@ async function queueTimelockTransaction(timelockContract, targetAddress, methodS
 	if (!queued) {
 		console.log(`WARNING: Failed to queue setOracle() function call on Timelock contract`)
 	} else {
-		console.log(`queueTimelockTransaction :: ${methodSignature} queued`)
-		console.log(`queueTimelockTransaction :: TxHash = ${txHash}`)
-		console.log(`queueTimelockTransaction :: ETA = ${eta} (${new Date(eta * 1000).toLocaleString()})`)
-		console.log(`queueTimelockTransaction :: Remember to call executeTransaction() upon ETA!`)
+		console.log(`queueTimelockTransaction() :: ${methodSignature} queued`)
+		console.log(`queueTimelockTransaction() :: ETA = ${eta} (${new Date(eta * 1000).toLocaleString()})`)
+		console.log(`queueTimelockTransaction() :: Remember to call executeTransaction() upon ETA!`)
 	}
 	return { txHash, eta }
 }
 
 async function calcTimelockETA(timelockContract) {
 	const delay = Number(await timelockContract.delay())
-	return (await getBlockTimestamp()) + delay
+	return (await getBlockTimestamp()) + delay + 60
 }
 
 // Helper/utils -------------------------------------------------------------------------------------------------------
@@ -242,7 +248,7 @@ async function toggleContractInitialization(contract) {
 	const isInitialized = await contract.isInitialized()
 	if (isInitialized) {
 		const name = await contract.NAME()
-		console.log(`NOTICE: ${name} at ${contract.address} is already initialized`)
+		console.log(`NOTICE: ${contract.address} -> ${name} is already initialized`)
 	} else {
 		await contract.setInitialized()
 	}
@@ -251,7 +257,7 @@ async function toggleContractInitialization(contract) {
 async function printDeployerBalance() {
 	const prevBalance = deployerBalance
 	deployerBalance = await ethers.provider.getBalance(deployerWallet.address)
-	const cost = prevBalance ? ethers.utils.formatUnits(prevBalance.sub(balance)) : 0
+	const cost = prevBalance ? ethers.utils.formatUnits(prevBalance.sub(deployerBalance)) : 0
 	console.log(
 		`${deployerWallet.address} Balance: ${ethers.utils.formatUnits(deployerBalance)} ${
 			cost ? `(Deployment cost: ${cost})` : ""
@@ -262,4 +268,3 @@ async function printDeployerBalance() {
 module.exports = {
 	mainnetDeploy,
 }
-
