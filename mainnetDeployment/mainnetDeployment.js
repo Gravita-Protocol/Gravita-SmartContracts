@@ -75,12 +75,11 @@ async function addCollateral(name, address, chainlinkPriceFeedAddress) {
 	await helper.sendAndWaitForTransaction(
 		coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
 	)
-	console.log(`[${name}] Collateral added: ${address}`)
-	await helper.sendAndWaitForTransaction(
-		coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
+	console.log(`[${name}] Collateral added (${address})`)
+	const { queuedTxHash, eta } = await setOracle(address, chainlinkPriceFeedAddress)
+	console.log(
+		`[${name}] Price Feed queued (QueuedTxHash: ${queuedTxHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
 	)
-	const queueTxHash = await setOracle(address, chainlinkPriceFeedAddress)
-	console.log(`[${name}] Price Feed queued (QueueTxHash: ${queueTxHash})`)
 }
 
 async function setOracle(collateralAddress, chainlinkPriceFeedAddress) {
@@ -95,7 +94,14 @@ async function setOracle(collateralAddress, chainlinkPriceFeedAddress) {
 		maxDeviationBetweenRounds.toString(),
 		isEthIndexed.toString(),
 	]
-	return await queueTimelockTransaction(coreContracts.shortTimelock, targetAddress, methodSignature, argTypes, argValues)
+	const { queuedTxHash, eta } = await queueTimelockTransaction(
+		coreContracts.shortTimelock,
+		targetAddress,
+		methodSignature,
+		argTypes,
+		argValues
+	)
+	return { queuedTxHash, eta }
 }
 
 // GRVT contracts deployment ------------------------------------------------------------------------------------------
@@ -150,7 +156,7 @@ async function transferContractsOwnerships() {
 		grvtContracts.GRVTStaking,
 	]
 	if ("localhost" != config.targetNetwork) {
-		adminOwnedContracts.push(coreContracts.priceFeed) // test contract is not Ownable
+		adminOwnedContracts.push(coreContracts.priceFeed) // PriceFeed test contract is not Ownable
 	}
 	const treasuryOwnedContracts = [coreContracts.lockedGrvt, grvtContracts.communityIssuance]
 	for (const contract of adminOwnedContracts) {
@@ -203,7 +209,7 @@ async function queueTimelockTransaction(timelockContract, targetAddress, methodS
 	if (!queued) {
 		console.log(`WARNING: Failed to queue setOracle() function call on Timelock contract`)
 	}
-	return queuedTxHash
+	return { queuedTxHash, eta }
 }
 
 async function printDeployerBalance() {

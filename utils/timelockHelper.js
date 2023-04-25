@@ -17,6 +17,7 @@ main()
 
 async function main() {
 	await queueTransaction(TARGET_ADDRESS, METHOD_SIGNATURE, METHOD_ARG_TYPES, METHOD_ARG_VALUES)
+	//await executeTransaction(TARGET_ADDRESS, METHOD_SIGNATURE, METHOD_ARG_TYPES, METHOD_ARG_VALUES)
 }
 
 async function queueTransaction(targetAddress, methodSignature, argTypes, argValues) {
@@ -37,16 +38,18 @@ async function queueTransaction(targetAddress, methodSignature, argTypes, argVal
 	await tx.wait(1)
 
 	const queued = await timelockContract.queuedTransactions(queuedTxHash)
-	console.log(`queuedTxHash: ${queuedTxHash} success: ${queued}`)
+	console.log(`QueuedTxHash: ${queuedTxHash} ETA: ${eta} Success: ${queued}`)
 }
 
 async function executeTransaction(targetAddress, methodSignature, argTypes, argValues) {
+	console.log(`Executing timelocked ${methodSignature}`)
 	const timelockContract = await getTimelockContract()
 	const eta = await getBlockTimestamp()
 	const value = 0
 	const data = encodeParameters(argTypes, argValues)
 	const tx = await timelockContract.executeTransaction(targetAddress, value, methodSignature, data, eta)
 	await tx.wait(1)
+	console.log(`Transaction executed`)
 }
 
 async function getTimelockContract() {
@@ -56,7 +59,7 @@ async function getTimelockContract() {
 
 async function calcETA(timelockContract) {
 	const delay = await timelockContract.delay()
-	return getBlockTimestamp() + delay
+	return (await getBlockTimestamp()) + delay
 }
 
 async function getBlockTimestamp() {
