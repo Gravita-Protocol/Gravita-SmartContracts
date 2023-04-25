@@ -1,19 +1,19 @@
 const targetNetwork = "localhost"
 const DEPLOY_GRVT_CONTRACTS = false
 const OUTPUT_FILE = "./mainnetDeployment/localForkDeploymentOutput.json"
-const GAS_PRICE = 20000000000 // 20 Gwei
+const GAS_PRICE = 20_000_000_000 // 20 Gwei
 const TX_CONFIRMATIONS = 1
 const ETHERSCAN_BASE_URL = undefined
 
 const externalAddrs = {
-	CHAINLINK_ETH_USD_ORACLE: undefined, // there are no oracles on local env
-	CHAINLINK_STETH_USD_ORACLE: undefined, // there are no oracles on local env
-	CHAINLINK_CBETH_ETH_ORACLE: undefined, // there are no oracles on local env
 	CBETH_ERC20: undefined, // mock ERC20s are deployed on local env
-	WETH_ERC20: undefined, // mock ERC20s are deployed on local env
 	RETH_ERC20: undefined, // mock ERC20s are deployed on local env
-	STETH_ERC20: undefined, // mock ERC20s are deployed on local env
+	WETH_ERC20: "0xFC623e91a3A638718cDA6dCC108BD60a9F8109E1", // mock ERC20s are deployed on local env
 	WSTETH_ERC20: undefined, // mock ERC20s are deployed on local env
+	CHAINLINK_CBETH_USD_ORACLE: undefined, // there are no oracles on local env
+	CHAINLINK_RETH_USD_ORACLE: undefined, // there are no oracles on local env
+	CHAINLINK_WETH_USD_ORACLE: "0x3DaD300A888CE2c31925079c1EBEb54feEE847B9", // there are no oracles on local env
+	CHAINLINK_WSTETH_USD_ORACLE: undefined, // there are no oracles on local env
 }
 
 const gravitaAddresses = {

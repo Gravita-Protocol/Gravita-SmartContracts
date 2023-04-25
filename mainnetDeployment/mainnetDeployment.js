@@ -14,17 +14,9 @@ let ADMIN_WALLET
 let TREASURY_WALLET
 
 async function mainnetDeploy(configParams) {
-	config = configParams
-	ADMIN_WALLET = config.gravitaAddresses.ADMIN_WALLET
-	TREASURY_WALLET = config.gravitaAddresses.TREASURY_WALLET
-	deployerWallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, ethers.provider)
-	// deployerWallet = (await ethers.getSigners())[0]
-	assert.equal(deployerWallet.address, config.gravitaAddresses.DEPLOYER_WALLET)
-
+	initConfigArgs(configParams)
 	await printDeployerBalance()
 
-	helper = new MainnetDeploymentHelper(config, deployerWallet)
-	deploymentState = helper.loadPreviousDeployment()
 	coreContracts = await helper.loadOrDeployCoreContracts(deploymentState)
 
 	if (config.DEPLOY_GRVT_CONTRACTS) {
@@ -40,13 +32,15 @@ async function mainnetDeploy(configParams) {
 
 	await addCollaterals()
 
-	await coreContracts.adminContract.setInitialized()
-	await coreContracts.debtToken.setInitialized()
-	// TODO set the admin address for the timelock contracts
+	await toggleContractInitialization(coreContracts.adminContract)
+	await toggleContractInitialization(coreContracts.debtToken)
+
+	// TODO shortTimelock.setPendingAdmin() via queueTransaction()
+	// TODO longTimelock.setPendingAdmin() via queueTransaction()
 
 	helper.saveDeployment(deploymentState)
 
-	await transferContractsOwnerships()
+	// await transferContractsOwnerships()
 
 	await printDeployerBalance()
 }
@@ -57,29 +51,33 @@ async function addCollaterals() {
 	console.log("Adding Collaterals...")
 	const cfg = config.externalAddrs
 	// await addCollateral("cbETH", cfg.CBETH_ERC20, cfg.CHAINLINK_CBETH_USD_ORACLE)
-	await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE)
+	// await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE)
 	await addCollateral("wETH", cfg.WETH_ERC20, cfg.CHAINLINK_WETH_USD_ORACLE)
 	// await addCollateral("wstETH", cfg.WSTETH_ERC20, cfg.CHAINLINK_WSTETH_USD_ORACLE)
 }
 
 async function addCollateral(name, address, chainlinkPriceFeedAddress) {
 	if (!address || address == "") {
-		throw `Error: No address found for collateral ${name}`
+		console.log(`[${name}] WARNING: No address found for collateral`)
+		return
 	}
 	if (!chainlinkPriceFeedAddress || chainlinkPriceFeedAddress == "") {
-		throw `Error: No chainlink price feed address found for collateral ${name}`
+		console.log(`[${name}] WARNING: No chainlink price feed address found for collateral`)
+		return
 	}
-	const decimals = 18
-	const isWrapped = true
-	const gasCompensation = dec(30, 18)
-	await helper.sendAndWaitForTransaction(
-		coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
-	)
-	console.log(`[${name}] Collateral added (${address})`)
-	const { queuedTxHash, eta } = await setOracle(address, chainlinkPriceFeedAddress)
-	console.log(
-		`[${name}] Price Feed queued (QueuedTxHash: ${queuedTxHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
-	)
+	if ((await coreContracts.adminContract.getDecimals(address)) > 0) {
+		console.log(`[${name}] NOTICE: collateral has already been added before`)
+	} else {
+		const decimals = 18
+		const isWrapped = true
+		const gasCompensation = dec(30, 18)
+		await helper.sendAndWaitForTransaction(
+			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
+		)
+		console.log(`[${name}] Collateral added (${address})`)
+	}
+	const { txHash, eta } = await setOracle(address, chainlinkPriceFeedAddress)
+	console.log(`[${name}] Price Feed queued (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`)
 }
 
 async function setOracle(collateralAddress, chainlinkPriceFeedAddress) {
@@ -94,14 +92,13 @@ async function setOracle(collateralAddress, chainlinkPriceFeedAddress) {
 		maxDeviationBetweenRounds.toString(),
 		isEthIndexed.toString(),
 	]
-	const { queuedTxHash, eta } = await queueTimelockTransaction(
+	return await queueTimelockTransaction(
 		coreContracts.shortTimelock,
 		targetAddress,
 		methodSignature,
 		argTypes,
 		argValues
 	)
-	return { queuedTxHash, eta }
 }
 
 // GRVT contracts deployment ------------------------------------------------------------------------------------------
@@ -186,15 +183,15 @@ async function transferOwnership(contract, newOwner) {
 	if ((await contract.owner()) != newOwner) await contract.transferOwnership(newOwner)
 }
 
-// Helper/utils -------------------------------------------------------------------------------------------------------
+// Timelock functions -------------------------------------------------------------------------------------------------
 
 async function queueTimelockTransaction(timelockContract, targetAddress, methodSignature, argTypes, argValues) {
 	const { encode: abiEncode } = new ethers.utils.AbiCoder()
-	const eta = await calcETA(timelockContract)
+	const eta = await calcTimelockETA(timelockContract)
 	const value = 0
 	const data = abiEncode(argTypes, argValues)
 
-	const queuedTxHash = ethers.utils.keccak256(
+	const txHash = ethers.utils.keccak256(
 		abiEncode(
 			["address", "uint256", "string", "bytes", "uint256"],
 			[targetAddress, value.toString(), methodSignature, data, eta.toString()]
@@ -205,11 +202,50 @@ async function queueTimelockTransaction(timelockContract, targetAddress, methodS
 		timelockContract.queueTransaction(targetAddress, value, methodSignature, data, eta)
 	)
 
-	const queued = await timelockContract.queuedTransactions(queuedTxHash)
+	const queued = await timelockContract.queuedTransactions(txHash)
 	if (!queued) {
 		console.log(`WARNING: Failed to queue setOracle() function call on Timelock contract`)
+	} else {
+		console.log(`queueTimelockTransaction :: ${methodSignature} queued`)
+		console.log(`queueTimelockTransaction :: TxHash = ${txHash}`)
+		console.log(`queueTimelockTransaction :: ETA = ${eta} (${new Date(eta * 1000).toLocaleString()})`)
+		console.log(`queueTimelockTransaction :: Remember to call executeTransaction() upon ETA!`)
 	}
-	return { queuedTxHash, eta }
+	return { txHash, eta }
+}
+
+async function calcTimelockETA(timelockContract) {
+	const delay = Number(await timelockContract.delay())
+	return (await getBlockTimestamp()) + delay
+}
+
+// Helper/utils -------------------------------------------------------------------------------------------------------
+
+function initConfigArgs(configParams) {
+	config = configParams
+	ADMIN_WALLET = config.gravitaAddresses.ADMIN_WALLET
+	TREASURY_WALLET = config.gravitaAddresses.TREASURY_WALLET
+	deployerWallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, ethers.provider)
+	// deployerWallet = (await ethers.getSigners())[0]
+	assert.equal(deployerWallet.address, config.gravitaAddresses.DEPLOYER_WALLET)
+
+	helper = new MainnetDeploymentHelper(config, deployerWallet)
+	deploymentState = helper.loadPreviousDeployment()
+}
+
+async function getBlockTimestamp() {
+	const currentBlock = await ethers.provider.getBlockNumber()
+	return Number((await ethers.provider.getBlock(currentBlock)).timestamp)
+}
+
+async function toggleContractInitialization(contract) {
+	const isInitialized = await contract.isInitialized()
+	if (isInitialized) {
+		const name = await contract.NAME()
+		console.log(`NOTICE: ${name} at ${contract.address} is already initialized`)
+	} else {
+		await contract.setInitialized()
+	}
 }
 
 async function printDeployerBalance() {
@@ -226,3 +262,4 @@ async function printDeployerBalance() {
 module.exports = {
 	mainnetDeploy,
 }
+
