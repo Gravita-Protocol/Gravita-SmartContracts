@@ -40,23 +40,24 @@ contract("PriceFeed", async accounts => {
 	let erc20
 
 	const setAddressesAndOracle = async () => {
-		await priceFeed.setAddresses(
-			adminContract.address,
-			shortTimelock.address,
-			{
-				from: owner,
-			}
-		)
+		await priceFeed.setAddresses(adminContract.address, shortTimelock.address, { from: owner })
 		await setOracle(ZERO_ADDRESS, mockChainlink.address)
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 	}
 
 	const setOracle = async (erc20Address, aggregatorAddress, isIndexed = false) => {
-		await impersonateAccount(shortTimelock.address)
-		await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
-			from: shortTimelock.address,
-		})
-		await stopImpersonatingAccount(shortTimelock.address)
+		const record = await priceFeed.oracleRecords(erc20Address)
+		if (!record.exists) {
+			await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
+				from: owner,
+			})
+		} else {
+			await impersonateAccount(shortTimelock.address)
+			await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
+				from: shortTimelock.address,
+			})
+			await stopImpersonatingAccount(shortTimelock.address)
+		}
 	}
 
 	const getPrice = async (erc20Address = ZERO_ADDRESS) => {
@@ -110,31 +111,19 @@ contract("PriceFeed", async accounts => {
 	describe("Mainnet PriceFeed setup", async accounts => {
 		it("setAddresses should fail after addresses have already been set", async () => {
 			// Owner can successfully set any address
-			const txOwner = await priceFeed.setAddresses(
-				adminContract.address,
-				shortTimelock.address,
-				{ from: owner }
-			)
+			const txOwner = await priceFeed.setAddresses(adminContract.address, shortTimelock.address, { from: owner })
 			assert.isTrue(txOwner.receipt.status)
 
 			await assertRevert(
-				priceFeed.setAddresses(
-					adminContract.address,
-					shortTimelock.address,
-					{
-						from: owner,
-					}
-				)
+				priceFeed.setAddresses(adminContract.address, shortTimelock.address, {
+					from: owner,
+				})
 			)
 
 			await assertRevert(
-				priceFeed.setAddresses(
-					adminContract.address,
-					shortTimelock.address,
-					{
-						from: alice,
-					}
-				),
+				priceFeed.setAddresses(adminContract.address, shortTimelock.address, {
+					from: alice,
+				}),
 				"OwnableUpgradeable: caller is not the owner"
 			)
 		})
@@ -274,7 +263,6 @@ contract("PriceFeed", async accounts => {
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const ethPrice = await getPrice()
 		assert.equal(ethPrice.toString(), ETH_USD_PRICE_18_DIGITS)
-
 
 		const RETH_ETH_RATIO_18_DIGITS = "1054021266924449498"
 		await priceFeed.fetchPrice(RETH_TOKEN_ADDRESS)
@@ -453,3 +441,4 @@ contract("PriceFeed", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+
