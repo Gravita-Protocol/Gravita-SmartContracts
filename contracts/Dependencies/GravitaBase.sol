@@ -8,7 +8,6 @@ import "./BaseMath.sol";
 import "./GravitaMath.sol";
 import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";
-import "../Interfaces/IPriceFeed.sol";
 import "../Interfaces/IGravitaBase.sol";
 import "../Interfaces/IAdminContract.sol";
 

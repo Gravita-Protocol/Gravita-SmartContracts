@@ -2736,13 +2736,13 @@
           {
             "contract": "PriceFeed",
             "label": "oracleRecords",
-            "type": "t_mapping(t_address,t_struct(OracleRecord)13568_storage)",
+            "type": "t_mapping(t_address,t_struct(OracleRecord)945_storage)",
             "src": "contracts\\PriceFeed.sol:33"
           },
           {
             "contract": "PriceFeed",
             "label": "priceRecords",
-            "type": "t_mapping(t_address,t_struct(PriceRecord)13573_storage)",
+            "type": "t_mapping(t_address,t_struct(PriceRecord)950_storage)",
             "src": "contracts\\PriceFeed.sol:34"
           }
         ],
@@ -2750,10 +2750,10 @@
           "t_address": {
             "label": "address"
           },
-          "t_mapping(t_address,t_struct(OracleRecord)13568_storage)": {
+          "t_mapping(t_address,t_struct(OracleRecord)945_storage)": {
             "label": "mapping(address => struct IPriceFeed.OracleRecord)"
           },
-          "t_struct(OracleRecord)13568_storage": {
+          "t_struct(OracleRecord)945_storage": {
             "label": "struct IPriceFeed.OracleRecord",
             "members": [
               {
@@ -2787,10 +2787,10 @@
           "t_bool": {
             "label": "bool"
           },
-          "t_mapping(t_address,t_struct(PriceRecord)13573_storage)": {
+          "t_mapping(t_address,t_struct(PriceRecord)950_storage)": {
             "label": "mapping(address => struct IPriceFeed.PriceRecord)"
           },
-          "t_struct(PriceRecord)13573_storage": {
+          "t_struct(PriceRecord)950_storage": {
             "label": "struct IPriceFeed.PriceRecord",
             "members": [
               {
@@ -3663,6 +3663,135 @@
           },
           "t_bool": {
             "label": "bool"
+          }
+        }
+      }
+    },
+    "0fc45de19bd4aed62c2b44120eadca096e41a187f236cd25181970b09cfacf69": {
+      "address": "0x15cEFeD1ecB5B6fa3a92BD208E1D43b21B520D78",
+      "txHash": "0xf6daae78766d8d643ac0c9effce970e7d18e60e5d4d295366ba7135592b99e7e",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "PriceFeed",
+            "label": "adminContractAddress",
+            "type": "t_address",
+            "src": "contracts\\PriceFeed.sol:29"
+          },
+          {
+            "contract": "PriceFeed",
+            "label": "timelockAddress",
+            "type": "t_address",
+            "src": "contracts\\PriceFeed.sol:30"
+          },
+          {
+            "contract": "PriceFeed",
+            "label": "oracleRecords",
+            "type": "t_mapping(t_address,t_struct(OracleRecord)945_storage)",
+            "src": "contracts\\PriceFeed.sol:32"
+          },
+          {
+            "contract": "PriceFeed",
+            "label": "priceRecords",
+            "type": "t_mapping(t_address,t_struct(PriceRecord)950_storage)",
+            "src": "contracts\\PriceFeed.sol:33"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_struct(OracleRecord)945_storage)": {
+            "label": "mapping(address => struct IPriceFeed.OracleRecord)"
+          },
+          "t_struct(OracleRecord)945_storage": {
+            "label": "struct IPriceFeed.OracleRecord",
+            "members": [
+              {
+                "label": "chainLinkOracle",
+                "type": "t_contract(AggregatorV3Interface)45"
+              },
+              {
+                "label": "maxDeviationBetweenRounds",
+                "type": "t_uint256"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool"
+              },
+              {
+                "label": "isFeedWorking",
+                "type": "t_bool"
+              },
+              {
+                "label": "isEthIndexed",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_contract(AggregatorV3Interface)45": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_struct(PriceRecord)950_storage)": {
+            "label": "mapping(address => struct IPriceFeed.PriceRecord)"
+          },
+          "t_struct(PriceRecord)950_storage": {
+            "label": "struct IPriceFeed.PriceRecord",
+            "members": [
+              {
+                "label": "scaledPrice",
+                "type": "t_uint256"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_uint8": {
+            "label": "uint8"
           }
         }
       }

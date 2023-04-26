@@ -50,13 +50,16 @@ async function mainnetDeploy(configParams) {
 async function addCollaterals() {
 	console.log("Adding Collaterals...")
 	const cfg = config.externalAddrs
-	// await addCollateral("cbETH", cfg.CBETH_ERC20, cfg.CHAINLINK_CBETH_USD_ORACLE)
-	await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE)
-	await addCollateral("wETH", cfg.WETH_ERC20, cfg.CHAINLINK_WETH_USD_ORACLE)
-	// await addCollateral("wstETH", cfg.WSTETH_ERC20, cfg.CHAINLINK_WSTETH_USD_ORACLE)
+	const maxDeviationBetweenRounds = ethers.utils.parseUnits("0.5") // TODO personalize for each collateral
+	const isEthIndexed = false // TODO personalize for each collateral
+
+	// await addCollateral("cbETH", cfg.CBETH_ERC20, cfg.CHAINLINK_CBETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
+	await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
+	await addCollateral("wETH", cfg.WETH_ERC20, cfg.CHAINLINK_WETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
+	// await addCollateral("wstETH", cfg.WSTETH_ERC20, cfg.CHAINLINK_WSTETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
 }
 
-async function addCollateral(name, address, chainlinkPriceFeedAddress) {
+async function addCollateral(name, address, chainlinkPriceFeedAddress, maxDeviationBetweenRounds, isEthIndexed) {
 	if (!address || address == "") {
 		console.log(`[${name}] WARNING: No address found for collateral`)
 		return
@@ -67,30 +70,53 @@ async function addCollateral(name, address, chainlinkPriceFeedAddress) {
 		return
 	}
 
-	const collExists = async address => {
-		const mcr = await coreContracts.adminContract.getMcr(address)
-		return mcr.gt(0)
-	}
+	const collExists = async () => (await coreContracts.adminContract.getMcr(address)).gt(0)
 
 	if (await collExists(address)) {
 		console.log(`[${name}] NOTICE: collateral has already been added before`)
 	} else {
 		const decimals = 18
-		const isWrapped = true
+		const isWrapped = false
 		const gasCompensation = th.dec(30, 18)
 		await helper.sendAndWaitForTransaction(
 			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
 		)
-		console.log(`[${name}] Collateral added (${address})`)
+		console.log(`[${name}] Collateral added @ ${address}`)
 	}
-	const { txHash, eta } = await setOracle(address, chainlinkPriceFeedAddress)
-	console.log(`[${name}] Price Feed queued (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`)
+
+	const oracleRecord = await coreContracts.priceFeed.oracleRecords(address)
+
+	if (!oracleRecord.exists) {
+		console.log(`[${name}] PriceFeed.setOracle()`)
+		await helper.sendAndWaitForTransaction(
+			coreContracts.priceFeed.setOracle(
+				address,
+				chainlinkPriceFeedAddress,
+				maxDeviationBetweenRounds.toString(),
+				isEthIndexed.toString()
+			)
+		)
+		console.log(`[${name}] Chainlink Oracle Price Feed has been set @ ${chainlinkPriceFeedAddress}`)
+	} else {
+		if (oracleRecord.chainLinkOracle == chainlinkPriceFeedAddress) {
+			console.log(`[${name}] Chainlink Oracle Price Feed had already been set @ ${chainlinkPriceFeedAddress}`)
+		} else {
+			console.log(`[${name}] Timelock.setOracle()`)
+			const { txHash, eta } = await setOracleViaTimelock(address, chainlinkPriceFeedAddress, maxDeviationBetweenRounds)
+			console.log(
+				`[${name}] setOracle() queued on ShortTimelock (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
+			)
+		}
+	}
 }
 
-async function setOracle(collateralAddress, chainlinkPriceFeedAddress) {
+async function setOracleViaTimelock(
+	collateralAddress,
+	chainlinkPriceFeedAddress,
+	maxDeviationBetweenRounds,
+	isEthIndexed
+) {
 	const targetAddress = coreContracts.priceFeed.address
-	const maxDeviationBetweenRounds = ethers.utils.parseUnits("0.5")
-	const isEthIndexed = false
 	const methodSignature = "setOracle(address, address, uint256, bool)"
 	const argTypes = ["address", "address", "uint256", "bool"]
 	const argValues = [
@@ -211,7 +237,7 @@ async function queueTimelockTransaction(timelockContract, targetAddress, methodS
 
 	const queued = await timelockContract.queuedTransactions(txHash)
 	if (!queued) {
-		console.log(`WARNING: Failed to queue setOracle() function call on Timelock contract`)
+		console.log(`WARNING: Failed to queue ${methodSignature} function call on Timelock contract`)
 	} else {
 		console.log(`queueTimelockTransaction() :: ${methodSignature} queued`)
 		console.log(`queueTimelockTransaction() :: ETA = ${eta} (${new Date(eta * 1000).toLocaleString()})`)
