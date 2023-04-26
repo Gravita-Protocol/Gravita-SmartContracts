@@ -28,7 +28,7 @@ async function mainnetDeploy(configParams) {
 		return
 	}
 
-	await helper.connectCoreContracts(coreContracts, grvtContracts, TREASURY_WALLET)
+	// await helper.connectCoreContracts(coreContracts, grvtContracts, TREASURY_WALLET)
 
 	await addCollaterals()
 
