@@ -159,6 +159,9 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 			FeeRecord storage sRecord = feeRecords[borrower][asset];
 			uint256 expiredAmount = _calcExpiredAmount(sRecord.from, sRecord.to, sRecord.amount);
 			if (expiredAmount == 0) {
+				unchecked {
+					i++;
+				}
 				continue;
 			}
 			uint256 updatedAmount = sRecord.amount - expiredAmount;

@@ -486,6 +486,29 @@ contract("FeeCollector", async accounts => {
 				assert.equal(bobBalance.toString(), "0")
 				assert.equal(treasuryBalance.toString(), totalFeesExpected.toString())
 			})
+
+			it.only("reverts when expiredAmount is zero", async () => {
+				const borrowAmount = toBN(dec(1_000_000, 18))
+			
+				// Bob opens a vessel
+				await openOrAjustVessel(bob, asset, borrowAmount)
+			
+				// Move forward in time to half life of loan
+				time.increase(87.5 * 24 * 60 * 60)
+			
+				// Alice opens a vessel
+				await openOrAjustVessel(alice, asset, borrowAmount)
+			
+				// Move forward in time so that the `expiredAmount` for Alice is still 0
+				time.increase(24 * 60 * 60)
+			
+				try {
+					await feeCollector.collectFees([alice, bob], [asset, asset])
+					throw new Error() // should not arrive here
+				} catch (err) {
+					assert.include(err.message, "Transaction ran out of gas")
+				}
+			})
 		})
 	})
 })
