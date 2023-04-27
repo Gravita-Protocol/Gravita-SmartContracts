@@ -213,7 +213,9 @@ async function transferOwnership(contract, newOwner) {
 			`WARNING!!! Transfer of contract ${contractName} (${contract.address}) ownership to an address ${newOwner} that is neither ADMIN nor TREASURY`
 		)
 	}
-	if ((await contract.owner()) != newOwner) await contract.transferOwnership(newOwner)
+	if ((await contract.owner()) != newOwner) {
+		await helper.sendAndWaitForTransaction(contract.transferOwnership(newOwner))
+	}
 }
 
 // Timelock functions -------------------------------------------------------------------------------------------------
@@ -276,7 +278,9 @@ async function toggleContractInitialization(contract) {
 		const name = await contract.NAME()
 		console.log(`NOTICE: ${contract.address} -> ${name} is already initialized`)
 	} else {
-		await contract.setInitialized()
+		await helper.sendAndWaitForTransaction(
+			contract.setInitialized()
+		)		
 	}
 }
 
@@ -294,3 +298,4 @@ async function printDeployerBalance() {
 module.exports = {
 	mainnetDeploy,
 }
+
