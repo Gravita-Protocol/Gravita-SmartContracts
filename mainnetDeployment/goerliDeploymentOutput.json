@@ -69,10 +69,6 @@
     "txHash": "0xdada18c23176041fb79b0ae47a9a32174ae582c13256e6678746d9c9800db516",
     "verification": "https://goerli.etherscan.io/address/0xD202c6617525B9f6559F84da9BA52f57F810678f#code"
   },
-  "debtToken": {
-    "address": "0xd0cC1C17066B421f1C848899E5cEa216A5b04d2e",
-    "txHash": "0x14aad960865f74a10fffdd2840a0a9085816216a7ae472c101cc069336a8d4ec"
-  },
   "DebtToken": {
     "address": "0xb0e99590cF3Ddfdc19e68F91f7fe0626790cDb53",
     "txHash": "0xdec9b95b0512e364f2628f60727d3f1c0f7973350b760d8b1818558cf99088ed",
