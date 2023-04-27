@@ -218,7 +218,9 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 				_refundFee(_borrower, _asset, refundAmount);
 				uint256 updatedAmount = sRecord.amount - expiredAmount - refundAmount;
 				sRecord.amount = updatedAmount;
-				sRecord.from = NOW;
+				if (NOW > sRecord.from) {
+					sRecord.from = NOW;
+				}
 				emit FeeRecordUpdated(_borrower, _asset, NOW, sRecord.to, updatedAmount);
 			}
 		}

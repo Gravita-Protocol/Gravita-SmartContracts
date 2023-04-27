@@ -96,6 +96,40 @@ contract("BorrowerOperations", async accounts => {
 			await loadFixture(deployContractsFixture)
 		})
 
+		it.only("bypasses MIN_FEE_DAYS", async () => {
+			// Open a Vessel
+			await openVessel({
+				asset: erc20.address,
+				extraVUSDAmount: toBN(dec(1000, 18)),
+				ICR: toBN(dec(2, 18)),
+				extraParams: { from: D },
+			})
+
+			// Track `from` value
+			const feeRecordFromStart = (await contracts.feeCollector.feeRecords(D, erc20.address)).from
+
+			// This triggers the update
+			await borrowerOperations.adjustVessel(
+				erc20.address,
+				0,
+				0,
+				"300000000000000000000",
+				false,
+				D,
+				D,
+				{ from: D }
+			)
+
+			// Track the updated `from` value
+			const feeRecordFromEnd = (await contracts.feeCollector.feeRecords(D, erc20.address)).from
+
+			// The one week `MIN_FEE_DAYS` limitation has been removed
+			const timeDiff = feeRecordFromStart - feeRecordFromEnd
+			const oneWeek = (60 * 60 * 24 * 7) - 1 // -1 to count for the time of the last tx
+			assert.isTrue(timeDiff >= oneWeek)
+		})
+
+
 		it("openVessel(): invalid collateral reverts", async () => {
 			const randomErc20 = await ERC20Mock.new("RAND", "RAND", 18)
 			await assertRevert(
