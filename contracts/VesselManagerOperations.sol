@@ -403,13 +403,13 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		truncatedDebtTokenAmount = _debtTokenAmount - remainingDebt;
 	}
 
-	/* getApproxHint() - return address of a Vessel that is, on average, (length / numTrials) positions away in the 
-    sortedVessels list from the correct insert position of the Vessel to be inserted. 
-    
-    Note: The output address is worst-case O(n) positions away from the correct insert position, however, the function 
+	/* getApproxHint() - return address of a Vessel that is, on average, (length / numTrials) positions away in the
+    sortedVessels list from the correct insert position of the Vessel to be inserted.
+
+    Note: The output address is worst-case O(n) positions away from the correct insert position, however, the function
     is probabilistic. Input can be tuned to guarantee results to a high degree of confidence, e.g:
 
-    Submitting numTrials = k * sqrt(length), with k = 15 makes it very, very likely that the ouput address will 
+    Submitting numTrials = k * sqrt(length), with k = 15 makes it very, very likely that the ouput address will
     be <= sqrt(length) positions away from the correct insert position.
     */
 	function getApproxHint(
@@ -476,11 +476,10 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		LocalVariables_LiquidationSequence memory vars;
 		LiquidationValues memory singleLiquidation;
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
-		vars.backToNormalMode = false;
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		for (vars.i = 0; vars.i < _vesselArray.length; ) {
+		for (vars.i; vars.i < _vesselArray.length; ) {
 			vars.user = _vesselArray[vars.i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
@@ -552,7 +551,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _vesselArray.length; ) {
+		for (vars.i; vars.i < _vesselArray.length; ) {
 			vars.user = _vesselArray[vars.i];
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -601,7 +600,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _n; ) {
+		for (vars.i; vars.i < _n; ) {
 			vars.user = sortedVesselsCached.getLast(_asset);
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -790,13 +789,12 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		LiquidationValues memory singleLiquidation;
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
-		vars.backToNormalMode = false;
 		vars.entireSystemDebt = getEntireSystemDebt(assetVars._asset);
 		vars.entireSystemColl = getEntireSystemColl(assetVars._asset);
 
 		vars.user = _contractsCache.sortedVessels.getLast(assetVars._asset);
 		address firstUser = _contractsCache.sortedVessels.getFirst(assetVars._asset);
-		for (vars.i = 0; vars.i < _n && vars.user != firstUser; ) {
+		for (vars.i; vars.i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
 			address nextUser = _contractsCache.sortedVessels.getPrev(assetVars._asset, vars.user);
 

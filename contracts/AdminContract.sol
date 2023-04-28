@@ -178,7 +178,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 
 	function isWrappedMany(address[] calldata _collaterals) external view returns (bool[] memory wrapped) {
 		wrapped = new bool[](_collaterals.length);
-		for (uint256 i = 0; i < _collaterals.length; ) {
+		for (uint256 i; i < _collaterals.length; ) {
 			wrapped[i] = collateralParams[_collaterals[i]].isWrapped;
 			unchecked {
 				i++;

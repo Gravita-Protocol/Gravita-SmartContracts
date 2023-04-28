@@ -607,7 +607,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		assets = adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
 		amounts = new uint256[](assetsLen);
-		for (uint256 i = 0; i < assetsLen; ) {
+		for (uint256 i; i < assetsLen; ) {
 			amounts[i] = _getGainFromSnapshots(initialDeposit, snapshots, assets[i]);
 			unchecked {
 				i++;
@@ -725,8 +725,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 			compoundedStake = (initialStake * P) / snapshot_P;
 		} else if (scaleDiff == 1) {
 			compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;
-		} else {
-			compoundedStake = 0;
 		}
 
 		/*
@@ -770,7 +768,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	) internal {
 		uint256 assetsLen = assets.length;
 		require(assetsLen == amounts.length, "StabilityPool: Length mismatch");
-		for (uint256 i = 0; i < assetsLen; ) {
+		for (uint256 i; i < assetsLen; ) {
 			uint256 amount = amounts[i];
 			if (amount == 0) {
 				unchecked {
@@ -814,7 +812,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 
 		Snapshots storage depositorSnapshots = depositSnapshots[_depositor];
 		if (_newValue == 0) {
-			for (uint256 i = 0; i < collsLen; ) {
+			for (uint256 i; i < collsLen; ) {
 				depositSnapshots[_depositor].S[colls[i]] = 0;
 				unchecked {
 					i++;
@@ -831,7 +829,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint128 currentEpochCached = currentEpoch;
 		uint256 currentP = P;
 
-		for (uint256 i = 0; i < collsLen; ) {
+		for (uint256 i; i < collsLen; ) {
 			address asset = colls[i];
 			uint256 currentS = epochToScaleToSum[asset][currentEpochCached][currentScaleCached];
 			depositSnapshots[_depositor].S[asset] = currentS;
@@ -873,8 +871,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 coll1Len = _coll1.amounts.length;
 		uint256 tokensLen = _tokens.length;
 
-		for (uint256 i = 0; i < coll1Len; ) {
-			for (uint256 j = 0; j < tokensLen; ) {
+		for (uint256 i; i < coll1Len; ) {
+			for (uint256 j; j < tokensLen; ) {
 				if (_coll1.tokens[i] == _tokens[j]) {
 					_coll1.amounts[i] += _amounts[j];
 				}
@@ -898,8 +896,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 coll1Len = _coll1.amounts.length;
 		uint256 tokensLen = _tokens.length;
 
-		for (uint256 i = 0; i < coll1Len; ) {
-			for (uint256 j = 0; j < tokensLen; ) {
+		for (uint256 i; i < coll1Len; ) {
+			for (uint256 j; j < tokensLen; ) {
 				if (_coll1.tokens[i] == _tokens[j]) {
 					_coll1.amounts[i] -= _amounts[j];
 				}
@@ -935,7 +933,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	function _requireNoUnderCollateralizedVessels() internal {
 		address[] memory assets = adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
-		for (uint256 i = 0; i < assetsLen; ) {
+		for (uint256 i; i < assetsLen; ) {
 			address assetAddress = assets[i];
 			address lowestVessel = sortedVessels.getLast(assetAddress);
 			uint256 price = adminContract.priceFeed().fetchPrice(assetAddress);

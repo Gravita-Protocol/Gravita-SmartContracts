@@ -154,7 +154,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 			revert FeeCollector__ArrayMismatch();
 		}
 		uint256 NOW = block.timestamp;
-		for (uint256 i = 0; i < borrowersLength; ) {
+		for (uint256 i; i < borrowersLength; ) {
 			address borrower = _borrowers[i];
 			address asset = _assets[i];
 			FeeRecord storage sRecord = feeRecords[borrower][asset];
