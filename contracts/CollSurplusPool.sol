@@ -3,12 +3,12 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 
-contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
+contract CollSurplusPool is Initializable, ICollSurplusPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CollSurplusPool";
@@ -31,7 +31,6 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
 	) external initializer {
-		__Ownable_init();
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;

@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
@@ -15,7 +15,7 @@ import "./Interfaces/IDefaultPool.sol";
  * When a vessel makes an operation that applies to its pending collateral and debt, they are moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is OwnableUpgradeable, IDefaultPool {
+contract DefaultPool is Initializable, IDefaultPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "DefaultPool";
@@ -29,7 +29,6 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 	// --- Dependency setters ---
 
 	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external initializer {
-		__Ownable_init();
 		vesselManagerAddress = _vesselManagerAddress;
 		activePoolAddress = _activePoolAddress;
 	}

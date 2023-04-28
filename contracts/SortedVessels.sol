@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import "./Interfaces/ISortedVessels.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /*
  * A sorted doubly linked list with nodes sorted in descending order.
@@ -39,7 +39,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedVessels is OwnableUpgradeable, ISortedVessels {
+contract SortedVessels is Initializable, ISortedVessels {
 
 	string public constant NAME = "SortedVessels";
 
@@ -69,8 +69,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	// --- Dependency setters ---
 
-	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external initializer {
-		__Ownable_init();
+	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external {
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 	}
