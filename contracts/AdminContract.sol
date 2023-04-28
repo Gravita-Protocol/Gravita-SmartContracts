@@ -322,9 +322,8 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	function setMintCap(address _collateral, uint256 mintCap) public override shortTimelockOnly {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldMintCap = collParams.mintCap;
-		uint256 newMintCap = mintCap;
-		collParams.mintCap = newMintCap;
-		emit MintCapChanged(oldMintCap, newMintCap);
+		collParams.mintCap = mintCap;
+		emit MintCapChanged(oldMintCap, mintCap);
 	}
 
 	function setRedemptionBlockTimestamp(

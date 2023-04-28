@@ -87,8 +87,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	) external override onlyBorrowerOperations {
 		unchecked {
 			uint256 minFeeAmount = (MIN_FEE_FRACTION * _feeAmount) / 1 ether;
-			uint256 refundableFeeAmount = _feeAmount - minFeeAmount;
-			uint256 feeToCollect = _createOrUpdateFeeRecord(_borrower, _asset, refundableFeeAmount);
+			uint256 feeToCollect = _createOrUpdateFeeRecord(_borrower, _asset, _feeAmount - minFeeAmount);
 			_collectFee(_borrower, _asset, minFeeAmount + feeToCollect);
 		}
 	}
