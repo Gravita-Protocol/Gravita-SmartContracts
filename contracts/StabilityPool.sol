@@ -849,7 +849,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		emit DepositSnapshotUpdated(_depositor, currentP, currentG);
 	}
 
-	function S(address _depositor, address _asset) public view returns (uint256) {
+	function S(address _depositor, address _asset) external view returns (uint256) {
 		return depositSnapshots[_depositor].S[_asset];
 	}
 

@@ -43,7 +43,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 		uint8 v,
 		bytes32 r,
 		bytes32 s
-	) public virtual override {
+	) external virtual override {
 		require(block.timestamp <= deadline, "Permit: expired deadline");
 
 		Counters.Counter storage nonce = _nonces[owner];
@@ -58,14 +58,14 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
 
 		nonce.increment();
-		
+
 		_approve(owner, spender, amount);
 	}
 
 	/**
 	 * @dev See {IERC2612Permit-nonces}.
 	 */
-	function nonces(address owner) public view override returns (uint256) {
+	function nonces(address owner) external view override returns (uint256) {
 		return _nonces[owner].current();
 	}
 }

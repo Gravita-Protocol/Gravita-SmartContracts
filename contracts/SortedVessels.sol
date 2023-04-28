@@ -161,10 +161,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 */
 	function _remove(address _asset, address _id) internal {
 		Data storage assetData = data[_asset];
-		
+
 		// List must contain the node
 		require(_contains(assetData, _id), "SortedVessels: List does not contain the id");
-		
+
 		Node storage node = assetData.nodes[_id];
 		if (assetData.size > 1) {
 			// List contains more than a single node
@@ -241,7 +241,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	/*
 	 * @dev Checks if the list is full
 	 */
-	function isFull(address _asset) public view override returns (bool) {
+	function isFull(address _asset) external view override returns (bool) {
 		return data[_asset].size == data[_asset].maxSize;
 	}
 

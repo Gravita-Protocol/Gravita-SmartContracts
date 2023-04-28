@@ -158,7 +158,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	// Return the nominal collateral ratio (ICR) of a given Vessel, without the price. Takes a vessel's pending coll and debt rewards from redistributions into account.
-	function getNominalICR(address _asset, address _borrower) public view override returns (uint256) {
+	function getNominalICR(address _asset, address _borrower) external view override returns (uint256) {
 		(uint256 currentAsset, uint256 currentDebt) = _getCurrentVesselAmounts(_asset, _borrower);
 
 		uint256 NICR = GravitaMath._computeNominalCR(currentAsset, currentDebt);
@@ -207,7 +207,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function getEntireDebtAndColl(address _asset, address _borrower)
-		public
+		external
 		view
 		override
 		returns (
@@ -236,7 +236,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		return _checkRecoveryMode(_asset, _price);
 	}
 
-	function getBorrowingRate(address _asset) public view override returns (uint256) {
+	function getBorrowingRate(address _asset) external view override returns (uint256) {
 		return adminContract.getBorrowingFee(_asset);
 	}
 

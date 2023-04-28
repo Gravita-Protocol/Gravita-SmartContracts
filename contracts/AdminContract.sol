@@ -224,7 +224,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 borrowingFee,
 		uint256 redemptionFeeFloor,
 		uint256 mintCap
-	) public onlyOwner {
+	) external onlyOwner {
 		collateralParams[_collateral].active = true;
 		setMCR(_collateral, newMCR);
 		setCCR(_collateral, newCCR);
@@ -262,7 +262,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
-	function setActive(address _collateral, bool _active) public onlyOwner {
+	function setActive(address _collateral, bool _active) external onlyOwner {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}
