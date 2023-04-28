@@ -202,7 +202,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		return (collateralParams[_collateral].index);
 	}
 
-	function getIndices(address[] memory _colls) external view returns (uint256[] memory indices) {
+	function getIndices(address[] calldata _colls) external view returns (uint256[] memory indices) {
 		uint256 len = _colls.length;
 		indices = new uint256[](len);
 

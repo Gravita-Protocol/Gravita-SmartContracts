@@ -107,8 +107,8 @@ contract Timelock {
 	function queueTransaction(
 		address target,
 		uint value,
-		string memory signature,
-		bytes memory data,
+		string calldata signature,
+		bytes calldata data,
 		uint eta
 	) external adminOnly returns (bytes32) {
 		if (eta < block.timestamp + delay) {
@@ -128,8 +128,8 @@ contract Timelock {
 	function cancelTransaction(
 		address target,
 		uint value,
-		string memory signature,
-		bytes memory data,
+		string calldata signature,
+		bytes calldata data,
 		uint eta
 	) external adminOnly {
 		bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
@@ -144,8 +144,8 @@ contract Timelock {
 	function executeTransaction(
 		address target,
 		uint value,
-		string memory signature,
-		bytes memory data,
+		string calldata signature,
+		bytes calldata data,
 		uint eta
 	) external payable adminOnly returns (bytes memory) {
 		bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
