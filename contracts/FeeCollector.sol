@@ -85,10 +85,12 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _asset,
 		uint256 _feeAmount
 	) external override onlyBorrowerOperations {
-		uint256 minFeeAmount = (MIN_FEE_FRACTION * _feeAmount) / 1 ether;
-		uint256 refundableFeeAmount = _feeAmount - minFeeAmount;
-		uint256 feeToCollect = _createOrUpdateFeeRecord(_borrower, _asset, refundableFeeAmount);
-		_collectFee(_borrower, _asset, minFeeAmount + feeToCollect);
+		unchecked {
+			uint256 minFeeAmount = (MIN_FEE_FRACTION * _feeAmount) / 1 ether;
+			uint256 refundableFeeAmount = _feeAmount - minFeeAmount;
+			uint256 feeToCollect = _createOrUpdateFeeRecord(_borrower, _asset, refundableFeeAmount);
+			_collectFee(_borrower, _asset, minFeeAmount + feeToCollect);
+		}
 	}
 
 	/**
@@ -248,12 +250,14 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 _feeAmount,
 		FeeRecord storage _sRecord
 	) internal {
-		uint256 from = block.timestamp + MIN_FEE_DAYS * 1 days;
-		uint256 to = from + FEE_EXPIRATION_SECONDS;
-		_sRecord.amount = _feeAmount;
-		_sRecord.from = from;
-		_sRecord.to = to;
-		emit FeeRecordUpdated(_borrower, _asset, from, to, _feeAmount);
+		unchecked {
+			uint256 from = block.timestamp + MIN_FEE_DAYS * 1 days;
+			uint256 to = from + FEE_EXPIRATION_SECONDS;
+			_sRecord.amount = _feeAmount;
+			_sRecord.from = from;
+			_sRecord.to = to;
+			emit FeeRecordUpdated(_borrower, _asset, from, to, _feeAmount);
+		}
 	}
 
 	function _updateFeeRecord(
@@ -376,4 +380,3 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		_;
 	}
 }
-

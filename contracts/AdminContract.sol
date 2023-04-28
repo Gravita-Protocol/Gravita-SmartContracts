@@ -43,7 +43,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	IPriceFeed public priceFeed;
 
 	/**
-		@dev Cannot be public as struct has too many variables for the stack. 
+		@dev Cannot be public as struct has too many variables for the stack.
 		@dev Create special view structs/getters instead.
 	 */
 	mapping(address => CollateralParams) internal collateralParams;
@@ -146,21 +146,23 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		// for the moment, require collaterals to have 18 decimals
 		require(_decimals == DEFAULT_DECIMALS, "collaterals must have the default decimals");
 		validCollateral.push(_collateral);
-		collateralParams[_collateral] = CollateralParams({
-			decimals: _decimals,
-			index: validCollateral.length - 1,
-			active: false,
-			isWrapped: _isWrapped,
-			mcr: MCR_DEFAULT,
-			ccr: CCR_DEFAULT,
-			debtTokenGasCompensation: _debtTokenGasCompensation,
-			minNetDebt: MIN_NET_DEBT_DEFAULT,
-			percentDivisor: PERCENT_DIVISOR_DEFAULT,
-			borrowingFee: BORROWING_FEE_DEFAULT,
-			redemptionFeeFloor: REDEMPTION_FEE_FLOOR_DEFAULT,
-			redemptionBlockTimestamp: 0,
-			mintCap: MINT_CAP_DEFAULT
-		});
+		unchecked {
+			collateralParams[_collateral] = CollateralParams({
+				decimals: _decimals,
+				index: validCollateral.length - 1,
+				active: false,
+				isWrapped: _isWrapped,
+				mcr: MCR_DEFAULT,
+				ccr: CCR_DEFAULT,
+				debtTokenGasCompensation: _debtTokenGasCompensation,
+				minNetDebt: MIN_NET_DEBT_DEFAULT,
+				percentDivisor: PERCENT_DIVISOR_DEFAULT,
+				borrowingFee: BORROWING_FEE_DEFAULT,
+				redemptionFeeFloor: REDEMPTION_FEE_FLOOR_DEFAULT,
+				redemptionBlockTimestamp: 0,
+				mintCap: MINT_CAP_DEFAULT
+			});
+		}
 
 		stabilityPool.addCollateralType(_collateral);
 
