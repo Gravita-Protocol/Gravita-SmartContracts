@@ -781,7 +781,6 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	) internal returns (LiquidationTotals memory totals) {
 		LocalVariables_AssetBorrowerPrice memory assetVars = LocalVariables_AssetBorrowerPrice({
 			_asset: _asset,
-			_borrower: address(0),
 			_price: _price
 		});
 
