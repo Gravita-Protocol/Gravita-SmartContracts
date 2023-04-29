@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
 
 import "./Interfaces/IPriceFeed.sol";
 
-contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
+contract PriceFeed is IPriceFeed, Initializable, BaseMath {
 
 	/** Constants ---------------------------------------------------------------------------------------------------- */
 
@@ -48,7 +48,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		address _adminContractAddress,
 		address _timelockAddress
 	) external initializer {
-		__Ownable_init();
 		timelockAddress = _timelockAddress;
 		adminContractAddress = _adminContractAddress;
 	}

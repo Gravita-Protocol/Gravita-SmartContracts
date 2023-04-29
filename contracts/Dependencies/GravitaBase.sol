@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./BaseMath.sol";
 import "./GravitaMath.sol";
@@ -16,7 +16,7 @@ import "../Interfaces/IAdminContract.sol";
  * Base contract for VesselManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable {
+abstract contract GravitaBase is IGravitaBase, BaseMath, Initializable {
 
 	IAdminContract public adminContract;
 	IActivePool public activePool;
