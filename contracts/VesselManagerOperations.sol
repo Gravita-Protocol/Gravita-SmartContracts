@@ -479,7 +479,8 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		for (uint256 i; i < _vesselArray.length; ) {
+		uint256 _vesselArrayLength = _vesselArray.length;
+		for (uint256 i; i < _vesselArrayLength; ) {
 			vars.user = _vesselArray[i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
@@ -551,7 +552,8 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (uint256 i; i < _vesselArray.length; ) {
+		uint256 _vesselArrayLength = _vesselArray.length;
+		for (uint256 i; i < _vesselArrayLength; ) {
 			vars.user = _vesselArray[i];
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
