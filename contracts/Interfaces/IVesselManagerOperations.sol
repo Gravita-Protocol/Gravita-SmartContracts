@@ -112,11 +112,6 @@ interface IVesselManagerOperations is IGravitaBase {
 		uint256 entireSystemColl;
 	}
 
-	struct LocalVariables_AssetBorrowerPrice {
-		address _asset;
-		uint256 _price;
-	}
-
 	// Functions --------------------------------------------------------------------------------------------------------
 
 	function liquidate(address _asset, address _borrower) external;
