@@ -110,7 +110,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		// Node id must not be null
 		require(_id != address(0), "SortedVessels: Id cannot be zero");
 		// NICR must be non-zero
-		require(_NICR > 0, "SortedVessels: NICR must be positive");
+		require(_NICR != 0, "SortedVessels: NICR must be positive");
 
 		address prevId = _prevId;
 		address nextId = _nextId;
@@ -219,7 +219,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		// List must contain the node
 		require(contains(_asset, _id), "SortedVessels: List does not contain the id");
 		// NICR must be non-zero
-		require(_newNICR > 0, "SortedVessels: NICR must be positive");
+		require(_newNICR != 0, "SortedVessels: NICR must be positive");
 
 		// Remove node from the list
 		_remove(_asset, _id);

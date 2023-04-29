@@ -126,7 +126,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			totals.totalDebtToOffset,
 			totals.totalCollToSendToSP
 		);
-		if (totals.totalCollSurplus > 0) {
+		if (totals.totalCollSurplus != 0) {
 			contractsCache.activePool.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
@@ -184,7 +184,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			totals.totalDebtToOffset,
 			totals.totalCollToSendToSP
 		);
-		if (totals.totalCollSurplus > 0) {
+		if (totals.totalCollSurplus != 0) {
 			activePoolCached.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
@@ -250,7 +250,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		if (_maxIterations == 0) {
 			_maxIterations = type(uint256).max;
 		}
-		while (currentBorrower != address(0) && totals.remainingDebt > 0 && _maxIterations > 0) {
+		while (currentBorrower != address(0) && totals.remainingDebt != 0 && _maxIterations != 0) {
 			_maxIterations--;
 			// Save the address of the vessel preceding the current one, before potentially modifying the list
 			address nextUserToCheck = contractsCache.sortedVessels.getPrev(_asset, currentBorrower);
@@ -363,7 +363,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			vars.maxIterations = type(uint256).max;
 		}
 
-		while (currentVesselBorrower != address(0) && remainingDebt > 0 && vars.maxIterations-- > 0) {
+		while (currentVesselBorrower != address(0) && remainingDebt != 0 && vars.maxIterations-- != 0) {
 			uint256 currentVesselNetDebt = _getNetDebt(
 				vars.asset,
 				vesselManager.getVesselDebt(vars.asset, currentVesselBorrower) +
@@ -751,7 +751,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			);
 
 			vesselManagerCached.closeVesselLiquidation(_asset, _borrower);
-			if (singleLiquidation.collSurplus > 0) {
+			if (singleLiquidation.collSurplus != 0) {
 				collSurplusPool.accountSurplus(_asset, _borrower, singleLiquidation.collSurplus);
 			}
 			emit VesselLiquidated(
@@ -865,7 +865,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			uint256 collToRedistribute
 		)
 	{
-		if (_debtTokenInStabPool > 0) {
+		if (_debtTokenInStabPool != 0) {
 			/*
 			 * Offset as much debt & collateral as possible against the Stability Pool, and redistribute the remainder
 			 * between all active vessels.

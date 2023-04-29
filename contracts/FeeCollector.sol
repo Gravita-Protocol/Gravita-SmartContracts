@@ -119,7 +119,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 _paybackFraction
 	) external view override returns (uint256) {
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
-		require(_paybackFraction > 0, "Payback fraction cannot be zero");
+		require(_paybackFraction != 0, "Payback fraction cannot be zero");
 		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
 		if (mRecord.amount == 0 || mRecord.to < block.timestamp) {
 			return 0;
@@ -140,7 +140,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	 */
 	function liquidateDebt(address _borrower, address _asset) external override onlyVesselManager {
 		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
-		if (mRecord.amount > 0) {
+		if (mRecord.amount != 0) {
 			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, mRecord.amount);
 		}
 	}
@@ -177,7 +177,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	 * Triggered by VesselManager.finalizeRedemption(); assumes _amount of _asset has been moved here from ActivePool.
 	 */
 	function handleRedemptionFee(address _asset, uint256 _amount) external onlyVesselManager {
-		if (_amount > 0) {
+		if (_amount != 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(_asset).safeTransfer(collector, _amount);
 			if (routeToGRVTStaking) {
@@ -196,7 +196,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	) internal {
 		uint256 NOW = block.timestamp;
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
-		require(_paybackFraction > 0, "Payback fraction cannot be zero");
+		require(_paybackFraction != 0, "Payback fraction cannot be zero");
 		FeeRecord storage sRecord = feeRecords[_borrower][_asset];
 		if (sRecord.amount == 0) {
 			return;
@@ -331,7 +331,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _asset,
 		uint256 _feeAmount
 	) internal {
-		if (_feeAmount > 0) {
+		if (_feeAmount != 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(debtTokenAddress).safeTransfer(collector, _feeAmount);
 			if (routeToGRVTStaking) {
@@ -346,7 +346,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _asset,
 		uint256 _refundAmount
 	) internal {
-		if (_refundAmount > 0) {
+		if (_refundAmount != 0) {
 			IERC20Upgradeable(debtTokenAddress).safeTransfer(_borrower, _refundAmount);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
 		}

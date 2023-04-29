@@ -176,10 +176,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _isValidResponse(FeedResponse memory _response) internal view returns (bool) {
 		return
 			(_response.success) &&
-			(_response.roundId > 0) &&
-			(_response.timestamp > 0) &&
+			(_response.roundId != 0) &&
+			(_response.timestamp != 0) &&
 			(_response.timestamp <= block.timestamp) &&
-			(_response.answer > 0);
+			(_response.answer != 0);
 	}
 
 	function _isPriceChangeAboveMaxDeviation(
