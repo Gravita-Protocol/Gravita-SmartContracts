@@ -104,7 +104,6 @@ interface IVesselManagerOperations is IGravitaBase {
 
 	struct LocalVariables_LiquidationSequence {
 		uint256 remainingDebtTokenInStabPool;
-		uint256 i;
 		uint256 ICR;
 		address user;
 		bool backToNormalMode;
