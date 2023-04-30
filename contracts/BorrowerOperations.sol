@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/IVesselManager.sol";
@@ -14,7 +15,7 @@ import "./Interfaces/IStabilityPool.sol";
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
-contract BorrowerOperations is GravitaBase, IBorrowerOperations {
+contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowerOperations {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "BorrowerOperations";
@@ -209,7 +210,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _assetSent,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, _assetSent, msg.sender, 0, 0, false, _upperHint, _lowerHint);
 	}
 
@@ -219,7 +220,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _collWithdrawal,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, 0, msg.sender, _collWithdrawal, 0, false, _upperHint, _lowerHint);
 	}
 
@@ -229,7 +230,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _debtTokenAmount,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, true, _upperHint, _lowerHint);
 	}
 
@@ -239,7 +240,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _debtTokenAmount,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, false, _upperHint, _lowerHint);
 	}
 
@@ -251,7 +252,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		bool _isDebtIncrease,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(
 			_asset,
 			_assetSent,
@@ -383,7 +384,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		);
 	}
 
-	function closeVessel(address _asset) external override {
+	function closeVessel(address _asset) external override nonReentrant {
 		IVesselManager vesselManagerCached = vesselManager;
 		IAdminContract adminContractCached = adminContract;
 		IActivePool activePoolCached = adminContractCached.activePool();
