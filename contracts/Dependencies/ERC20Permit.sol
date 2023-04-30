@@ -21,7 +21,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 					"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
 				),
 				keccak256(bytes(name())),
-				keccak256(bytes("1")), // Version
+				keccak256("1"), // Version
 				block.chainid,
 				address(this)
 			)
@@ -43,16 +43,18 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	) external virtual override {
 		require(block.timestamp <= deadline, "Permit: expired deadline");
 
-		bytes32 hashStruct = keccak256(
-			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, _nonces[owner]++, deadline)
-		);
+		unchecked {
+			bytes32 hashStruct = keccak256(
+				abi.encode(PERMIT_TYPEHASH, owner, spender, amount, _nonces[owner]++, deadline)
+			);
 
-		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
+			bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
 
-		address signer = ECDSA.recover(_hash, v, r, s);
-		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
+			address signer = ECDSA.recover(_hash, v, r, s);
+			require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
 
-		_approve(owner, spender, amount);
+			_approve(owner, spender, amount);
+		}
 	}
 
 	/**
