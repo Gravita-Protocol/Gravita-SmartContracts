@@ -3,13 +3,10 @@
 pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "../Interfaces/IERC2612Permit.sol";
 
 abstract contract ERC20Permit is ERC20, IERC2612Permit {
-	using Counters for Counters.Counter;
-
-	mapping(address => Counters.Counter) private _nonces;
+	mapping(address => uint256) private _nonces;
 
 	// keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 	bytes32 public constant PERMIT_TYPEHASH =
@@ -46,18 +43,14 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	) external virtual override {
 		require(block.timestamp <= deadline, "Permit: expired deadline");
 
-		Counters.Counter storage nonce = _nonces[owner];
-
 		bytes32 hashStruct = keccak256(
-			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
+			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, _nonces[owner]++, deadline)
 		);
 
 		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
 
 		address signer = ECDSA.recover(_hash, v, r, s);
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
-
-		nonce.increment();
 
 		_approve(owner, spender, amount);
 	}
@@ -66,6 +59,6 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	 * @dev See {IERC2612Permit-nonces}.
 	 */
 	function nonces(address owner) external view override returns (uint256) {
-		return _nonces[owner].current();
+		return _nonces[owner];
 	}
 }
