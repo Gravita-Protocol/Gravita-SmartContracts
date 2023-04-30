@@ -403,13 +403,13 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		truncatedDebtTokenAmount = _debtTokenAmount - remainingDebt;
 	}
 
-	/* getApproxHint() - return address of a Vessel that is, on average, (length / numTrials) positions away in the 
-    sortedVessels list from the correct insert position of the Vessel to be inserted. 
-    
-    Note: The output address is worst-case O(n) positions away from the correct insert position, however, the function 
+	/* getApproxHint() - return address of a Vessel that is, on average, (length / numTrials) positions away in the
+    sortedVessels list from the correct insert position of the Vessel to be inserted.
+
+    Note: The output address is worst-case O(n) positions away from the correct insert position, however, the function
     is probabilistic. Input can be tuned to guarantee results to a high degree of confidence, e.g:
 
-    Submitting numTrials = k * sqrt(length), with k = 15 makes it very, very likely that the ouput address will 
+    Submitting numTrials = k * sqrt(length), with k = 15 makes it very, very likely that the ouput address will
     be <= sqrt(length) positions away from the correct insert position.
     */
 	function getApproxHint(
@@ -782,7 +782,6 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	) internal returns (LiquidationTotals memory totals) {
 		LocalVariables_AssetBorrowerPrice memory assetVars = LocalVariables_AssetBorrowerPrice({
 			_asset: _asset,
-			_borrower: address(0),
 			_price: _price
 		});
 
