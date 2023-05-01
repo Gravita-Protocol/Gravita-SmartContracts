@@ -39,7 +39,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedVessels is OwnableUpgradeable, ISortedVessels {
+contract SortedVessels is OwnableUpgradeable, ISortedVessels { 
 
 	string public constant NAME = "SortedVessels";
 
@@ -58,7 +58,6 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	struct Data {
 		address head; // Head of the list. Also the node in the list with the largest NICR
 		address tail; // Tail of the list. Also the node in the list with the smallest NICR
-		uint256 maxSize; // Maximum size of the list
 		uint256 size; // Current size of the list
 		// Depositor address => node
 		mapping(address => Node) nodes; // Track the corresponding ids for each node in the list
@@ -239,13 +238,6 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	}
 
 	/*
-	 * @dev Checks if the list is full
-	 */
-	function isFull(address _asset) public view override returns (bool) {
-		return data[_asset].size == data[_asset].maxSize;
-	}
-
-	/*
 	 * @dev Checks if the list is empty
 	 */
 	function isEmpty(address _asset) public view override returns (bool) {
@@ -257,13 +249,6 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 */
 	function getSize(address _asset) external view override returns (uint256) {
 		return data[_asset].size;
-	}
-
-	/*
-	 * @dev Returns the maximum size of the list
-	 */
-	function getMaxSize(address _asset) external view override returns (uint256) {
-		return data[_asset].maxSize;
 	}
 
 	/*
