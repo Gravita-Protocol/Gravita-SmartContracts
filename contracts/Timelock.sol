@@ -111,7 +111,7 @@ contract Timelock {
 		bytes memory data,
 		uint eta
 	) public adminOnly returns (bytes32) {
-		if (eta < block.timestamp + delay) {
+		if (eta < block.timestamp + delay || eta > block.timestamp + delay + GRACE_PERIOD) {
 			revert Timelock__ETAMustSatisfyDelay();
 		}
 
