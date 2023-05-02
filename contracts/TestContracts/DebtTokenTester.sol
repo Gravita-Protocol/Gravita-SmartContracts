@@ -71,7 +71,7 @@ contract DebtTokenTester is DebtToken {
 			keccak256(
 				abi.encodePacked(
 					uint16(0x1901),
-					DOMAIN_SEPARATOR,
+					_domainSeparator(),
 					keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce, deadline))
 				)
 			);

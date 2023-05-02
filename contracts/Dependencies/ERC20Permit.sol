@@ -8,6 +8,12 @@ import "../Interfaces/IERC2612Permit.sol";
 
 abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	using Counters for Counters.Counter;
+	bytes32 private immutable _CACHED_DOMAIN_SEPARATOR;
+    uint256 private immutable _CACHED_CHAIN_ID;
+    address private immutable _CACHED_THIS;
+
+    bytes32 private immutable _HASHED_NAME;
+    bytes32 private immutable _HASHED_VERSION;
 
 	mapping(address => Counters.Counter) private _nonces;
 
@@ -15,21 +21,31 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	bytes32 public constant PERMIT_TYPEHASH =
 		0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
-	bytes32 public immutable DOMAIN_SEPARATOR;
-
 	constructor() {
-		DOMAIN_SEPARATOR = keccak256(
-			abi.encode(
-				keccak256(
-					"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-				),
-				keccak256(bytes(name())),
-				keccak256(bytes("1")), // Version
-				block.chainid,
-				address(this)
-			)
-		);
+		bytes32 hashedName = keccak256(bytes(name()));
+        bytes32 hashedVersion = keccak256(bytes("1"));
+        _HASHED_NAME = hashedName;
+        _HASHED_VERSION = hashedVersion;
+        _CACHED_CHAIN_ID = block.chainid;
+        _CACHED_DOMAIN_SEPARATOR = _buildDomainSeparator(hashedName, hashedVersion);
+        _CACHED_THIS = address(this);
 	}
+
+	function _domainSeparator() internal view returns (bytes32) {
+        if (address(this) == _CACHED_THIS && block.chainid == _CACHED_CHAIN_ID) {
+            return _CACHED_DOMAIN_SEPARATOR;
+        } else {
+            return _buildDomainSeparator(_HASHED_NAME, _HASHED_VERSION);
+        }
+    }
+
+    function _buildDomainSeparator(
+        bytes32 nameHash,
+        bytes32 versionHash
+    ) private view returns (bytes32) {
+        return keccak256(abi.encode(PERMIT_TYPEHASH, nameHash, versionHash, block.chainid, address(this)));
+    }
+	
 
 	/**
 	 * @dev See {IERC2612Permit-permit}.
@@ -52,7 +68,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
 		);
 
-		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), DOMAIN_SEPARATOR, hashStruct));
+		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), _domainSeparator(), hashStruct));
 
 		address signer = ECDSA.recover(_hash, v, r, s);
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
