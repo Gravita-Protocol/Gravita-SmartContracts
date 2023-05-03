@@ -43,7 +43,7 @@ contract Timelock {
 	error Timelock__TxReverted();
 
 	uint public constant GRACE_PERIOD = 14 days;
-	uint public constant MINIMUM_DELAY = 5 minutes; // 2 days;
+	uint public constant MINIMUM_DELAY = 2 days;
 	uint public constant MAXIMUM_DELAY = 15 days;
 
 	address public admin;
