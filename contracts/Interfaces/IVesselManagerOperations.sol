@@ -34,7 +34,7 @@ interface IVesselManagerOperations is IGravitaBase {
 
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
-	error VesselManagerOperations__CalldataEmptyArray();
+	error VesselManagerOperations__InvalidArraySize();
 	error VesselManagerOperations__EmptyAmount();
 	error VesselManagerOperations__FeePercentOutOfBounds(uint256 lowerBoundary, uint256 upperBoundary);
 	error VesselManagerOperations__InsufficientDebtTokenBalance(uint256 availableBalance);

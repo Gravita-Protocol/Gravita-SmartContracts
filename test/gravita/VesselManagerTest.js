@@ -3103,7 +3103,7 @@ contract("VesselManager", async accounts => {
 					const tx = await vesselManagerOperations.batchLiquidateVessels(erc20.address, liquidationArray)
 					assert.isFalse(tx.receipt.status)
 				} catch (error) {
-					assert.include(error.message, "VesselManagerOperations__CalldataEmptyArray()")
+					assert.include(error.message, "VesselManagerOperations__InvalidArraySize()")
 				}
 			})
 
