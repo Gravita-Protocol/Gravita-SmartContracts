@@ -446,7 +446,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	function _getUSDValue(uint256 _coll, uint256 _price) internal pure returns (uint256) {
-		return _price * _coll / DECIMAL_PRECISION;
+		return (_price * _coll) / DECIMAL_PRECISION;
 	}
 
 	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
@@ -552,10 +552,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 	function _requireSingularCollChange(uint256 _collWithdrawal, uint256 _amountSent) internal pure {
 		require(_collWithdrawal == 0 || _amountSent == 0, "BorrowerOperations: Cannot withdraw and add coll");
-	}
-
-	function _requireCallerIsBorrower(address _borrower) internal view {
-		require(msg.sender == _borrower, "BorrowerOps: Caller must be the borrower for a withdrawal");
 	}
 
 	function _requireNonZeroAdjustment(
@@ -680,10 +676,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		);
 	}
 
-	function _requireCallerIsStabilityPool() internal view {
-		require(address(stabilityPool) == msg.sender, "BorrowerOps: Caller is not Stability Pool");
-	}
-
 	function _requireSufficientDebtTokenBalance(
 		IDebtToken _debtToken,
 		address _borrower,
@@ -781,3 +773,4 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		return _getCompositeDebt(_asset, _debt);
 	}
 }
+
