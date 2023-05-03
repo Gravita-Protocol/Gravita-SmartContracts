@@ -12,6 +12,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
 	uint256 public constant PERCENTAGE_PRECISION = 1000;
+	uint256 public constant BATCH_SIZE_LIMIT = 25;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -153,8 +154,8 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	 * Attempt to liquidate a custom list of vessels provided by the caller.
 	 */
 	function batchLiquidateVessels(address _asset, address[] memory _vesselArray) public override {
-		if (_vesselArray.length == 0) {
-			revert VesselManagerOperations__CalldataEmptyArray();
+		if (_vesselArray.length == 0 || _vesselArray.length > BATCH_SIZE_LIMIT) {
+			revert VesselManagerOperations__InvalidArraySize();
 		}
 
 		IActivePool activePoolCached = adminContract.activePool();
