@@ -8,7 +8,6 @@ import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
 
 contract VesselManager is IVesselManager, GravitaBase {
-
 	// Constants ------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "VesselManager";
@@ -184,7 +183,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 			return 0;
 		}
 		uint256 stake = Vessels[_borrower][_asset].stake;
-		uint256 pendingAssetReward = stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+		uint256 pendingAssetReward = (stake * rewardPerUnitStaked) / DECIMAL_PRECISION;
 		return pendingAssetReward;
 	}
 
@@ -196,7 +195,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 			return 0;
 		}
 		uint256 stake = Vessels[_borrower][_asset].stake;
-		return stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+		return (stake * rewardPerUnitStaked) / DECIMAL_PRECISION;
 	}
 
 	function hasPendingRewards(address _asset, address _borrower) public view override returns (bool) {
@@ -241,7 +240,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function getBorrowingFee(address _asset, uint256 _debt) external view override returns (uint256) {
-		return adminContract.getBorrowingFee(_asset) *_debt / DECIMAL_PRECISION;
+		return (adminContract.getBorrowingFee(_asset) * _debt) / DECIMAL_PRECISION;
 	}
 
 	function getRedemptionFee(address _asset, uint256 _assetDraw) public view returns (uint256) {
@@ -335,16 +334,15 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 _assetDrawn,
 		uint256 _price,
 		uint256 _totalDebtTokenSupply
-	) external override onlyVesselManagerOperations returns (uint256) {
+	) external override onlyVesselManagerOperations {
 		uint256 decayedBaseRate = _calcDecayedBaseRate(_asset);
-		uint256 redeemedDebtFraction = _assetDrawn * _price / _totalDebtTokenSupply;
+		uint256 redeemedDebtFraction = (_assetDrawn * _price) / _totalDebtTokenSupply;
 		uint256 newBaseRate = decayedBaseRate + (redeemedDebtFraction / BETA);
 		newBaseRate = GravitaMath._min(newBaseRate, DECIMAL_PRECISION);
 		assert(newBaseRate > 0);
 		baseRate[_asset] = newBaseRate;
 		emit BaseRateUpdated(_asset, newBaseRate);
 		_updateLastFeeOpTime(_asset);
-		return newBaseRate;
 	}
 
 	function applyPendingRewards(address _asset, address _borrower)
@@ -587,7 +585,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 			 * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
 			 */
 			assert(assetStakes > 0);
-			stake = _coll * assetStakes / assetColl;
+			stake = (_coll * assetStakes) / assetColl;
 		}
 	}
 
@@ -645,7 +643,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function _calcRedemptionFee(uint256 _redemptionRate, uint256 _assetDraw) internal pure returns (uint256) {
-		uint256 redemptionFee = _redemptionRate * _assetDraw / DECIMAL_PRECISION;
+		uint256 redemptionFee = (_redemptionRate * _assetDraw) / DECIMAL_PRECISION;
 		if (redemptionFee >= _assetDraw) {
 			revert VesselManager__FeeBiggerThanAssetDraw();
 		}
@@ -664,7 +662,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	function _calcDecayedBaseRate(address _asset) internal view returns (uint256) {
 		uint256 minutesPassed = _minutesPassedSinceLastFeeOp(_asset);
 		uint256 decayFactor = GravitaMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
-		return baseRate[_asset] * decayFactor / DECIMAL_PRECISION;
+		return (baseRate[_asset] * decayFactor) / DECIMAL_PRECISION;
 	}
 
 	function _minutesPassedSinceLastFeeOp(address _asset) internal view returns (uint256) {
@@ -756,3 +754,4 @@ contract VesselManager is IVesselManager, GravitaBase {
 		return newDebt;
 	}
 }
+
