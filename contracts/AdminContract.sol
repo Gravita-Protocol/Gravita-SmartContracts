@@ -95,14 +95,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 min,
 		uint256 max
 	) {
-		require(
-			collateralParams[_collateral].active,
-			"Collateral is not configured, use setCollateralParameters"
-		);
+		if (!collateralParams[_collateral].active) revert CollateralIsNotConfigured();
 
-		if (enteredValue < min || enteredValue > max) {
-			revert SafeCheckError(parameter, enteredValue, min, max);
-		}
+		if (enteredValue < min || enteredValue > max) revert SafeCheckError(parameter, enteredValue, min, max);
+
 		_;
 	}
 
@@ -245,10 +241,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit MCRChanged(oldMCR, newMCR);
 	}
 
-	function setCCR(
-		address _collateral,
-		uint256 newCCR
-	)
+	function setCCR(address _collateral, uint256 newCCR)
 		public
 		override
 		shortTimelockOnly
@@ -265,20 +258,19 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		collParams.active = _active;
 	}
 
-	function setPercentDivisor(
-		address _collateral,
-		uint256 percentDivisor
-	) public override onlyOwner safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200) {
+	function setPercentDivisor(address _collateral, uint256 percentDivisor)
+		public
+		override
+		onlyOwner
+		safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200)
+	{
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldPercent = collParams.percentDivisor;
 		collParams.percentDivisor = percentDivisor;
 		emit PercentDivisorChanged(oldPercent, percentDivisor);
 	}
 
-	function setBorrowingFee(
-		address _collateral,
-		uint256 borrowingFee
-	)
+	function setBorrowingFee(address _collateral, uint256 borrowingFee)
 		public
 		override
 		onlyOwner
@@ -291,20 +283,19 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit BorrowingFeeChanged(oldBorrowing, newBorrowingFee);
 	}
 
-	function setMinNetDebt(
-		address _collateral,
-		uint256 minNetDebt
-	) public override longTimelockOnly safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether) {
+	function setMinNetDebt(address _collateral, uint256 minNetDebt)
+		public
+		override
+		longTimelockOnly
+		safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether)
+	{
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldMinNet = collParams.minNetDebt;
 		collParams.minNetDebt = minNetDebt;
 		emit MinNetDebtChanged(oldMinNet, minNetDebt);
 	}
 
-	function setRedemptionFeeFloor(
-		address _collateral,
-		uint256 redemptionFeeFloor
-	)
+	function setRedemptionFeeFloor(address _collateral, uint256 redemptionFeeFloor)
 		public
 		override
 		onlyOwner
@@ -325,10 +316,11 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit MintCapChanged(oldMintCap, newMintCap);
 	}
 
-	function setRedemptionBlockTimestamp(
-		address _collateral,
-		uint256 _blockTimestamp
-	) external override shortTimelockOnly {
+	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp)
+		external
+		override
+		shortTimelockOnly
+	{
 		collateralParams[_collateral].redemptionBlockTimestamp = _blockTimestamp;
 		emit RedemptionBlockTimestampChanged(_collateral, _blockTimestamp);
 	}
@@ -379,3 +371,4 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		require(collateralParams[_collateral].mcr != 0, "collateral does not exist");
 	}
 }
+
