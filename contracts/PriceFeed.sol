@@ -10,7 +10,6 @@ import "./Dependencies/GravitaMath.sol";
 import "./Interfaces/IPriceFeed.sol";
 
 contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
-
 	/** Constants ---------------------------------------------------------------------------------------------------- */
 
 	string public constant NAME = "PriceFeed";
@@ -44,10 +43,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	/** Initializer -------------------------------------------------------------------------------------------------- */
 
-	function setAddresses(
-		address _adminContractAddress,
-		address _timelockAddress
-	) external initializer {
+	function setAddresses(address _adminContractAddress, address _timelockAddress) external initializer {
 		__Ownable_init();
 		timelockAddress = _timelockAddress;
 		adminContractAddress = _adminContractAddress;
@@ -149,7 +145,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
 		uint256 ethPrice = fetchPrice(address(0));
-		return ethPrice * ethAmount / 1 ether;
+		return (ethPrice * ethAmount) / 1 ether;
 	}
 
 	function _fetchFeedResponses(AggregatorV3Interface oracle)
@@ -198,7 +194,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		 * - If price decreased, the percentage deviation is in relation to the previous price.
 		 * - If price increased, the percentage deviation is in relation to the current price.
 		 */
-		uint256 percentDeviation = (maxPrice - minPrice) * DECIMAL_PRECISION / maxPrice;
+		uint256 percentDeviation = ((maxPrice - minPrice) * DECIMAL_PRECISION) / maxPrice;
 
 		return percentDeviation > _maxDeviationBetweenRounds;
 	}
@@ -241,14 +237,19 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			response.decimals = decimals;
 		} catch {
 			// If call to Chainlink aggregator reverts, return a zero response with success = false
-			return response;}
+			return response;
+		}
 		try _priceAggregator.latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
 			uint256, /* startedAt */
 			uint256 timestamp,
-			uint80 /* answeredInRound */
+			uint80 answeredInRound
 		) {
+			require(answeredInRound >= roundId, "Stale price");
+			require(answer > 0, "Chainlink answer reporting 0");
+			require(timestamp != 0, "Round not complete");
+
 			// If call to Chainlink succeeds, return the response and success = true
 			response.roundId = roundId;
 			response.answer = answer;
@@ -274,8 +275,12 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 				int256 answer,
 				uint256, /* startedAt */
 				uint256 timestamp,
-				uint80 /* answeredInRound */
+				uint80 answeredInRound
 			) {
+				require(answeredInRound >= roundId, "Stale price");
+				require(answer > 0, "Chainlink answer reporting 0");
+				require(timestamp != 0, "Round not complete");
+
 				prevResponse.roundId = roundId;
 				prevResponse.answer = answer;
 				prevResponse.timestamp = timestamp;
@@ -285,3 +290,4 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		}
 	}
 }
+
