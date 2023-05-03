@@ -9,7 +9,7 @@ const externalAddrs = {
 	// --- Collateral ---
 	// CBETH_ERC20: "0xE0a45669496A4753c65d5832b49D087F712d7fef", // PLUTO mock token
 	// RETH_ERC20: "0xebEfF29547F501Daf5E3dA4917c79b427B499C88", // MOON mock token
-	RETH_ERC20: "0x62bc478ffc429161115a6e4090f819ce5c50a5d9", // Goerli RETH token
+	RETH_ERC20: "0x178E141a0E3b34152f73Ff610437A7bf9B83267A", // Goerli RETH token
 	WETH_ERC20: "0x2df77eE5a6FcF23F666650ed53bE071E7288eCb6", // STAR mock token
 	// WSTETH_ERC20: "0x40cb9640581298c748C2181f7A36f60B55BF9132", // MARS mock token
 	// --- Price Feed Aggregators ---
