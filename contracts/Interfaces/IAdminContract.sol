@@ -7,13 +7,12 @@ import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 
 interface IAdminContract {
-
 	// Structs ----------------------------------------------------------------------------------------------------------
 
 	struct CollateralParams {
 		uint256 decimals;
 		uint256 index; //Maps to token address in validCollateral[]
-		bool active;
+		bool status;
 		bool isWrapped;
 		uint256 mcr;
 		uint256 ccr;
@@ -108,3 +107,4 @@ interface IAdminContract {
 
 	function getTotalAssetDebt(address _asset) external view returns (uint256);
 }
+

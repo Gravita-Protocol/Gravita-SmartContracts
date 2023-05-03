@@ -349,9 +349,9 @@ class DeploymentHelper {
 		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18, false)
 		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18, false)
 
-		await contracts.adminContract.setActive(ZERO_ADDRESS, true)
-		await contracts.adminContract.setActive(contracts.erc20.address, true)
-		await contracts.adminContract.setActive(contracts.erc20B.address, true)
+		await contracts.adminContract.changeCollateralStatus(ZERO_ADDRESS, true)
+		await contracts.adminContract.changeCollateralStatus(contracts.erc20.address, true)
+		await contracts.adminContract.changeCollateralStatus(contracts.erc20B.address, true)
 	}
 
 	static async connectGRVTContractsToCore(GRVTContracts, coreContracts, skipPool = false, liquitySettings = true) {
