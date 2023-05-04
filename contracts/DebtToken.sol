@@ -43,7 +43,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		address _stabilityPoolAddress,
 		address _borrowerOperationsAddress,
 		address _timelockAddress
-	) ERC20("GRAI", "GRAI") {
+	) payable ERC20("GRAI", "GRAI") {
 		vesselManagerAddress = _vesselManagerAddress;
 		timelockAddress = _timelockAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);

@@ -69,7 +69,7 @@ contract Timelock {
 		_;
 	}
 
-	constructor(uint _delay) isValidDelay(_delay) {
+	constructor(uint _delay) payable isValidDelay(_delay) {
 		admin = msg.sender;
 		delay = _delay;
 	}

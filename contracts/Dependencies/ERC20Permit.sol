@@ -14,7 +14,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 
 	bytes32 public immutable DOMAIN_SEPARATOR;
 
-	constructor() {
+	constructor() payable {
 		DOMAIN_SEPARATOR = keccak256(
 			abi.encode(
 				keccak256(
