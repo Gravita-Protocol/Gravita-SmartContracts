@@ -70,7 +70,7 @@ contract CollSurplusPool is Initializable, ICollSurplusPool {
 
 		uint256 safetyTransferclaimableColl = SafetyTransfer.decimalsCorrection(_asset, claimableCollEther);
 
-		require(safetyTransferclaimableColl != 0, "CollSurplusPool: No collateral available to claim");
+		require(safetyTransferclaimableColl != 0, "No collateral available to claim");
 
 		userBalance[_asset] = 0;
 		emit CollBalanceUpdated(_account, 0);
@@ -89,18 +89,18 @@ contract CollSurplusPool is Initializable, ICollSurplusPool {
 	// --- 'require' functions ---
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(msg.sender == borrowerOperationsAddress, "CollSurplusPool: Caller is not Borrower Operations");
+		require(msg.sender == borrowerOperationsAddress, "Caller is not Borrower Operation");
 	}
 
 	function _requireCallerIsVesselManager() internal view {
 		require(
 			msg.sender == vesselManagerAddress || msg.sender == vesselManagerOperationsAddress,
-			"CollSurplusPool: Caller is not VesselManager"
+			"Caller is not VesselManager"
 		);
 	}
 
 	function _requireCallerIsActivePool() internal view {
-		require(msg.sender == activePoolAddress, "CollSurplusPool: Caller is not Active Pool");
+		require(msg.sender == activePoolAddress, "Caller is not Active Pool");
 	}
 
 }

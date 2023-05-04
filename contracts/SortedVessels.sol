@@ -105,11 +105,11 @@ contract SortedVessels is Initializable, ISortedVessels {
 		Data storage assetData = data[_asset];
 
 		// List must not already contain node
-		require(!_contains(assetData, _id), "SortedVessels: List already contains the node");
+		require(!_contains(assetData, _id), "List already contains the node");
 		// Node id must not be null
 		require(_id != address(0), "SortedVessels: Id cannot be zero");
 		// NICR must be non-zero
-		require(_NICR != 0, "SortedVessels: NICR must be positive");
+		require(_NICR != 0, "NICR must be positive");
 
 		address prevId = _prevId;
 		address nextId = _nextId;
@@ -162,7 +162,7 @@ contract SortedVessels is Initializable, ISortedVessels {
 		Data storage assetData = data[_asset];
 
 		// List must contain the node
-		require(_contains(assetData, _id), "SortedVessels: List does not contain the id");
+		require(_contains(assetData, _id), "List does not contain the id");
 
 		Node storage node = assetData.nodes[_id];
 		if (assetData.size > 1) {
@@ -216,9 +216,9 @@ contract SortedVessels is Initializable, ISortedVessels {
 
 		_requireCallerIsBOorVesselM(vesselManagerCached);
 		// List must contain the node
-		require(contains(_asset, _id), "SortedVessels: List does not contain the id");
+		require(contains(_asset, _id), "List does not contain the id");
 		// NICR must be non-zero
-		require(_newNICR != 0, "SortedVessels: NICR must be positive");
+		require(_newNICR != 0, "NICR must be positive");
 
 		// Remove node from the list
 		_remove(_asset, _id);
@@ -454,13 +454,13 @@ contract SortedVessels is Initializable, ISortedVessels {
 	// --- 'require' functions ---
 
 	function _requireCallerIsVesselManager() internal view {
-		require(msg.sender == address(vesselManager), "SortedVessels: Caller is not the VesselManager");
+		require(msg.sender == address(vesselManager), "Caller is not the VesselManager");
 	}
 
 	function _requireCallerIsBOorVesselM(IVesselManager _vesselManager) internal view {
 		require(
 			msg.sender == borrowerOperationsAddress || msg.sender == address(_vesselManager),
-			"SortedVessels: Caller is neither BO nor VesselM"
+			"Caller is neither BO nor VesselM"
 		);
 	}
 }

@@ -97,7 +97,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	) {
 		require(
 			collateralParams[_collateral].active,
-			"Collateral is not configured, use setCollateralParameters"
+			"Collateral is not configured"
 		);
 
 		if (enteredValue < min || enteredValue > max) {
@@ -144,7 +144,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	) external longTimelockOnly {
 		require(collateralParams[_collateral].mcr == 0, "collateral already exists");
 		// for the moment, require collaterals to have 18 decimals
-		require(_decimals == DEFAULT_DECIMALS, "collaterals must have the default decimals");
+		require(_decimals == DEFAULT_DECIMALS, "Wrong collaterals decimals");
 		validCollateral.push(_collateral);
 		unchecked {
 			collateralParams[_collateral] = CollateralParams({
