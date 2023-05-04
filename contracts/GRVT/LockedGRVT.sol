@@ -29,6 +29,8 @@ contract LockedGRVT is Ownable, Initializable {
 
 	mapping(address => Rule) public entitiesVesting;
 
+	event AssignedGRVTTokensUpdated(uint256 indexed newAssignedGRVTTokens);
+
 	modifier entityRuleExists(address _entity) {
 		require(entitiesVesting[_entity].createdDate != 0, "Entity doesn't have a Vesting Rule");
 		_;
@@ -44,6 +46,7 @@ contract LockedGRVT is Ownable, Initializable {
 		require(entitiesVesting[_entity].createdDate == 0, "Entity already has a Vesting Rule");
 
 		assignedGRVTTokens += _totalSupply;
+		emit AssignedGRVTTokensUpdated(assignedGRVTTokens);
 
 		entitiesVesting[_entity] = Rule(
 			block.timestamp,
@@ -122,3 +125,4 @@ contract LockedGRVT is Ownable, Initializable {
 		return entitiesVesting[_entity].createdDate != 0;
 	}
 }
+
