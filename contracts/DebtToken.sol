@@ -78,7 +78,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		uint256 _amount
 	) external override {
 		_requireCallerIsBorrowerOperations();
-		require(!emergencyStopMintingCollateral[_asset], "Mint is block on this collateral");
+		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
 		_mint(_account, _amount);
 	}
@@ -139,22 +139,22 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	function _requireValidRecipient(address _recipient) internal view {
 		require(
 			_recipient != address(0) && _recipient != address(this),
-			"Cannot transfer tokens"
+			"DebtToken: Cannot transfer tokens directly to the token contract or the zero address"
 		);
 		require(
 			address(stabilityPool) != _recipient &&
 				_recipient != vesselManagerAddress &&
 				_recipient != borrowerOperationsAddress,
-			"Cannot transfer tokens"
+			"DebtToken: Cannot transfer tokens directly to the StabilityPool, VesselManager or BorrowerOps"
 		);
 	}
 
 	function _requireCallerIsWhitelistedContract() internal view {
-		require(whitelistedContracts[msg.sender], "Caller is not a whitelisted SC");
+		require(whitelistedContracts[msg.sender], "DebtToken: Caller is not a whitelisted SC");
 	}
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(msg.sender == borrowerOperationsAddress, "Caller is not BorrowerOperations");
+		require(msg.sender == borrowerOperationsAddress, "DebtToken: Caller is not BorrowerOperations");
 	}
 
 	function _requireCallerIsBOorVesselMorSP() internal view {
@@ -162,18 +162,18 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 			msg.sender == borrowerOperationsAddress ||
 				msg.sender == vesselManagerAddress ||
 				address(stabilityPool) == msg.sender,
-			"Wrong caller"
+			"DebtToken: Caller is neither BorrowerOperations nor VesselManager nor StabilityPool"
 		);
 	}
 
 	function _requireCallerIsStabilityPool() internal view {
-		require(address(stabilityPool) == msg.sender, "Caller not the StabilityPool");
+		require(address(stabilityPool) == msg.sender, "DebtToken: Caller is not the StabilityPool");
 	}
 
 	function _requireCallerIsVesselMorSP() internal view {
 		require(
 			msg.sender == vesselManagerAddress || address(stabilityPool) == msg.sender,
-			"Wrong caller"
+			"DebtToken: Caller is neither VesselManager nor StabilityPool"
 		);
 	}
 }

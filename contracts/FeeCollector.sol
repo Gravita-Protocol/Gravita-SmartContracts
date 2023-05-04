@@ -118,7 +118,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _asset,
 		uint256 _paybackFraction
 	) external view override returns (uint256) {
-		require(_paybackFraction <= 1 ether, "High Payback fraction");
+		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
 		require(_paybackFraction != 0, "Payback fraction cannot be zero");
 		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
 		if (mRecord.amount == 0 || mRecord.to < block.timestamp) {
@@ -195,7 +195,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 _paybackFraction
 	) internal {
 		uint256 NOW = block.timestamp;
-		require(_paybackFraction <= 1 ether, "High Payback fraction");
+		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
 		require(_paybackFraction != 0, "Payback fraction cannot be zero");
 		FeeRecord storage sRecord = feeRecords[_borrower][_asset];
 		if (sRecord.amount == 0) {

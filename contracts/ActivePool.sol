@@ -41,7 +41,7 @@ contract ActivePool is ReentrancyGuardUpgradeable, IActivePool {
 	modifier callerIsBorrowerOpsOrDefaultPool() {
 		require(
 			msg.sender == borrowerOperationsAddress || msg.sender == address(defaultPool),
-			"ActivePool: Caller is not auth"
+			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
 	}
@@ -49,7 +49,7 @@ contract ActivePool is ReentrancyGuardUpgradeable, IActivePool {
 	modifier callerIsBorrowerOpsOrVesselMgr() {
 		require(
 			msg.sender == borrowerOperationsAddress || msg.sender == vesselManagerAddress,
-			"ActivePool: Caller is not auth"
+			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
 	}
@@ -59,7 +59,7 @@ contract ActivePool is ReentrancyGuardUpgradeable, IActivePool {
 			msg.sender == borrowerOperationsAddress ||
 				msg.sender == stabilityPoolAddress ||
 				msg.sender == vesselManagerAddress,
-			"ActivePool: Caller is not auth"
+			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
 	}
@@ -70,7 +70,7 @@ contract ActivePool is ReentrancyGuardUpgradeable, IActivePool {
 				msg.sender == stabilityPoolAddress ||
 				msg.sender == vesselManagerAddress ||
 				msg.sender == vesselManagerOperationsAddress,
-			"ActivePool: Caller is not auth"
+			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
 	}
