@@ -12,7 +12,7 @@ interface IDebtToken is IERC20 {
 	event EmergencyStopMintingCollateral(address _asset, bool state);
 	event WhitelistChanged(address _whitelisted, bool whitelisted);
 
-	function emergencyStopMinting(address _asset, bool status) external;
+	function emergencyStopMinting(address _asset, bool status) external payable;
 
 	function mint(address _asset, address _account, uint256 _amount) external;
 
@@ -28,5 +28,5 @@ interface IDebtToken is IERC20 {
 
 	function addWhitelist(address _address) external;
 
-	function removeWhitelist(address _address) external;
+	function removeWhitelist(address _address) external payable;
 }

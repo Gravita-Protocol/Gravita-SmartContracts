@@ -117,7 +117,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		address _priceFeedAddress,
 		address _shortTimelock,
 		address _longTimelock
-	) external onlyOwner {
+	) external payable onlyOwner {
 		require(!isInitialized, "Already initialized");
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 		activePool = IActivePool(_activePoolAddress);
@@ -132,7 +132,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	/**
 	 * @dev The deployment script will call this function after all collaterals have been configured.
 	 */
-	function setInitialized() external onlyOwner {
+	function setInitialized() external payable onlyOwner {
 		isInitialized = true;
 	}
 
@@ -225,7 +225,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 borrowingFee,
 		uint256 redemptionFeeFloor,
 		uint256 mintCap
-	) external onlyOwner {
+	) external payable onlyOwner {
 		collateralParams[_collateral].active = true;
 		setMCR(_collateral, newMCR);
 		setCCR(_collateral, newCCR);
@@ -263,7 +263,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
-	function setActive(address _collateral, bool _active) external onlyOwner {
+	function setActive(address _collateral, bool _active) external payable onlyOwner {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}
@@ -271,7 +271,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	function setPercentDivisor(
 		address _collateral,
 		uint256 percentDivisor
-	) public override onlyOwner safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200) {
+	) public payable override onlyOwner safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200) {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldPercent = collParams.percentDivisor;
 		collParams.percentDivisor = percentDivisor;
@@ -283,6 +283,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 borrowingFee
 	)
 		public
+		payable
 		override
 		onlyOwner
 		safeCheck("Borrowing Fee Floor", _collateral, borrowingFee, 0, 1000) /// 0% - 10%
@@ -309,6 +310,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 		uint256 redemptionFeeFloor
 	)
 		public
+		payable
 		override
 		onlyOwner
 		safeCheck("Redemption Fee Floor", _collateral, redemptionFeeFloor, 10, 1000) /// 0.10% - 10%

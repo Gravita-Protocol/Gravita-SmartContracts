@@ -31,9 +31,9 @@ interface IFeeCollector {
 
 	// Functions --------------------------------------------------------------------------------------------------------
 
-	function setGRVTStakingAddress(address _grvtStakingAddress) external;
-	
-	function setRouteToGRVTStaking(bool _routeToGRVTStaking) external;
+	function setGRVTStakingAddress(address _grvtStakingAddress) external payable;
+
+	function setRouteToGRVTStaking(bool _routeToGRVTStaking) external payable;
 
 	function increaseDebt(
 		address _borrower,
@@ -57,4 +57,3 @@ interface IFeeCollector {
 
 	function handleRedemptionFee(address _asset, uint256 _amount) external;
 }
-

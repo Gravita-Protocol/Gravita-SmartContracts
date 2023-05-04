@@ -50,14 +50,14 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 	}
 
-	function setInitialized() external onlyOwner {
+	function setInitialized() external payable onlyOwner {
 		isInitialized = true;
 	}
 
 	// --- Functions for intra-Gravita calls ---
 
 	//
-	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {
+	function emergencyStopMinting(address _asset, bool status) external payable override onlyOwner {
 		emergencyStopMintingCollateral[_asset] = status;
 		emit EmergencyStopMintingCollateral(_asset, status);
 	}
@@ -94,7 +94,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		emit WhitelistChanged(_address, true);
 	}
 
-	function removeWhitelist(address _address) external override onlyOwner {
+	function removeWhitelist(address _address) external payable override onlyOwner {
 		whitelistedContracts[_address] = false;
 
 		emit WhitelistChanged(_address, false);

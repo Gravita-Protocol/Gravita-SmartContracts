@@ -58,12 +58,12 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 
 	/** Config setters ----------------------------------------------------------------------------------------------- */
 
-	function setGRVTStakingAddress(address _grvtStakingAddress) external onlyOwner {
+	function setGRVTStakingAddress(address _grvtStakingAddress) external payable onlyOwner {
 		grvtStaking = IGRVTStaking(_grvtStakingAddress);
 		emit GRVTStakingAddressChanged(_grvtStakingAddress);
 	}
 
-	function setRouteToGRVTStaking(bool _routeToGRVTStaking) external onlyOwner {
+	function setRouteToGRVTStaking(bool _routeToGRVTStaking) external payable onlyOwner {
 		if (_routeToGRVTStaking && address(grvtStaking) == address(0)) {
 			revert FeeCollector__InvalidGRVTStakingAddress();
 		}
