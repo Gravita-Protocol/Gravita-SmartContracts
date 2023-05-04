@@ -61,7 +61,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		address _collSurplusPoolAddress,
 		address _debtTokenAddress,
 		address _adminContractAddress
-	) external initializer {
+	) external payable initializer {
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);

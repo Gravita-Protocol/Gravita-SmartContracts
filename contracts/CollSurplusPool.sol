@@ -30,7 +30,7 @@ contract CollSurplusPool is Initializable, ICollSurplusPool {
 		address _borrowerOperationsAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external initializer {
+	) external payable initializer {
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;

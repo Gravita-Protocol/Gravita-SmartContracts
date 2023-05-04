@@ -84,7 +84,7 @@ contract ActivePool is ReentrancyGuardUpgradeable, IActivePool {
 		address _stabilityPoolAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external initializer {
+	) external payable initializer {
 		__ReentrancyGuard_init();
 
 		borrowerOperationsAddress = _borrowerOperationsAddress;

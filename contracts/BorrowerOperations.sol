@@ -96,7 +96,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _debtTokenAddress,
 		address _feeCollectorAddress,
 		address _adminContractAddress
-	) external initializer {
+	) external payable initializer {
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;

@@ -28,7 +28,7 @@ contract DefaultPool is Initializable, IDefaultPool {
 
 	// --- Dependency setters ---
 
-	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external initializer {
+	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external payable initializer {
 		vesselManagerAddress = _vesselManagerAddress;
 		activePoolAddress = _activePoolAddress;
 	}

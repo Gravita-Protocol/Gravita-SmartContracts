@@ -69,7 +69,7 @@ contract SortedVessels is Initializable, ISortedVessels {
 
 	// --- Dependency setters ---
 
-	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external initializer {
+	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external payable initializer {
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 	}

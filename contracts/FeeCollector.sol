@@ -42,7 +42,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _debtTokenAddress,
 		address _treasuryAddress,
 		bool _routeToGRVTStaking
-	) external initializer {
+	) external payable initializer {
 		require(_treasuryAddress != address(0));
 		__Ownable_init();
 		borrowerOperationsAddress = _borrowerOperationsAddress;

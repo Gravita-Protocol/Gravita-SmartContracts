@@ -127,7 +127,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _sortedVesselsAddress,
 		address _vesselManagerOperationsAddress,
 		address _adminContractAddress
-	) external initializer {
+	) external payable initializer {
 		borrowerOperations = _borrowerOperationsAddress;
 		vesselManagerOperations = _vesselManagerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);

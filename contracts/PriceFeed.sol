@@ -47,7 +47,7 @@ contract PriceFeed is IPriceFeed, Initializable, BaseMath {
 	function setAddresses(
 		address _adminContractAddress,
 		address _timelockAddress
-	) external initializer {
+	) external payable initializer {
 		timelockAddress = _timelockAddress;
 		adminContractAddress = _adminContractAddress;
 	}

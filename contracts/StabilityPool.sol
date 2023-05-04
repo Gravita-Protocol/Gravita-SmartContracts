@@ -234,7 +234,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		address _sortedVesselsAddress,
 		address _communityIssuanceAddress,
 		address _adminContractAddress
-	) external initializer {
+	) external payable initializer {
 		__ReentrancyGuard_init();
 
 		borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
