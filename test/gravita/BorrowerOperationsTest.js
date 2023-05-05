@@ -1407,6 +1407,43 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(baseRate_2_Asset.lt(baseRate_1_Asset))
 		}) */
 
+		it("withdrawDebtTokens(): bug: borrow with inActive asset", async () => {
+			assert.equal(await debtToken.balanceOf(alice), 0)
+
+			await openVessel({
+				asset: erc20.address,
+				ICR: toBN(dec(10, 18)),
+				extraParams: { from: alice },
+			})
+
+			// borrow more
+			await borrowerOperations.withdrawDebtTokens(erc20.address, dec(10000, 18), alice, alice, {
+				from: alice,
+			})
+
+			// cannot borrow more
+			try {
+				await borrowerOperations.withdrawDebtTokens(erc20.address, dec(10000, 18), alice, alice, {
+					from: alice,
+				})
+			} catch (err) {
+				assert.include(err.message, "revert")
+			}
+
+			// asset set as inActive
+			await adminContract.setActive(erc20.address, false)
+			assert.equal(await adminContract.getIsActive(erc20.address), false)
+
+			// more collateral can be added and more GRAI can be borrowed
+			await borrowerOperations.addColl(erc20.address, dec(10000000, 18), alice, alice, {
+				from: alice,
+			})
+
+			await borrowerOperations.withdrawDebtTokens(erc20.address, dec(100000000, 18), alice, alice, {
+				from: alice,
+			})
+		})
+
 		it("withdrawDebtTokens(): borrowing at non-zero base rate sends fee to GRVT staking contract", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
