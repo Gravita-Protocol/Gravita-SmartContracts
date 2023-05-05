@@ -931,15 +931,20 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	 * @notice check ICR of bottom vessel (per asset) in SortedVessels
 	 */
 	function _requireNoUnderCollateralizedVessels() internal {
-		address[] memory assets = adminContract.getValidCollateral();
+		IVesselManager _vesselManager = vesselManager;
+		IAdminContract _adminContract = adminContract;
+		ISortedVessels _sortedVessels = sortedVessels;
+		IPriceFeed _priceFeed = _adminContract.priceFeed();
+		address[] memory assets = _adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
+
 		for (uint256 i; i < assetsLen; ) {
 			address assetAddress = assets[i];
-			address lowestVessel = sortedVessels.getLast(assetAddress);
-			uint256 price = adminContract.priceFeed().fetchPrice(assetAddress);
-			uint256 ICR = vesselManager.getCurrentICR(assetAddress, lowestVessel, price);
+			address lowestVessel = _sortedVessels.getLast(assetAddress);
+			uint256 price = _priceFeed.fetchPrice(assetAddress);
+			uint256 ICR = _vesselManager.getCurrentICR(assetAddress, lowestVessel, price);
 			require(
-				ICR >= adminContract.getMcr(assetAddress),
+				ICR >= _adminContract.getMcr(assetAddress),
 				"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
 			);
 			unchecked {
