@@ -518,19 +518,26 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 
 		// If the Stability Pool was emptied, increment the epoch, and reset the scale and product P
 		if (newProductFactor == 0) {
-			currentEpoch = currentEpochCached + 1;
-			emit EpochUpdated(currentEpoch);
+			currentEpochCached += 1;
+			currentEpoch = currentEpochCached;
+			emit EpochUpdated(currentEpochCached);
 			currentScale = 0;
-			emit ScaleUpdated(currentScale);
+			emit ScaleUpdated(0);
 			newP = DECIMAL_PRECISION;
 
 			// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
-		} else if ((currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR) {
-			newP = (currentP * newProductFactor * SCALE_FACTOR) / DECIMAL_PRECISION;
-			currentScale = currentScaleCached + 1;
-			emit ScaleUpdated(currentScale);
 		} else {
-			newP = (currentP * newProductFactor) / DECIMAL_PRECISION;
+			uint256 mulCached = currentP * newProductFactor;
+			uint256 mulDivCached = mulCached / DECIMAL_PRECISION;
+
+			if (mulDivCached < SCALE_FACTOR) {
+				newP = (mulCached * SCALE_FACTOR) / DECIMAL_PRECISION;
+				currentScaleCached += 1;
+				currentScale = currentScaleCached;
+				emit ScaleUpdated(currentScaleCached);
+			} else {
+				newP = mulDivCached;
+			}
 		}
 
 		require(newP != 0, "StabilityPool: P = 0");
