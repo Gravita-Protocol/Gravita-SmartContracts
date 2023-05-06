@@ -585,19 +585,12 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	function getDepositorGains(address _depositor) public view returns (address[] memory, uint256[] memory) {
 		uint256 initialDeposit = deposits[_depositor];
 
-		if (initialDeposit == 0) {
-			address[] memory emptyAddress = new address[](0);
-			uint256[] memory emptyUint = new uint256[](0);
-			return (emptyAddress, emptyUint);
+		if (initialDeposit != 0) {
+			return _calculateNewGains(
+				initialDeposit,
+				depositSnapshots[_depositor]
+			);
 		}
-
-		Snapshots storage snapshots = depositSnapshots[_depositor];
-
-		(address[] memory collateralsFromNewGains, uint256[] memory amountsFromNewGains) = _calculateNewGains(
-			initialDeposit,
-			snapshots
-		);
-		return (collateralsFromNewGains, amountsFromNewGains);
 	}
 
 	/**
