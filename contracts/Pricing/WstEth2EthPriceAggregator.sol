@@ -80,9 +80,9 @@ contract WstEth2EthPriceAggregator is AggregatorV3Interface {
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
 
 	function _stETH2wstETH(int256 stETHValue) internal view returns (int256) {
-		assert(stETHValue > 0);
+		require(stETHValue > 0, "stETH value cannot be zero");
 		int256 multiplier = int256(wstETH.stEthPerToken());
-		assert(multiplier > 0);
+		require(multiplier > 0, "wstETH.stEthPerToken() cannot be zero");
     // wstETH.stEthPerToken() response has 18-digit precision, hence we need the denominator below
 		return (stETHValue * multiplier) / PRECISION;
 	}
