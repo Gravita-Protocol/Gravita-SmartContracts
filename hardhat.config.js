@@ -50,7 +50,7 @@ module.exports = {
 		// },
 		goerli: {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-			gas: 20_000_000, // tx gas limit
+			gas: 30_000_000, // tx gas limit
 			accounts: [`${process.env.GOERLI_DEPLOYER_PRIVATEKEY}`],
 		},
 	},

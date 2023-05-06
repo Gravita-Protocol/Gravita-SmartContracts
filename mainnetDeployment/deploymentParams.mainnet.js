@@ -20,7 +20,7 @@ const WETHParameters = {
 }
 
 
-const gravityAddresses = {
+const gravitaAddresses = {
   ADMIN_WALLET: "0x4A4651B31d747D1DdbDDADCF1b1E24a5f6dcc7b0",
   TREASURY_WALLET: "0x2e7108e381e9acab03aa1b4819aacb50d2964532", // to be passed to GRVTToken as the GRVT multisig address
   DEPLOYER_WALLET: "0x87209dc4B76b14B67BC5E5e5c0737E7d002a219c" // Mainnet REAL deployment address
@@ -84,7 +84,7 @@ const beneficiaries = {
 
 
 const REDEMPTION_SAFETY = 14;
-const GRVT_TOKEN_ONLY = false;
+const DEPLOY_GRVT_CONTRACTS = false;
 
 const OUTPUT_FILE = './mainnetDeployment/mainnetDeploymentOutput.json'
 
@@ -100,7 +100,7 @@ const ETHERSCAN_BASE_URL = 'https://arbiscan.io/address'
 
 module.exports = {
   externalAddrs,
-  gravityAddresses,
+  gravitaAddresses,
   beneficiaries,
   OUTPUT_FILE,
   waitFunction,
@@ -108,7 +108,7 @@ module.exports = {
   TX_CONFIRMATIONS,
   ETHERSCAN_BASE_URL,
   REDEMPTION_SAFETY,
-  GRVT_TOKEN_ONLY,
+  DEPLOY_GRVT_CONTRACTS,
   WETHParameters: WETHParameters,
   targetNetwork
 };

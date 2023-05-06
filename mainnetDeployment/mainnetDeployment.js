@@ -5,136 +5,138 @@ const { ethers } = require("hardhat")
 let helper
 let config
 let deployerWallet
+let deployerBalance
 let coreContracts
-let grvtTokenContracts
+let grvtContracts = []
 let deploymentState
 
 let ADMIN_WALLET
 let TREASURY_WALLET
 
 async function mainnetDeploy(configParams) {
-	config = configParams
+	initConfigArgs(configParams)
+	await printDeployerBalance()
 
-	ADMIN_WALLET = config.gravityAddresses.ADMIN_WALLET
-	TREASURY_WALLET = config.gravityAddresses.TREASURY_WALLET
-	deployerWallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, ethers.provider)
-	// deployerWallet = (await ethers.getSigners())[0]
-	const initialBalance = await ethers.provider.getBalance(deployerWallet.address)
-	console.log(`Deployer: ${deployerWallet.address}`)
-	console.log(`Initial balance: ${ethers.utils.formatUnits(initialBalance)}`)
+	coreContracts = await helper.loadOrDeployCoreContracts(deploymentState)
 
-	helper = new MainnetDeploymentHelper(config, deployerWallet)
-	deploymentState = helper.loadPreviousDeployment()
+	if (config.DEPLOY_GRVT_CONTRACTS) {
+		// grvtContracts = await helper.deployGrvtContracts(TREASURY_WALLET, deploymentState)
+		// await deployOnlyGRVTContracts()
+		// await helper.connectgrvtContractsToCore(grvtContracts, coreContracts, TREASURY_WALLET)
+		// await approveGRVTTokenAllowanceForCommunityIssuance()
 
-	assert.equal(deployerWallet.address, config.gravityAddresses.DEPLOYER_WALLET)
-
-	if (config.GRVT_TOKEN_ONLY) {
-		await deployOnlyGRVTContract()
 		return
 	}
 
-	coreContracts = await helper.deployCoreContracts(deploymentState)
-	grvtTokenContracts = await helper.deployGRVTTokenContracts(
-		TREASURY_WALLET, // multisig GRVT endowment address
-		deploymentState
-	)
+	// await helper.connectCoreContracts(coreContracts, grvtContracts, TREASURY_WALLET)
 
-	await helper.connectCoreContracts(coreContracts, grvtTokenContracts, TREASURY_WALLET)
-	await helper.connectGRVTTokenContractsToCore(grvtTokenContracts, coreContracts, TREASURY_WALLET)
+	await addCollaterals()
 
-	await approveGRVTTokenAllowanceForCommunityIssuance()
-	
-	if ("mainnet" == configParams.targetNetwork) {
-		await addCollaterals()
-		await coreContracts.adminContract.setInitialized()
-		await coreContracts.debtToken.setInitialized()
-		// TODO set the admin address for the timelock contracts
-	}
+	// await toggleContractInitialization(coreContracts.adminContract)
+	// await toggleContractInitialization(coreContracts.debtToken)
+
+	// TODO shortTimelock.setPendingAdmin() via queueTransaction()
+	// TODO longTimelock.setPendingAdmin() via queueTransaction()
 
 	helper.saveDeployment(deploymentState)
 
-	// await helper.deployMultiVesselGetterContract(coreContracts, deploymentState)
+	// await transferContractsOwnerships()
 
-	await transferContractsOwnerships()
-
-	const finalBalance = await ethers.provider.getBalance(deployerWallet.address)
-	console.log(`Final balance: ${ethers.utils.formatUnits(finalBalance)}`)
-	console.log(`Deployment cost: ${ethers.utils.formatUnits(initialBalance.sub(finalBalance))}`)
+	await printDeployerBalance()
 }
 
-async function approveGRVTTokenAllowanceForCommunityIssuance() {
-	const allowance = await grvtTokenContracts.GRVTToken.allowance(
-		deployerWallet.address,
-		grvtTokenContracts.communityIssuance.address
-	)
-	if (allowance == 0) {
-		await grvtTokenContracts.GRVTToken.approve(
-			grvtTokenContracts.communityIssuance.address,
-			ethers.constants.MaxUint256
-		)
-	}
-}
+// Collateral ---------------------------------------------------------------------------------------------------------
 
 async function addCollaterals() {
 	console.log("Adding Collaterals...")
-	await addCollateral("wETH", "WETH_ERC20")
-	await addCollateral("rETH", "RETH_ERC20")
-	await addCollateral("stETH", "STETH_ERC20")
-	await addCollateral("wstETH", "WSTETH_ERC20")
+	const cfg = config.externalAddrs
+	const maxDeviationBetweenRounds = ethers.utils.parseUnits("0.5") // TODO personalize for each collateral
+	const isEthIndexed = false // TODO personalize for each collateral
+
+	// await addCollateral("cbETH", cfg.CBETH_ERC20, cfg.CHAINLINK_CBETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
+	await addCollateral("rETH", cfg.RETH_ERC20, cfg.CHAINLINK_RETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
+	await addCollateral("wETH", cfg.WETH_ERC20, cfg.CHAINLINK_WETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
+	// await addCollateral("wstETH", cfg.WSTETH_ERC20, cfg.CHAINLINK_WSTETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
 }
 
-async function addCollateral(name, configKey) {
-	const address = config.externalAddrs[configKey]
+async function addCollateral(name, address, chainlinkPriceFeedAddress, maxDeviationBetweenRounds, isEthIndexed) {
 	if (!address || address == "") {
-		throw `No address found for collateral ${name} using config var externalAddrs.${configKey}`
+		console.log(`[${name}] WARNING: No address found for collateral`)
+		return
 	}
-	console.log(`Collateral added: ${address} -> ${name}`)
-	await helper.sendAndWaitForTransaction(coreContracts.adminContract.addNewCollateral(address, dec(30, 18), 18, true))
-}
 
-async function transferContractsOwnerships() {
-	// TODO review contracts owners and update this function
-	const adminOwnedContracts = [
-		coreContracts.adminContract, 
-		coreContracts.debtToken,
-		coreContracts.feeCollector,
-		grvtTokenContracts.GRVTStaking
-	]
-	if ("localhost" != config.targetNetwork) {
-		adminOwnedContracts.push(coreContracts.priceFeed) // test contract is not Ownable
+	if (!chainlinkPriceFeedAddress || chainlinkPriceFeedAddress == "") {
+		console.log(`[${name}] WARNING: No chainlink price feed address found for collateral`)
+		return
 	}
-	const treasuryOwnedContracts = [
-		coreContracts.lockedGrvt, 
-		grvtTokenContracts.communityIssuance
-	]
-	for (const contract of adminOwnedContracts) {
-		await transferOwnership(contract, ADMIN_WALLET)
-	}
-	for (const contract of treasuryOwnedContracts) {
-		await transferOwnership(contract, TREASURY_WALLET)
-	}
-}
 
-async function transferOwnership(contract, newOwner) {
-	if (!newOwner || newOwner == ethers.constants.AddressZero) {
-		throw "Transfering ownership to null/zero address"
-	}
-	let contractName = "?"
-	try {
-		contractName = await contract.NAME()
-	} catch (e) {}
-	const newOwnerName = newOwner == TREASURY_WALLET ? "Treasury" : newOwner == ADMIN_WALLET ? "Admin" : undefined
-	if (newOwnerName) {
-		console.log(`Transferring ownership: ${contract.address} -> ${newOwner} ${contractName} -> ${newOwnerName}`)
+	const collExists = async () => (await coreContracts.adminContract.getMcr(address)).gt(0)
+
+	if (await collExists(address)) {
+		console.log(`[${name}] NOTICE: collateral has already been added before`)
 	} else {
-		console.log(
-			`WARNING!!! Transfer of contract ${contractName} (${contract.address}) ownership to an address ${newOwner} that is neither ADMIN nor TREASURY`
+		const decimals = 18
+		const isWrapped = false
+		const gasCompensation = th.dec(30, 18)
+		await helper.sendAndWaitForTransaction(
+			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
 		)
+		console.log(`[${name}] Collateral added @ ${address}`)
 	}
-	if ((await contract.owner()) != newOwner) await contract.transferOwnership(newOwner)
+
+	const oracleRecord = await coreContracts.priceFeed.oracleRecords(address)
+
+	if (!oracleRecord.exists) {
+		console.log(`[${name}] PriceFeed.setOracle()`)
+		await helper.sendAndWaitForTransaction(
+			coreContracts.priceFeed.setOracle(
+				address,
+				chainlinkPriceFeedAddress,
+				maxDeviationBetweenRounds.toString(),
+				isEthIndexed.toString()
+			)
+		)
+		console.log(`[${name}] Chainlink Oracle Price Feed has been set @ ${chainlinkPriceFeedAddress}`)
+	} else {
+		if (oracleRecord.chainLinkOracle == chainlinkPriceFeedAddress) {
+			console.log(`[${name}] Chainlink Oracle Price Feed had already been set @ ${chainlinkPriceFeedAddress}`)
+		} else {
+			console.log(`[${name}] Timelock.setOracle()`)
+			const { txHash, eta } = await setOracleViaTimelock(address, chainlinkPriceFeedAddress, maxDeviationBetweenRounds)
+			console.log(
+				`[${name}] setOracle() queued on ShortTimelock (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
+			)
+		}
+	}
 }
 
-async function deployOnlyGRVTContract() {
+async function setOracleViaTimelock(
+	collateralAddress,
+	chainlinkPriceFeedAddress,
+	maxDeviationBetweenRounds,
+	isEthIndexed
+) {
+	const targetAddress = coreContracts.priceFeed.address
+	const methodSignature = "setOracle(address, address, uint256, bool)"
+	const argTypes = ["address", "address", "uint256", "bool"]
+	const argValues = [
+		collateralAddress,
+		chainlinkPriceFeedAddress,
+		maxDeviationBetweenRounds.toString(),
+		isEthIndexed.toString(),
+	]
+	return await queueTimelockTransaction(
+		coreContracts.shortTimelock,
+		targetAddress,
+		methodSignature,
+		argTypes,
+		argValues
+	)
+}
+
+// GRVT contracts deployment ------------------------------------------------------------------------------------------
+
+async function deployOnlyGRVTContracts() {
 	console.log("INIT GRVT ONLY")
 	const partialContracts = await helper.deployPartially(TREASURY_WALLET, deploymentState)
 	// create vesting rule to beneficiaries
@@ -161,6 +163,136 @@ async function deployOnlyGRVTContract() {
 	console.log(`Sending ${balance} GRVT to ${TREASURY_WALLET}`)
 	await partialContracts.GRVTToken.transfer(TREASURY_WALLET, balance)
 	console.log(`deployerETHBalance after: ${await ethers.provider.getBalance(deployerWallet.address)}`)
+}
+
+async function approveGRVTTokenAllowanceForCommunityIssuance() {
+	const allowance = await grvtContracts.GRVTToken.allowance(
+		deployerWallet.address,
+		grvtContracts.communityIssuance.address
+	)
+	if (allowance == 0) {
+		await grvtContracts.GRVTToken.approve(grvtContracts.communityIssuance.address, ethers.constants.MaxUint256)
+	}
+}
+
+// Contract ownership -------------------------------------------------------------------------------------------------
+
+async function transferContractsOwnerships() {
+	// TODO review contracts owners and update this function
+	const adminOwnedContracts = [
+		coreContracts.adminContract,
+		coreContracts.debtToken,
+		coreContracts.feeCollector,
+		grvtContracts.GRVTStaking,
+	]
+	if ("localhost" != config.targetNetwork) {
+		adminOwnedContracts.push(coreContracts.priceFeed) // PriceFeed test contract is not Ownable
+	}
+	const treasuryOwnedContracts = [coreContracts.lockedGrvt, grvtContracts.communityIssuance]
+	for (const contract of adminOwnedContracts) {
+		await transferOwnership(contract, ADMIN_WALLET)
+	}
+	for (const contract of treasuryOwnedContracts) {
+		await transferOwnership(contract, TREASURY_WALLET)
+	}
+}
+
+async function transferOwnership(contract, newOwner) {
+	if (!newOwner || newOwner == ethers.constants.AddressZero) {
+		throw "Transfering ownership to null/zero address"
+	}
+	let contractName = "?"
+	try {
+		contractName = await contract.NAME()
+	} catch (e) {}
+	const newOwnerName = newOwner == TREASURY_WALLET ? "Treasury" : newOwner == ADMIN_WALLET ? "Admin" : undefined
+	if (newOwnerName) {
+		console.log(`Transferring ownership: ${contract.address} -> ${newOwner} ${contractName} -> ${newOwnerName}`)
+	} else {
+		console.log(
+			`WARNING!!! Transfer of contract ${contractName} (${contract.address}) ownership to an address ${newOwner} that is neither ADMIN nor TREASURY`
+		)
+	}
+	if ((await contract.owner()) != newOwner) {
+		await helper.sendAndWaitForTransaction(contract.transferOwnership(newOwner))
+	}
+}
+
+// Timelock functions -------------------------------------------------------------------------------------------------
+
+async function queueTimelockTransaction(timelockContract, targetAddress, methodSignature, argTypes, argValues) {
+	const abi = new ethers.utils.AbiCoder()
+	const eta = await calcTimelockETA(timelockContract)
+	const value = 0
+	const data = abi.encode(argTypes, argValues)
+
+	const txHash = ethers.utils.keccak256(
+		abi.encode(
+			["address", "uint256", "string", "bytes", "uint256"],
+			[targetAddress, value.toString(), methodSignature, data, eta.toString()]
+		)
+	)
+
+	await helper.sendAndWaitForTransaction(
+		timelockContract.queueTransaction(targetAddress, value, methodSignature, data, eta)
+	)
+
+	const queued = await timelockContract.queuedTransactions(txHash)
+	if (!queued) {
+		console.log(`WARNING: Failed to queue ${methodSignature} function call on Timelock contract`)
+	} else {
+		console.log(`queueTimelockTransaction() :: ${methodSignature} queued`)
+		console.log(`queueTimelockTransaction() :: ETA = ${eta} (${new Date(eta * 1000).toLocaleString()})`)
+		console.log(`queueTimelockTransaction() :: Remember to call executeTransaction() upon ETA!`)
+	}
+	return { txHash, eta }
+}
+
+async function calcTimelockETA(timelockContract) {
+	const delay = Number(await timelockContract.delay())
+	return (await getBlockTimestamp()) + delay + 60
+}
+
+// Helper/utils -------------------------------------------------------------------------------------------------------
+
+function initConfigArgs(configParams) {
+	config = configParams
+	ADMIN_WALLET = config.gravitaAddresses.ADMIN_WALLET
+	TREASURY_WALLET = config.gravitaAddresses.TREASURY_WALLET
+	deployerWallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, ethers.provider)
+	// deployerWallet = (await ethers.getSigners())[0]
+	assert.equal(deployerWallet.address, config.gravitaAddresses.DEPLOYER_WALLET)
+
+	helper = new MainnetDeploymentHelper(config, deployerWallet)
+	deploymentState = helper.loadPreviousDeployment()
+}
+
+async function getBlockTimestamp() {
+	const currentBlock = await ethers.provider.getBlockNumber()
+	return Number((await ethers.provider.getBlock(currentBlock)).timestamp)
+}
+
+async function toggleContractInitialization(contract) {
+	const isInitialized = await contract.isInitialized()
+	if (isInitialized) {
+		const name = await contract.NAME()
+		console.log(`NOTICE: ${contract.address} -> ${name} is already initialized`)
+	} else {
+		await helper.sendAndWaitForTransaction(
+			contract.setInitialized()
+		)		
+	}
+}
+
+async function printDeployerBalance() {
+	const prevBalance = deployerBalance
+	deployerBalance = await ethers.provider.getBalance(deployerWallet.address)
+	const cost = prevBalance ? ethers.utils.formatUnits(prevBalance.sub(deployerBalance)) : 0
+	console.log(
+		`${deployerWallet.address} Balance: ${ethers.utils.formatUnits(deployerBalance)} ${
+			cost ? `(Deployment cost: ${cost})` : ""
+		}`
+	)
 }
 
 module.exports = {

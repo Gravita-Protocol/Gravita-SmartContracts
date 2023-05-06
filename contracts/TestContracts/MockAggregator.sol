@@ -6,17 +6,18 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 contract MockAggregator is AggregatorV3Interface {
 	// storage variables to hold the mock data
 	uint8 private decimalsVal = 8;
-	int256 private price;
-	int256 private prevPrice;
+	int256 private price = 190000000000;
+	int256 private prevPrice = 190000000000;
 	uint256 private updateTime;
 	uint256 private prevUpdateTime;
 
-	uint80 private latestRoundId;
-	uint80 private prevRoundId;
+	uint80 private latestRoundId = 2;
+	uint80 private prevRoundId = 1;
 
 	bool latestRevert;
 	bool prevRevert;
 	bool decimalsRevert;
+	bool priceIsAlwaysUpToDate = true;
 
 	// --- Functions ---
 
@@ -25,7 +26,9 @@ contract MockAggregator is AggregatorV3Interface {
 	}
 
 	function setPrice(int256 _price) external {
+		// setting a price will also set the previous one, so we don't create a deviation problem between rounds
 		price = _price;
+		prevPrice = _price;
 	}
 
 	function setPrevPrice(int256 _prevPrice) external {
@@ -60,6 +63,10 @@ contract MockAggregator is AggregatorV3Interface {
 		prevRoundId = _prevRoundId;
 	}
 
+	function setPriceIsAlwaysUpToDate(bool _priceIsAlwaysUpToDate) external {
+		priceIsAlwaysUpToDate = _priceIsAlwaysUpToDate;
+	}
+
 	// --- Getters that adhere to the AggregatorV3 interface ---
 
 	function decimals() external view override returns (uint8) {
@@ -85,8 +92,8 @@ contract MockAggregator is AggregatorV3Interface {
 		if (latestRevert) {
 			require(1 == 0, "latestRoundData reverted");
 		}
-
-		return (latestRoundId, price, 0, updateTime, 0);
+		uint256 timestamp = priceIsAlwaysUpToDate ? block.timestamp - 2 minutes : updateTime;
+		return (latestRoundId, price, 0, timestamp, 0);
 	}
 
 	function getRoundData(uint80)
@@ -105,7 +112,8 @@ contract MockAggregator is AggregatorV3Interface {
 			require(1 == 0, "getRoundData reverted");
 		}
 
-		return (prevRoundId, prevPrice, 0, updateTime, 0);
+		uint256 timestamp = priceIsAlwaysUpToDate ? block.timestamp - 5 minutes : updateTime;
+		return (prevRoundId, prevPrice, 0, timestamp, 0);
 	}
 
 	function description() external pure override returns (string memory) {
