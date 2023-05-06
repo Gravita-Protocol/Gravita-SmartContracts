@@ -5,6 +5,17 @@ pragma solidity 0.8.19;
 import "./IDeposit.sol";
 
 interface IStabilityPool is IDeposit {
+
+	// --- Structs ---
+
+	struct Snapshots {
+		mapping(address => uint256) S;
+		uint256 P;
+		uint256 G;
+		uint128 scale;
+		uint128 epoch;
+	}
+
 	// --- Events ---
 
 	event DepositSnapshotUpdated(address indexed _depositor, uint256 _P, uint256 _G);
@@ -31,17 +42,14 @@ interface IStabilityPool is IDeposit {
 
 	// --- Functions ---
 
+	function addCollateralType(address _collateral) external;
+
 	/*
 	 * Initial checks:
-	 * - Frontend is registered or zero address
-	 * - Sender is not a registered frontend
 	 * - _amount is not zero
 	 * ---
-	 * - Triggers a GRVT issuance, based on time passed since the last issuance. The GRVT issuance is shared between *all* depositors and front ends
-	 * - Tags the deposit with the provided front end tag param, if it's a new deposit
-	 * - Sends depositor's accumulated gains (GRVT, ETH) to depositor
-	 * - Sends the tagged front end's accumulated GRVT gains to the tagged front end
-	 * - Increases deposit and tagged front end's stake, and takes new snapshots for each.
+	 * - Triggers a GRVT issuance, based on time passed since the last issuance. The GRVT issuance is shared between *all* depositors.
+	 * - Sends depositor's accumulated gains (GRVT, assets) to depositor
 	 */
 	function provideToSP(uint256 _amount) external;
 
@@ -50,11 +58,9 @@ interface IStabilityPool is IDeposit {
 	 * - _amount is zero or there are no under collateralized vessels left in the system
 	 * - User has a non zero deposit
 	 * ---
-	 * - Triggers a GRVT issuance, based on time passed since the last issuance. The GRVT issuance is shared between *all* depositors and front ends
-	 * - Removes the deposit's front end tag if it is a full withdrawal
-	 * - Sends all depositor's accumulated gains (GRVT, ETH) to depositor
-	 * - Sends the tagged front end's accumulated GRVT gains to the tagged front end
-	 * - Decreases deposit and tagged front end's stake, and takes new snapshots for each.
+	 * - Triggers a GRVT issuance, based on time passed since the last issuance. The GRVT issuance is shared between *all* depositors.
+	 * - Sends all depositor's accumulated gains (GRVT, assets) to depositor
+	 * - Decreases deposit's stake, and takes new snapshots.
 	 *
 	 * If _amount > userDeposit, the user withdraws all of their compounded deposit.
 	 */
@@ -76,7 +82,7 @@ interface IStabilityPool is IDeposit {
 	function getTotalDebtTokenDeposits() external view returns (uint256);
 
 	/*
-	 * Calculates the ETH gain earned by the deposit since its last snapshots were taken.
+	 * Calculates the asset gains earned by the deposit since its last snapshots were taken.
 	 */
 	function getDepositorGains(
 		address _depositor
@@ -84,9 +90,6 @@ interface IStabilityPool is IDeposit {
 
 	/*
 	 * Calculate the GRVT gain earned by a deposit since its last snapshots were taken.
-	 * If not tagged with a front end, the depositor gets a 100% cut of what their deposit earned.
-	 * Otherwise, their cut of the deposit's earnings is equal to the kickbackRate, set by the front end through
-	 * which they made their deposit.
 	 */
 	function getDepositorGRVTGain(address _depositor) external view returns (uint256);
 
@@ -95,11 +98,4 @@ interface IStabilityPool is IDeposit {
 	 */
 	function getCompoundedDebtTokenDeposits(address _depositor) external view returns (uint256);
 
-	/*
-	 * Fallback function
-	 * Only callable by Active Pool, it just accounts for ETH received
-	 * receive() external payable;
-	 */
-
-	function addCollateralType(address _collateral) external;
 }

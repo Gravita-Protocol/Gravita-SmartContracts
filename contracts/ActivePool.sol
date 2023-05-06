@@ -106,6 +106,22 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		return debtTokenBalances[_asset];
 	}
 
+	function increaseDebt(address _collateral, uint256 _amount) external override callerIsBorrowerOpsOrVesselMgr {
+		uint256 newDebt = debtTokenBalances[_collateral] + _amount;
+		debtTokenBalances[_collateral] = newDebt;
+		emit ActivePoolDebtUpdated(_collateral, newDebt);
+	}
+
+	function decreaseDebt(address _asset, uint256 _amount)
+		external
+		override
+		callerIsBorrowerOpsOrStabilityPoolOrVesselMgr
+	{
+		uint256 newDebt = debtTokenBalances[_asset] - _amount;
+		debtTokenBalances[_asset] = newDebt;
+		emit ActivePoolDebtUpdated(_asset, newDebt);
+	}
+
 	// --- Pool functionality ---
 
 	function sendAsset(
@@ -133,22 +149,6 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		return (_account == address(defaultPool) ||
 			_account == address(collSurplusPool) ||
 			_account == stabilityPoolAddress);
-	}
-
-	function increaseDebt(address _collateral, uint256 _amount) external override callerIsBorrowerOpsOrVesselMgr {
-		uint256 newDebt = debtTokenBalances[_collateral] + _amount;
-		debtTokenBalances[_collateral] = newDebt;
-		emit ActivePoolDebtUpdated(_collateral, newDebt);
-	}
-
-	function decreaseDebt(address _asset, uint256 _amount)
-		external
-		override
-		callerIsBorrowerOpsOrStabilityPoolOrVesselMgr
-	{
-		uint256 newDebt = debtTokenBalances[_asset] - _amount;
-		debtTokenBalances[_asset] = newDebt;
-		emit ActivePoolDebtUpdated(_asset, newDebt);
 	}
 
 	function receivedERC20(address _asset, uint256 _amount) external override callerIsBorrowerOpsOrDefaultPool {

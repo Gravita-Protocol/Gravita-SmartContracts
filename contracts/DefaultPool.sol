@@ -44,6 +44,18 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 		return debtTokenBalances[_asset];
 	}
 
+	function increaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
+		uint256 newDebt = debtTokenBalances[_asset] + _amount;
+		debtTokenBalances[_asset] = newDebt;
+		emit DefaultPoolDebtUpdated(_asset, newDebt);
+	}
+
+	function decreaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
+		uint256 newDebt = debtTokenBalances[_asset] - _amount;
+		debtTokenBalances[_asset] = newDebt;
+		emit DefaultPoolDebtUpdated(_asset, newDebt);
+	}
+
 	// --- Pool functionality ---
 
 	function sendAssetToActivePool(address _asset, uint256 _amount) external override callerIsVesselManager {
@@ -62,18 +74,6 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
 		emit AssetSent(activePool, _asset, safetyTransferAmount);
-	}
-
-	function increaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
-		uint256 newDebt = debtTokenBalances[_asset] + _amount;
-		debtTokenBalances[_asset] = newDebt;
-		emit DefaultPoolDebtUpdated(_asset, newDebt);
-	}
-
-	function decreaseDebt(address _asset, uint256 _amount) external override callerIsVesselManager {
-		uint256 newDebt = debtTokenBalances[_asset] - _amount;
-		debtTokenBalances[_asset] = newDebt;
-		emit DefaultPoolDebtUpdated(_asset, newDebt);
 	}
 
 	// --- 'require' functions ---
