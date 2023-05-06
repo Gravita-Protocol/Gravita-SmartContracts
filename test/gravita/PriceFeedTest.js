@@ -4,31 +4,26 @@ const {
 	impersonateAccount,
 	stopImpersonatingAccount,
 } = require("@nomicfoundation/hardhat-network-helpers")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const { assert } = require("hardhat")
+
 const AdminContract = artifacts.require("AdminContract")
 const ERC20Mock = artifacts.require("ERC20Mock")
+const FixedPriceAggregator = artifacts.require("FixedPriceAggregator")
 const MockChainlink = artifacts.require("MockAggregator")
+const MockWstETH = artifacts.require("MockWstETH")
 const PriceFeed = artifacts.require("PriceFeedTester")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
+const WstEth2EthPriceAggregator = artifacts.require("WstEth2EthPriceAggregator")
 
-const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
-const { assert } = require("hardhat")
 const testHelpers = require("../../utils/testHelpers.js")
 const th = testHelpers.TestHelper
-
 const { dec, assertRevert, toBN } = th
 
 const MAX_PRICE_DEVIATION_BETWEEN_ROUNDS = dec(5, 17) // 0.5 ether
 const DEFAULT_PRICE = dec(100, 18)
 const DEFAULT_PRICE_e8 = dec(100, 8)
-const CBETH_TOKEN_ADDRESS =
-	/* goerli: */ "0xbe9895146f7af43049ca1c1ae358b0541ea49704" /* mainnet: "0xbe9895146f7af43049ca1c1ae358b0541ea49704" */
-const RETH_TOKEN_ADDRESS =
-	/* goerli: */ "0x62BC478FFC429161115A6E4090f819CE5C50A5d9" /* mainnet: "0xae78736Cd615f374D3085123A210448E74Fc6393" */
-const STETH_TOKEN_ADDRESS =
-	/* goerli: */ "0xc58af6BFaeA2F559085b75E4EccA913B015D93a4" /* mainnet: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84" */
-const WSTETH_TOKEN_ADDRESS =
-	/* goerli: */ "0x6320cD32aA674d2898A68ec82e869385Fc5f7E2f" /* mainnet: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0" */
 
 contract("PriceFeed", async accounts => {
 	const [owner, alice] = accounts
@@ -40,23 +35,24 @@ contract("PriceFeed", async accounts => {
 	let erc20
 
 	const setAddressesAndOracle = async () => {
-		await priceFeed.setAddresses(
-			adminContract.address,
-			shortTimelock.address,
-			{
-				from: owner,
-			}
-		)
+		await priceFeed.setAddresses(adminContract.address, shortTimelock.address, { from: owner })
 		await setOracle(ZERO_ADDRESS, mockChainlink.address)
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 	}
 
 	const setOracle = async (erc20Address, aggregatorAddress, isIndexed = false) => {
-		await impersonateAccount(shortTimelock.address)
-		await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
-			from: shortTimelock.address,
-		})
-		await stopImpersonatingAccount(shortTimelock.address)
+		const record = await priceFeed.oracleRecords(erc20Address)
+		if (!record.exists) {
+			await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
+				from: owner,
+			})
+		} else {
+			await impersonateAccount(shortTimelock.address)
+			await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
+				from: shortTimelock.address,
+			})
+			await stopImpersonatingAccount(shortTimelock.address)
+		}
 	}
 
 	const getPrice = async (erc20Address = ZERO_ADDRESS) => {
@@ -110,33 +106,136 @@ contract("PriceFeed", async accounts => {
 	describe("Mainnet PriceFeed setup", async accounts => {
 		it("setAddresses should fail after addresses have already been set", async () => {
 			// Owner can successfully set any address
-			const txOwner = await priceFeed.setAddresses(
-				adminContract.address,
-				shortTimelock.address,
-				{ from: owner }
-			)
+			const txOwner = await priceFeed.setAddresses(adminContract.address, shortTimelock.address, { from: owner })
 			assert.isTrue(txOwner.receipt.status)
 
 			await assertRevert(
-				priceFeed.setAddresses(
-					adminContract.address,
-					shortTimelock.address,
-					{
-						from: owner,
-					}
-				)
+				priceFeed.setAddresses(adminContract.address, shortTimelock.address, {
+					from: owner,
+				})
 			)
-
 			await assertRevert(
-				priceFeed.setAddresses(
-					adminContract.address,
-					shortTimelock.address,
-					{
-						from: alice,
-					}
-				),
+				priceFeed.setAddresses(adminContract.address, shortTimelock.address, {
+					from: alice,
+				}),
 				"OwnableUpgradeable: caller is not the owner"
 			)
+		})
+	})
+
+	describe("Custom Aggregators", async () => {
+		it("fetchPrice of ETH-indexed Oracle", async () => {
+			await setAddressesAndOracle()
+			const ETH_TO_USD = dec(1600, 18)
+			mockChainlink.setPrevPrice(ETH_TO_USD)
+			mockChainlink.setPrice(ETH_TO_USD)
+			mockChainlink.setDecimals(18)
+			const ERC20_TO_ETH = dec(11, 17) // MOCK:ETH = 1,1
+			const erc20MockChainlink = await MockChainlink.new()
+			await erc20MockChainlink.setPrice(ERC20_TO_ETH)
+			await erc20MockChainlink.setPrevPrice(ERC20_TO_ETH)
+			await erc20MockChainlink.setLatestRoundId(3)
+			await erc20MockChainlink.setPrevRoundId(2)
+			await erc20MockChainlink.setDecimals(18)
+			await erc20MockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
+			await setOracle(erc20.address, erc20MockChainlink.address, true)
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+			await priceFeed.fetchPrice(erc20.address)
+			const erc20Price = await getPrice(erc20.address)
+			const expectedPrice = toBN(ERC20_TO_ETH).mul(toBN(ETH_TO_USD)).div(toBN(1e18))
+			assert.equal(erc20Price.toString(), expectedPrice.toString())
+		})
+
+		it("fetchPrice of unknown token, reverts", async () => {
+			const randomAddr = "0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5"
+			await assertRevert(priceFeed.fetchPrice(randomAddr), "Oracle is not registered!")
+		})
+
+		it("fetchPrice of stale aggregator, reverts", async () => {
+			await setAddressesAndOracle()
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+			const stalePriceTimeout = Number(await priceFeed.RESPONSE_TIMEOUT())
+			await time.increase(stalePriceTimeout + 1)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+		})
+
+		it("fetchPrice of stale aggregator, reverts", async () => {
+			await setAddressesAndOracle()
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+			const stalePriceTimeout = Number(await priceFeed.RESPONSE_TIMEOUT())
+			await time.increase(stalePriceTimeout + 1)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+		})
+
+		it("fixed price aggregator", async () => {
+			await setAddressesAndOracle()
+			const one_to_one_oracle = await FixedPriceAggregator.new(1e8)
+			await priceFeed.setOracle(erc20.address, one_to_one_oracle.address, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isEthIndexed = false)
+			await priceFeed.fetchPrice(erc20.address)
+			const price = (await priceFeed.priceRecords(erc20.address)).scaledPrice
+			assert.equal(price.toString(), 1e18.toString())
+		})
+
+		it("wstETH price via custom aggregator", async () => {
+			const ETH_TO_USD = "197870000000"
+			const STETH_TO_ETH = "997265198653368300"
+			const WSTETH_TO_STETH = "1122752566282725055"
+
+			await setAddressesAndOracle()
+
+			const eth_to_usd_mockChainlink = mockChainlink
+			await eth_to_usd_mockChainlink.setDecimals(8)
+			await eth_to_usd_mockChainlink.setPrice(ETH_TO_USD)
+			await eth_to_usd_mockChainlink.setPrevPrice(ETH_TO_USD)
+			await eth_to_usd_mockChainlink.setLatestRoundId(3)
+			await eth_to_usd_mockChainlink.setPrevRoundId(2)
+			await eth_to_usd_mockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
+
+			const stEth_to_eth_mockChainlink = await MockChainlink.new()
+			await stEth_to_eth_mockChainlink.setDecimals(18)
+			await stEth_to_eth_mockChainlink.setPrice(STETH_TO_ETH)
+			await stEth_to_eth_mockChainlink.setPrevPrice(STETH_TO_ETH)
+			await stEth_to_eth_mockChainlink.setLatestRoundId(3)
+			await stEth_to_eth_mockChainlink.setPrevRoundId(2)
+			await stEth_to_eth_mockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
+
+			const mock_wstETH = await MockWstETH.new()
+			mock_wstETH.setStETHPerToken(WSTETH_TO_STETH)
+
+			const wstEth_to_eth_oracle = await WstEth2EthPriceAggregator.new(
+				mock_wstETH.address,
+				stEth_to_eth_mockChainlink.address
+			)
+			assert.equal(await wstEth_to_eth_oracle.decimals(), "18")
+
+			const wstEth_to_eth_priceBN = (await wstEth_to_eth_oracle.latestRoundData()).answer
+			const wstEth_to_eth_price = ethers.utils.formatUnits(wstEth_to_eth_priceBN.toString(), 18)
+
+			const expected_wstEth_to_eth_priceBN = toBN(WSTETH_TO_STETH)
+				.mul(toBN(STETH_TO_ETH))
+				.div(toBN(dec(1, "ether")))
+			const expected_wstEth_to_eth_price = ethers.utils.formatUnits(expected_wstEth_to_eth_priceBN.toString(), 18)
+
+			assert.equal(wstEth_to_eth_price, expected_wstEth_to_eth_price)
+
+			await priceFeed.setOracle(
+				mock_wstETH.address,
+				wstEth_to_eth_oracle.address,
+				MAX_PRICE_DEVIATION_BETWEEN_ROUNDS,
+				(isEthIndexed = true)
+			)
+			const feedDigits = Number(await priceFeed.TARGET_DIGITS())
+			assert.equal(feedDigits, 18)
+
+			await priceFeed.fetchPrice(mock_wstETH.address)
+
+			const wstEth_to_usd_priceBN = (await priceFeed.priceRecords(mock_wstETH.address)).scaledPrice
+			const expected_wstEth_to_usd_priceBN = expected_wstEth_to_eth_priceBN.mul(toBN(ETH_TO_USD)).div(toBN(dec(1, 8)))
+
+			const wstEth_to_usd_price = ethers.utils.formatUnits(wstEth_to_usd_priceBN.toString(), feedDigits)
+			const expected_wstEth_to_usd_price = ethers.utils.formatUnits(expected_wstEth_to_usd_priceBN.toString(), 18)
+
+			assert.equal(wstEth_to_usd_price, expected_wstEth_to_usd_price)
 		})
 	})
 
@@ -189,41 +288,6 @@ contract("PriceFeed", async accounts => {
 		assert.equal(newPrice.toString(), dec(2345, 18).toString())
 	})
 
-	it("fetchPrice of ETH-indexed Oracle", async () => {
-		await setAddressesAndOracle()
-		const ETH_TO_USD = dec(1600, 18)
-		mockChainlink.setPrevPrice(ETH_TO_USD)
-		mockChainlink.setPrice(ETH_TO_USD)
-		mockChainlink.setDecimals(18)
-		const ERC20_TO_ETH = dec(11, 17) // MOCK:ETH = 1,1
-		const erc20MockChainlink = await MockChainlink.new()
-		await erc20MockChainlink.setPrice(ERC20_TO_ETH)
-		await erc20MockChainlink.setPrevPrice(ERC20_TO_ETH)
-		await erc20MockChainlink.setLatestRoundId(3)
-		await erc20MockChainlink.setPrevRoundId(2)
-		await erc20MockChainlink.setDecimals(18)
-		await erc20MockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
-		await setOracle(erc20.address, erc20MockChainlink.address, true)
-		await priceFeed.fetchPrice(ZERO_ADDRESS)
-		await priceFeed.fetchPrice(erc20.address)
-		const erc20Price = await getPrice(erc20.address)
-		const expectedPrice = toBN(ERC20_TO_ETH).mul(toBN(ETH_TO_USD)).div(toBN(1e18))
-		assert.equal(erc20Price.toString(), expectedPrice.toString())
-	})
-
-	it("fetchPrice of unknown token, reverts", async () => {
-		const randomAddr = "0xDAFEA492D9c6733ae3d56b7Ed1ADB60692c98Bc5"
-		await assertRevert(priceFeed.fetchPrice(randomAddr), "Oracle is not registered!")
-	})
-
-	it("fetchPrice of stale aggregator, reverts", async () => {
-		await setAddressesAndOracle()
-		await priceFeed.fetchPrice(ZERO_ADDRESS)
-		const stalePriceTimeout = Number(await priceFeed.RESPONSE_TIMEOUT())
-		await time.increase(stalePriceTimeout + 1)
-		await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
-	})
-
 	it("chainlinkWorking: Oracle works, return price and remain feedWorking", async () => {
 		await setAddressesAndOracle()
 		const feedWorkingBefore = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
@@ -256,40 +320,6 @@ contract("PriceFeed", async accounts => {
 		assert.equal(feedWorkingAfter, false)
 		assert.notEqual(price, dec(1234, 18).toString())
 		assert.equal(price, DEFAULT_PRICE.toString())
-	})
-
-	// Removed as we don't use the native feed anymore
-	it.skip("chainlinkWorking: rETH and wstETH prices", async () => {
-		const ethers = require("ethers")
-		const ETH_USD_PRICE_18_DIGITS = "1341616900000000000000"
-		await setAddressesAndOracle()
-
-		await mockChainlink.setDecimals(18)
-		await mockChainlink.setPrevPrice(ETH_USD_PRICE_18_DIGITS)
-		await mockChainlink.setPrice(ETH_USD_PRICE_18_DIGITS)
-		await mockChainlink.setLatestRoundId("92233720368547797825")
-
-		await setOracle(ZERO_ADDRESS, mockChainlink.address)
-		await priceFeed.fetchPrice(ZERO_ADDRESS)
-		const ethPrice = await getPrice()
-		assert.equal(ethPrice.toString(), ETH_USD_PRICE_18_DIGITS)
-
-
-		const RETH_ETH_RATIO_18_DIGITS = "1054021266924449498"
-		await priceFeed.fetchPrice(RETH_TOKEN_ADDRESS)
-		const rethPrice = await getPrice(RETH_TOKEN_ADDRESS)
-		const expectedRethPrice = ethers.BigNumber.from(RETH_ETH_RATIO_18_DIGITS)
-			.mul(ETH_USD_PRICE_18_DIGITS)
-			.div("1000000000000000000")
-		assert.equal(rethPrice.toString(), expectedRethPrice.toString())
-
-		const WSTETH_STETH_RATIO_18_DIGITS = "1104446462143629660"
-		await priceFeed.fetchPrice(WSTETH_TOKEN_ADDRESS)
-		const wstEthPrice = await getPrice(WSTETH_TOKEN_ADDRESS)
-		const expectedWstethPrice = ethers.BigNumber.from(WSTETH_STETH_RATIO_18_DIGITS)
-			.mul(ETH_USD_PRICE_18_DIGITS)
-			.div("1000000000000000000")
-		assert.equal(wstEthPrice.toString(), expectedWstethPrice.toString())
 	})
 
 	it("chainlinkWorking: fetchPrice should return the correct price, taking into account the number of decimal digits on the aggregator", async () => {
