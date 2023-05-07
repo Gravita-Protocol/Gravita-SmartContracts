@@ -868,8 +868,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 tokensLen = _tokens.length;
 
 		for (uint256 i; i < coll1Len; ) {
+			address token = _coll1.tokens[i];
+
 			for (uint256 j; j < tokensLen; ) {
-				if (_coll1.tokens[i] == _tokens[j]) {
+				if (token == _tokens[j]) {
 					_coll1.amounts[i] -= _amounts[j];
 				}
 				unchecked {
