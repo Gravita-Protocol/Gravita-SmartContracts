@@ -114,7 +114,6 @@ interface IVesselManagerOperations is IGravitaBase {
 
 	struct LocalVariables_AssetBorrowerPrice {
 		address _asset;
-		address _borrower;
 		uint256 _price;
 	}
 
