@@ -554,10 +554,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		require(_collWithdrawal == 0 || _amountSent == 0, "BorrowerOperations: Cannot withdraw and add coll");
 	}
 
-	function _requireCallerIsBorrower(address _borrower) internal view {
-		require(msg.sender == _borrower, "BorrowerOps: Caller must be the borrower for a withdrawal");
-	}
-
 	function _requireNonZeroAdjustment(
 		uint256 _collWithdrawal,
 		uint256 _debtTokenChange,
@@ -678,10 +674,6 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 			_debtRepayment <= _currentDebt - adminContract.getDebtTokenGasCompensation(_asset),
 			"BorrowerOps: Amount repaid must not be larger than the Vessel's debt"
 		);
-	}
-
-	function _requireCallerIsStabilityPool() internal view {
-		require(address(stabilityPool) == msg.sender, "BorrowerOps: Caller is not Stability Pool");
 	}
 
 	function _requireSufficientDebtTokenBalance(
