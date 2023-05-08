@@ -472,6 +472,52 @@ contract("PriceFeed", async accounts => {
 		assert.equal(feedWorkingAfter, true)
 		assert.equal(price, dec(1234, 18).toString())
 	})
+
+	describe("Protocol DoS Bug", () => {
+		it("Incorrect fallback price mechanism leading to protocol DoS", async () => {
+			await setAddressesAndOracle()
+
+			// set price and timestamp on mock chainlink
+			await mockChainlink.setPriceIsAlwaysUpToDate(false)
+			await mockChainlink.setPrice(dec(110, 8))
+			const updateTime = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp;
+			await mockChainlink.setUpdateTime(updateTime)
+
+			// verify price and timestamp on mock chainlink
+			const chainlinkResp = await mockChainlink.latestRoundData();
+			assert.equal(chainlinkResp[1], dec(110, 8))
+			assert.equal(chainlinkResp[3], updateTime)
+
+			// initial value of PriceFeed.priceRecords is 100e18
+			assert.equal((await priceFeed.priceRecords(ZERO_ADDRESS)).scaledPrice, dec(100, 18))
+
+			// invoke fetchPrice
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+
+			// PriceFeed.priceRecords gets updated
+			assert.equal((await priceFeed.priceRecords(ZERO_ADDRESS)).scaledPrice, dec(110, 18))
+			assert.equal((await priceFeed.priceRecords(ZERO_ADDRESS)).timestamp, updateTime)
+
+			// make chainlink stale
+			const stalePriceTimeout = Number(await priceFeed.RESPONSE_TIMEOUT())
+			await time.increase(stalePriceTimeout + 1)
+
+			// PriceFeed does not correctly fallback to previously recorded `priceRecords`
+			// Staleness check is also performed on previously recorded `priceRecords`
+			// Hence `fetchPrice` reverts
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+			try {
+				await priceFeed.fetchPrice(ZERO_ADDRESS)
+			} catch (err) {
+				assert.equal(
+					err.message,
+					`VM Exception while processing transaction: reverted with custom error 'PriceFeed__FeedFrozenError("${ZERO_ADDRESS}")'`
+				)
+			}
+
+			// Now all calls to `PriceFeed.fetchPrice` reverts resulting in protocol DoS.
+		})
+	})
 })
 
 contract("Reset chain state", async accounts => {})
