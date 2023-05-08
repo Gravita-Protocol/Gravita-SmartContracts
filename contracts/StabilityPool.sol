@@ -160,16 +160,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	// Anytime a new collateral is added to AdminContract, both lists are lengthened
 	Colls internal totalColl;
 
-	// --- Data structures ---
-
-	struct Snapshots {
-		mapping(address => uint256) S;
-		uint256 P;
-		uint256 G;
-		uint128 scale;
-		uint128 epoch;
-	}
-
 	mapping(address => uint256) public deposits; // depositor address -> deposit amount
 
 	/*
@@ -248,7 +238,18 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		P = DECIMAL_PRECISION;
 	}
 
-	// --- Getters for public variables. Required by IPool interface ---
+	/**
+	 * @notice add a collateral
+	 * @dev should be called anytime a collateral is added to controller
+	 * keeps all arrays the correct length
+	 * @param _collateral address of collateral to add
+	 */
+	function addCollateralType(address _collateral) external {
+		_requireCallerIsAdminContract();
+		lastAssetError_Offset.push(0);
+		totalColl.tokens.push(_collateral);
+		totalColl.amounts.push(0);
+	}
 
 	/**
 	 * @notice get collateral balance in the SP for a given collateral type
@@ -462,9 +463,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 _debtToOffset,
 		uint256 _totalDeposits
 	) internal returns (uint256 collGainPerUnitStaked, uint256 debtLossPerUnitStaked) {
-		uint256 currentP = P;
-		uint256 index = adminContract.getIndex(_asset);
-		uint256 collateralNumerator = (_amountAdded * DECIMAL_PRECISION) + lastAssetError_Offset[index];
+		uint256 assetIndex = adminContract.getIndex(_asset);
+		uint256 collateralNumerator = (_amountAdded * DECIMAL_PRECISION) + lastAssetError_Offset[assetIndex];
 		require(_debtToOffset <= _totalDeposits, "StabilityPool: Debt is larger than totalDeposits");
 		if (_debtToOffset == _totalDeposits) {
 			debtLossPerUnitStaked = DECIMAL_PRECISION; // When the Pool depletes to 0, so does each deposit
@@ -478,41 +478,38 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 			debtLossPerUnitStaked = (lossNumerator / _totalDeposits) + 1;
 			lastDebtTokenLossError_Offset = (debtLossPerUnitStaked * _totalDeposits) - lossNumerator;
 		}
-		collGainPerUnitStaked = (collateralNumerator * currentP) / _totalDeposits;
-		lastAssetError_Offset[index] = collateralNumerator - ((collGainPerUnitStaked * _totalDeposits) / currentP);
+		collGainPerUnitStaked = collateralNumerator / _totalDeposits;
+		lastAssetError_Offset[assetIndex] = collateralNumerator - (collGainPerUnitStaked * _totalDeposits);
 	}
 
-	/**
-	 * @notice add a collateral
-	 * @dev should be called anytime a collateral is added to controller
-	 * keeps all arrays the correct length
-	 * @param _collateral address of collateral to add
-	 */
-	function addCollateralType(address _collateral) external {
-		_requireCallerIsAdminContract();
-		lastAssetError_Offset.push(0);
-		totalColl.tokens.push(_collateral);
-		totalColl.amounts.push(0);
-	}
-
-	// Update the Stability Pool reward sum S and product P
 	function _updateRewardSumAndProduct(
 		address _asset,
-		uint256 _AssetGainPerUnitStaked,
-		uint256 _lossPerUnitStaked
+		uint256 _collGainPerUnitStaked,
+		uint256 _debtLossPerUnitStaked
 	) internal {
-		require(_lossPerUnitStaked <= DECIMAL_PRECISION, "StabilityPool: Loss < 1");
+
+		require(_debtLossPerUnitStaked <= DECIMAL_PRECISION, "StabilityPool: Loss < 1");
 		uint256 currentP = P;
 		uint256 newP;
+
 		/*
 		 * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool debt tokens in the liquidation.
-		 * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - lossPerUnitStaked)
+		 * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - _debtLossPerUnitStaked)
 		 */
-		uint256 newProductFactor = DECIMAL_PRECISION - _lossPerUnitStaked;
+		uint256 newProductFactor = DECIMAL_PRECISION - _debtLossPerUnitStaked;
 		uint128 currentScaleCached = currentScale;
 		uint128 currentEpochCached = currentEpoch;
 		uint256 currentS = epochToScaleToSum[_asset][currentEpochCached][currentScaleCached];
-		uint256 newS = currentS + _AssetGainPerUnitStaked;
+
+		/*
+     * Calculate the new S first, before we update P.
+     * The asset gain for any given depositor from a liquidation depends on the value of their deposit
+     * (and the value of totalDeposits) prior to the Stability being depleted by the debt in the liquidation.
+     *
+     * Since S corresponds to asset gain, and P to deposit loss, we update S first.
+     */
+		uint256 marginalAssetGain = _collGainPerUnitStaked * currentP;
+		uint256 newS = currentS + marginalAssetGain;
 		epochToScaleToSum[_asset][currentEpochCached][currentScaleCached] = newS;
 		emit S_Updated(_asset, newS, currentEpochCached, currentScaleCached);
 
@@ -522,9 +519,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 			emit EpochUpdated(currentEpoch);
 			currentScale = 0;
 			emit ScaleUpdated(currentScale);
-			newP = DECIMAL_PRECISION;
+			newP = DECIMAL_PRECISION;			
 
-			// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
+		// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
 		} else if ((currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR) {
 			newP = (currentP * newProductFactor * SCALE_FACTOR) / DECIMAL_PRECISION;
 			currentScale = currentScaleCached + 1;
