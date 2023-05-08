@@ -59,8 +59,7 @@ const testHelpers = require("./testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
-const shortDelay = 86400 * 3
-const longDelay = 86400 * 7
+const timelockDelay = 86400 * 3
 
 const ZERO_ADDRESS = "0x" + "0".repeat(40)
 
@@ -85,13 +84,12 @@ class DeploymentHelper {
 		const stabilityPool = await StabilityPool.new()
 		const vesselManager = await VesselManager.new()
 		const vesselManagerOperations = await VesselManagerOperations.new()
-		const shortTimelock = await Timelock.new(shortDelay)
-		const longTimelock = await Timelock.new(longDelay)
+		const timelock = await Timelock.new(timelockDelay)
 		const debtToken = await DebtToken.new(
 			vesselManager.address,
 			stabilityPool.address,
 			borrowerOperations.address,
-			shortTimelock.address
+			timelock.address
 		)
 
 		ActivePool.setAsDeployed(activePool)
@@ -108,8 +106,7 @@ class DeploymentHelper {
 		PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
 		SortedVessels.setAsDeployed(sortedVessels)
 		StabilityPool.setAsDeployed(stabilityPool)
-		Timelock.setAsDeployed(shortTimelock)
-		Timelock.setAsDeployed(longTimelock)
+		Timelock.setAsDeployed(timelock)
 		VesselManager.setAsDeployed(vesselManager)
 		VesselManagerOperations.setAsDeployed(vesselManagerOperations)
 
@@ -131,8 +128,7 @@ class DeploymentHelper {
 			vesselManagerOperations,
 			sortedVessels,
 			stabilityPool,
-			shortTimelock,
-			longTimelock,
+			timelock,
 			erc20,
 			erc20B,
 		}
@@ -154,8 +150,7 @@ class DeploymentHelper {
 		testerContracts.priceFeedTestnet = await PriceFeedTestnet.new()
 		testerContracts.sortedVessels = await SortedVessels.new()
 		testerContracts.vesselManagerOperations = await VesselManagerOperations.new()
-		testerContracts.shortTimelock = await Timelock.new(shortDelay)
-		testerContracts.longTimelock = await Timelock.new(longDelay)
+		testerContracts.timelock = await Timelock.new(timelockDelay)
 		// Actual tester contracts
 		testerContracts.borrowerOperations = await BorrowerOperationsTester.new()
 		testerContracts.communityIssuance = await CommunityIssuanceTester.new()
@@ -166,7 +161,7 @@ class DeploymentHelper {
 			testerContracts.vesselManager.address,
 			testerContracts.stabilityPool.address,
 			testerContracts.borrowerOperations.address,
-			testerContracts.shortTimelock.address
+			testerContracts.timelock.address
 		)
 		testerContracts.debtTokenWhitelistedTester = await DebtTokenWhitelistedTester.new(testerContracts.debtToken.address)
 
@@ -199,7 +194,7 @@ class DeploymentHelper {
 			contracts.vesselManager.address,
 			contracts.stabilityPool.address,
 			contracts.borrowerOperations.address,
-			contracts.shortTimelock.address
+			contracts.timelock.address
 		)
 		return contracts
 	}
@@ -273,8 +268,7 @@ class DeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeedTestnet.address,
-			contracts.shortTimelock.address,
-			contracts.longTimelock.address
+			contracts.timelock.address,
 		)
 
 		await contracts.borrowerOperations.setAddresses(
