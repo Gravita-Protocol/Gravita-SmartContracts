@@ -520,7 +520,6 @@ contract VesselManager is IVesselManager, GravitaBase {
 		if (!hasPendingRewards(_asset, _borrower)) {
 			return;
 		}
-		assert(isVesselActive(_asset, _borrower));
 
 		// Compute pending rewards
 		uint256 pendingCollReward = getPendingAssetReward(_asset, _borrower);
