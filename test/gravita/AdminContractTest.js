@@ -4,6 +4,10 @@ const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
 
+const PriceFeed = artifacts.require("./PriceFeed.sol")
+const TransparentUpgradeableProxy = artifacts.require("./TransparentUpgradeableProxy.sol")
+const AdminContract = artifacts.require("./AdminContract.sol")
+
 contract("AdminContract", async accounts => {
 	const ZERO_ADDRESS = th.ZERO_ADDRESS
 	const assertRevert = th.assertRevert
@@ -334,6 +338,30 @@ contract("AdminContract", async accounts => {
 			.mul(toBN(USDVRequest))
 			.div(toBN(dec(1, 18)))
 		assert.isTrue(_USDVFee_Asset.eq(expectedFee_Asset))
+	})
+
+	it("upgrade contracts instantly", async () => {
+		const impl1 = await PriceFeed.new()
+		const proxy = await TransparentUpgradeableProxy.new(impl1.address, adminContract.address, "0x")
+
+		assert.equal(await adminContract.getProxyImplementation(proxy.address), impl1.address)
+
+		const impl2 = await PriceFeed.new()
+		await adminContract.upgrade(proxy.address, impl2.address)
+
+		assert.equal(await adminContract.getProxyImplementation(proxy.address), impl2.address)
+	})
+
+	it("change Proxy's Admin instantly", async () => {
+		const impl = await PriceFeed.new()
+		const proxy = await TransparentUpgradeableProxy.new(impl.address, adminContract.address, "0x")
+
+		assert.equal(await adminContract.getProxyAdmin(proxy.address), adminContract.address)
+
+		const newAdmin = await AdminContract.new()
+		await adminContract.changeProxyAdmin(proxy.address, newAdmin.address)
+
+		assert.equal(await newAdmin.getProxyAdmin(proxy.address), newAdmin.address)
 	})
 })
 
