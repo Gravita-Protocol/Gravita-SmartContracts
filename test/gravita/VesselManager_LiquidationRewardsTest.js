@@ -1,3 +1,4 @@
+const { ethers } = require("hardhat")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
@@ -59,6 +60,68 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 
 	beforeEach(async () => {
 		await loadFixture(deployContractsFixture)
+	})
+
+	describe("Bug: Owner has the privilege to cause DoS for all crucial protocol operations (like liquidations)", () => {
+		it("Setting GRVT Staking to zero address", async () => {
+			await openVessel({
+				asset: erc20.address,
+				ICR: toBN(dec(400, 16)),
+				extraParams: { from: alice },
+			})
+			await openVessel({
+				asset: erc20.address,
+				ICR: toBN(dec(210, 16)),
+				extraParams: { from: bob },
+			})
+	
+			// Price drops to 100 $/E
+			await priceFeed.setPrice(erc20.address, dec(100, 18))
+	
+			const feeCollector = contracts.feeCollector
+			const nonZeroAddr = '0x0000000000000000000000000000000000000001'
+			await feeCollector.setGRVTStakingAddress(nonZeroAddr)
+			await feeCollector.setRouteToGRVTStaking(true)
+			await feeCollector.setGRVTStakingAddress(ethers.constants.AddressZero)
+	
+			try {
+				await vesselManagerOperations.liquidate(erc20.address, bob)
+			} catch (err) {
+				assert.equal(
+					err.message,
+					"VM Exception while processing transaction: reverted with reason string 'DebtToken: Cannot transfer tokens directly to the token contract or the zero address'"
+				)
+			}
+		})
+
+		it("Setting GRVT Staking to DebtToken's contract address", async () => {
+			await openVessel({
+				asset: erc20.address,
+				ICR: toBN(dec(400, 16)),
+				extraParams: { from: alice },
+			})
+			await openVessel({
+				asset: erc20.address,
+				ICR: toBN(dec(210, 16)),
+				extraParams: { from: bob },
+			})
+	
+			// Price drops to 100 $/E
+			await priceFeed.setPrice(erc20.address, dec(100, 18))
+	
+			const feeCollector = contracts.feeCollector
+			await feeCollector.setGRVTStakingAddress(debtToken.address)
+			await feeCollector.setRouteToGRVTStaking(true)
+	
+			try {
+				await vesselManagerOperations.liquidate(erc20.address, bob)
+			} catch (err) {
+				assert.equal(
+					err.message,
+					"VM Exception while processing transaction: reverted with reason string 'DebtToken: Cannot transfer tokens directly to the token contract or the zero address'"
+				)
+			}
+		})
 	})
 
 	it("redistribution: A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
