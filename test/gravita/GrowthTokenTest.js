@@ -19,8 +19,7 @@ const ZERO_ADDRESS = th.ZERO_ADDRESS
 const assertRevert = th.assertRevert
 
 contract("GRVT Token", async accounts => {
-	
-  const [owner, A, B, C, D] = accounts
+	const [owner, A, B, C, D] = accounts
 	const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
 
 	// Create the approval tx data, for use in permit()
@@ -41,9 +40,7 @@ contract("GRVT Token", async accounts => {
 	}
 
 	const PERMIT_TYPEHASH = keccak256(
-		toUtf8Bytes(
-			"Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-		)
+		toUtf8Bytes("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 	)
 
 	// Returns the EIP712 hash which should be signed by the user
@@ -79,7 +76,7 @@ contract("GRVT Token", async accounts => {
 
 		// Get the EIP712 digest
 		const digest = getPermitDigest(
-			await grvtTokenTester.DOMAIN_SEPARATOR(),
+			await grvtTokenTester.domainSeparator(),
 			approve.owner,
 			approve.spender,
 			approve.value,
@@ -243,18 +240,8 @@ contract("GRVT Token", async accounts => {
 	it("transfer(): transfer to or from the zero-address reverts", async () => {
 		await mintToABC()
 
-		const txPromiseFromZero = grvtTokenTester.callInternalTransfer(
-			ZERO_ADDRESS,
-			A,
-			dec(100, 18),
-			{ from: B }
-		)
-		const txPromiseToZero = grvtTokenTester.callInternalTransfer(
-			A,
-			ZERO_ADDRESS,
-			dec(100, 18),
-			{ from: B }
-		)
+		const txPromiseFromZero = grvtTokenTester.callInternalTransfer(ZERO_ADDRESS, A, dec(100, 18), { from: B })
+		const txPromiseToZero = grvtTokenTester.callInternalTransfer(A, ZERO_ADDRESS, dec(100, 18), { from: B })
 		await assertRevert(txPromiseFromZero)
 		await assertRevert(txPromiseToZero)
 	})
@@ -336,10 +323,7 @@ contract("GRVT Token", async accounts => {
 		// Check that approval was successful
 		assert.equal(event.event, "Approval")
 		assert.equal(await grvtTokenTester.nonces(approve.owner), 1)
-		assert.equal(
-			await grvtTokenTester.allowance(approve.owner, approve.spender),
-			approve.value
-		)
+		assert.equal(await grvtTokenTester.allowance(approve.owner, approve.spender), approve.value)
 
 		// Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
 		await assertRevert(
@@ -389,3 +373,4 @@ contract("GRVT Token", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+
