@@ -74,7 +74,7 @@ contract Timelock {
 		delay = _delay;
 	}
 
-	//function() external payable { }
+	receive() external payable {}
 
 	function setDelay(uint _delay) public isValidDelay(_delay) {
 		if (msg.sender != address(this)) {
