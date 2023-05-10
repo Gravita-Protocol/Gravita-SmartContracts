@@ -345,11 +345,9 @@ class DeploymentHelper {
 			contracts.adminContract.address
 		)
 
-		await contracts.adminContract.addNewCollateral(ZERO_ADDRESS, dec(30, 18), 18, false)
 		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18, false)
 		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18, false)
 
-		await contracts.adminContract.setActive(ZERO_ADDRESS, true)
 		await contracts.adminContract.setActive(contracts.erc20.address, true)
 		await contracts.adminContract.setActive(contracts.erc20B.address, true)
 	}

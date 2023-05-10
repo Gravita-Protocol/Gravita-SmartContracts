@@ -144,7 +144,7 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	) external longTimelockOnly {
 		require(collateralParams[_collateral].mcr == 0, "collateral already exists");
 		// for the moment, require collaterals to have 18 decimals
-		require(_decimals == DEFAULT_DECIMALS, "collaterals must have the default decimals");
+		require(_decimals == DEFAULT_DECIMALS && _decimals == hasDecimals(_collateral).decimals(), "collateral must have the default decimals");
 		validCollateral.push(_collateral);
 		collateralParams[_collateral] = CollateralParams({
 			decimals: _decimals,
@@ -378,4 +378,8 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	function _exists(address _collateral) internal view {
 		require(collateralParams[_collateral].mcr != 0, "collateral does not exist");
 	}
+}
+
+interface hasDecimals {
+	function decimals() external view returns (uint8);
 }
