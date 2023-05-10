@@ -1,12 +1,12 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const VesselManagerTester = artifacts.require("VesselManagerTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
 
 let latestRandomSeed = 31337
-
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 
 contract("VesselManagerOperations-HintHelpers", async accounts => {
 

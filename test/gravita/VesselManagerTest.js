@@ -1,8 +1,10 @@
 const { loadFixture, time, setBalance } = require("@nomicfoundation/hardhat-network-helpers")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+
 const VesselManagerTester = artifacts.require("VesselManagerTester")
 const DebtTokenTester = artifacts.require("DebtTokenTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec

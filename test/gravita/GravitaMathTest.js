@@ -1,4 +1,4 @@
-const GravitaMathTester = artifacts.require("./GravitaMathTester.sol")
+const GravitaMathTester = artifacts.require("GravitaMathTester")
 
 contract('GravitaMath', async accounts => {
   let mathTester

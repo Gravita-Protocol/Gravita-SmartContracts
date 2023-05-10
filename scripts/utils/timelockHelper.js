@@ -126,3 +126,66 @@ function calcTxHash(targetAddress, value, methodSignature, data, eta) {
 	)
 }
 
+// From the deployment script
+
+// const { txHash, eta } = await setOracleViaTimelock(
+// 	address,
+// 	chainlinkPriceFeedAddress,
+// 	maxDeviationBetweenRounds
+// )
+// console.log(
+// 	`[${name}] setOracle() queued on Timelock (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
+// )
+
+// Timelock functions -------------------------------------------------------------------------------------------------
+
+// async setOracleViaTimelock(collateralAddress, chainlinkPriceFeedAddress, maxDeviationBetweenRounds, isEthIndexed) {
+// 	const targetAddress = coreContracts.priceFeed.address
+// 	const methodSignature = "setOracle(address, address, uint256, bool)"
+// 	const argTypes = ["address", "address", "uint256", "bool"]
+// 	const argValues = [
+// 		collateralAddress,
+// 		chainlinkPriceFeedAddress,
+// 		maxDeviationBetweenRounds.toString(),
+// 		isEthIndexed.toString(),
+// 	]
+// 	return await queueTimelockTransaction(coreContracts.timelock, targetAddress, methodSignature, argTypes, argValues)
+// }
+
+// async queueTimelockTransaction(timelockContract, targetAddress, methodSignature, argTypes, argValues) {
+// 	const abi = new ethers.utils.AbiCoder()
+// 	const eta = await calcTimelockETA(timelockContract)
+// 	const value = 0
+// 	const data = abi.encode(argTypes, argValues)
+
+// 	const txHash = ethers.utils.keccak256(
+// 		abi.encode(
+// 			["address", "uint256", "string", "bytes", "uint256"],
+// 			[targetAddress, value.toString(), methodSignature, data, eta.toString()]
+// 		)
+// 	)
+
+// 	await helper.sendAndWaitForTransaction(
+// 		timelockContract.queueTransaction(targetAddress, value, methodSignature, data, eta)
+// 	)
+
+// 	const queued = await timelockContract.queuedTransactions(txHash)
+// 	if (!queued) {
+// 		console.log(`WARNING: Failed to queue ${methodSignature} function call on Timelock contract`)
+// 	} else {
+// 		console.log(`queueTimelockTransaction() :: ${methodSignature} queued`)
+// 		console.log(`queueTimelockTransaction() :: ETA = ${eta} (${new Date(eta * 1000).toLocaleString()})`)
+// 		console.log(`queueTimelockTransaction() :: Remember to call executeTransaction() upon ETA!`)
+// 	}
+// 	return { txHash, eta }
+// }
+
+// async calcTimelockETA(timelockContract) {
+// 	const delay = Number(await timelockContract.delay())
+// 	return (await getBlockTimestamp()) + delay + 60
+// }
+
+// async getBlockTimestamp() {
+// 	const currentBlock = await ethers.provider.getBlockNumber()
+// 	return Number((await ethers.provider.getBlock(currentBlock)).timestamp)
+// }

@@ -1,0 +1,58 @@
+{
+  "ActivePool": {
+    "address": "0xF1c0DB770e77a961efde9DD11216e3833ad5c588",
+    "txHash": "0x8979d68dd369426270378a1785f257460f91e75b43825b8febaf7d2734084a37"
+  },
+  "BorrowerOperations": {
+    "address": "0x985B8fE9D1e76592f586795bD335B5b6C5af42aA",
+    "txHash": "0x2ec9547acdcaecaa85ee58f5365db57b6a7def1e20b820f6e4cd7685100069e6"
+  },
+  "CollSurplusPool": {
+    "address": "0x6A74Bb4aE703226BC58c5af49ddc26F5EC4B2a63",
+    "txHash": "0x3784bb8d939f10d7c14f1e5201a2900fc4e973f9bbf581c9e610fd36910d1557"
+  },
+  "DefaultPool": {
+    "address": "0x77daB71aAa886E7ee8E1abbCbE4aCb6da1802A5F",
+    "txHash": "0x3dc022b615ba13c11f8afa029a75613f7b4650882ac5aa3f8922c1ed1891b9f1"
+  },
+  "FeeCollector": {
+    "address": "0x582DA0692dD4D67bD67B16083949c5589Ac80703",
+    "txHash": "0xf869ca7f2b9fac63f6666e48fca74ae1f8e0a98b81d975eeaca0572d71e4f079"
+  },
+  "PriceFeed": {
+    "address": "0x738b4A928bFeEd9Bb4AE67c223f6A05C61dfd4bD",
+    "txHash": "0x6ddd37f337977287090350c5a9547e9eb39fd4a21708bdd02745c12e0a475e66"
+  },
+  "SortedVessels": {
+    "address": "0x14a8EB5c9960621E7abEf9B8360Fc357Ea41C9c5",
+    "txHash": "0xd3811c29e97c425f3398527e7ae2bac9d0e195b37ff36d7eb940a2f61491c54d"
+  },
+  "StabilityPool": {
+    "address": "0xd66A46E8fD06829609c937d25CA1f3f4b4aA79B5",
+    "txHash": "0x188c370c39a332dc22feada0dd56322b24d50c01ea299da78b7ccf7b20f2cbbe"
+  },
+  "VesselManager": {
+    "address": "0x24CED57dBe3Ce2080A8D4c94E768A0573d7a5f7A",
+    "txHash": "0x9681858d7df5cf14fa2cd4f91b076647e772a01371c332e5455d5cd1b38a02fa"
+  },
+  "VesselManagerOperations": {
+    "address": "0x337c6D715fac1f8013d78567e154Ed38060ca2A6",
+    "txHash": "0x32a307d451af9573bac3089074dc8f50f2ca407e88e43eff6e65b2b9d82f1f15"
+  },
+  "AdminContract": {
+    "address": "0xeebd674d85E02cF41c28eC87e4FA89F5a51554D7",
+    "txHash": "0x17a4d1d05a0e7b6bfefa32fa8482a1c93ce14042fc2111bdf60eb9f8f9384701"
+  },
+  "GasPool": {
+    "address": "0xE88EDcc956Cb979bF2d823EeFa1f7C6d69169285",
+    "txHash": "0xe5d9d29860dd15f7a2a47c3fd17313cce3c93534c7eb2e69b091a71043aacf75"
+  },
+  "Timelock": {
+    "address": "0x54eD9C8b2CAB402540B11996979064CFF709888e",
+    "txHash": "0xcb2cff4b0eb45af5cef52031eef46e38d56d49c72083cae52b311a55d5cfd716"
+  },
+  "DebtToken": {
+    "address": "0x1a3C351b6CF73b4488d44D8c71f1234Be61603c5",
+    "txHash": "0x3650ebb7cc121f4ef1ae7ef4798a1b435a5cd859955587ec25827fd8185e73f7"
+  }
+}

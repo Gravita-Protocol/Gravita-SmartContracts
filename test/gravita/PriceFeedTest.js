@@ -17,7 +17,8 @@ const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
 const WstEth2EthPriceAggregator = artifacts.require("WstEth2EthPriceAggregator")
 
-const testHelpers = require("../../utils/testHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
+
 const th = testHelpers.TestHelper
 const { dec, assertRevert, toBN } = th
 

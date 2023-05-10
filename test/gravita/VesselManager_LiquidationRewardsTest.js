@@ -1,13 +1,14 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
+
+const VesselManagerTester = artifacts.require("VesselManagerTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN
 const getDifference = th.getDifference
-
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 
 contract("VesselManager - Redistribution reward calculations", async accounts => {
 	const [owner, alice, bob, carol, dennis, erin, freddy, A, B, C, D, E] = accounts

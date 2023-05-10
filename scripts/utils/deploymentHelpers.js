@@ -1,20 +1,16 @@
-const { ethers } = require("hardhat")
-const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@nomicfoundation/hardhat-network-helpers")
 const fs = require("fs")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 
-class MainnetDeploymentHelper {
+class DeploymentHelper {
 	constructor(configParams, deployerWallet) {
 		this.configParams = configParams
 		this.deployerWallet = deployerWallet
 		this.hre = require("hardhat")
+		this.timelockDelay = this.isMainnet() ? 3 * 86_400 : 120 // 3 days || 2 minutes
+	}
 
-		if ("mainnet" == this.configParams.targetNetwork) {
-			this.timelockDelay = 3 * 86_400 // 3 days
-		} else {
-			// mainnet
-			this.timelockDelay = 300 // 5 minutes
-		}
+	isMainnet() {
+		return "mainnet" == this.configParams.targetNetwork
 	}
 
 	async loadOrDeployCoreContracts(deploymentState) {
@@ -25,7 +21,7 @@ class MainnetDeploymentHelper {
 			return await this.loadOrDeploy(factory, name, deploymentState, false, params)
 		}
 
-		console.log("Deploying core contracts...")
+		console.log(`Deploying core contracts...`)
 
 		const activePoolFactory = await this.getFactory("ActivePool")
 		const adminContractFactory = await this.getFactory("AdminContract")
@@ -38,7 +34,9 @@ class MainnetDeploymentHelper {
 		const priceFeedFactory = await this.getFactory("PriceFeed")
 		const sortedVesselsFactory = await this.getFactory("SortedVessels")
 		const stabilityPoolFactory = await this.getFactory("StabilityPool")
-		const timelockFactory = await this.getFactory("Timelock")
+		const timelockFactory = this.isMainnet()
+			? await this.getFactory("Timelock")
+			: await this.getFactory("TimelockTester")
 		const vesselManagerFactory = await this.getFactory("VesselManager")
 		const vesselMgrOperationsFactory = await this.getFactory("VesselManagerOperations")
 
@@ -288,7 +286,7 @@ class MainnetDeploymentHelper {
 		let previousDeployment = {}
 		if (fs.existsSync(this.configParams.OUTPUT_FILE)) {
 			console.log(`Loading previous deployment from ${this.configParams.OUTPUT_FILE}...`)
-			previousDeployment = require("../" + this.configParams.OUTPUT_FILE)
+			previousDeployment = JSON.parse(fs.readFileSync(this.configParams.OUTPUT_FILE))
 		}
 		return previousDeployment
 	}
@@ -434,4 +432,4 @@ class MainnetDeploymentHelper {
 	}
 }
 
-module.exports = MainnetDeploymentHelper
+module.exports = DeploymentHelper

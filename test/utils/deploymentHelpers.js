@@ -27,24 +27,6 @@ const GRVTTokenTester = artifacts.require("./GRVTTokenTester.sol")
 const StabilityPoolTester = artifacts.require("./StabilityPoolTester.sol")
 const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
 
-// Proxy scripts
-const BorrowerOperationsScript = artifacts.require("BorrowerOperationsScript")
-const BorrowerWrappersScript = artifacts.require("BorrowerWrappersScript")
-const GRVTStakingScript = artifacts.require("GRVTStakingScript")
-const StabilityPoolScript = artifacts.require("StabilityPoolScript")
-const TokenScript = artifacts.require("TokenScript")
-
-const {
-	buildUserProxies,
-	BorrowerOperationsProxy,
-	BorrowerWrappersProxy,
-	VesselManagerProxy,
-	StabilityPoolProxy,
-	SortedVesselsProxy,
-	TokenProxy,
-	GRVTStakingProxy,
-} = require("../utils/proxyHelpers.js")
-
 /* "Gravita core" consists of all contracts in the core Gravita system.
 
 GRVT contracts consist of only those contracts related to the GRVT Token:

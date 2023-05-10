@@ -1,9 +1,11 @@
 const Decimal = require("decimal.js")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const { BNConverter } = require("../../utils/BNConverter.js")
-const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
-const GravitaMathTester = artifacts.require("./GravitaMathTester.sol")
+
+const VesselManagerTester = artifacts.require("VesselManagerTester")
+const GravitaMathTester = artifacts.require("GravitaMathTester")
+
+const { BNConverter } = require("../utils/BNConverter.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const timeValues = testHelpers.TimeValues

@@ -4,8 +4,8 @@ const BorrowerOperationsTester = artifacts.require("BorrowerOperationsTester")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
 const ERC20Mock = artifacts.require("ERC20Mock")
 
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const { dec, toBN, assertRevert } = th

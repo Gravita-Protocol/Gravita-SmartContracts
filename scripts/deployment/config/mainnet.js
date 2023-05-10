@@ -1,0 +1,37 @@
+const OUTPUT_FILE = "./scripts/deployment/output/mainnet.json"
+const GAS_PRICE = 25_000_000_000 // 25 Gwei
+const TX_CONFIRMATIONS = 3 // for mainnet
+const ETHERSCAN_BASE_URL = "https://arbiscan.io/address"
+
+const COLLATERAL_ADDRESSES = {
+	// --- Collateral ---
+	RETH_ERC20: "",
+	WETH_ERC20: "",
+	WSTETH_ERC20: "",
+	// --- Price Feed Aggregators ---
+	RETH_USD_ORACLE: "",
+	WETH_USD_ORACLE: "",
+	WSTETH_USD_ORACLE: "",
+}
+
+const GRAVITA_ADDRESSES = {
+	UPGRADES_PROXY_ADMIN: "",
+	SYSTEM_PARAMS_ADMIN: "",
+	TREASURY_WALLET: "",
+}
+
+const DEPLOY_GRVT_CONTRACTS = false
+const GRVT_BENEFICIARIES = {
+	"0x0000000000000000000000000000000000000000": 1_000_000,
+}
+
+module.exports = {
+	COLLATERAL_ADDRESSES,
+	DEPLOY_GRVT_CONTRACTS,
+	ETHERSCAN_BASE_URL,
+	GAS_PRICE,
+	GRAVITA_ADDRESSES,
+	GRVT_BENEFICIARIES,
+	OUTPUT_FILE,
+	TX_CONFIRMATIONS,
+}

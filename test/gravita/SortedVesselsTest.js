@@ -1,9 +1,9 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
-
 const SortedVessels = artifacts.require("SortedVessels")
 const SortedVesselsTester = artifacts.require("SortedVesselsTester")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec

@@ -1,8 +1,9 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-const StabilityPool = artifacts.require("StabilityPool.sol")
+
+const VesselManagerTester = artifacts.require("VesselManagerTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec

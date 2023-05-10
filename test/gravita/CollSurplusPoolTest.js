@@ -1,7 +1,7 @@
-// const { erc20.address } = require("@openzeppelin/test-helpers/src/constants")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec

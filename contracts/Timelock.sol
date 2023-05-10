@@ -42,6 +42,8 @@ contract Timelock {
 	error Timelock__TxExpired();
 	error Timelock__TxReverted();
 
+	string public constant NAME = "Timelock";
+
 	uint public constant GRACE_PERIOD = 14 days;
 	uint public constant MINIMUM_DELAY = 2 days;
 	uint public constant MAXIMUM_DELAY = 15 days;
@@ -52,7 +54,7 @@ contract Timelock {
 
 	mapping(bytes32 => bool) public queuedTransactions;
 
-	modifier isValidDelay(uint256 _delay) {
+	modifier isValidDelay(uint256 _delay) virtual {
 		if (_delay < MINIMUM_DELAY) {
 			revert Timelock__DelayMustExceedMininumDelay();
 		}

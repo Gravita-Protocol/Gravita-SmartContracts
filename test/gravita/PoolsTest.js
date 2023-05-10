@@ -1,6 +1,8 @@
 const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@nomicfoundation/hardhat-network-helpers")
+
 const StabilityPoolTester = artifacts.require("StabilityPoolTester")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
 
 contract("PoolBase", async accounts => {
 	const [token1, token2, token3] = accounts

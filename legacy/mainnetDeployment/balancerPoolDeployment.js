@@ -8,7 +8,7 @@ const { ERC20 } = require("./ABIs/ERC20.js")
 const { WETH: WETH_ABI } = require("./ABIs/WETH.js")
 const { ChainlinkAggregatorV3Interface } = require("./ABIs/ChainlinkAggregatorV3Interface.js")
 const toBigNum = ethers.BigNumber.from
-const { TestHelper: th, TimeValues: timeVals } = require("../utils/testHelpers.js")
+const { TestHelper: th, TimeValues: timeVals } = require("../../scripts/utils/testHelpers.js")
 const { dec } = th
 // Addresses are the same on all networks
 

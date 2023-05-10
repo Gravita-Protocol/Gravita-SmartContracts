@@ -6,11 +6,11 @@ const {
 	stopImpersonatingAccount,
 } = require("@nomicfoundation/hardhat-network-helpers")
 
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const FeeCollectorTester = artifacts.require("FeeCollectorTester")
+const VesselManagerTester = artifacts.require("VesselManagerTester")
 
-const FeeCollectorTester = artifacts.require("FeeCollectorTester.sol")
-const VesselManagerTester = artifacts.require("VesselManagerTester.sol")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const { dec, toBN } = th

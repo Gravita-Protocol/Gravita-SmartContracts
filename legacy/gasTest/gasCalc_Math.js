@@ -1,6 +1,6 @@
 const fs = require("fs")
-const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
+const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const testHelpers = require("../../utils/testHelpers.js")
 const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
 const GravityMathTester = artifacts.require("./GravityMathTester.sol")
 

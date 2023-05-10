@@ -1,9 +1,10 @@
-const { current } = require("@openzeppelin/test-helpers/src/balance")
-const { web3 } = require("@openzeppelin/test-helpers/src/setup")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
+
+const VesselManagerTester = artifacts.require("VesselManagerTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
+
 const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN

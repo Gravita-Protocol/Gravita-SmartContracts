@@ -1,4 +1,4 @@
-const { TestHelper: { dec } } = require("../utils/testHelpers.js")
+const { TestHelper: { dec } } = require("../../utils/testHelpers.js")
 
 const EchidnaTester = artifacts.require('EchidnaTester')
 const VesselManager = artifacts.require('VesselManager')

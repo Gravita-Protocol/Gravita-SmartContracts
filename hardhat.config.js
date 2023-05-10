@@ -1,15 +1,32 @@
+require("@nomicfoundation/hardhat-toolbox")
 require("@nomiclabs/hardhat-truffle5")
 require("@nomiclabs/hardhat-ethers")
 require("@nomiclabs/hardhat-etherscan")
 require("@openzeppelin/hardhat-upgrades")
-//require("hardhat-gas-reporter")
+require("@openzeppelin/hardhat-defender")
 require("hardhat-contract-sizer")
-require("hardhat-interface-generator")
+// require("hardhat-gas-reporter")
+// require("hardhat-interface-generator")
 require("solidity-coverage")
 require("dotenv").config()
 
 const accounts = require("./hardhatAccountsList2k.js")
 const accountsList = accounts.accountsList
+
+const { Deployer, DeploymentTarget } = require("./scripts/deployment/deployer.js")
+
+task("deploy-localhost", "Deploys contracts to Localhost").setAction(
+	async (_, hre) => await new Deployer(hre, DeploymentTarget.Localhost).run()
+)
+task("deploy-testnet-goerli", "Deploys contracts to Goerli Testnet").setAction(
+	async (_, hre) => await new Deployer(hre, DeploymentTarget.GoerliTestnet).run()
+)
+task("deploy-testnet-sepolia", "Deploys contracts to Sepolia Testnet").setAction(
+	async (_, hre) => await new Deployer(hre, DeploymentTarget.SepoliaTestnet).run()
+)
+task("deploy-mainnet", "Deploys contracts to Mainnet").setAction(
+	async (_, hre) => await new Deployer(hre, DeploymentTarget.Mainnet).run()
+)
 
 module.exports = {
 	paths: {
@@ -17,6 +34,10 @@ module.exports = {
 		tests: "./test/gravita",
 		cache: "./cache",
 		artifacts: "./artifacts",
+	},
+	defender: {
+		apiKey: process.env.DEFENDER_TEAM_API_KEY,
+		apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY,
 	},
 	solidity: {
 		compilers: [
@@ -27,7 +48,7 @@ module.exports = {
 						enabled: true,
 						runs: 200,
 					},
-				//viaIR: true,
+					//viaIR: true,
 				},
 			},
 		],
@@ -35,24 +56,29 @@ module.exports = {
 	networks: {
 		hardhat: {
 			allowUnlimitedContractSize: true,
-			accounts: accountsList,
-			gas: 10_000_000, // tx gas limit
-			gasPrice: 50_000_000_000,
+			accounts: [
+				{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: 10e18.toString() }, 
+				...accountsList
+			],
 		},
 		localhost: {
 			url: "http://localhost:8545",
-			gas: 20_000_000, // tx gas limit
+			gas: 20_000_000,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		testnet_goerli: {
+			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		testnet_sepolia: {
+			url: `${process.env.SEPOLIA_TESTNET_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		// mainnet: {
 		// 	url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
 		// 	gasPrice: process.env.GAS_PRICE ? parseInt(process.env.GAS_PRICE) : 20000000000,
 		// 	accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		// },
-		goerli: {
-			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-			gas: 30_000_000, // tx gas limit
-			accounts: [`${process.env.GOERLI_DEPLOYER_PRIVATEKEY}`],
-		},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
@@ -68,4 +94,3 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
-

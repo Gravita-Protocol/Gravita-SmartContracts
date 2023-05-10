@@ -1,5 +1,6 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
+
 const th = testHelpers.TestHelper
 
 contract("Deployment script - Sets correct contract addresses dependencies after deployment", async accounts => {
