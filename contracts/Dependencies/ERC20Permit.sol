@@ -31,7 +31,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
         _CACHED_THIS = address(this);
 	}
 
-	function _domainSeparator() internal view returns (bytes32) {
+	function domainSeparator() public view returns (bytes32) {
         if (address(this) == _CACHED_THIS && block.chainid == _CACHED_CHAIN_ID) {
             return _CACHED_DOMAIN_SEPARATOR;
         } else {
@@ -68,7 +68,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 			abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
 		);
 
-		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), _domainSeparator(), hashStruct));
+		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), domainSeparator(), hashStruct));
 
 		address signer = ECDSA.recover(_hash, v, r, s);
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
