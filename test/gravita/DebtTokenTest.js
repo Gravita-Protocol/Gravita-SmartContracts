@@ -16,9 +16,7 @@ const sign = (digest, privateKey) => {
 }
 
 const PERMIT_TYPEHASH = keccak256(
-	toUtf8Bytes(
-		"Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-	)
+	toUtf8Bytes("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 )
 
 // Returns the EIP712 hash which should be signed by the user
@@ -96,18 +94,9 @@ contract("DebtToken", async accounts => {
 
 			// mint some tokens
 			if (withProxy) {
-				await DebtTokenOriginal.unprotectedMint(
-					debtTokenTester.getProxyAddressFromUser(alice),
-					150
-				)
-				await DebtTokenOriginal.unprotectedMint(
-					debtTokenTester.getProxyAddressFromUser(bob),
-					100
-				)
-				await DebtTokenOriginal.unprotectedMint(
-					debtTokenTester.getProxyAddressFromUser(carol),
-					50
-				)
+				await DebtTokenOriginal.unprotectedMint(debtTokenTester.getProxyAddressFromUser(alice), 150)
+				await DebtTokenOriginal.unprotectedMint(debtTokenTester.getProxyAddressFromUser(bob), 100)
+				await DebtTokenOriginal.unprotectedMint(debtTokenTester.getProxyAddressFromUser(carol), 50)
 			} else {
 				await DebtTokenOriginal.unprotectedMint(alice, 150)
 				await DebtTokenOriginal.unprotectedMint(bob, 100)
@@ -172,12 +161,7 @@ contract("DebtToken", async accounts => {
 			})
 
 			it("approve(): reverts when owner param is address(0)", async () => {
-				const txPromise = debtTokenTester.callInternalApprove(
-					ZERO_ADDRESS,
-					alice,
-					dec(1000, 18),
-					{ from: bob }
-				)
+				const txPromise = debtTokenTester.callInternalApprove(ZERO_ADDRESS, alice, dec(1000, 18), { from: bob })
 				await assertAssert(txPromise)
 			})
 		}
@@ -206,9 +190,7 @@ contract("DebtToken", async accounts => {
 			assert.equal(await debtTokenTester.balanceOf(bob), 50)
 
 			// Alice tries to transfer more tokens from bob's account to carol than she's allowed
-			await expectRevert.unspecified(
-				debtTokenTester.transferFrom(bob, carol, 50, { from: alice })
-			)
+			await expectRevert.unspecified(debtTokenTester.transferFrom(bob, carol, 50, { from: alice }))
 		})
 
 		it("transfer(): increases the recipient's balance by the correct amount", async () => {
@@ -257,18 +239,14 @@ contract("DebtToken", async accounts => {
 
 			// TODO: Rewrite this test - it should check the actual debtTokenTester's balance.
 			it("sendToPool(): changes balances of Stability pool and user by the correct amounts", async () => {
-				const stabilityPool_BalanceBefore = await debtTokenTester.balanceOf(
-					stabilityPool.address
-				)
+				const stabilityPool_BalanceBefore = await debtTokenTester.balanceOf(stabilityPool.address)
 				const bob_BalanceBefore = await debtTokenTester.balanceOf(bob)
 				assert.equal(stabilityPool_BalanceBefore, 0)
 				assert.equal(bob_BalanceBefore, 100)
 
 				await debtTokenTester.unprotectedSendToPool(bob, stabilityPool.address, 75)
 
-				const stabilityPool_BalanceAfter = await debtTokenTester.balanceOf(
-					stabilityPool.address
-				)
+				const stabilityPool_BalanceAfter = await debtTokenTester.balanceOf(stabilityPool.address)
 				const bob_BalanceAfter = await debtTokenTester.balanceOf(bob)
 				assert.equal(stabilityPool_BalanceAfter, 75)
 				assert.equal(bob_BalanceAfter, 25)
@@ -279,18 +257,14 @@ contract("DebtToken", async accounts => {
 				await debtTokenTester.unprotectedMint(stabilityPool.address, 100)
 
 				/// --- TEST ---
-				const stabilityPool_BalanceBefore = await debtTokenTester.balanceOf(
-					stabilityPool.address
-				)
+				const stabilityPool_BalanceBefore = await debtTokenTester.balanceOf(stabilityPool.address)
 				const bob_BalanceBefore = await debtTokenTester.balanceOf(bob)
 				assert.equal(stabilityPool_BalanceBefore, 100)
 				assert.equal(bob_BalanceBefore, 100)
 
 				await debtTokenTester.unprotectedReturnFromPool(stabilityPool.address, bob, 75)
 
-				const stabilityPool_BalanceAfter = await debtTokenTester.balanceOf(
-					stabilityPool.address
-				)
+				const stabilityPool_BalanceAfter = await debtTokenTester.balanceOf(stabilityPool.address)
 				const bob_BalanceAfter = await debtTokenTester.balanceOf(bob)
 				assert.equal(stabilityPool_BalanceAfter, 25)
 				assert.equal(bob_BalanceAfter, 175)
@@ -307,9 +281,7 @@ contract("DebtToken", async accounts => {
 		it("decreaseAllowance(): fails trying to decrease more than previously allowed", async () => {
 			await debtTokenTester.approve(bob, dec(3, 18), { from: alice })
 			assert.equal((await debtTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
-			await expectRevert.unspecified(
-				debtTokenTester.decreaseAllowance(bob, dec(4, 18), { from: alice })
-			)
+			await expectRevert.unspecified(debtTokenTester.decreaseAllowance(bob, dec(4, 18), { from: alice }))
 			assert.equal((await debtTokenTester.allowance(alice, bob)).toString(), dec(3, 18))
 		})
 
@@ -336,7 +308,7 @@ contract("DebtToken", async accounts => {
 
 				// Get the EIP712 digest
 				const digest = getPermitDigest(
-					await debtTokenTester.DOMAIN_SEPARATOR(),
+					await debtTokenTester.domainSeparator(),
 					approve.owner,
 					approve.spender,
 					approve.value,
@@ -370,22 +342,11 @@ contract("DebtToken", async accounts => {
 				// Check that approval was successful
 				assert.equal(event.event, "Approval")
 				assert.equal(await debtTokenTester.nonces(approve.owner), 1)
-				assert.equal(
-					await debtTokenTester.allowance(approve.owner, approve.spender),
-					approve.value
-				)
+				assert.equal(await debtTokenTester.allowance(approve.owner, approve.spender), approve.value)
 
 				// Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
 				await assertRevert(
-					debtTokenTester.permit(
-						approve.owner,
-						approve.spender,
-						approve.value,
-						deadline,
-						v,
-						r,
-						s
-					),
+					debtTokenTester.permit(approve.owner, approve.spender, approve.value, deadline, v, r, s),
 					"VUSD: invalid signature"
 				)
 
@@ -415,15 +376,7 @@ contract("DebtToken", async accounts => {
 
 				const { v, r, s } = await buildPermitTx(deadline)
 
-				const tx = debtTokenTester.permit(
-					carol,
-					approve.spender,
-					approve.value,
-					deadline,
-					v,
-					hexlify(r),
-					hexlify(s)
-				)
+				const tx = debtTokenTester.permit(carol, approve.spender, approve.value, deadline, v, hexlify(r), hexlify(s))
 
 				await assertRevert(tx, "VUSD: invalid signature")
 			})
