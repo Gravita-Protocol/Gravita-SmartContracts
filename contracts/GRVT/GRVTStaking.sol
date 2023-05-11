@@ -73,7 +73,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	// If caller has a pre-existing stake, send any accumulated asset and debtToken gains to them.
 	function stake(uint256 _GRVTamount) external override nonReentrant whenNotPaused {
-		require(_GRVTamount > 0);
+		require(_GRVTamount > 0, "GRVT amount < 0");
 
 		uint256 currentStake = stakes[msg.sender];
 
@@ -184,7 +184,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		uint256 assetFeePerGRVTStaked;
 
 		if (totalGRVTStaked > 0) {
-			assetFeePerGRVTStaked = _assetFee * DECIMAL_PRECISION / totalGRVTStaked;
+			assetFeePerGRVTStaked = (_assetFee * DECIMAL_PRECISION) / totalGRVTStaked;
 		}
 
 		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerGRVTStaked;
@@ -199,7 +199,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 		uint256 feePerGRVTStaked;
 		if (totalGRVTStaked > 0) {
-			feePerGRVTStaked = _debtTokenFee * DECIMAL_PRECISION / totalGRVTStaked;
+			feePerGRVTStaked = (_debtTokenFee * DECIMAL_PRECISION) / totalGRVTStaked;
 		}
 
 		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerGRVTStaked;
@@ -220,7 +220,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function _getPendingAssetGain(address _asset, address _user) internal view returns (uint256) {
 		uint256 F_ASSET_Snapshot = snapshots[_user].F_ASSETS_Snapshot[_asset];
-		uint256 AssetGain = stakes[_user] * (F_ASSETS[_asset] - F_ASSET_Snapshot) / DECIMAL_PRECISION;
+		uint256 AssetGain = (stakes[_user] * (F_ASSETS[_asset] - F_ASSET_Snapshot)) / DECIMAL_PRECISION;
 		return AssetGain;
 	}
 
@@ -230,7 +230,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function _getPendingDebtTokenGain(address _user) internal view returns (uint256) {
 		uint256 debtTokenSnapshot = snapshots[_user].F_DEBT_TOKENS_Snapshot;
-		return stakes[_user] * (F_DEBT_TOKENS - debtTokenSnapshot) / DECIMAL_PRECISION;
+		return (stakes[_user] * (F_DEBT_TOKENS - debtTokenSnapshot)) / DECIMAL_PRECISION;
 	}
 
 	// --- Internal helper functions ---
@@ -271,3 +271,4 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		require(currentStake > 0, "GRVTStaking: User must have a non-zero stake");
 	}
 }
+
