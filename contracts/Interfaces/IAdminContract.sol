@@ -7,7 +7,6 @@ import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 
 interface IAdminContract {
-
 	// Structs ----------------------------------------------------------------------------------------------------------
 
 	struct CollateralParams {
@@ -28,6 +27,7 @@ interface IAdminContract {
 
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
+	error CollateralIsNotConfigured();
 	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
 	error AdminContract__ShortTimelockOnly();
 	error AdminContract__LongTimelockOnly();
@@ -107,3 +107,4 @@ interface IAdminContract {
 
 	function getTotalAssetDebt(address _asset) external view returns (uint256);
 }
+
