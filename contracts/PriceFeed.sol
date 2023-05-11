@@ -242,8 +242,12 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			int256 answer,
 			uint256, /* startedAt */
 			uint256 timestamp,
-			uint80 /* answeredInRound */
+			uint80 answeredInRound
 		) {
+			require(answeredInRound >= roundId, "Stale price");
+			require(answer > 0, "Chainlink answer reporting 0");
+			require(timestamp != 0, "Round not complete");
+
 			// If call to Chainlink succeeds, return the response and success = true
 			response.roundId = roundId;
 			response.answer = answer;
@@ -269,8 +273,12 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 				int256 answer,
 				uint256, /* startedAt */
 				uint256 timestamp,
-				uint80 /* answeredInRound */
+				uint80 answeredInRound
 			) {
+				require(answeredInRound >= roundId, "Stale price");
+				require(answer > 0, "Chainlink answer reporting 0");
+				require(timestamp != 0, "Round not complete");
+
 				prevResponse.roundId = roundId;
 				prevResponse.answer = answer;
 				prevResponse.timestamp = timestamp;
