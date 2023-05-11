@@ -1,6 +1,5 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -8,40 +7,33 @@ const toBN = th.toBN
 const assertRevert = th.assertRevert
 
 contract("Access Control: functions where the caller is restricted to Gravita contract(s)", async accounts => {
+
 	let contracts
 	const openVessel = async params => th.openVessel(contracts, params)
-	const [alice, bob] = accounts
+	const [alice, bob, treasury] = accounts
 
-	before(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		VesselManagerTester.setAsDeployed(contracts.vesselManager)
+	beforeEach(async () => {
 
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 10))
 
-		priceFeed = contracts.priceFeedTestnet
-		debtToken = contracts.debtToken
-		sortedVessels = contracts.sortedVessels
-		vesselManager = contracts.vesselManager
+		contracts = coreContracts
 		activePool = contracts.activePool
-		defaultPool = contracts.defaultPool
-		collSurplusPool = contracts.collSurplusPool
-		borrowerOperations = contracts.borrowerOperations
 		adminContract = contracts.adminContract
+		borrowerOperations = contracts.borrowerOperations
+		collSurplusPool = contracts.collSurplusPool
+		debtToken = contracts.debtToken
+		defaultPool = contracts.defaultPool
+		erc20 = contracts.erc20
+		priceFeed = contracts.priceFeedTestnet
+		sortedVessels = contracts.sortedVessels
 		stabilityPool = contracts.stabilityPool
+		vesselManager = contracts.vesselManager
 
 		grvtStaking = GRVTContracts.grvtStaking
 		grvtToken = GRVTContracts.grvtToken
 		communityIssuance = GRVTContracts.communityIssuance
-		erc20 = contracts.erc20
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 
 		for (account of accounts.slice(0, 10)) {
-			await erc20.mint(account, await web3.eth.getBalance(account))
-
 			await openVessel({
 				asset: erc20.address,
 				extraVUSDAmount: toBN(dec(20000, 18)),

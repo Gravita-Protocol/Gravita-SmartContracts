@@ -1,16 +1,11 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
-const getDifference = th.getDifference
-
-const VesselManagerTester = artifacts.require("VesselManagerTester")
+const { dec, toBN, getDifference } = th
 
 contract("VesselManager - Redistribution reward calculations", async accounts => {
-	const [owner, alice, bob, carol, dennis, erin, freddy, A, B, C, D, E] = accounts
+	const [owner, alice, bob, carol, dennis, erin, freddy, A, B, C, D, E, treasury] = accounts
 
 	let priceFeed
 	let debtToken
@@ -27,38 +22,19 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 	const getNetBorrowingAmount = async (debtWithFee, asset) => th.getNetBorrowingAmount(contracts, debtWithFee, asset)
 	const openVessel = async params => th.openVessel(contracts, params)
 
-	async function deployContractsFixture() {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+	beforeEach(async () => {
+		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 20))
 
-		priceFeed = contracts.priceFeedTestnet
+		contracts = coreContracts
+		activePool = contracts.activePool
+		borrowerOperations = contracts.borrowerOperations
 		debtToken = contracts.debtToken
+		defaultPool = contracts.defaultPool
+		erc20 = contracts.erc20
+		priceFeed = contracts.priceFeedTestnet
 		sortedVessels = contracts.sortedVessels
 		vesselManager = contracts.vesselManager
 		vesselManagerOperations = contracts.vesselManagerOperations
-		nameRegistry = contracts.nameRegistry
-		activePool = contracts.activePool
-		defaultPool = contracts.defaultPool
-		functionCaller = contracts.functionCaller
-		borrowerOperations = contracts.borrowerOperations
-		erc20 = contracts.erc20
-
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			index++
-
-			if (index >= 20) break
-		}
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-	}
-
-	beforeEach(async () => {
-		await loadFixture(deployContractsFixture)
 	})
 
 	it("redistribution: A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
@@ -784,7 +760,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const addedColl = toBN(dec(1, "ether"))
 		await borrowerOperations.addColl(erc20.address, addedColl, bob, bob, { from: bob })
 
-		// Alice withdraws 
+		// Alice withdraws
 		await borrowerOperations.withdrawDebtTokens(
 			erc20.address,
 			await getNetBorrowingAmount(A_totalDebt_Asset, erc20.address),
@@ -1321,7 +1297,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			from: bob,
 		})
 
-		// Alice withdraws 
+		// Alice withdraws
 		await borrowerOperations.withdrawDebtTokens(
 			erc20.address,
 			await getNetBorrowingAmount(A_totalDebt_Asset, erc20.address),

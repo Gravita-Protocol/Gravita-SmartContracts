@@ -3,8 +3,6 @@ const testHelpers = require("../../utils/testHelpers.js")
 const th = testHelpers.TestHelper
 
 contract("Deployment script - Sets correct contract addresses dependencies after deployment", async accounts => {
-	let coreContracts
-	let GRVTContracts
 
 	let activePool
 	let adminContract
@@ -27,8 +25,8 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 	let grvtToken
 
 	before(async () => {
-		coreContracts = await deploymentHelper.deployGravitaCore()
-		GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+
+		const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(accounts[0])
 
 		activePool = coreContracts.activePool
 		adminContract = coreContracts.adminContract
@@ -37,7 +35,6 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		debtToken = coreContracts.debtToken
 		defaultPool = coreContracts.defaultPool
 		feeCollector = coreContracts.feeCollector
-		functionCaller = coreContracts.functionCaller
 		gasPool = coreContracts.gasPool
 		priceFeed = coreContracts.priceFeedTestnet
 		sortedVessels = coreContracts.sortedVessels
@@ -50,9 +47,6 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		communityIssuance = GRVTContracts.communityIssuance
 		grvtStaking = GRVTContracts.grvtStaking
 		grvtToken = GRVTContracts.grvtToken
-
-		await deploymentHelper.connectCoreContracts(coreContracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, coreContracts)
 	})
 
 	describe("Core Contracts", async () => {

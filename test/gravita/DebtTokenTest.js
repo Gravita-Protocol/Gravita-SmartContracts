@@ -61,22 +61,15 @@ contract("DebtToken", async accounts => {
 	let tokenName
 	let tokenVersion
 
-	const testCorpus = ({ withProxy = false }) => {
+	const testCorpus = () => {
 		beforeEach(async () => {
-			const contracts = await deploymentHelper.deployTesterContractsHardhat()
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
 
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+			const { coreContracts: contracts } = await deploymentHelper.deployTestContracts(accounts[0])
 
 			erc20 = contracts.erc20
 			stabilityPool = await contracts.stabilityPool
 
 			DebtTokenOriginal = contracts.debtToken
-			if (withProxy) {
-				const users = [alice, bob, carol, dennis]
-				await deploymentHelper.deployProxyScripts(contracts, GRVTContracts, owner, users)
-			}
 
 			debtTokenTester = contracts.debtToken
 			debtTokenWhitelistedTester = contracts.debtTokenWhitelistedTester
@@ -93,16 +86,9 @@ contract("DebtToken", async accounts => {
 			tokenVersion = 1
 			tokenName = await DebtTokenOriginal.name()
 
-			// mint some tokens
-			if (withProxy) {
-				await DebtTokenOriginal.unprotectedMint(debtTokenTester.getProxyAddressFromUser(alice), 150)
-				await DebtTokenOriginal.unprotectedMint(debtTokenTester.getProxyAddressFromUser(bob), 100)
-				await DebtTokenOriginal.unprotectedMint(debtTokenTester.getProxyAddressFromUser(carol), 50)
-			} else {
-				await DebtTokenOriginal.unprotectedMint(alice, 150)
-				await DebtTokenOriginal.unprotectedMint(bob, 100)
-				await DebtTokenOriginal.unprotectedMint(carol, 50)
-			}
+			await DebtTokenOriginal.unprotectedMint(alice, 150)
+			await DebtTokenOriginal.unprotectedMint(bob, 100)
+			await DebtTokenOriginal.unprotectedMint(carol, 50)
 		})
 
 		it("balanceOf(): gets the balance of the account", async () => {

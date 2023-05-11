@@ -55,6 +55,12 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
+	function initialize() public initializer {
+		__Ownable_init();
+	}
+	
+	// Dependency setter ------------------------------------------------------------------------------------------------
+
 	function setAddresses(
 		address _vesselManagerAddress,
 		address _sortedVesselsAddress,
@@ -62,8 +68,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		address _collSurplusPoolAddress,
 		address _debtTokenAddress,
 		address _adminContractAddress
-	) external initializer {
-		__Ownable_init();
+	) external onlyOwner {
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -333,11 +338,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		external
 		view
 		override
-		returns (
-			address firstRedemptionHint,
-			uint256 partialRedemptionHintNewICR,
-			uint256 truncatedDebtTokenAmount
-		)
+		returns (address firstRedemptionHint, uint256 partialRedemptionHintNewICR, uint256 truncatedDebtTokenAmount)
 	{
 		ISortedVessels sortedVesselsCached = sortedVessels;
 
@@ -418,16 +419,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		uint256 _CR,
 		uint256 _numTrials,
 		uint256 _inputRandomSeed
-	)
-		external
-		view
-		override
-		returns (
-			address hintAddress,
-			uint256 diff,
-			uint256 latestRandomSeed
-		)
-	{
+	) external view override returns (address hintAddress, uint256 diff, uint256 latestRandomSeed) {
 		uint256 arrayLength = vesselManager.getVesselOwnersCount(_asset);
 
 		if (arrayLength == 0) {
@@ -570,11 +562,10 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		}
 	}
 
-	function _addLiquidationValuesToTotals(LiquidationTotals memory oldTotals, LiquidationValues memory singleLiquidation)
-		internal
-		pure
-		returns (LiquidationTotals memory newTotals)
-	{
+	function _addLiquidationValuesToTotals(
+		LiquidationTotals memory oldTotals,
+		LiquidationValues memory singleLiquidation
+	) internal pure returns (LiquidationTotals memory newTotals) {
 		// Tally all the values with their respective running totals
 		newTotals.totalCollGasCompensation = oldTotals.totalCollGasCompensation + singleLiquidation.collGasCompensation;
 		newTotals.totalDebtTokenGasCompensation =
@@ -863,12 +854,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	)
 		internal
 		pure
-		returns (
-			uint256 debtToOffset,
-			uint256 collToSendToSP,
-			uint256 debtToRedistribute,
-			uint256 collToRedistribute
-		)
+		returns (uint256 debtToOffset, uint256 collToSendToSP, uint256 debtToRedistribute, uint256 collToRedistribute)
 	{
 		if (_debtTokenInStabPool > 0) {
 			/*
@@ -882,7 +868,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 			 *
 			 */
 			debtToOffset = GravitaMath._min(_debt, _debtTokenInStabPool);
-			collToSendToSP = _coll * debtToOffset / _debt;
+			collToSendToSP = (_coll * debtToOffset) / _debt;
 			debtToRedistribute = _debt - debtToOffset;
 			collToRedistribute = _coll - collToSendToSP;
 		} else {
@@ -904,7 +890,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	) internal view returns (LiquidationValues memory singleLiquidation) {
 		singleLiquidation.entireVesselDebt = _entireVesselDebt;
 		singleLiquidation.entireVesselColl = _entireVesselColl;
-		uint256 cappedCollPortion = _entireVesselDebt * adminContract.getMcr(_asset) / _price;
+		uint256 cappedCollPortion = (_entireVesselDebt * adminContract.getMcr(_asset)) / _price;
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, cappedCollPortion);
 		singleLiquidation.debtTokenGasCompensation = adminContract.getDebtTokenGasCompensation(_asset);

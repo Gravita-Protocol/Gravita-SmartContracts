@@ -43,13 +43,18 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		_;
 	}
 
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+	}
+
 	// --- Functions ---
 	function setAddresses(
 		address _grvtTokenAddress,
 		address _stabilityPoolAddress,
 		address _adminContract
-	) external initializer {
-		__Ownable_init();
+	) external onlyOwner {
 		adminContract = _adminContract;
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -66,21 +71,14 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 	function removeFundFromStabilityPool(uint256 _fundToRemove) external onlyOwner {
 		uint256 newCap = GRVTSupplyCap - _fundToRemove;
-		require(
-			totalGRVTIssued <= newCap,
-			"CommunityIssuance: Stability Pool doesn't have enough supply."
-		);
+		require(totalGRVTIssued <= newCap, "CommunityIssuance: Stability Pool doesn't have enough supply.");
 
 		GRVTSupplyCap -= _fundToRemove;
 
 		grvtToken.safeTransfer(msg.sender, _fundToRemove);
 	}
 
-	function addFundToStabilityPoolFrom(uint256 _assignedSupply, address _spender)
-		external
-		override
-		isController
-	{
+	function addFundToStabilityPoolFrom(uint256 _assignedSupply, address _spender) external override isController {
 		_addFundToStabilityPoolFrom(_assignedSupply, _spender);
 	}
 
@@ -121,11 +119,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		return totalDistribuedSinceBeginning;
 	}
 
-	function sendGRVT(address _account, uint256 _GRVTamount)
-		external
-		override
-		onlyStabilityPool
-	{
+	function sendGRVT(address _account, uint256 _GRVTamount) external override onlyStabilityPool {
 		uint256 balanceGRVT = grvtToken.balanceOf(address(this));
 		uint256 safeAmount = balanceGRVT >= _GRVTamount ? _GRVTamount : balanceGRVT;
 
