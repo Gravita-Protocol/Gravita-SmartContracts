@@ -162,8 +162,9 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 		// Set the vessel struct's properties
 		contractsCache.vesselManager.setVesselStatus(vars.asset, msg.sender, 1); // Vessel Status 1 = Active
-		contractsCache.vesselManager.increaseVesselColl(vars.asset, msg.sender, _assetAmount);
-		contractsCache.vesselManager.increaseVesselDebt(vars.asset, msg.sender, vars.compositeDebt);
+		uint256 newColl = contractsCache.vesselManager.increaseVesselColl(vars.asset, msg.sender, _assetAmount);
+		uint256 newDebt = contractsCache.vesselManager.increaseVesselDebt(vars.asset, msg.sender, vars.compositeDebt);
+		// @audit - Do some checking with this returned data to make sure everything is successful
 
 		contractsCache.vesselManager.updateVesselRewardSnapshots(vars.asset, msg.sender);
 		vars.stake = contractsCache.vesselManager.updateStakeAndTotalStakes(vars.asset, msg.sender);
@@ -446,7 +447,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	function _getUSDValue(uint256 _coll, uint256 _price) internal pure returns (uint256) {
-		return _price * _coll / DECIMAL_PRECISION;
+		return (_price * _coll) / DECIMAL_PRECISION;
 	}
 
 	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
@@ -773,3 +774,4 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		return _getCompositeDebt(_asset, _debt);
 	}
 }
+

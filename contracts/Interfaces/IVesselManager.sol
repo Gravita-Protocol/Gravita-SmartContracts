@@ -195,7 +195,7 @@ interface IVesselManager is IGravitaBase {
 		uint256 _assetDrawn,
 		uint256 _price,
 		uint256 _totalDebtTokenSupply
-	) external returns (uint256);
+	) external;
 
 	function getRedemptionFee(address _asset, uint256 _assetDraw) external view returns (uint256);
 
@@ -232,3 +232,4 @@ interface IVesselManager is IGravitaBase {
 		uint256 _assetAmount
 	) external;
 }
+
