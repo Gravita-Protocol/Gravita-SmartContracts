@@ -446,7 +446,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	function _getUSDValue(uint256 _coll, uint256 _price) internal pure returns (uint256) {
-		return _price * _coll / DECIMAL_PRECISION;
+		return (_price * _coll) / DECIMAL_PRECISION;
 	}
 
 	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
@@ -773,3 +773,4 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		return _getCompositeDebt(_asset, _debt);
 	}
 }
+
