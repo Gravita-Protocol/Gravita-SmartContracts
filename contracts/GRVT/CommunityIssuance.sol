@@ -53,10 +53,14 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		adminContract = _adminContract;
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
+
+		emit AddressesChanged(_adminContract, _stabilityPoolAddress, _adminContract);
 	}
 
 	function setAdminContract(address _admin) external onlyOwner {
 		require(_admin != address(0));
+
+		emit AdminContractChanged(_admin, adminContract);
 		adminContract = _admin;
 	}
 
@@ -66,21 +70,14 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 	function removeFundFromStabilityPool(uint256 _fundToRemove) external onlyOwner {
 		uint256 newCap = GRVTSupplyCap - _fundToRemove;
-		require(
-			totalGRVTIssued <= newCap,
-			"CommunityIssuance: Stability Pool doesn't have enough supply."
-		);
+		require(totalGRVTIssued <= newCap, "CommunityIssuance: Stability Pool doesn't have enough supply.");
 
 		GRVTSupplyCap -= _fundToRemove;
 
 		grvtToken.safeTransfer(msg.sender, _fundToRemove);
 	}
 
-	function addFundToStabilityPoolFrom(uint256 _assignedSupply, address _spender)
-		external
-		override
-		isController
-	{
+	function addFundToStabilityPoolFrom(uint256 _assignedSupply, address _spender) external override isController {
 		_addFundToStabilityPoolFrom(_assignedSupply, _spender);
 	}
 
@@ -121,11 +118,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		return totalDistribuedSinceBeginning;
 	}
 
-	function sendGRVT(address _account, uint256 _GRVTamount)
-		external
-		override
-		onlyStabilityPool
-	{
+	function sendGRVT(address _account, uint256 _GRVTamount) external override onlyStabilityPool {
 		uint256 balanceGRVT = grvtToken.balanceOf(address(this));
 		uint256 safeAmount = balanceGRVT >= _GRVTamount ? _GRVTamount : balanceGRVT;
 
@@ -140,3 +133,4 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		grvtDistribution = _weeklyReward / DISTRIBUTION_DURATION;
 	}
 }
+

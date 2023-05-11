@@ -5,6 +5,12 @@ pragma solidity 0.8.19;
 interface ICommunityIssuance {
 	// --- Events ---
 
+	event AddressesChanged(
+		address indexed newGrvtTokenAddress,
+		address indexed newStabilityPoolAddress,
+		address indexed newAdminContract
+	);
+	event AdminContractChanged(address indexed oldAdminContract, address indexed newAdminContract);
 	event TotalGRVTIssuedUpdated(uint256 _totalGRVTIssued);
 
 	// --- Functions ---
@@ -19,3 +25,4 @@ interface ICommunityIssuance {
 
 	function setWeeklyGrvtDistribution(uint256 _weeklyReward) external;
 }
+
