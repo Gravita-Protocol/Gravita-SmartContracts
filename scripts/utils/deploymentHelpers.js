@@ -108,8 +108,7 @@ class DeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeed.address,
-			contracts.shortTimelock.address,
-			contracts.longTimelock.address,
+			contracts.shortTimelock.address
 		])
 
 		await this.setAddresses("BorrowerOperations", contracts.borrowerOperations, [

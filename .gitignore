@@ -1,27 +1,28 @@
 node_modules
 out
 
-#Hardhat files
+# Hardhat files
 cache
 artifacts
 build/contracts
 bin
 
-#This shouldn't be needed 
-mainnetDeployment/localForkDeploymentOutput.json
+# Deployment script localhost cache
+scripts/deployment/output/localhost.json
+
+# https://docs.openzeppelin.com/upgrades-plugins/1.x/network-files
+.openzeppelin/unknown-*.json
 
 .secret
 
-#IDEs
+# IDEs
 .idea
 .vscode
 
 
-#FOLLOWING ARE FROM THE FORK -- Waiting for cleanup
+# FOLLOWING ARE FROM THE FORK -- Waiting for cleanup
 
 secrets.js
-# Ethereum accounts for testing
-/accountsList.js 
 
 # Exported function gas costs and test outputs
 /gasTest/outputs
@@ -50,9 +51,6 @@ __pycache__
 build/
 reports/
 tests/simulation.csv
-
-# OpenZeppelin
-.openzeppelin/unknown-31337.json
 
 # Forge
 build
