@@ -5,6 +5,7 @@ import "./Interfaces/ISortedVessels.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /*
  * A sorted doubly linked list with nodes sorted in descending order.
@@ -39,7 +40,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedVessels is OwnableUpgradeable, ISortedVessels { 
+contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels { 
 
 	string public constant NAME = "SortedVessels";
 
@@ -70,6 +71,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 	}
@@ -449,4 +451,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			"SortedVessels: Caller is neither BO nor VesselM"
 		);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

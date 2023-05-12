@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -20,7 +21,7 @@ import "./Interfaces/IStabilityPool.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
+contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "ActivePool";
@@ -87,7 +88,7 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 	) external initializer {
 		__Ownable_init();
 		__ReentrancyGuard_init();
-
+		__UUPSUpgradeable_init();
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
@@ -156,4 +157,10 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		assetsBalances[_asset] = newBalance;
 		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

@@ -9,7 +9,7 @@ import "./Dependencies/GravitaBase.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
 
-contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBase {
+contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 
 	// Constants ------------------------------------------------------------------------------------------------------
 
@@ -131,6 +131,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		address _adminContractAddress
 	) external initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 		borrowerOperations = _borrowerOperationsAddress;
 		vesselManagerOperations = _vesselManagerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -757,4 +758,10 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		}
 		return newDebt;
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

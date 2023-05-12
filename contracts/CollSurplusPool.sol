@@ -4,11 +4,12 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 
-contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
+contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CollSurplusPool";
@@ -32,6 +33,7 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 		address _vesselManagerOperationsAddress
 	) external initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
@@ -103,6 +105,11 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 	function _requireCallerIsActivePool() internal view {
 		require(msg.sender == activePoolAddress, "CollSurplusPool: Caller is not Active Pool");
 	}
+	
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
 
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
 

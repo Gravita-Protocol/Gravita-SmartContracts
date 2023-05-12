@@ -10,7 +10,7 @@ import "./Interfaces/IDefaultPool.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
 
-contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpgradeable, GravitaBase {
+contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
 	uint256 public constant PERCENTAGE_PRECISION = 1000;
@@ -66,6 +66,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 		address _adminContractAddress
 	) external initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -1017,4 +1018,10 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 		return singleRedemption;
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

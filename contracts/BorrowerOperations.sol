@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.19;
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -15,7 +15,7 @@ import "./Interfaces/IStabilityPool.sol";
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
-contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowerOperations {
+contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgradeable, IBorrowerOperations {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "BorrowerOperations";
@@ -99,6 +99,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 		address _adminContractAddress
 	) external initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();		
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;
@@ -773,4 +774,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 	function getCompositeDebt(address _asset, uint256 _debt) external view override returns (uint256) {
 		return _getCompositeDebt(_asset, _debt);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

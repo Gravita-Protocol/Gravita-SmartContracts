@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IDefaultPool.sol";
@@ -12,7 +13,7 @@ import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ICommunityIssuance.sol";
 import "./Interfaces/IAdminContract.sol";
 
-contract AdminContract is IAdminContract, ProxyAdmin {
+contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "AdminContract";
@@ -351,4 +352,10 @@ contract AdminContract is IAdminContract, ProxyAdmin {
 	function _exists(address _collateral) internal view {
 		require(collateralParams[_collateral].mcr != 0, "collateral does not exist");
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
