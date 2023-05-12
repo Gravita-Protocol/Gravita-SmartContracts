@@ -124,6 +124,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+		__ReentrancyGuard_init();
 	}
 	
 	// Dependency setter ------------------------------------------------------------------------------------------------

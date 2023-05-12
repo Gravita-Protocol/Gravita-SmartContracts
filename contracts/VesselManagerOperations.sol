@@ -61,6 +61,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+		__ReentrancyGuard_init();
 	}
 	
 	// Dependency setter ------------------------------------------------------------------------------------------------
