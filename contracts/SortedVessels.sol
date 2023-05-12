@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 import "./Interfaces/ISortedVessels.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
