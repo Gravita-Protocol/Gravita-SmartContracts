@@ -143,7 +143,7 @@ class DeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeedTestnet.address,
-			contracts.shortTimelock.address,
+			contracts.shortTimelock.address
 		)
 
 		await contracts.borrowerOperations.setAddresses(
@@ -211,13 +211,13 @@ class DeploymentHelper {
 			contracts.adminContract.address
 		)
 
-		await contracts.adminContract.addNewCollateral(EMPTY_ADDRESS, dec(30, 18), 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18, false)
+		await contracts.adminContract.addNewCollateral(EMPTY_ADDRESS, dec(30, 18), 18)
+		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18)
+		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18)
 
-		await contracts.adminContract.setActive(EMPTY_ADDRESS, true)
-		await contracts.adminContract.setActive(contracts.erc20.address, true)
-		await contracts.adminContract.setActive(contracts.erc20B.address, true)
+		await contracts.adminContract.setIsActive(EMPTY_ADDRESS, true)
+		await contracts.adminContract.setIsActive(contracts.erc20.address, true)
+		await contracts.adminContract.setIsActive(contracts.erc20B.address, true)
 	}
 
 	/**
@@ -258,36 +258,36 @@ class DeploymentHelper {
 		await GRVTContracts.communityIssuance.setWeeklyGrvtDistribution(weeklyReward, { from: treasuryAddress })
 
 		// Set configs (since the tests have been designed with it)
+		const defaultFee = (0.005e18).toString() // 0.5%
 		await coreContracts.adminContract.setCollateralParameters(
 			EMPTY_ADDRESS,
-			"1100000000000000000",
-			"1500000000000000000",
-			dec(300, 18),
-			100,
-			50,
-			50,
-			dec(1000000, 18)
+			defaultFee, // borrowingFee
+			(1.5e18).toString(), // ccr
+			(1.1e18).toString(), // mcr
+			dec(300, 18), // minNetDebt
+			dec(1_000_000, 18), // mintCap
+			100, // percentDivisor
+			defaultFee // redemptionFeeFloor
 		)
-
 		await coreContracts.adminContract.setCollateralParameters(
 			coreContracts.erc20.address,
-			"1100000000000000000",
-			"1500000000000000000",
-			dec(1800, 18),
-			200,
-			50,
-			50,
-			"10000000000000000000000000000"
+			defaultFee, // borrowingFee
+			(1.5e18).toString(), // ccr
+			(1.1e18).toString(), // mcr
+			dec(1_800, 18), // minNetDebt
+			dec(10_000_000_000, 18), // mintCap
+			200, // percentDivisor
+			defaultFee // redemptionFeeFloor
 		)
 		await coreContracts.adminContract.setCollateralParameters(
 			coreContracts.erc20B.address,
-			"1100000000000000000",
-			"1500000000000000000",
-			dec(1800, 18),
-			200,
-			50,
-			50,
-			"10000000000000000000000000000"
+			defaultFee, // borrowingFee
+			(1.5e18).toString(), // ccr
+			(1.1e18).toString(), // mcr
+			dec(1_800, 18), // minNetDebt
+			dec(10_000_000_000, 18), // mintCap
+			200, // percentDivisor
+			defaultFee // redemptionFeeFloor
 		)
 	}
 }
