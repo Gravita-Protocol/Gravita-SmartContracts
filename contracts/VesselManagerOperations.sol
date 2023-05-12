@@ -2,13 +2,15 @@
 
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+
 import "./Dependencies/GravitaBase.sol";
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IDefaultPool.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
 
-contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
+contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
 	uint256 public constant PERCENTAGE_PRECISION = 1000;
@@ -98,7 +100,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	 * Liquidate a sequence of vessels. Closes a maximum number of n under-collateralized Vessels,
 	 * starting from the one with the lowest collateral ratio in the system, and moving upwards.
 	 */
-	function liquidateVessels(address _asset, uint256 _n) external override {
+	function liquidateVessels(address _asset, uint256 _n) external override nonReentrant {
 		LiquidationContractsCache memory contractsCache = LiquidationContractsCache({
 			activePool: adminContract.activePool(),
 			defaultPool: adminContract.defaultPool(),
@@ -161,7 +163,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	/*
 	 * Attempt to liquidate a custom list of vessels provided by the caller.
 	 */
-	function batchLiquidateVessels(address _asset, address[] memory _vesselArray) public override {
+	function batchLiquidateVessels(address _asset, address[] memory _vesselArray) public override nonReentrant {
 		if (_vesselArray.length == 0 || _vesselArray.length > BATCH_SIZE_LIMIT) {
 			revert VesselManagerOperations__InvalidArraySize();
 		}

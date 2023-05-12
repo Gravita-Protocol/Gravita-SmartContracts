@@ -427,7 +427,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	 * @param _asset token address
 	 * @param _amountAdded token amount as uint256
 	 */
-	function offset(uint256 _debtToOffset, address _asset, uint256 _amountAdded) external {
+	function offset(
+		uint256 _debtToOffset,
+		address _asset,
+		uint256 _amountAdded
+	) external nonReentrant {
 		_requireCallerIsVesselManager();
 		uint256 cachedTotalDebtTokenDeposits = totalDebtTokenDeposits; // cached to save an SLOAD
 		if (cachedTotalDebtTokenDeposits == 0 || _debtToOffset == 0) {
