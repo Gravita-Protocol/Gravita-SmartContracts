@@ -12,15 +12,10 @@ const { ecsign } = require("ethereumjs-util")
 // from https://github.com/liquity/dev/blob/main/packages/contracts/hardhatAccountsList2k.js#L3
 
 const th = testHelpers.TestHelper
-const toBN = th.toBN
-const dec = th.dec
-
-const ZERO_ADDRESS = th.ZERO_ADDRESS
-const assertRevert = th.assertRevert
+const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
 
 contract("GRVT Token", async accounts => {
-	const [owner, A, B, C, D] = accounts
-	const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
+	const [owner, A, B, C, D, treasury] = accounts
 
 	// Create the approval tx data, for use in permit()
 	const approve = {
@@ -31,7 +26,6 @@ contract("GRVT Token", async accounts => {
 
 	const A_PrivateKey = "0xeaa445c85f7b438dEd6e831d06a4eD0CEBDc2f8527f84Fcda6EBB5fCfAd4C0e9"
 
-	let contracts
 	let grvtTokenTester
 	let grvtStaking
 
@@ -100,8 +94,8 @@ contract("GRVT Token", async accounts => {
 	}
 
 	beforeEach(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+
+		const { GRVTContracts } = await deploymentHelper.deployTestContracts(treasury)
 
 		grvtStaking = GRVTContracts.grvtStaking
 		grvtTokenTester = GRVTContracts.grvtToken
@@ -110,9 +104,6 @@ contract("GRVT Token", async accounts => {
 		tokenName = await grvtTokenTester.name()
 		tokenVersion = 1
 		chainId = await grvtTokenTester.getChainId()
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 	})
 
 	it("balanceOf(): gets the balance of the account", async () => {

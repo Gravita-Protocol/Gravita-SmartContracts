@@ -1,11 +1,8 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
-const assertRevert = th.assertRevert
+const { dec, toBN, assertRevert } = th
 const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
 
@@ -36,7 +33,6 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		freddy,
 		greta,
 		harry,
-		ida,
 		whale,
 		defaulter_1,
 		defaulter_2,
@@ -51,63 +47,46 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		G,
 		H,
 		I,
+		treasury
 	] = accounts
 
-	const [bountyAddress, lpRewardsAddress, multisig] = accounts.slice(997, 1000)
+	let contracts
 
-	let priceFeed
-	let debtToken
-	let sortedVessels
-	let vesselManager
-	let vesselManagerOperations
 	let activePool
-	let stabilityPoolERC20
-	let defaultPool
-	let functionCaller
 	let borrowerOperations
 	let collSurplusPool
+	let debtToken
+	let defaultPool
 	let erc20
-
-	let contracts
+	let priceFeed
+	let sortedVessels
+	let stabilityPoolERC20
+	let vesselManager
+	let vesselManagerOperations
 
 	let REDEMPTION_SOFTENING_PARAM
 
 	const openVessel = async params => th.openVessel(contracts, params)
 	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
 
-	async function deployContractsFixture() {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
+	beforeEach(async () => {
 
-		priceFeed = contracts.priceFeedTestnet
-		debtToken = contracts.debtToken
-		sortedVessels = contracts.sortedVessels
-		vesselManager = contracts.vesselManager
-		vesselManagerOperations = contracts.vesselManagerOperations
+		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 40))
+		contracts = coreContracts
+
 		activePool = contracts.activePool
-		defaultPool = contracts.defaultPool
-		functionCaller = contracts.functionCaller
 		borrowerOperations = contracts.borrowerOperations
 		collSurplusPool = contracts.collSurplusPool
 		erc20 = contracts.erc20
+		debtToken = contracts.debtToken
+		defaultPool = contracts.defaultPool
+		priceFeed = contracts.priceFeedTestnet
+		sortedVessels = contracts.sortedVessels
 		stabilityPoolERC20 = contracts.stabilityPool
-
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			if (++index >= 40) break
-		}
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		vesselManager = contracts.vesselManager
+		vesselManagerOperations = contracts.vesselManagerOperations
 
 		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
-	}
-
-	beforeEach(async () => {
-		await loadFixture(deployContractsFixture)
 	})
 
 	it("checkRecoveryMode(): Returns true if TCR falls below CCR", async () => {

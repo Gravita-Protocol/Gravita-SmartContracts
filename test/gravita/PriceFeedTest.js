@@ -17,9 +17,8 @@ const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
 const WstEth2EthPriceAggregator = artifacts.require("WstEth2EthPriceAggregator")
 
-const testHelpers = require("../../utils/testHelpers.js")
-const th = testHelpers.TestHelper
-const { dec, assertRevert, toBN } = th
+const { TestHelper } = require("../../utils/testHelpers.js")
+const { dec, assertRevert, toBN, getLatestBlockTimestamp, fastForwardTime } = TestHelper
 
 const MAX_PRICE_DEVIATION_BETWEEN_ROUNDS = dec(5, 17) // 0.5 ether
 const DEFAULT_PRICE = dec(100, 18)
@@ -62,22 +61,14 @@ contract("PriceFeed", async accounts => {
 
 	beforeEach(async () => {
 		priceFeedTestnet = await PriceFeedTestnet.new()
-		PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
-
 		priceFeed = await PriceFeed.new()
-		PriceFeed.setAsDeployed(priceFeed)
-
 		mockChainlink = await MockChainlink.new()
-		MockChainlink.setAsDeployed(mockChainlink)
-
 		adminContract = await AdminContract.new()
-		AdminContract.setAsDeployed(adminContract)
-
 		erc20 = await ERC20Mock.new("MOCK", "MOCK", 18)
-		ERC20Mock.setAsDeployed(erc20)
+
+		await priceFeed.initialize()
 
 		timelock = await Timelock.new(86400 * 3)
-		Timelock.setAsDeployed(timelock)
 		setBalance(timelock.address, 1e18)
 
 		// Set Chainlink latest and prev roundId's to non-zero
@@ -91,7 +82,7 @@ contract("PriceFeed", async accounts => {
 		await mockChainlink.setDecimals(8)
 
 		// Set mock price updateTimes to very recent
-		const now = await th.getLatestBlockTimestamp(web3)
+		const now = await getLatestBlockTimestamp(web3)
 		await mockChainlink.setUpdateTime(now)
 	})
 
@@ -137,7 +128,7 @@ contract("PriceFeed", async accounts => {
 			await erc20MockChainlink.setLatestRoundId(3)
 			await erc20MockChainlink.setPrevRoundId(2)
 			await erc20MockChainlink.setDecimals(18)
-			await erc20MockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
+			await erc20MockChainlink.setUpdateTime(await getLatestBlockTimestamp(web3))
 			await setOracle(erc20.address, erc20MockChainlink.address, true)
 			await priceFeed.fetchPrice(ZERO_ADDRESS)
 			await priceFeed.fetchPrice(erc20.address)
@@ -163,10 +154,15 @@ contract("PriceFeed", async accounts => {
 		it("fixed price aggregator", async () => {
 			await setAddressesAndOracle()
 			const one_to_one_oracle = await FixedPriceAggregator.new(1e8)
-			await priceFeed.setOracle(erc20.address, one_to_one_oracle.address, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isEthIndexed = false)
+			await priceFeed.setOracle(
+				erc20.address,
+				one_to_one_oracle.address,
+				MAX_PRICE_DEVIATION_BETWEEN_ROUNDS,
+				(isEthIndexed = false)
+			)
 			await priceFeed.fetchPrice(erc20.address)
 			const price = (await priceFeed.priceRecords(erc20.address)).scaledPrice
-			assert.equal(price.toString(), 1e18.toString())
+			assert.equal(price.toString(), (1e18).toString())
 		})
 
 		it("wstETH price via custom aggregator", async () => {
@@ -182,7 +178,7 @@ contract("PriceFeed", async accounts => {
 			await eth_to_usd_mockChainlink.setPrevPrice(ETH_TO_USD)
 			await eth_to_usd_mockChainlink.setLatestRoundId(3)
 			await eth_to_usd_mockChainlink.setPrevRoundId(2)
-			await eth_to_usd_mockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
+			await eth_to_usd_mockChainlink.setUpdateTime(await getLatestBlockTimestamp(web3))
 
 			const stEth_to_eth_mockChainlink = await MockChainlink.new()
 			await stEth_to_eth_mockChainlink.setDecimals(18)
@@ -190,7 +186,7 @@ contract("PriceFeed", async accounts => {
 			await stEth_to_eth_mockChainlink.setPrevPrice(STETH_TO_ETH)
 			await stEth_to_eth_mockChainlink.setLatestRoundId(3)
 			await stEth_to_eth_mockChainlink.setPrevRoundId(2)
-			await stEth_to_eth_mockChainlink.setUpdateTime(await th.getLatestBlockTimestamp(web3))
+			await stEth_to_eth_mockChainlink.setUpdateTime(await getLatestBlockTimestamp(web3))
 
 			const mock_wstETH = await MockWstETH.new()
 			mock_wstETH.setStETHPerToken(WSTETH_TO_STETH)
@@ -359,7 +355,7 @@ contract("PriceFeed", async accounts => {
 		assert.equal(feedWorkingBefore, true)
 		await mockChainlink.setPrice(dec(1234, 8))
 		await mockChainlink.setPrevPrice(dec(1234, 8))
-		await th.fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
+		await fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const feedWorkingAfter = (await priceFeed.oracleRecords(ZERO_ADDRESS)).isFeedWorking
 		assert.equal(feedWorkingAfter, true)
@@ -371,7 +367,7 @@ contract("PriceFeed", async accounts => {
 		assert.equal(feedWorkingBefore, true)
 		await mockChainlink.setPrice(dec(1234, 8))
 		await mockChainlink.setPrevPrice(dec(1234, 8))
-		await th.fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
+		await fastForwardTime(10740, web3.currentProvider) // fast forward 2hrs 59 minutes
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 		const price = await getPrice()
 		assert.equal(price, dec(1234, 18))
@@ -475,4 +471,3 @@ contract("PriceFeed", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
-

@@ -1,7 +1,3 @@
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-
-const BorrowerOperationsTester = artifacts.require("BorrowerOperationsTester")
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 const ERC20Mock = artifacts.require("ERC20Mock")
 
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
@@ -50,18 +46,12 @@ contract("BorrowerOperations", async accounts => {
 	let MIN_NET_DEBT_ERC20
 
 	withProxy = false
-	
+
 	describe("BorrowerOperations Mechanisms", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.borrowerOperations = await BorrowerOperationsTester.new()
-			contracts.vesselManager = await VesselManagerTester.new()
-			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		beforeEach(async () => {
+			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(accounts[0])
 
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts, treasury)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-
+			contracts = coreContracts
 			activePool = contracts.activePool
 			adminContract = contracts.adminContract
 			borrowerOperations = contracts.borrowerOperations
@@ -90,10 +80,6 @@ contract("BorrowerOperations", async accounts => {
 				})
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
-		}
-
-		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
 		})
 
 		it("openVessel(): invalid collateral reverts", async () => {

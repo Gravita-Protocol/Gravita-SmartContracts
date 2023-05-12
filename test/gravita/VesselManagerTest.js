@@ -1,15 +1,12 @@
-const { loadFixture, time, setBalance } = require("@nomicfoundation/hardhat-network-helpers")
+const { time, setBalance } = require("@nomicfoundation/hardhat-network-helpers")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("VesselManagerTester")
-const DebtTokenTester = artifacts.require("DebtTokenTester")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
-const assertRevert = th.assertRevert
+const { dec, toBN, assertRevert } = th
 const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
+
 const { ethers } = require("hardhat")
 const f = v => ethers.utils.formatEther(v.toString())
 
@@ -45,7 +42,7 @@ contract("VesselManager", async accounts => {
 		C,
 		D,
 		E,
-		treasury
+		treasury,
 	] = accounts
 
 	const multisig = accounts[999]
@@ -71,58 +68,44 @@ contract("VesselManager", async accounts => {
 	const getNetBorrowingAmount = async (debtWithFee, asset) => th.getNetBorrowingAmount(contracts, debtWithFee, asset)
 	const openVessel = async params => th.openVessel(contracts, params)
 	const withdrawVUSD = async params => th.withdrawVUSD(contracts, params)
-	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
+	const calcSoftnedAmount = (collAmount, price) =>
+		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
 
 	describe("Vessel Manager", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-			VesselManagerTester.setAsDeployed(contracts.vesselManager)
-			DebtTokenTester.setAsDeployed(contracts.debtToken)
+		beforeEach(async () => {
+			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(treasury)
 
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-
-			priceFeed = contracts.priceFeedTestnet
+			contracts = coreContracts
+			activePool = contracts.activePool
+			adminContract = contracts.adminContract
+			borrowerOperations = contracts.borrowerOperations
+			collSurplusPool = contracts.collSurplusPool
 			debtToken = contracts.debtToken
+			defaultPool = contracts.defaultPool
+			erc20 = contracts.erc20
+			priceFeed = contracts.priceFeedTestnet
 			sortedVessels = contracts.sortedVessels
+			stabilityPool = contracts.stabilityPool
 			vesselManager = contracts.vesselManager
 			vesselManagerOperations = contracts.vesselManagerOperations
-			activePool = contracts.activePool
-			defaultPool = contracts.defaultPool
-			collSurplusPool = contracts.collSurplusPool
-			borrowerOperations = contracts.borrowerOperations
-			adminContract = contracts.adminContract
-			stabilityPool = contracts.stabilityPool
 
+			communityIssuance = GRVTContracts.communityIssuance
 			grvtStaking = GRVTContracts.grvtStaking
 			grvtToken = GRVTContracts.grvtToken
-			communityIssuance = GRVTContracts.communityIssuance
 
 			await grvtToken.unprotectedMint(multisig, dec(1, 24))
 
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
 
-			erc20 = contracts.erc20
-
-			let index = 0
-			for (const acc of accounts) {
+			for (const acc of accounts.slice(0, 20)) {
 				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), {
 					from: acc,
 				})
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
 			}
 
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts, treasury)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-
 			REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
-		}
-
-		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
 		})
 
 		describe("Liquidations", async () => {
@@ -3481,7 +3464,9 @@ contract("VesselManager", async accounts => {
 					await vesselManagerOperations.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
 
 				assert.equal(firstRedemptionHint, carol)
-				const expectedICR = A_coll.mul(price).sub(partialRedemptionAmount.mul(mv._1e18BN)).div(A_totalDebt.sub(partialRedemptionAmount))
+				const expectedICR = A_coll.mul(price)
+					.sub(partialRedemptionAmount.mul(mv._1e18BN))
+					.div(A_totalDebt.sub(partialRedemptionAmount))
 				const errorMargin = toBN(firstRedemptionHint).div(toBN(100)) // allow for a 1% error margin
 				th.assertIsApproximatelyEqual(partialRedemptionHintNewICR, expectedICR, Number(errorMargin))
 			})
@@ -3525,8 +3510,7 @@ contract("VesselManager", async accounts => {
 
 				assert.equal(partialRedemptionHintNICR_Asset, "0")
 			}),
-
-			it("redeemCollateral(): soft redemption dates", async () => {
+				it("redeemCollateral(): soft redemption dates", async () => {
 					const redemptionWait = 14 * 24 * 60 * 60 // 14 days
 					const redemptionBlock = (await time.latest()) + redemptionWait
 					// turn off redemptions for 2 weeks
@@ -3555,7 +3539,12 @@ contract("VesselManager", async accounts => {
 
 					const price = await priceFeed.getPrice(erc20.address)
 
-					const { 1: hintNICR } = await vesselManagerOperations.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
+					const { 1: hintNICR } = await vesselManagerOperations.getRedemptionHints(
+						erc20.address,
+						redemptionAmount,
+						price,
+						0
+					)
 					const { 0: upperHint, 1: lowerHint } = await sortedVessels.findInsertPosition(
 						erc20.address,
 						hintNICR,
@@ -3577,7 +3566,7 @@ contract("VesselManager", async accounts => {
 					)
 					await th.assertRevert(tx)
 
-					// skip redemption 
+					// skip redemption
 					await time.increase(redemptionWait)
 
 					// this time tx should succeed
@@ -3635,8 +3624,12 @@ contract("VesselManager", async accounts => {
 
 				// We don't need to use getApproxHint for this test, since it's not the subject of this
 				// test case, and the list is very small, so the correct position is quickly found
-				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, dennis, dennis)
+				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					partialRedemptionHintNewICR,
+					dennis,
+					dennis
+				)
 
 				// skip redemption bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -3667,8 +3660,8 @@ contract("VesselManager", async accounts => {
 				const carol_debt_After = carol_Vessel_After[th.VESSEL_DEBT_INDEX].toString()
 
 				// check that Dennis' redeemed 20 debt tokens have been cancelled with debt from Bobs's Vessel (8) and Carol's Vessel (10).
-    			// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
-    			// It leaves her with (3) debt tokens + 50 for gas compensation.
+				// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
+				// It leaves her with (3) debt tokens + 50 for gas compensation.
 				th.assertIsApproximatelyEqual(alice_debt_After, A_totalDebt.sub(partialRedemptionAmount))
 				assert.equal(bob_debt_After, "0")
 				assert.equal(carol_debt_After, "0")
@@ -3682,7 +3675,10 @@ contract("VesselManager", async accounts => {
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
 
 				const dennis_DebtTokenBalance_After = (await debtToken.balanceOf(dennis)).toString()
-				th.assertIsApproximatelyEqual(dennis_DebtTokenBalance_After, dennis_DebtTokenBalance_Before.sub(redemptionAmount))
+				th.assertIsApproximatelyEqual(
+					dennis_DebtTokenBalance_After,
+					dennis_DebtTokenBalance_Before.sub(redemptionAmount)
+				)
 			})
 
 			it("redeemCollateral(): with invalid first hint, zero address", async () => {
@@ -3731,8 +3727,12 @@ contract("VesselManager", async accounts => {
 
 				// We don't need to use getApproxHint for this test, since it's not the subject of this
 				// test case, and the list is very small, so the correct position is quickly found
-				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, dennis, dennis)
+				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					partialRedemptionHintNewICR,
+					dennis,
+					dennis
+				)
 
 				// skip redemption bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -3761,8 +3761,8 @@ contract("VesselManager", async accounts => {
 				const carol_debt_After = carol_Vessel_After[th.VESSEL_DEBT_INDEX].toString()
 
 				// check that Dennis' redeemed 20 debt tokens have been cancelled with debt from Bobs's Vessel (8) and Carol's Vessel (10).
-    			// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
-    			// It leaves her with (3) debt tokens + 50 for gas compensation. 
+				// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
+				// It leaves her with (3) debt tokens + 50 for gas compensation.
 				th.assertIsApproximatelyEqual(alice_debt_After, A_totalDebt.sub(partialRedemptionAmount))
 				assert.equal(bob_debt_After, "0")
 				assert.equal(carol_debt_After, "0")
@@ -3776,7 +3776,10 @@ contract("VesselManager", async accounts => {
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
 
 				const dennis_DebtTokenBalance_After = (await debtToken.balanceOf(dennis)).toString()
-				th.assertIsApproximatelyEqual(dennis_DebtTokenBalance_After, dennis_DebtTokenBalance_Before.sub(redemptionAmount))
+				th.assertIsApproximatelyEqual(
+					dennis_DebtTokenBalance_After,
+					dennis_DebtTokenBalance_Before.sub(redemptionAmount)
+				)
 			})
 
 			it("redeemCollateral(): with invalid first hint, non-existent vessel", async () => {
@@ -3824,8 +3827,12 @@ contract("VesselManager", async accounts => {
 
 				// We don't need to use getApproxHint for this test, since it's not the subject of this
 				// test case, and the list is very small, so the correct position is quickly found
-				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, dennis, dennis)
+				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					partialRedemptionHintNewICR,
+					dennis,
+					dennis
+				)
 
 				// skip redemption bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -3854,8 +3861,8 @@ contract("VesselManager", async accounts => {
 				const carol_debt_After = carol_Vessel_After[th.VESSEL_DEBT_INDEX].toString()
 
 				// check that Dennis' redeemed 20 debt tokens have been cancelled with debt from Bobs's Vessel (8) and Carol's Vessel (10).
-    			// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
-    			// It leaves her with (3) debt tokens + 50 for gas compensation.
+				// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
+				// It leaves her with (3) debt tokens + 50 for gas compensation.
 				th.assertIsApproximatelyEqual(alice_debt_After, A_totalDebt.sub(partialRedemptionAmount))
 				assert.equal(bob_debt_After, "0")
 				assert.equal(carol_debt_After, "0")
@@ -3869,7 +3876,10 @@ contract("VesselManager", async accounts => {
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
 
 				const dennis_DebtTokenBalance_After = (await debtToken.balanceOf(dennis)).toString()
-				th.assertIsApproximatelyEqual(dennis_DebtTokenBalance_After, dennis_DebtTokenBalance_Before.sub(redemptionAmount))
+				th.assertIsApproximatelyEqual(
+					dennis_DebtTokenBalance_After,
+					dennis_DebtTokenBalance_Before.sub(redemptionAmount)
+				)
 			})
 
 			it("redeemCollateral(): with invalid first hint, vessel below MCR", async () => {
@@ -3926,8 +3936,12 @@ contract("VesselManager", async accounts => {
 
 				// We don't need to use getApproxHint for this test, since it's not the subject of this
 				// test case, and the list is very small, so the correct position is quickly found
-				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, dennis, dennis)
+				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					partialRedemptionHintNewICR,
+					dennis,
+					dennis
+				)
 
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -3958,8 +3972,8 @@ contract("VesselManager", async accounts => {
 				const carol_debt_After = carol_Vessel_After[th.VESSEL_DEBT_INDEX].toString()
 
 				// check that Dennis' redeemed 20 debt tokens have been cancelled with debt from Bobs's Vessel (8) and Carol's Vessel (10).
-   				// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
-    			// It leaves her with (3) debt tokens + 50 for gas compensation.
+				// The remaining lot (2) is sent to Alice's Vessel, who had the best ICR.
+				// It leaves her with (3) debt tokens + 50 for gas compensation.
 				th.assertIsApproximatelyEqual(alice_debt_After, A_totalDebt.sub(partialRedemptionAmount))
 
 				assert.equal(bob_debt_After, "0")
@@ -3974,7 +3988,10 @@ contract("VesselManager", async accounts => {
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
 
 				const dennis_DebtTokenBalance_After = (await debtToken.balanceOf(dennis)).toString()
-				th.assertIsApproximatelyEqual(dennis_DebtTokenBalance_After, dennis_DebtTokenBalance_Before.sub(redemptionAmount))
+				th.assertIsApproximatelyEqual(
+					dennis_DebtTokenBalance_After,
+					dennis_DebtTokenBalance_Before.sub(redemptionAmount)
+				)
 			})
 
 			it("redeemCollateral(): ends the redemption sequence when the token redemption request has been filled", async () => {
@@ -4299,8 +4316,12 @@ contract("VesselManager", async accounts => {
 
 				const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
 					await vesselManagerOperations.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
-				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, dennis, dennis)
+				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					partialRedemptionHintNewICR,
+					dennis,
+					dennis
+				)
 
 				const frontRunRedemption = toBN(dec(1, 18))
 
@@ -5079,8 +5100,12 @@ contract("VesselManager", async accounts => {
 				const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
 					await vesselManagerOperations.getRedemptionHints(erc20.address, dec(400, 18), price, 0)
 
-				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, erin, erin)
+				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					partialRedemptionHintNewICR,
+					erin,
+					erin
+				)
 
 				await vesselManagerOperations.redeemCollateral(
 					erc20.address,
@@ -5099,7 +5124,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(activePool_debt_before.sub(activePool_debt_after), dec(400, 18))
 
 				// Check ActivePool coll reduced by $400 worth of collateral: at Coll:USD price of $200, this should be 2,
-    			// therefore, remaining ActivePool coll should be 198 (not accounted for softening)
+				// therefore, remaining ActivePool coll should be 198 (not accounted for softening)
 				const activePool_coll_after = await activePool.getAssetBalance(erc20.address)
 				const expectedCollWithdrawn = calcSoftnedAmount(toBN(dec(400, 18)), price)
 				assert.equal(activePool_coll_after.toString(), activePool_coll_before.sub(expectedCollWithdrawn))
@@ -5174,12 +5199,8 @@ contract("VesselManager", async accounts => {
 
 				// Erin tries to redeem 1000 VUSD
 				try {
-					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } = await vesselManagerOperations.getRedemptionHints(
-						erc20.address,
-						dec(1000, 18),
-						price,
-						0
-					))
+					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
+						await vesselManagerOperations.getRedemptionHints(erc20.address, dec(1000, 18), price, 0))
 
 					const { 0: upperPartialRedemptionHint_1_Asset, 1: lowerPartialRedemptionHint_1_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5204,12 +5225,8 @@ contract("VesselManager", async accounts => {
 
 				// Erin tries to redeem 801 VUSD
 				try {
-					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } = await vesselManagerOperations.getRedemptionHints(
-						erc20.address,
-						"801000000000000000000",
-						price,
-						0
-					))
+					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
+						await vesselManagerOperations.getRedemptionHints(erc20.address, "801000000000000000000", price, 0))
 
 					const { 0: upperPartialRedemptionHint_2_Asset, 1: lowerPartialRedemptionHint_2_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5235,12 +5252,8 @@ contract("VesselManager", async accounts => {
 				// Erin tries to redeem 239482309 VUSD
 
 				try {
-					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } = await vesselManagerOperations.getRedemptionHints(
-						erc20.address,
-						"239482309000000000000000000",
-						price,
-						0
-					))
+					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
+						await vesselManagerOperations.getRedemptionHints(erc20.address, "239482309000000000000000000", price, 0))
 
 					const { 0: upperPartialRedemptionHint_3_Asset, 1: lowerPartialRedemptionHint_3_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5267,12 +5280,8 @@ contract("VesselManager", async accounts => {
 				const maxBytes32 = toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 
 				try {
-					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } = await vesselManagerOperations.getRedemptionHints(
-						erc20.address,
-						"239482309000000000000000000",
-						price,
-						0
-					))
+					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
+						await vesselManagerOperations.getRedemptionHints(erc20.address, "239482309000000000000000000", price, 0))
 
 					const { 0: upperPartialRedemptionHint_4_Asset, 1: lowerPartialRedemptionHint_4_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5368,10 +5377,10 @@ contract("VesselManager", async accounts => {
 
 				// 120 debt tokens redeemed = expect $120 worth of collateral removed
 				// At Coll:USD price of $200,
-    			// Coll removed = (120/200) = 0.6 * 97% (softening) = 0.582
-    			// Total active collateral = 280 - 0.582 = 279.418
+				// Coll removed = (120/200) = 0.6 * 97% (softening) = 0.582
+				// Total active collateral = 280 - 0.582 = 279.418
 
-				const activePoolBalance1 = await activePool.getAssetBalance(erc20.address)				
+				const activePoolBalance1 = await activePool.getAssetBalance(erc20.address)
 				const expectedActivePoolBalance1 = activePoolBalance0.sub(calcSoftnedAmount(toBN(_120_), price))
 				assert.equal(activePoolBalance1.toString(), expectedActivePoolBalance1.toString())
 
@@ -5397,10 +5406,10 @@ contract("VesselManager", async accounts => {
 				)
 				assert.isTrue(redemption_2.receipt.status)
 
-				// 373 debt tokens redeemed = expect $373 worth of collateral removed 
+				// 373 debt tokens redeemed = expect $373 worth of collateral removed
 				// At Coll:USD price of $200,
-    			// Coll removed = (373/200) = 1.865 * 97% (softening) = 1.80905
-    			// Total active collateral = 279.418 - 1.80905 = 277.60895
+				// Coll removed = (373/200) = 1.865 * 97% (softening) = 1.80905
+				// Total active collateral = 279.418 - 1.80905 = 277.60895
 				const activePoolBalance2 = await activePool.getAssetBalance(erc20.address)
 				const expectedActivePoolBalance2 = activePoolBalance1.sub(calcSoftnedAmount(toBN(_373_), price))
 				assert.equal(activePoolBalance2.toString(), expectedActivePoolBalance2.toString())
@@ -5430,7 +5439,7 @@ contract("VesselManager", async accounts => {
 				// 950 debt tokens redeemed = expect $950 worth of collateral removed
 				// At Coll:USD price of $200,
 				// Coll removed = (950/200) = 4.75 * 97% (softening) = 4.6075
-    			// Total active collaterl = 277.60895 - 4.6075 = 273.00145
+				// Total active collaterl = 277.60895 - 4.6075 = 273.00145
 				const activePoolBalance3 = (await activePool.getAssetBalance(erc20.address)).toString()
 				const expectedActivePoolBalance3 = activePoolBalance2.sub(calcSoftnedAmount(toBN(_950_), price))
 				assert.equal(activePoolBalance3.toString(), expectedActivePoolBalance3.toString())
@@ -5972,23 +5981,26 @@ contract("VesselManager", async accounts => {
 
 				const A_balanceBefore = toBN(await erc20.balanceOf(A))
 
-				// A redeems $9 
+				// A redeems $9
 				const redemptionAmount = toBN(dec(9, 18))
 				await th.redeemCollateral(A, contracts, redemptionAmount, erc20.address)
 
 				// At Coll:USD price of 200:
-    			// collDrawn = (9 / 200) = 0.045 -> 0.04365 after softening
-    			// redemptionFee = (0.005 + (1/2) *(9/260)) * assetDrawn = 0.00100384615385
-    			// assetRemainder = 0.045 - 0.001003... = 0.0439961538462
+				// collDrawn = (9 / 200) = 0.045 -> 0.04365 after softening
+				// redemptionFee = (0.005 + (1/2) *(9/260)) * assetDrawn = 0.00100384615385
+				// assetRemainder = 0.045 - 0.001003... = 0.0439961538462
 
 				const A_balanceAfter = toBN(await erc20.balanceOf(A))
 
-				// check A's asset balance has increased by 0.045 
+				// check A's asset balance has increased by 0.045
 				const price = await priceFeed.getPrice(erc20.address)
 				const assetDrawn = calcSoftnedAmount(redemptionAmount, price)
 
 				const A_balanceDiff = A_balanceAfter.sub(A_balanceBefore)
-				const redemptionFee = toBN(dec(5, 15)).add(redemptionAmount.mul(mv._1e18BN).div(totalDebt).div(toBN(2))).mul(assetDrawn).div(mv._1e18BN)
+				const redemptionFee = toBN(dec(5, 15))
+					.add(redemptionAmount.mul(mv._1e18BN).div(totalDebt).div(toBN(2)))
+					.mul(assetDrawn)
+					.div(mv._1e18BN)
 				const expectedDiff = assetDrawn.sub(redemptionFee)
 
 				console.log(`${f(assetDrawn)} -> assetDrawn`)
@@ -6238,44 +6250,44 @@ contract("VesselManager", async accounts => {
 				// Check D stays active
 				assert.isTrue(await sortedVessels.contains(erc20.address, D))
 
-		//		Skip this part, as the VesselUpdated event is emitted by a nested contract call and is no longer returned by the th
+				//		Skip this part, as the VesselUpdated event is emitted by a nested contract call and is no longer returned by the th
 
-		// 		const vesselUpdatedEvents_Asset = th.getAllEventsByName(redemptionTx_Asset, "VesselUpdated")
+				// 		const vesselUpdatedEvents_Asset = th.getAllEventsByName(redemptionTx_Asset, "VesselUpdated")
 
-		// 		// Get each vessel's emitted debt and coll
+				// 		// Get each vessel's emitted debt and coll
 
-		// 		const [A_emittedDebt_Asset, A_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
-		// 			vesselUpdatedEvents_Asset,
-		// 			A
-		// 		)
-		// 		const [B_emittedDebt_Asset, B_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
-		// 			vesselUpdatedEvents_Asset,
-		// 			B
-		// 		)
-		// 		const [C_emittedDebt_Asset, C_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
-		// 			vesselUpdatedEvents_Asset,
-		// 			C
-		// 		)
-		// 		const [D_emittedDebt_Asset, D_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
-		// 			vesselUpdatedEvents_Asset,
-		// 			D
-		// 		)
+				// 		const [A_emittedDebt_Asset, A_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
+				// 			vesselUpdatedEvents_Asset,
+				// 			A
+				// 		)
+				// 		const [B_emittedDebt_Asset, B_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
+				// 			vesselUpdatedEvents_Asset,
+				// 			B
+				// 		)
+				// 		const [C_emittedDebt_Asset, C_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
+				// 			vesselUpdatedEvents_Asset,
+				// 			C
+				// 		)
+				// 		const [D_emittedDebt_Asset, D_emittedColl_Asset] = th.getDebtAndCollFromVesselUpdatedEvents(
+				// 			vesselUpdatedEvents_Asset,
+				// 			D
+				// 		)
 
-		// 		// Expect A, B, C to have 0 emitted debt and coll, since they were closed
+				// 		// Expect A, B, C to have 0 emitted debt and coll, since they were closed
 
-		// 		assert.equal(A_emittedDebt_Asset, "0")
-		// 		assert.equal(A_emittedColl_Asset, "0")
-		// 		assert.equal(B_emittedDebt_Asset, "0")
-		// 		assert.equal(B_emittedColl_Asset, "0")
-		// 		assert.equal(C_emittedDebt_Asset, "0")
-		// 		assert.equal(C_emittedColl_Asset, "0")
+				// 		assert.equal(A_emittedDebt_Asset, "0")
+				// 		assert.equal(A_emittedColl_Asset, "0")
+				// 		assert.equal(B_emittedDebt_Asset, "0")
+				// 		assert.equal(B_emittedColl_Asset, "0")
+				// 		assert.equal(C_emittedDebt_Asset, "0")
+				// 		assert.equal(C_emittedColl_Asset, "0")
 
-		// 		/* Expect D to have lost 15 debt and (at ETH price of 200) 15/200 = 0.075 ETH.
-    // So, expect remaining debt = (85 - 15) = 70, and remaining ETH = 1 - 15/200 = 0.925 remaining. */
-		// 		const price = await priceFeed.getPrice(erc20.address)
+				// 		/* Expect D to have lost 15 debt and (at ETH price of 200) 15/200 = 0.075 ETH.
+				// So, expect remaining debt = (85 - 15) = 70, and remaining ETH = 1 - 15/200 = 0.925 remaining. */
+				// 		const price = await priceFeed.getPrice(erc20.address)
 
-		// 		th.assertIsApproximatelyEqual(D_emittedDebt_Asset, D_totalDebt_Asset.sub(partialAmount))
-		// 		th.assertIsApproximatelyEqual(D_emittedColl_Asset, D_coll_Asset.sub(partialAmount.mul(mv._1e18BN).div(price)))
+				// 		th.assertIsApproximatelyEqual(D_emittedDebt_Asset, D_totalDebt_Asset.sub(partialAmount))
+				// 		th.assertIsApproximatelyEqual(D_emittedColl_Asset, D_coll_Asset.sub(partialAmount.mul(mv._1e18BN).div(price)))
 			})
 
 			it("redeemCollateral(): a redemption that closes a vessel leaves the vessel's surplus (collateral - collateral drawn) available for the vessel owner to claim", async () => {
@@ -6302,9 +6314,15 @@ contract("VesselManager", async accounts => {
 
 				const price = await priceFeed.getPrice(erc20.address)
 
-				const A_balanceExpected_Asset = A_balanceBefore_Asset.add(A_coll_Asset.sub(calcSoftnedAmount(A_netDebt_Asset, price)))
-				const B_balanceExpected_Asset = B_balanceBefore_Asset.add(B_coll_Asset.sub(calcSoftnedAmount(B_netDebt_Asset, price)))
-				const C_balanceExpected_Asset = C_balanceBefore_Asset.add(C_coll_Asset.sub(calcSoftnedAmount(C_netDebt_Asset, price)))
+				const A_balanceExpected_Asset = A_balanceBefore_Asset.add(
+					A_coll_Asset.sub(calcSoftnedAmount(A_netDebt_Asset, price))
+				)
+				const B_balanceExpected_Asset = B_balanceBefore_Asset.add(
+					B_coll_Asset.sub(calcSoftnedAmount(B_netDebt_Asset, price))
+				)
+				const C_balanceExpected_Asset = C_balanceBefore_Asset.add(
+					C_coll_Asset.sub(calcSoftnedAmount(C_netDebt_Asset, price))
+				)
 
 				th.assertIsApproximatelyEqual(A_balanceAfter_Asset, A_balanceExpected_Asset)
 				th.assertIsApproximatelyEqual(B_balanceAfter_Asset, B_balanceExpected_Asset)

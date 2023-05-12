@@ -214,6 +214,15 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	uint256[] public lastAssetError_Offset;
 	uint256 public lastDebtTokenLossError_Offset;
 
+	bool public isSetupInitialized;
+
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__ReentrancyGuard_init();
+	}
+
 	// --- Contract setters ---
 
 	function setAddresses(
@@ -224,9 +233,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		address _sortedVesselsAddress,
 		address _communityIssuanceAddress,
 		address _adminContractAddress
-	) external initializer {
-		__ReentrancyGuard_init();
-		__Ownable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		activePool = IActivePool(_activePoolAddress);
@@ -236,6 +244,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		adminContract = IAdminContract(_adminContractAddress);
 
 		P = DECIMAL_PRECISION;
+		isSetupInitialized = true;
 	}
 
 	/**
@@ -487,7 +496,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 _collGainPerUnitStaked,
 		uint256 _debtLossPerUnitStaked
 	) internal {
-
 		require(_debtLossPerUnitStaked <= DECIMAL_PRECISION, "StabilityPool: Loss < 1");
 		uint256 currentP = P;
 		uint256 newP;
@@ -502,12 +510,12 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 currentS = epochToScaleToSum[_asset][currentEpochCached][currentScaleCached];
 
 		/*
-     * Calculate the new S first, before we update P.
-     * The asset gain for any given depositor from a liquidation depends on the value of their deposit
-     * (and the value of totalDeposits) prior to the Stability being depleted by the debt in the liquidation.
-     *
-     * Since S corresponds to asset gain, and P to deposit loss, we update S first.
-     */
+		 * Calculate the new S first, before we update P.
+		 * The asset gain for any given depositor from a liquidation depends on the value of their deposit
+		 * (and the value of totalDeposits) prior to the Stability being depleted by the debt in the liquidation.
+		 *
+		 * Since S corresponds to asset gain, and P to deposit loss, we update S first.
+		 */
 		uint256 marginalAssetGain = _collGainPerUnitStaked * currentP;
 		uint256 newS = currentS + marginalAssetGain;
 		epochToScaleToSum[_asset][currentEpochCached][currentScaleCached] = newS;
@@ -519,9 +527,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 			emit EpochUpdated(currentEpoch);
 			currentScale = 0;
 			emit ScaleUpdated(currentScale);
-			newP = DECIMAL_PRECISION;			
+			newP = DECIMAL_PRECISION;
 
-		// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
+			// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
 		} else if ((currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR) {
 			newP = (currentP * newProductFactor * SCALE_FACTOR) / DECIMAL_PRECISION;
 			currentScale = currentScaleCached + 1;
@@ -544,11 +552,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	 * @param _amount amount as uint256
 	 * @param _debtToOffset uint256
 	 */
-	function _moveOffsetCollAndDebt(
-		address _asset,
-		uint256 _amount,
-		uint256 _debtToOffset
-	) internal {
+	function _moveOffsetCollAndDebt(address _asset, uint256 _amount, uint256 _debtToOffset) internal {
 		IActivePool activePoolCached = activePool;
 		activePoolCached.decreaseDebt(_asset, _debtToOffset);
 		_decreaseDebtTokens(_debtToOffset);
@@ -596,11 +600,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	 * @param initialDeposit Amount of initial deposit
 	 * @param snapshots struct snapshots
 	 */
-	function _calculateNewGains(uint256 initialDeposit, Snapshots storage snapshots)
-		internal
-		view
-		returns (address[] memory assets, uint256[] memory amounts)
-	{
+	function _calculateNewGains(
+		uint256 initialDeposit,
+		Snapshots storage snapshots
+	) internal view returns (address[] memory assets, uint256[] memory amounts) {
 		assets = adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
 		amounts = new uint256[](assetsLen);
@@ -658,11 +661,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		return _getGRVTGainFromSnapshots(initialDeposit, snapshots);
 	}
 
-	function _getGRVTGainFromSnapshots(uint256 initialStake, Snapshots storage snapshots)
-		internal
-		view
-		returns (uint256)
-	{
+	function _getGRVTGainFromSnapshots(
+		uint256 initialStake,
+		Snapshots storage snapshots
+	) internal view returns (uint256) {
 		/*
 		 * Grab the sum 'G' from the epoch at which the stake was made. The GRVT gain may span up to one scale change.
 		 * If it does, the second portion of the GRVT gain is scaled by 1e9.
@@ -697,11 +699,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	}
 
 	// Internal function, used to calculate compounded deposits and compounded stakes.
-	function _getCompoundedStakeFromSnapshots(uint256 initialStake, Snapshots storage snapshots)
-		internal
-		view
-		returns (uint256)
-	{
+	function _getCompoundedStakeFromSnapshots(
+		uint256 initialStake,
+		Snapshots storage snapshots
+	) internal view returns (uint256) {
 		uint256 snapshot_P = snapshots.P;
 		uint128 scaleSnapshot = snapshots.scale;
 		uint128 epochSnapshot = snapshots.epoch;
@@ -760,11 +761,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	 * @param assets array of address
 	 * @param amounts array of uint256. Includes pending collaterals since that was added in previous steps
 	 */
-	function _sendGainsToDepositor(
-		address _to,
-		address[] memory assets,
-		uint256[] memory amounts
-	) internal {
+	function _sendGainsToDepositor(address _to, address[] memory assets, uint256[] memory amounts) internal {
 		uint256 assetsLen = assets.length;
 		require(assetsLen == amounts.length, "StabilityPool: Length mismatch");
 		for (uint256 i = 0; i < assetsLen; ) {
