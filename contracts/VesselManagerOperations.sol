@@ -45,6 +45,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	IStabilityPool public stabilityPool;
 	ICollSurplusPool public collSurplusPool;
 	IDebtToken public debtToken;
+	bool public isSetupInitialized;
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
@@ -57,6 +58,13 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+	
+	// Dependency setter ------------------------------------------------------------------------------------------------
+
 	function setAddresses(
 		address _vesselManagerAddress,
 		address _sortedVesselsAddress,
@@ -64,15 +72,15 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		address _collSurplusPoolAddress,
 		address _debtTokenAddress,
 		address _adminContractAddress
-	) external initializer {
-		__Ownable_init();
-		__UUPSUpgradeable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		debtToken = IDebtToken(_debtTokenAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// Liquidation external functions -----------------------------------------------------------------------------------
@@ -336,11 +344,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		external
 		view
 		override
-		returns (
-			address firstRedemptionHint,
-			uint256 partialRedemptionHintNewICR,
-			uint256 truncatedDebtTokenAmount
-		)
+		returns (address firstRedemptionHint, uint256 partialRedemptionHintNewICR, uint256 truncatedDebtTokenAmount)
 	{
 		ISortedVessels sortedVesselsCached = sortedVessels;
 
@@ -421,16 +425,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 _CR,
 		uint256 _numTrials,
 		uint256 _inputRandomSeed
-	)
-		external
-		view
-		override
-		returns (
-			address hintAddress,
-			uint256 diff,
-			uint256 latestRandomSeed
-		)
-	{
+	) external view override returns (address hintAddress, uint256 diff, uint256 latestRandomSeed) {
 		uint256 arrayLength = vesselManager.getVesselOwnersCount(_asset);
 
 		if (arrayLength == 0) {
@@ -573,11 +568,10 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		}
 	}
 
-	function _addLiquidationValuesToTotals(LiquidationTotals memory oldTotals, LiquidationValues memory singleLiquidation)
-		internal
-		pure
-		returns (LiquidationTotals memory newTotals)
-	{
+	function _addLiquidationValuesToTotals(
+		LiquidationTotals memory oldTotals,
+		LiquidationValues memory singleLiquidation
+	) internal pure returns (LiquidationTotals memory newTotals) {
 		// Tally all the values with their respective running totals
 		newTotals.totalCollGasCompensation = oldTotals.totalCollGasCompensation + singleLiquidation.collGasCompensation;
 		newTotals.totalDebtTokenGasCompensation =
@@ -866,12 +860,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	)
 		internal
 		pure
-		returns (
-			uint256 debtToOffset,
-			uint256 collToSendToSP,
-			uint256 debtToRedistribute,
-			uint256 collToRedistribute
-		)
+		returns (uint256 debtToOffset, uint256 collToSendToSP, uint256 debtToRedistribute, uint256 collToRedistribute)
 	{
 		if (_debtTokenInStabPool > 0) {
 			/*
@@ -885,7 +874,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			 *
 			 */
 			debtToOffset = GravitaMath._min(_debt, _debtTokenInStabPool);
-			collToSendToSP = _coll * debtToOffset / _debt;
+			collToSendToSP = (_coll * debtToOffset) / _debt;
 			debtToRedistribute = _debt - debtToOffset;
 			collToRedistribute = _coll - collToSendToSP;
 		} else {
@@ -907,7 +896,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	) internal view returns (LiquidationValues memory singleLiquidation) {
 		singleLiquidation.entireVesselDebt = _entireVesselDebt;
 		singleLiquidation.entireVesselColl = _entireVesselColl;
-		uint256 cappedCollPortion = _entireVesselDebt * adminContract.getMcr(_asset) / _price;
+		uint256 cappedCollPortion = (_entireVesselDebt * adminContract.getMcr(_asset)) / _price;
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, cappedCollPortion);
 		singleLiquidation.debtTokenGasCompensation = adminContract.getDebtTokenGasCompensation(_asset);

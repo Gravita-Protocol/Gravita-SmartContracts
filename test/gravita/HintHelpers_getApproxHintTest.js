@@ -6,8 +6,6 @@ const { dec, toBN } = th
 
 let latestRandomSeed = 31337
 
-const VesselManagerTester = artifacts.require("VesselManagerTester")
-
 contract("VesselManagerOperations-HintHelpers", async accounts => {
 
 	let sortedVessels
@@ -69,25 +67,18 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 	}
 
 	before(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+
+		const { coreContracts } = await deploymentHelper.deployTestContracts(accounts[0], accounts.slice(0, 10))
+
+		contracts = coreContracts
 
 		sortedVessels = contracts.sortedVessels
 		vesselManager = contracts.vesselManager
 		borrowerOperations = contracts.borrowerOperations
 		vesselManagerOperations = contracts.vesselManagerOperations
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-
 		numAccounts = 10
 		erc20 = contracts.erc20
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			if (++index >= 20) break
-		}
 
 		await contracts.priceFeedTestnet.setPrice(contracts.erc20.address, dec(100, 18))
 		await makeVesselsInSequence(accounts, numAccounts)

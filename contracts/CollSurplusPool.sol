@@ -24,6 +24,15 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 	// Collateral surplus claimable by vessel owners
 	mapping(address => mapping(address => uint256)) internal userBalances;
 
+	bool public isSetupInitialized;
+
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+
 	// --- Contract setters ---
 
 	function setAddresses(
@@ -31,13 +40,13 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 		address _borrowerOperationsAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external initializer {
-		__Ownable_init();
-		__UUPSUpgradeable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	/* Returns the Asset state variable at ActivePool address.
@@ -52,14 +61,10 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 
 	// --- Pool functionality ---
 
-	function accountSurplus(
-		address _asset,
-		address _account,
-		uint256 _amount
-	) external override {
+	function accountSurplus(address _asset, address _account, uint256 _amount) external override {
 		_requireCallerIsVesselManager();
 
-		mapping(address => uint256) storage userBalance = userBalances[_account]; 
+		mapping(address => uint256) storage userBalance = userBalances[_account];
 		uint256 newAmount = userBalance[_asset] + _amount;
 		userBalance[_asset] = newAmount;
 
@@ -68,7 +73,7 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 
 	function claimColl(address _asset, address _account) external override {
 		_requireCallerIsBorrowerOperations();
-		mapping(address => uint256) storage userBalance = userBalances[_account]; 
+		mapping(address => uint256) storage userBalance = userBalances[_account];
 		uint256 claimableCollEther = userBalance[_asset];
 
 		uint256 safetyTransferclaimableColl = SafetyTransfer.decimalsCorrection(_asset, claimableCollEther);
@@ -112,4 +117,3 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }
-

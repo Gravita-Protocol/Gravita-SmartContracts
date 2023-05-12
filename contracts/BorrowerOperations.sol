@@ -30,6 +30,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	IDebtToken public debtToken;
 	ISortedVessels public sortedVessels; // double-linked list, sorted by their collateral ratios
 
+	bool public isSetupInitialized;
+
 	/* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -86,7 +88,14 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		BorrowerOperation operation
 	);
 
-	// --- Dependency setters ---
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+
+	// --- Dependency setter ---
 
 	function setAddresses(
 		address _vesselManagerAddress,
@@ -97,9 +106,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		address _debtTokenAddress,
 		address _feeCollectorAddress,
 		address _adminContractAddress
-	) external initializer {
-		__Ownable_init();
-		__UUPSUpgradeable_init();		
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;
@@ -108,6 +116,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		debtToken = IDebtToken(_debtTokenAddress);
 		feeCollector = IFeeCollector(_feeCollectorAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// --- Borrower Vessel Operations ---
@@ -448,14 +457,13 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	function _getUSDValue(uint256 _coll, uint256 _price) internal pure returns (uint256) {
-		return _price * _coll / DECIMAL_PRECISION;
+		return (_price * _coll) / DECIMAL_PRECISION;
 	}
 
-	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
-		internal
-		pure
-		returns (uint256 collChange, bool isCollIncrease)
-	{
+	function _getCollChange(
+		uint256 _collReceived,
+		uint256 _requestedCollWithdrawal
+	) internal pure returns (uint256 collChange, bool isCollIncrease) {
 		if (_collReceived != 0) {
 			collChange = _collReceived;
 			isCollIncrease = true;
@@ -508,11 +516,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	// Send asset to Active Pool and increase its recorded asset balance
-	function _activePoolAddColl(
-		address _asset,
-		IActivePool _activePool,
-		uint256 _amount
-	) internal {
+	function _activePoolAddColl(address _asset, IActivePool _activePool, uint256 _amount) internal {
 		_activePool.receivedERC20(_asset, _amount);
 		IERC20Upgradeable(_asset).safeTransferFrom(
 			msg.sender,
@@ -567,20 +571,12 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		);
 	}
 
-	function _requireVesselIsActive(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _borrower
-	) internal view {
+	function _requireVesselIsActive(address _asset, IVesselManager _vesselManager, address _borrower) internal view {
 		uint256 status = _vesselManager.getVesselStatus(_asset, _borrower);
 		require(status == 1, "BorrowerOps: Vessel does not exist or is closed");
 	}
 
-	function _requireVesselIsNotActive(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _borrower
-	) internal view {
+	function _requireVesselIsNotActive(address _asset, IVesselManager _vesselManager, address _borrower) internal view {
 		uint256 status = _vesselManager.getVesselStatus(_asset, _borrower);
 		require(status != 1, "BorrowerOps: Vessel is active");
 	}
@@ -667,11 +663,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		);
 	}
 
-	function _requireValidDebtTokenRepayment(
-		address _asset,
-		uint256 _currentDebt,
-		uint256 _debtRepayment
-	) internal view {
+	function _requireValidDebtTokenRepayment(address _asset, uint256 _currentDebt, uint256 _debtRepayment) internal view {
 		require(
 			_debtRepayment <= _currentDebt - adminContract.getDebtTokenGasCompensation(_asset),
 			"BorrowerOps: Amount repaid must not be larger than the Vessel's debt"

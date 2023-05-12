@@ -1,5 +1,4 @@
 const Decimal = require("decimal.js")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const { BNConverter } = require("../../utils/BNConverter.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
@@ -13,7 +12,6 @@ const getDifference = th.getDifference
 
 contract("Fee arithmetic tests", async accounts => {
 	let ZERO_ADDRESS = th.ZERO_ADDRESS
-	let contracts
 	let vesselManagerTester
 	let mathTester
 
@@ -200,15 +198,7 @@ contract("Fee arithmetic tests", async accounts => {
 
 	before(async () => {
 		vesselManagerTester = await VesselManagerTester.new()
-		VesselManagerTester.setAsDeployed(vesselManagerTester)
-
 		mathTester = await GravitaMathTester.new()
-		GravitaMathTester.setAsDeployed(mathTester)
-	})
-
-	beforeEach(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		await deploymentHelper.connectCoreContracts(contracts, [])
 	})
 
 	it("minutesPassedSinceLastFeeOp(): returns minutes passed for no time increase", async () => {

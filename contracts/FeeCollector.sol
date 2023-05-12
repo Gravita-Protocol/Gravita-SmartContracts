@@ -14,7 +14,7 @@ import "./Interfaces/IGRVTStaking.sol";
 contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	/** Constants ---------------------------------------------------------------------------------------------------- */
+	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "FeeCollector";
 
@@ -22,7 +22,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	uint256 public constant MIN_FEE_FRACTION = 0.038461538 * 1 ether; // (1/26) fee divided by 26 weeks
 	uint256 public constant FEE_EXPIRATION_SECONDS = 175 * 1 days; // ~ 6 months, minus one week (MIN_FEE_DAYS)
 
-	/** State -------------------------------------------------------------------------------------------------------- */
+	// State ------------------------------------------------------------------------------------------------------------
 
 	mapping(address => mapping(address => FeeRecord)) public feeRecords; // borrower -> asset -> fees
 
@@ -33,8 +33,16 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 
 	IGRVTStaking public grvtStaking;
 	bool public routeToGRVTStaking; // if true, collected fees go to stakers; if false, to the treasury
+	bool public isSetupInitialized;
 
-	/** Constructor/Initializer -------------------------------------------------------------------------------------- */
+	// Initializer ------------------------------------------------------------------------------------------------------
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+
+	// Dependency setter ------------------------------------------------------------------------------------------------
 
 	function setAddresses(
 		address _borrowerOperationsAddress,
@@ -43,10 +51,9 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 		address _debtTokenAddress,
 		address _treasuryAddress,
 		bool _routeToGRVTStaking
-	) external initializer {
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		require(_treasuryAddress != address(0));
-		__Ownable_init();
-		__UUPSUpgradeable_init();
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		grvtStaking = IGRVTStaking(_grvtStakingAddress);
@@ -56,9 +63,10 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 		if (_routeToGRVTStaking && address(grvtStaking) == address(0)) {
 			revert FeeCollector__InvalidGRVTStakingAddress();
 		}
+		isSetupInitialized = true;
 	}
 
-	/** Config setters ----------------------------------------------------------------------------------------------- */
+	// Config setters ---------------------------------------------------------------------------------------------------
 
 	function setGRVTStakingAddress(address _grvtStakingAddress) external onlyOwner {
 		grvtStaking = IGRVTStaking(_grvtStakingAddress);
@@ -73,7 +81,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 		emit RouteToGRVTStakingChanged(_routeToGRVTStaking);
 	}
 
-	/** Public/external methods -------------------------------------------------------------------------------------- */
+	// Public/external methods ------------------------------------------------------------------------------------------
 
 	/**
 	 * Triggered when a vessel is created and again whenever the borrower acquires additional loans.
@@ -187,7 +195,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 		}
 	}
 
-	/** Helper & internal methods ------------------------------------------------------------------------------------ */
+	// Helper & internal methods ----------------------------------------------------------------------------------------
 
 	function _decreaseDebt(address _borrower, address _asset, uint256 _paybackFraction) internal {
 		uint256 NOW = block.timestamp;
@@ -330,7 +338,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 		}
 	}
 
-	/** Modifiers ---------------------------------------------------------------------------------------------------- */
+	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	modifier onlyBorrowerOperations() {
 		if (msg.sender != borrowerOperationsAddress) {

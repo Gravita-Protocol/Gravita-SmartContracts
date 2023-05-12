@@ -52,6 +52,8 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	// Addresses for easy access
 	address[] public validCollateral; // index maps to token address.
 
+	bool public isSetupInitialized;
+
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	// Require that the collateral exists in the controller. If it is not the 0th index, and the
@@ -90,6 +92,12 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 		_;
 	}
 
+	// Initializer ------------------------------------------------------------------------------------------------------
+
+	function initialize() public initializer {
+		__Ownable_init();
+	}
+
 	// External Functions -----------------------------------------------------------------------------------------------
 
 	function setAddresses(
@@ -101,7 +109,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 		address _priceFeedAddress,
 		address _timelockAddress
 	) external onlyOwner {
-		require(!isInitialized, "Already initialized");
+		require(!isSetupInitialized, "Setup is already initialized");
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 		activePool = IActivePool(_activePoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
@@ -112,10 +120,11 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	/**
-	 * @dev The deployment script will call this function after all collaterals have been configured.
+	 * @dev The deployment script will call this function when all initial collaterals have been configured; 
+	 *      after this is set to true, all subsequent config/setters will need to go through the timelocks.
 	 */
-	function setInitialized() external onlyOwner {
-		isInitialized = true;
+	function setSetupIsInitialized() external onlyOwner {
+		isSetupInitialized = true;
 	}
 
 	function addNewCollateral(

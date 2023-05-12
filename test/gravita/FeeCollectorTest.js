@@ -1,5 +1,4 @@
 const {
-	loadFixture,
 	time,
 	setBalance,
 	impersonateAccount,
@@ -9,12 +8,9 @@ const {
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 
-const FeeCollectorTester = artifacts.require("FeeCollectorTester.sol")
-const VesselManagerTester = artifacts.require("VesselManagerTester.sol")
-
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
-const { ethers, assert } = require("hardhat")
+const { assert } = require("hardhat")
 
 const ERROR_MARGIN = 1e9
 const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
@@ -22,13 +18,13 @@ const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
 contract("FeeCollector", async accounts => {
 	const openVessel = async params => th.openVessel(contracts, params)
 	const withdrawVUSD = async params => th.withdrawVUSD(contracts, params)
-	const f = val => ethers.utils.formatUnits(val.toString())
 
-	const [owner, alice, bob, whale, treasury] = accounts
+	const [treasury, alice, bob, whale] = accounts
 
 	let contracts
 
 	let asset
+	let borrowerOperations
 	let debtToken
 	let erc20
 	let feeCollector
@@ -48,7 +44,7 @@ contract("FeeCollector", async accounts => {
 	}
 
 	const openOrAjustVessel = async (borrower, asset, debtAmount) => {
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		// mimic borrowerOperations._triggerBorrowingFee()
 		const { maxFee } = calcFees(debtAmount)
 		await impersonateAccount(borrowerOperationsAddress)
@@ -59,7 +55,7 @@ contract("FeeCollector", async accounts => {
 	}
 
 	const payVesselDebt = async (borrower, asset, debtPaymentPercent) => {
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		await impersonateAccount(borrowerOperationsAddress)
 		const tx = await feeCollector.decreaseDebt(borrower, asset, debtPaymentPercent, { from: borrowerOperationsAddress })
 		await stopImpersonatingAccount(borrowerOperationsAddress)
@@ -67,7 +63,7 @@ contract("FeeCollector", async accounts => {
 	}
 
 	const closeVessel = async (borrower, asset) => {
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		await impersonateAccount(borrowerOperationsAddress)
 		const tx = await feeCollector.decreaseDebt(borrower, asset, toBN(1e18), { from: borrowerOperationsAddress })
 		await stopImpersonatingAccount(borrowerOperationsAddress)
@@ -75,43 +71,27 @@ contract("FeeCollector", async accounts => {
 	}
 
 	describe("Fee Collector", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-			contracts.feeCollector = await FeeCollectorTester.new()
-			feeCollector = contracts.feeCollector
-			debtToken = contracts.debtToken
-			erc20 = contracts.erc20
+		beforeEach(async () => {
+			const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 20))
+			contracts = coreContracts
+			debtToken = coreContracts.debtToken
+			borrowerOperations = coreContracts.borrowerOperations
+			feeCollector = coreContracts.feeCollector
+			erc20 = coreContracts.erc20
 			asset = erc20.address
-			priceFeed = contracts.priceFeedTestnet
-			sortedVessels = contracts.sortedVessels
-			vesselManager = contracts.vesselManager
-			vesselManagerOperations = contracts.vesselManagerOperations
-			FeeCollectorTester.setAsDeployed(feeCollector)
-			VesselManagerTester.setAsDeployed(contracts.vesselManager)
-
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts, treasury)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-
-			let index = 0
-			for (const acc of accounts) {
-				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
-			}
+			priceFeed = coreContracts.priceFeedTestnet
+			sortedVessels = coreContracts.sortedVessels
+			vesselManager = coreContracts.vesselManager
+			vesselManagerOperations = coreContracts.vesselManagerOperations
 
 			// give some gas to the contracts that will be impersonated
-			setBalance(contracts.borrowerOperations.address, 1e18)
-			setBalance(contracts.vesselManager.address, 1e18)
+			setBalance(borrowerOperations.address, 1e18)
+			setBalance(vesselManager.address, 1e18)
+
 			MIN_FEE_DAYS = toBN(String(await feeCollector.MIN_FEE_DAYS()))
 			MIN_FEE_SECONDS = toBN(MIN_FEE_DAYS * 24 * 60 * 60)
 			MIN_FEE_FRACTION = toBN(String(await feeCollector.MIN_FEE_FRACTION()))
 			FEE_EXPIRATION_SECONDS = toBN(String(await feeCollector.FEE_EXPIRATION_SECONDS()))
-		}
-
-		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
 		})
 
 		describe("Fee yielding & refund generation", async () => {
@@ -443,7 +423,7 @@ contract("FeeCollector", async accounts => {
 				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
 
 				// liquidate vessel
-				await vesselManagerOperations.liquidate(erc20.address, alice, { from: owner })
+				await vesselManagerOperations.liquidate(erc20.address, alice, { from: bob })
 
 				const treasuryBalanceAfterLiquidation = await debtToken.balanceOf(treasury)
 

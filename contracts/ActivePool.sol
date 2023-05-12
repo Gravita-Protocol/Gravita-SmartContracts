@@ -37,6 +37,8 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
 
+	bool public isSetupInitialized;
+
 	// --- Modifiers ---
 
 	modifier callerIsBorrowerOpsOrDefaultPool() {
@@ -76,6 +78,14 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		_;
 	}
 
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__ReentrancyGuard_init();
+		__UUPSUpgradeable_init();
+	}
+
 	// --- Contract setters ---
 
 	function setAddresses(
@@ -85,16 +95,15 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		address _stabilityPoolAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external initializer {
-		__Ownable_init();
-		__ReentrancyGuard_init();
-		__UUPSUpgradeable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
 		stabilityPoolAddress = _stabilityPoolAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -113,11 +122,10 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		emit ActivePoolDebtUpdated(_collateral, newDebt);
 	}
 
-	function decreaseDebt(address _asset, uint256 _amount)
-		external
-		override
-		callerIsBorrowerOpsOrStabilityPoolOrVesselMgr
-	{
+	function decreaseDebt(
+		address _asset,
+		uint256 _amount
+	) external override callerIsBorrowerOpsOrStabilityPoolOrVesselMgr {
 		uint256 newDebt = debtTokenBalances[_asset] - _amount;
 		debtTokenBalances[_asset] = newDebt;
 		emit ActivePoolDebtUpdated(_asset, newDebt);
