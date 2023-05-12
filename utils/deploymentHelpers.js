@@ -215,6 +215,11 @@ class DeploymentHelper {
 		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18)
 		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18)
 
+		// Redemption are disabled by default; enable them for testing
+		await contracts.adminContract.setRedemptionBlockTimestamp(EMPTY_ADDRESS, 0)
+		await contracts.adminContract.setRedemptionBlockTimestamp(contracts.erc20.address, 0)
+		await contracts.adminContract.setRedemptionBlockTimestamp(contracts.erc20B.address, 0)
+
 		await contracts.adminContract.setIsActive(EMPTY_ADDRESS, true)
 		await contracts.adminContract.setIsActive(contracts.erc20.address, true)
 		await contracts.adminContract.setIsActive(contracts.erc20B.address, true)
