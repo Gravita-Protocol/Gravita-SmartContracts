@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "./IActivePool.sol";
 import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 
 interface IAdminContract {
-
 	// Structs ----------------------------------------------------------------------------------------------------------
 
 	struct CollateralParams {
@@ -29,8 +28,9 @@ interface IAdminContract {
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
 	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
+	error AdminContract__ShortTimelockOnly();
+	error AdminContract__LongTimelockOnly();
 	error AdminContract__OnlyOwner();
-	error AdminContract__OnlyTimelock();
 	error AdminContract__CollateralAlreadyInitialized();
 
 	// Events -----------------------------------------------------------------------------------------------------------
@@ -62,6 +62,17 @@ interface IAdminContract {
 		uint256 _debtTokenGasCompensation,
 		uint256 _decimals,
 		bool _isWrapped
+	) external;
+
+	function setCollateralParameters(
+		address _collateral,
+		uint256 borrowingFee,
+		uint256 ccr,
+		uint256 mcr,
+		uint256 minNetDebt,
+		uint256 mintCap,
+		uint256 percentDivisor,
+		uint256 redemptionFeeFloor
 	) external;
 
 	function setMCR(address _collateral, uint256 newMCR) external;

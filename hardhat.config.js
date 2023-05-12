@@ -13,18 +13,18 @@ require("dotenv").config()
 const accounts = require("./hardhatAccountsList2k.js")
 const accountsList = accounts.accountsList
 
-const { Deployer, DeploymentTarget } = require("./scripts/deployment/deployer.js")
+const { Deployer, DeploymentTarget } = require("./scripts/deployment/deployer-core.js")
 
-task("deploy-localhost", "Deploys contracts to Localhost").setAction(
+task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.Localhost).run()
 )
-task("deploy-testnet-goerli", "Deploys contracts to Goerli Testnet").setAction(
+task("deploy-core-testnet-goerli", "Deploys contracts to Goerli Testnet").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.GoerliTestnet).run()
 )
-task("deploy-testnet-sepolia", "Deploys contracts to Sepolia Testnet").setAction(
+task("deploy-core-testnet-sepolia", "Deploys contracts to Sepolia Testnet").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.SepoliaTestnet).run()
 )
-task("deploy-mainnet", "Deploys contracts to Mainnet").setAction(
+task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.Mainnet).run()
 )
 
@@ -64,7 +64,6 @@ module.exports = {
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		testnet_goerli: {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,

@@ -1,24 +1,41 @@
+const { utils } = require("ethers")
+const toEther = val => utils.parseEther(String(val))
+
 const OUTPUT_FILE = "./scripts/deployment/output/localhost.json"
 const GAS_PRICE = 20_000_000_000 // 20 Gwei
 const TX_CONFIRMATIONS = 1
 const ETHERSCAN_BASE_URL = undefined
 
-const COLLATERAL_ADDRESSES = {
-	// --- Collateral ---
-	RETH_ERC20: undefined,
-	WETH_ERC20: undefined,
-	WSTETH_ERC20: undefined,
-	// --- Price Feed Aggregators ---
-	RETH_USD_ORACLE: undefined,
-	WETH_USD_ORACLE: undefined,
-	WSTETH_USD_ORACLE: undefined,
-}
+const UPGRADES_PROXY_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
+const SYSTEM_PARAMS_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
+const TREASURY_WALLET = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 
-const GRAVITA_ADDRESSES = {
-	UPGRADES_PROXY_ADMIN: "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596",
-	SYSTEM_PARAMS_ADMIN: "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596",
-	TREASURY_WALLET: "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596",
-}
+const COLLATERAL = [
+	{
+		name: "rETH",
+		address: "0xE8BAde28E08B469B4EeeC35b9E48B2Ce49FB3FC9",
+		oracleAddress: "0xF1c0DB770e77a961efde9DD11216e3833ad5c588",
+		oraclePriceDeviation: toEther(0.25),
+		oracleIsEthIndexed: false,
+		MCR: toEther(1.25),
+		CCR: toEther(1.5),
+		minNetDebt: toEther(1_800),
+		gasCompensation: toEther(300),
+		mintCap: toEther(1_500_000)
+	},
+	{
+		name: "wETH",
+		address: "0x1A0A7c9008Aa351cf8150a01b21Ff2BB98D70D2D",
+		oracleAddress: "0xF1c0DB770e77a961efde9DD11216e3833ad5c588",
+		oraclePriceDeviation: toEther(0.25),
+		oracleIsEthIndexed: false,
+		MCR: toEther(1.25),
+		CCR: toEther(1.5),
+		minNetDebt: toEther(1_800),
+		gasCompensation: toEther(300),
+		mintCap: toEther(1_500_000)
+	},
+]
 
 const DEPLOY_GRVT_CONTRACTS = false
 const GRVT_BENEFICIARIES = {
@@ -26,13 +43,15 @@ const GRVT_BENEFICIARIES = {
 }
 
 module.exports = {
-	COLLATERAL_ADDRESSES,
+	COLLATERAL,
 	DEPLOY_GRVT_CONTRACTS,
 	ETHERSCAN_BASE_URL,
 	GAS_PRICE,
-	GRAVITA_ADDRESSES,
 	GRVT_BENEFICIARIES,
 	OUTPUT_FILE,
+	SYSTEM_PARAMS_ADMIN,
+	TREASURY_WALLET,
 	TX_CONFIRMATIONS,
+	UPGRADES_PROXY_ADMIN
 }
 

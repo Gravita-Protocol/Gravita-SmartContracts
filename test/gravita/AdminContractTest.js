@@ -24,7 +24,6 @@ contract("AdminContract", async accounts => {
 	let MIN_NET_DEBT
 	let PERCENT_DIVISOR
 	let BORROWING_FEE
-	let MAX_BORROWING_FEE
 	let REDEMPTION_FEE_FLOOR
 	let MINT_CAP
 
@@ -37,14 +36,14 @@ contract("AdminContract", async accounts => {
 	const PERCENT_DIVISOR_SAFETY_MAX = toBN(200)
 	const PERCENT_DIVISOR_SAFETY_MIN = toBN(2)
 
-	const BORROWING_FEE_SAFETY_MAX = toBN(1000) //10%
+	const BORROWING_FEE_SAFETY_MAX = toBN(0.1e18.toString()) // 10%
 	const BORROWING_FEE_SAFETY_MIN = toBN(0)
 
-	const MIN_NET_DEBT_SAFETY_MAX = toBN(dec(1800, 18))
+	const MIN_NET_DEBT_SAFETY_MAX = toBN(dec(2_000, 18))
 	const MIN_NET_DEBT_SAFETY_MIN = toBN(0)
 
-	const REDEMPTION_FEE_FLOOR_SAFETY_MAX = toBN(1000)
-	const REDEMPTION_FEE_FLOOR_SAFETY_MIN = toBN(10)
+	const REDEMPTION_FEE_FLOOR_SAFETY_MAX = toBN(0.1e18.toString()) // 10%
+	const REDEMPTION_FEE_FLOOR_SAFETY_MIN = toBN(0.001e18.toString()) // 0.1%
 
 	const openVessel = async params => th.openVessel(contracts, params)
 
@@ -85,13 +84,13 @@ contract("AdminContract", async accounts => {
 	})
 
 	it("Formula Checks: Call every function with default value, Should match default values", async () => {
-		await adminContract.setMCR(ZERO_ADDRESS, "1100000000000000000")
 		await adminContract.setCCR(ZERO_ADDRESS, "1500000000000000000")
+		await adminContract.setMCR(ZERO_ADDRESS, "1100000000000000000")
+		await adminContract.setBorrowingFee(ZERO_ADDRESS, 0.005e18) // 0.5%
+		await adminContract.setMinNetDebt(ZERO_ADDRESS, dec(2_000, 18))
+		await adminContract.setMintCap(ZERO_ADDRESS, dec(1_000_000, 18))
 		await adminContract.setPercentDivisor(ZERO_ADDRESS, 100)
-		await adminContract.setBorrowingFee(ZERO_ADDRESS, 50)
-		await adminContract.setMinNetDebt(ZERO_ADDRESS, dec(300, 18))
-		await adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, 50)
-		await adminContract.setMintCap(ZERO_ADDRESS, dec(1000000, 18))
+		await adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, 0.005e18) // 0.5%
 
 		assert.equal((await adminContract.getMcr(ZERO_ADDRESS)).toString(), MCR)
 		assert.equal((await adminContract.getCcr(ZERO_ADDRESS)).toString(), CCR)
@@ -106,13 +105,13 @@ contract("AdminContract", async accounts => {
 		await assertRevert(
 			adminContract.setCollateralParameters(
 				ZERO_ADDRESS,
-				MCR,
-				CCR,
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR,
 				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR,
+				CCR,
+				MCR,
+				MIN_NET_DEBT,
 				MINT_CAP,
+				PERCENT_DIVISOR,
+				REDEMPTION_FEE_FLOOR,
 				{ from: user }
 			)
 		)
@@ -211,91 +210,73 @@ contract("AdminContract", async accounts => {
 		await assertRevert(
 			adminContract.setCollateralParameters(
 				ZERO_ADDRESS,
-				MCR_SAFETY_MAX.add(toBN(1)),
-				CCR,
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR,
-				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR,
-				MINT_CAP
-			)
-		)
-
-		await assertRevert(
-			adminContract.setCollateralParameters(
-				ZERO_ADDRESS,
-				MCR,
-				CCR_SAFETY_MAX.add(toBN(1)),
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR,
-				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR,
-				MINT_CAP
-			)
-		)
-
-		await assertRevert(
-			adminContract.setCollateralParameters(
-				ZERO_ADDRESS,
-				MCR,
-				CCR,
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR,
-				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR,
-				MINT_CAP
-			)
-		)
-
-		await assertRevert(
-			adminContract.setCollateralParameters(
-				ZERO_ADDRESS,
-				MCR,
-				CCR,
-				MIN_NET_DEBT_SAFETY_MAX.add(toBN(1)),
-				PERCENT_DIVISOR,
-				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR,
-				MINT_CAP
-			)
-		)
-
-		await assertRevert(
-			adminContract.setCollateralParameters(
-				ZERO_ADDRESS,
-				MCR,
-				CCR,
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR_SAFETY_MAX.add(toBN(1)),
-				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR,
-				MINT_CAP
-			)
-		)
-
-		await assertRevert(
-			adminContract.setCollateralParameters(
-				ZERO_ADDRESS,
-				MCR,
-				CCR,
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR,
 				BORROWING_FEE_SAFETY_MAX.add(toBN(1)),
-				REDEMPTION_FEE_FLOOR,
-				MINT_CAP
+				CCR,
+				MCR,
+				MIN_NET_DEBT,
+				MINT_CAP,
+				PERCENT_DIVISOR,
+				REDEMPTION_FEE_FLOOR
 			)
 		)
-
 		await assertRevert(
 			adminContract.setCollateralParameters(
 				ZERO_ADDRESS,
-				MCR,
-				CCR,
-				MIN_NET_DEBT,
-				PERCENT_DIVISOR,
 				BORROWING_FEE,
-				REDEMPTION_FEE_FLOOR_SAFETY_MAX.add(toBN(1)),
-				MINT_CAP
+				CCR_SAFETY_MAX.add(toBN(1)),
+				MCR,
+				MIN_NET_DEBT,
+				MINT_CAP,
+				PERCENT_DIVISOR,
+				REDEMPTION_FEE_FLOOR
+			)
+		)
+		await assertRevert(
+			adminContract.setCollateralParameters(
+				ZERO_ADDRESS,
+				BORROWING_FEE,
+				CCR,
+				MCR_SAFETY_MAX.add(toBN(1)),
+				MIN_NET_DEBT,
+				MINT_CAP,
+				PERCENT_DIVISOR,
+				REDEMPTION_FEE_FLOOR
+			)
+		)
+		await assertRevert(
+			adminContract.setCollateralParameters(
+				ZERO_ADDRESS,
+				BORROWING_FEE,
+				CCR,
+				MCR,
+				MIN_NET_DEBT_SAFETY_MAX.add(toBN(1)),
+				MINT_CAP,
+				PERCENT_DIVISOR,
+				REDEMPTION_FEE_FLOOR
+			)
+		)
+		await assertRevert(
+			adminContract.setCollateralParameters(
+				ZERO_ADDRESS,
+				BORROWING_FEE,
+				CCR,
+				MCR,
+				MIN_NET_DEBT,
+				MINT_CAP,
+				PERCENT_DIVISOR_SAFETY_MAX.add(toBN(1)),
+				REDEMPTION_FEE_FLOOR
+			)
+		)
+		await assertRevert(
+			adminContract.setCollateralParameters(
+				ZERO_ADDRESS,
+				BORROWING_FEE,
+				CCR,
+				MCR,
+				MIN_NET_DEBT,
+				MINT_CAP,
+				PERCENT_DIVISOR,
+				REDEMPTION_FEE_FLOOR_SAFETY_MAX.add(toBN(1))
 			)
 		)
 	})
@@ -340,4 +321,3 @@ contract("AdminContract", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
-

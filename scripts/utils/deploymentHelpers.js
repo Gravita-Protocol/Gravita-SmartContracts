@@ -6,7 +6,8 @@ class DeploymentHelper {
 		this.configParams = configParams
 		this.deployerWallet = deployerWallet
 		this.hre = require("hardhat")
-		this.timelockDelay = this.isMainnet() ? 3 * 86_400 : 120 // 3 days || 2 minutes
+		this.shortTimelockDelay = this.isMainnet() ? 3 * 86_400 : 120 // 3 days || 2 minutes
+		this.longTimelockDelay = this.isMainnet() ? 7 * 86_400 : 120 // 7 days || 2 minutes
 	}
 
 	isMainnet() {
@@ -14,12 +15,11 @@ class DeploymentHelper {
 	}
 
 	async loadOrDeployCoreContracts(deploymentState) {
-		const deployUpgradable = async (factory, name, params = []) => {
-			return await this.loadOrDeploy(factory, name, deploymentState, true, params)
-		}
-		const deployNonUpgradable = async (factory, name, params = []) => {
-			return await this.loadOrDeploy(factory, name, deploymentState, false, params)
-		}
+		const deployUpgradable = async (factory, name, params = []) =>
+			await this.loadOrDeploy(factory, name, deploymentState, true, params)
+
+		const deployNonUpgradable = async (factory, name, params = []) =>
+			await this.loadOrDeploy(factory, name, deploymentState, false, params)
 
 		console.log(`Deploying core contracts...`)
 
@@ -42,6 +42,7 @@ class DeploymentHelper {
 
 		// Upgradable (proxy-based) contracts
 		const activePool = await deployUpgradable(activePoolFactory, "ActivePool")
+		const adminContract = await deployUpgradable(adminContractFactory, "AdminContract")
 		const borrowerOperations = await deployUpgradable(borrowerOperationsFactory, "BorrowerOperations")
 		const collSurplusPool = await deployUpgradable(collSurplusPoolFactory, "CollSurplusPool")
 		const defaultPool = await deployUpgradable(defaultPoolFactory, "DefaultPool")
@@ -53,11 +54,16 @@ class DeploymentHelper {
 		const vesselManagerOperations = await deployUpgradable(vesselMgrOperationsFactory, "VesselManagerOperations")
 
 		// Non-upgradable contracts
-		const adminContract = await deployNonUpgradable(adminContractFactory, "AdminContract")
 		const gasPool = await deployNonUpgradable(gasPoolFactory, "GasPool")
-		const timelock = await deployNonUpgradable(timelockFactory, "Timelock", [this.timelockDelay])
+		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortTimelockDelay])
+		const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longTimelockDelay])
 
-		const debtTokenParams = [vesselManager.address, stabilityPool.address, borrowerOperations.address, timelock.address]
+		const debtTokenParams = [
+			vesselManager.address,
+			stabilityPool.address,
+			borrowerOperations.address,
+			shortTimelock.address,
+		]
 		const debtToken = await deployNonUpgradable(debtTokenFactory, "DebtToken", debtTokenParams)
 
 		await this.verifyCoreContracts(deploymentState, debtTokenParams)
@@ -73,7 +79,8 @@ class DeploymentHelper {
 			gasPool,
 			priceFeed,
 			sortedVessels,
-			timelock,
+			shortTimelock,
+			longTimelock,
 			stabilityPool,
 			vesselManager,
 			vesselManagerOperations,
@@ -101,7 +108,8 @@ class DeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeed.address,
-			contracts.timelock.address,
+			contracts.shortTimelock.address,
+			contracts.longTimelock.address,
 		])
 
 		await this.setAddresses("BorrowerOperations", contracts.borrowerOperations, [
@@ -138,7 +146,7 @@ class DeploymentHelper {
 
 		await this.setAddresses("PriceFeed", contracts.priceFeed, [
 			contracts.adminContract.address,
-			contracts.timelock.address,
+			contracts.shortTimelock.address,
 		])
 
 		await this.setAddresses("SortedVessels", contracts.sortedVessels, [
@@ -320,7 +328,13 @@ class DeploymentHelper {
 			timeout = 600_000 // milliseconds
 		while (++retry < maxRetries) {
 			try {
-				const contract = await (proxy ? upgrades.deployProxy(factory) : factory.deploy(...params))
+				let contract
+				if (proxy) {
+					let opts = factory.interface.functions.initialize ? { initializer: "initialize()" } : {}
+					contract = await upgrades.deployProxy(factory, opts)
+				} else {
+					contract = await factory.deploy(...params)
+				}
 				await this.deployerWallet.provider.waitForTransaction(
 					contract.deployTransaction.hash,
 					this.configParams.TX_CONFIRMATIONS,
@@ -398,9 +412,10 @@ class DeploymentHelper {
 			await this.verifyContract("PriceFeed", deploymentState)
 			await this.verifyContract("SortedVessels", deploymentState)
 			await this.verifyContract("StabilityPool", deploymentState)
-			await this.verifyContract("Timelock", deploymentState)
 			await this.verifyContract("VesselManager", deploymentState)
 			await this.verifyContract("VesselManagerOperations", deploymentState)
+			await this.verifyContract("ShortTimelock", deploymentState)
+			await this.verifyContract("LongTimelock", deploymentState)
 		}
 	}
 

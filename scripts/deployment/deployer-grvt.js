@@ -55,7 +55,7 @@ class Deployer {
 		await this.helper.connectCoreContracts(
 			this.coreContracts,
 			this.grvtContracts,
-			this.config.GRAVITA_ADDRESSES.TREASURY_WALLET
+			this.config.TREASURY_WALLET
 		)
 
 		await this.addCollaterals()
@@ -190,7 +190,7 @@ class Deployer {
 	 * Transfers the ProxyAdmin's Upgrades ownership to the address defined on config's UPGRADES_PROXY_ADMIN.
 	 */
 	async transferUpgradesProxyAdminOwnership() {
-		const gnosisSafeAddress = this.config.GRAVITA_ADDRESSES.UPGRADES_PROXY_ADMIN
+		const gnosisSafeAddress = this.config.UPGRADES_PROXY_ADMIN
 		if (!gnosisSafeAddress) {
 			throw Error("Provide an address for UPGRADES_PROXY_ADMIN in the config file before transferring the ownership.")
 		}
@@ -219,7 +219,7 @@ class Deployer {
 	 * Transfers the ownership of all (core) Ownable contracts to the address defined on config's SYSTEM_PARAMS_ADMIN.
 	 */
 	async transferCoreContractsOwnerships() {
-		const sysAdminAddress = this.config.GRAVITA_ADDRESSES.SYSTEM_PARAMS_ADMIN
+		const sysAdminAddress = this.config.SYSTEM_PARAMS_ADMIN
 		if (!sysAdminAddress || sysAdminAddress == this.hre.ethers.constants.AddressZero) {
 			throw Error("Provide an address for SYSTEM_PARAMS_ADMIN in the config file before transferring the ownerships.")
 		}

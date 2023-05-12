@@ -9,10 +9,10 @@
 	"scripts": {
 		"hardhat": "hardhat",
 		"test": "hardhat test --max-memory 4096 --show-stack-traces",
-		"deploy-localhost": "npx hardhat deploy-localhost --network localhost --show-stack-traces",
-		"deploy-testnet-goerli": "npx hardhat deploy-testnet-goerli --network testnet_goerli --show-stack-traces",
-		"deploy-testnet-sepolia": "npx hardhat deploy-testnet-sepolia --network testnet_sepolia --show-stack-traces",
-		"deploy-mainnet": "npx hardhat deploy-mainnet --network mainnet --show-stack-traces"
+		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
+		"deploy-core-testnet-goerli": "npx hardhat deploy-core-testnet-goerli --network testnet_goerli --show-stack-traces",
+		"deploy-core-testnet-sepolia": "npx hardhat deploy-core-testnet-sepolia --network testnet_sepolia --show-stack-traces",
+		"deploy-core-mainnet": "npx hardhat deploy-core-mainnet --network mainnet --show-stack-traces"
 	},
 	"keywords": [],
 	"author": "",
