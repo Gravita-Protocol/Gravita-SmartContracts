@@ -75,10 +75,9 @@ async function addCollateral(name, address, chainlinkPriceFeedAddress, maxDeviat
 		console.log(`[${name}] NOTICE: collateral has already been added before`)
 	} else {
 		const decimals = 18
-		const isWrapped = false
 		const gasCompensation = th.dec(30, 18)
 		await helper.sendAndWaitForTransaction(
-			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
+			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals)
 		)
 		console.log(`[${name}] Collateral added @ ${address}`)
 	}

@@ -10,7 +10,7 @@ import "./Interfaces/IDefaultPool.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
 
-contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpgradeable, GravitaBase {
+contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
 	uint256 public constant PERCENTAGE_PRECISION = 1000;
@@ -60,6 +60,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 	function initialize() public initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 	}
 	
 	// Dependency setter ------------------------------------------------------------------------------------------------
@@ -478,12 +479,12 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		for (vars.i = 0; vars.i < _vesselArray.length; ) {
-			vars.user = _vesselArray[vars.i];
+		for (uint i = 0; i < _vesselArray.length; ) {
+			vars.user = _vesselArray[i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
 				unchecked {
-					i++;
+					++i;
 				}
 				continue;
 			}
@@ -493,7 +494,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				// Skip this vessel if ICR is greater than MCR and Stability Pool is empty
 				if (vars.ICR >= adminContract.getMcr(_asset) && vars.remainingDebtTokenInStabPool == 0) {
 					unchecked {
-						i++;
+						++i;
 					}
 					continue;
 				}
@@ -534,7 +535,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			}
 			unchecked {
-				i++;
+				++i;
 			}
 		}
 	}
@@ -550,8 +551,8 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _vesselArray.length; ) {
-			vars.user = _vesselArray[vars.i];
+		for (uint i = 0; i < _vesselArray.length; ) {
+			vars.user = _vesselArray[i];
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (vars.ICR < adminContract.getMcr(_asset)) {
@@ -562,7 +563,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			}
 			unchecked {
-				i++;
+				++i;
 			}
 		}
 	}
@@ -598,7 +599,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _n; ) {
+		for (uint i = 0; i < _n; ) {
 			vars.user = sortedVesselsCached.getLast(_asset);
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -611,7 +612,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
 			unchecked {
-				i++;
+				++i;
 			}
 		}
 	}
@@ -783,12 +784,12 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 		vars.backToNormalMode = false;
-		vars.entireSystemDebt = getEntireSystemDebt(assetVars._asset);
-		vars.entireSystemColl = getEntireSystemColl(assetVars._asset);
+		vars.entireSystemDebt = getEntireSystemDebt(_asset);
+		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		vars.user = _contractsCache.sortedVessels.getLast(assetVars._asset);
-		address firstUser = _contractsCache.sortedVessels.getFirst(assetVars._asset);
-		for (vars.i = 0; vars.i < _n && vars.user != firstUser; ) {
+		vars.user = _contractsCache.sortedVessels.getLast(_asset);
+		address firstUser = _contractsCache.sortedVessels.getFirst(_asset);
+		for (uint i = 0; i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
 			address nextUser = _contractsCache.sortedVessels.getPrev(_asset, vars.user);
 
@@ -840,7 +841,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 			vars.user = nextUser;
 			unchecked {
-				i++;
+				++i;
 			}
 		}
 	}
@@ -1002,4 +1003,10 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 		return singleRedemption;
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
