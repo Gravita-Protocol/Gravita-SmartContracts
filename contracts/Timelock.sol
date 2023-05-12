@@ -95,13 +95,13 @@ contract Timelock {
 		emit NewAdmin(msg.sender);
 	}
 
-	function setPendingAdmin(address pendingAdmin_) external {
+	function setPendingAdmin(address _pendingAdmin) external {
 		if (msg.sender != address(this)) {
 			revert Timelock__TimelockOnly();
 		}
-		pendingAdmin = pendingAdmin_;
+		pendingAdmin = _pendingAdmin;
 
-		emit NewPendingAdmin(pendingAdmin_);
+		emit NewPendingAdmin(_pendingAdmin);
 	}
 
 	function queueTransaction(

@@ -442,13 +442,13 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		external
 		onlyVesselManagerOperations
 	{
-		uint256 _totalStakes = totalStakes[_asset];
-		totalStakesSnapshot[_asset] = _totalStakes;
+		uint256 totalStakesCached = totalStakes[_asset];
+		totalStakesSnapshot[_asset] = totalStakesCached;
 		uint256 activeColl = adminContract.activePool().getAssetBalance(_asset);
 		uint256 liquidatedColl = adminContract.defaultPool().getAssetBalance(_asset);
 		uint256 _totalCollateralSnapshot = activeColl - _collRemainder + liquidatedColl;
 		totalCollateralSnapshot[_asset] = _totalCollateralSnapshot;
-		emit SystemSnapshotsUpdated(_asset, _totalStakes, _totalCollateralSnapshot);
+		emit SystemSnapshotsUpdated(_asset, totalStakesCached, _totalCollateralSnapshot);
 	}
 
 	function closeVessel(
@@ -748,8 +748,8 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+    _authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+  function _authorizeUpgrade(address) internal override onlyOwner {}
 }
