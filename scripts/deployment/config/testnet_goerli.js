@@ -1,4 +1,4 @@
-const OUTPUT_FILE = "./scripts/deployment/output/testnet_goerli.json"
+const OUTPUT_FILE = "./scripts/deployment/output/goerli.json"
 const GAS_PRICE = 20_000_000_000 // 20 Gwei
 const TX_CONFIRMATIONS = 1
 const ETHERSCAN_BASE_URL = "https://goerli.etherscan.io/address"

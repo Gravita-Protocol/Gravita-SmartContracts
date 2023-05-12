@@ -17,11 +17,8 @@ const { Deployer, DeploymentTarget } = require("./scripts/deployment/deployer-co
 task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.Localhost).run()
 )
-task("deploy-core-testnet-goerli", "Deploys contracts to Goerli Testnet").setAction(
+task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.GoerliTestnet).run()
-)
-task("deploy-core-testnet-sepolia", "Deploys contracts to Sepolia Testnet").setAction(
-	async (_, hre) => await new Deployer(hre, DeploymentTarget.SepoliaTestnet).run()
 )
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new Deployer(hre, DeploymentTarget.Mainnet).run()
@@ -64,12 +61,8 @@ module.exports = {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
 		},
-		testnet_goerli: {
+		goerli: {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
-		testnet_sepolia: {
-			url: `${process.env.SEPOLIA_TESTNET_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		// mainnet: {

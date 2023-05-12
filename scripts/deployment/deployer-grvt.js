@@ -8,8 +8,7 @@ const DeploymentHelper = require("../utils/deploymentHelpers.js")
  */
 const DeploymentTarget = Object.freeze({
 	Localhost: "localhost",
-	GoerliTestnet: "testnet_goerli",
-	SepoliaTestnet: "testnet_sepolia",
+	GoerliTestnet: "goerli",
 	Mainnet: "mainnet",
 })
 
