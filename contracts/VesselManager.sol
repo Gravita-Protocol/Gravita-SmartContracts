@@ -2,12 +2,14 @@
 
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+
 import "./Dependencies/GravitaBase.sol";
 
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
 
-contract VesselManager is IVesselManager, GravitaBase {
+contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBase {
 
 	// Constants ------------------------------------------------------------------------------------------------------
 
@@ -280,7 +282,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _asset,
 		address _borrower,
 		uint256 _newColl
-	) external override onlyVesselManagerOperations {
+	) external override nonReentrant onlyVesselManagerOperations {
 		_removeStake(_asset, _borrower);
 		_closeVessel(_asset, _borrower, Status.closedByRedemption);
 		_redeemCloseVessel(_asset, _borrower, adminContract.getDebtTokenGasCompensation(_asset), _newColl);
@@ -350,7 +352,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	function applyPendingRewards(address _asset, address _borrower)
 		external
-		override
+		override nonReentrant
 		onlyVesselManagerOperationsOrBorrowerOperations
 	{
 		return _applyPendingRewards(_asset, _borrower);
@@ -393,7 +395,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 _coll,
 		uint256 _debtToOffset,
 		uint256 _collToSendToStabilityPool
-	) external override onlyVesselManagerOperations {
+	) external override nonReentrant onlyVesselManagerOperations {
 		stabilityPool.offset(_debtToOffset, _asset, _collToSendToStabilityPool);
 
 		if (_debt == 0) {
@@ -465,7 +467,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _liquidator,
 		uint256 _debtTokenAmount,
 		uint256 _assetAmount
-	) external onlyVesselManagerOperations {
+	) external nonReentrant onlyVesselManagerOperations {
 		if (_debtTokenAmount > 0) {
 			debtToken.returnFromPool(gasPoolAddress, _liquidator, _debtTokenAmount);
 		}

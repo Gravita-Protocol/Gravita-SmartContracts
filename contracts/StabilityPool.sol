@@ -422,7 +422,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		uint256 _debtToOffset,
 		address _asset,
 		uint256 _amountAdded
-	) external {
+	) external nonReentrant {
 		_requireCallerIsVesselManager();
 		uint256 cachedTotalDebtTokenDeposits = totalDebtTokenDeposits; // cached to save an SLOAD
 		if (cachedTotalDebtTokenDeposits == 0 || _debtToOffset == 0) {
