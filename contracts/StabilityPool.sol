@@ -247,14 +247,18 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		isSetupInitialized = true;
 	}
 
+	function setCommunityIssuanceAddress(address _communityIssuanceAddress) external override onlyAdminContract {
+		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
+		emit CommunityIssuanceAddressChanged(_communityIssuanceAddress);
+	}
+
 	/**
 	 * @notice add a collateral
 	 * @dev should be called anytime a collateral is added to controller
 	 * keeps all arrays the correct length
 	 * @param _collateral address of collateral to add
 	 */
-	function addCollateralType(address _collateral) external {
-		_requireCallerIsAdminContract();
+	function addCollateralType(address _collateral) external onlyAdminContract {
 		lastAssetError_Offset.push(0);
 		totalColl.tokens.push(_collateral);
 		totalColl.amounts.push(0);
@@ -427,12 +431,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	 * @param _asset token address
 	 * @param _amountAdded token amount as uint256
 	 */
-	function offset(
-		uint256 _debtToOffset,
-		address _asset,
-		uint256 _amountAdded
-	) external nonReentrant {
-		_requireCallerIsVesselManager();
+	function offset(uint256 _debtToOffset, address _asset, uint256 _amountAdded) external onlyVesselManager {
 		uint256 cachedTotalDebtTokenDeposits = totalDebtTokenDeposits; // cached to save an SLOAD
 		if (cachedTotalDebtTokenDeposits == 0 || _debtToOffset == 0) {
 			return;
@@ -880,20 +879,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		return _coll1.amounts;
 	}
 
-	// --- 'require' functions ---
-
-	function _requireCallerIsActivePool() internal view {
-		require(msg.sender == address(adminContract.activePool()), "StabilityPool: Caller is not ActivePool");
-	}
-
-	function _requireCallerIsVesselManager() internal view {
-		require(msg.sender == address(vesselManager), "StabilityPool: Caller is not VesselManager");
-	}
-
-	function _requireCallerIsAdminContract() internal view {
-		require(msg.sender == address(adminContract), "StabilityPool: Caller is not AdminContract");
-	}
-
 	/**
 	 * @notice check ICR of bottom vessel (per asset) in SortedVessels
 	 */
@@ -903,12 +888,14 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		for (uint256 i = 0; i < assetsLen; ) {
 			address assetAddress = assets[i];
 			address lowestVessel = sortedVessels.getLast(assetAddress);
-			uint256 price = adminContract.priceFeed().fetchPrice(assetAddress);
-			uint256 ICR = vesselManager.getCurrentICR(assetAddress, lowestVessel, price);
-			require(
-				ICR >= adminContract.getMcr(assetAddress),
-				"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
-			);
+			if (lowestVessel != address(0)) {
+				uint256 price = adminContract.priceFeed().fetchPrice(assetAddress);
+				uint256 ICR = vesselManager.getCurrentICR(assetAddress, lowestVessel, price);
+				require(
+					ICR >= adminContract.getMcr(assetAddress),
+					"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
+				);
+			}
 			unchecked {
 				i++;
 			}
@@ -923,10 +910,32 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		require(_amount > 0, "StabilityPool: Amount must be non-zero");
 	}
 
+	// --- Modifiers ---
+
+	modifier onlyAdminContract() {
+		if (msg.sender != address(adminContract)) {
+			revert StabilityPool__AdminContractOnly(msg.sender, address(adminContract));
+		}
+		_;
+	}
+
+	modifier onlyActivePool() {
+		if (msg.sender != address(adminContract.activePool())) {
+			revert StabilityPool__ActivePoolOnly(msg.sender, address(adminContract.activePool()));
+		}
+		_;
+	}
+
+	modifier onlyVesselManager() {
+		if (msg.sender != address(vesselManager)) {
+			revert StabilityPool__VesselManagerOnly(msg.sender, address(vesselManager));
+		}
+		_;
+	}
+
 	// --- Fallback function ---
 
-	function receivedERC20(address _asset, uint256 _amount) external override {
-		_requireCallerIsActivePool();
+	function receivedERC20(address _asset, uint256 _amount) external override onlyActivePool {
 		uint256 collateralIndex = adminContract.getIndex(_asset);
 		uint256 newAssetBalance = totalColl.amounts[collateralIndex] + _amount;
 		totalColl.amounts[collateralIndex] = newAssetBalance;

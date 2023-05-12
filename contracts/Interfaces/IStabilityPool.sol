@@ -5,7 +5,6 @@ pragma solidity ^0.8.19;
 import "./IDeposit.sol";
 
 interface IStabilityPool is IDeposit {
-
 	// --- Structs ---
 
 	struct Snapshots {
@@ -18,16 +17,12 @@ interface IStabilityPool is IDeposit {
 
 	// --- Events ---
 
+	event CommunityIssuanceAddressChanged(address newAddress);
 	event DepositSnapshotUpdated(address indexed _depositor, uint256 _P, uint256 _G);
 	event SystemSnapshotUpdated(uint256 _P, uint256 _G);
 
 	event AssetSent(address _asset, address _to, uint256 _amount);
-	event GainsWithdrawn(
-		address indexed _depositor,
-		address[] _collaterals,
-		uint256[] _amounts,
-		uint256 _debtTokenLoss
-	);
+	event GainsWithdrawn(address indexed _depositor, address[] _collaterals, uint256[] _amounts, uint256 _debtTokenLoss);
 	event GRVTPaidToDepositor(address indexed _depositor, uint256 _GRVT);
 	event StabilityPoolAssetBalanceUpdated(address _asset, uint256 _newBalance);
 	event StabilityPoolDebtTokenBalanceUpdated(uint256 _newBalance);
@@ -40,7 +35,18 @@ interface IStabilityPool is IDeposit {
 	event EpochUpdated(uint128 _currentEpoch);
 	event ScaleUpdated(uint128 _currentScale);
 
+	// --- Errors ---
+
+	error StabilityPool__ActivePoolOnly(address sender, address expected);
+	error StabilityPool__AdminContractOnly(address sender, address expected);
+	error StabilityPool__VesselManagerOnly(address sender, address expected);
+
 	// --- Functions ---
+
+	/**
+	 * The CommunityIssuance contract can be deployed on a posterior time and has to be updatable.
+	 */
+	function setCommunityIssuanceAddress(address _communityIssuanceAddress) external;
 
 	function addCollateralType(address _collateral) external;
 
@@ -84,9 +90,7 @@ interface IStabilityPool is IDeposit {
 	/*
 	 * Calculates the asset gains earned by the deposit since its last snapshots were taken.
 	 */
-	function getDepositorGains(
-		address _depositor
-	) external view returns (address[] memory, uint256[] memory);
+	function getDepositorGains(address _depositor) external view returns (address[] memory, uint256[] memory);
 
 	/*
 	 * Calculate the GRVT gain earned by a deposit since its last snapshots were taken.
@@ -97,5 +101,4 @@ interface IStabilityPool is IDeposit {
 	 * Return the user's compounded deposits.
 	 */
 	function getCompoundedDebtTokenDeposits(address _depositor) external view returns (uint256);
-
 }
