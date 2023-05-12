@@ -30,11 +30,11 @@ contract("PriceFeed", async accounts => {
 	let priceFeed
 	let mockChainlink
 	let adminContract
-	let shortTimelock
+	let timelock
 	let erc20
 
 	const setAddressesAndOracle = async () => {
-		await priceFeed.setAddresses(adminContract.address, shortTimelock.address, { from: owner })
+		await priceFeed.setAddresses(adminContract.address, timelock.address, { from: owner })
 		await setOracle(ZERO_ADDRESS, mockChainlink.address)
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 	}
@@ -46,11 +46,11 @@ contract("PriceFeed", async accounts => {
 				from: owner,
 			})
 		} else {
-			await impersonateAccount(shortTimelock.address)
+			await impersonateAccount(timelock.address)
 			await priceFeed.setOracle(erc20Address, aggregatorAddress, MAX_PRICE_DEVIATION_BETWEEN_ROUNDS, isIndexed, {
-				from: shortTimelock.address,
+				from: timelock.address,
 			})
-			await stopImpersonatingAccount(shortTimelock.address)
+			await stopImpersonatingAccount(timelock.address)
 		}
 	}
 
@@ -65,12 +65,11 @@ contract("PriceFeed", async accounts => {
 		mockChainlink = await MockChainlink.new()
 		adminContract = await AdminContract.new()
 		erc20 = await ERC20Mock.new("MOCK", "MOCK", 18)
-		shortTimelock = await Timelock.new(86400 * 3)
+		ERC20Mock.setAsDeployed(erc20)
 
-		await priceFeed.initialize()
-		await adminContract.initialize()
-
-		setBalance(shortTimelock.address, 1e18)
+		timelock = await Timelock.new(86400 * 3)
+		Timelock.setAsDeployed(timelock)
+		setBalance(timelock.address, 1e18)
 
 		// Set Chainlink latest and prev roundId's to non-zero
 		await mockChainlink.setLatestRoundId(3)
@@ -96,9 +95,18 @@ contract("PriceFeed", async accounts => {
 	})
 
 	describe("Mainnet PriceFeed setup", async accounts => {
-		it("setAddresses should fail if not coming from owner", async () => {
+		it("setAddresses should fail after addresses have already been set", async () => {
+			// Owner can successfully set any address
+			const txOwner = await priceFeed.setAddresses(adminContract.address, timelock.address, { from: owner })
+			assert.isTrue(txOwner.receipt.status)
+
 			await assertRevert(
-				priceFeed.setAddresses(adminContract.address, shortTimelock.address, {
+				priceFeed.setAddresses(adminContract.address, timelock.address, {
+					from: owner,
+				})
+			)
+			await assertRevert(
+				priceFeed.setAddresses(adminContract.address, timelock.address, {
 					from: alice,
 				}),
 				"OwnableUpgradeable: caller is not the owner"

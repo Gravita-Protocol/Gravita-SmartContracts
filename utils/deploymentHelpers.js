@@ -20,16 +20,8 @@ const VesselManagerOperations = artifacts.require("VesselManagerOperations")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
 
 const testHelpers = require("./testHelpers.js")
-const { dec } = testHelpers.TestHelper
-
-/*
- * Gravita Core consists of all contracts in the core Gravita system.
- * GRVT contracts consist of only those contracts related to the GRVT Token:
- *   - the GRVT token
- *   - the Lockup factory and lockup contracts
- *   - the GRVTStaking contract
- *   - the CommunityIssuance contract
- */
+const th = testHelpers.TestHelper
+const dec = th.dec
 
 const EMPTY_ADDRESS = "0x" + "0".repeat(40)
 const TIMELOCK_SHORT_DELAY = 86400 * 3
@@ -76,7 +68,7 @@ class DeploymentHelper {
 			vesselManager.address,
 			stabilityPool.address,
 			borrowerOperations.address,
-			shortTimelock.address
+			longTimelock.address
 		)
 		const debtTokenWhitelistedTester = await DebtTokenWhitelistedTester.new(debtToken.address)
 
@@ -152,7 +144,6 @@ class DeploymentHelper {
 			contracts.collSurplusPool.address,
 			contracts.priceFeedTestnet.address,
 			contracts.shortTimelock.address,
-			contracts.longTimelock.address
 		)
 
 		await contracts.borrowerOperations.setAddresses(

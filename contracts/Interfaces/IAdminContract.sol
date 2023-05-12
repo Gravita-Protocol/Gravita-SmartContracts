@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "./IActivePool.sol";
 import "./IDefaultPool.sol";
@@ -29,9 +29,8 @@ interface IAdminContract {
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
 	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
-	error AdminContract__ShortTimelockOnly();
-	error AdminContract__LongTimelockOnly();
 	error AdminContract__OnlyOwner();
+	error AdminContract__OnlyTimelock();
 	error AdminContract__CollateralAlreadyInitialized();
 
 	// Events -----------------------------------------------------------------------------------------------------------

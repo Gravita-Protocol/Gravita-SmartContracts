@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -31,8 +31,9 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	address public shortTimelock;
-	address public longTimelock;
+	bool public isInitialized;
+
+	address public timelockAddress;
 
 	ICommunityIssuance public communityIssuance;
 	IActivePool public activePool;
@@ -63,23 +64,10 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		_;
 	}
 
-	modifier shortTimelockOnly() {
-		if (isSetupInitialized) {
-			if (msg.sender != shortTimelock) {
-				revert AdminContract__ShortTimelockOnly();
-			}
-		} else {
-			if (msg.sender != owner()) {
-				revert AdminContract__OnlyOwner();
-			}
-		}
-		_;
-	}
-
-	modifier longTimelockOnly() {
-		if (isSetupInitialized) {
-			if (msg.sender != longTimelock) {
-				revert AdminContract__LongTimelockOnly();
+	modifier onlyTimelock() {
+		if (isInitialized) {
+			if (msg.sender != timelockAddress) {
+				revert AdminContract__OnlyTimelock();
 			}
 		} else {
 			if (msg.sender != owner()) {
@@ -96,10 +84,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		uint256 min,
 		uint256 max
 	) {
-		require(
-			collateralParams[_collateral].active,
-			"Collateral is not configured, use setCollateralParameters"
-		);
+		require(collateralParams[_collateral].active, "Collateral is not configured, use setCollateralParameters");
 
 		if (enteredValue < min || enteredValue > max) {
 			revert SafeCheckError(parameter, enteredValue, min, max);
@@ -122,8 +107,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		address _stabilityPoolAddress,
 		address _collSurplusPoolAddress,
 		address _priceFeedAddress,
-		address _shortTimelock,
-		address _longTimelock
+		address _timelockAddress
 	) external onlyOwner {
 		require(!isSetupInitialized, "Setup is already initialized");
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
@@ -132,8 +116,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		priceFeed = IPriceFeed(_priceFeedAddress);
-		shortTimelock = _shortTimelock;
-		longTimelock = _longTimelock;
+		timelockAddress = _timelockAddress;
 	}
 
 	/**
@@ -149,7 +132,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		uint256 _debtTokenGasCompensation, // the gas compensation is initialized here as it won't be changed
 		uint256 _decimals,
 		bool _isWrapped
-	) external longTimelockOnly {
+	) external onlyTimelock {
 		require(collateralParams[_collateral].mcr == 0, "collateral already exists");
 		// for the moment, require collaterals to have 18 decimals
 		require(_decimals == DEFAULT_DECIMALS, "collaterals must have the default decimals");
@@ -230,7 +213,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		uint256 borrowingFee,
 		uint256 redemptionFeeFloor,
 		uint256 mintCap
-	) public onlyOwner {
+	) public onlyTimelock {
 		collateralParams[_collateral].active = true;
 		setMCR(_collateral, newMCR);
 		setCCR(_collateral, newCCR);
@@ -244,7 +227,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 	function setMCR(address _collateral, uint256 newMCR)
 		public
 		override
-		shortTimelockOnly
+		onlyTimelock
 		safeCheck("MCR", _collateral, newMCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
 	{
 		CollateralParams storage collParams = collateralParams[_collateral];
@@ -253,13 +236,10 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		emit MCRChanged(oldMCR, newMCR);
 	}
 
-	function setCCR(
-		address _collateral,
-		uint256 newCCR
-	)
+	function setCCR(address _collateral, uint256 newCCR)
 		public
 		override
-		shortTimelockOnly
+		onlyTimelock
 		safeCheck("CCR", _collateral, newCCR, 1010000000000000000, 10000000000000000000) /// 101% - 1000%
 	{
 		CollateralParams storage collParams = collateralParams[_collateral];
@@ -268,28 +248,27 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
-	function setActive(address _collateral, bool _active) public onlyOwner {
+	function setActive(address _collateral, bool _active) public onlyTimelock {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}
 
-	function setPercentDivisor(
-		address _collateral,
-		uint256 percentDivisor
-	) public override onlyOwner safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200) {
+	function setPercentDivisor(address _collateral, uint256 percentDivisor)
+		public
+		override
+		onlyTimelock
+		safeCheck("Percent Divisor", _collateral, percentDivisor, 2, 200)
+	{
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldPercent = collParams.percentDivisor;
 		collParams.percentDivisor = percentDivisor;
 		emit PercentDivisorChanged(oldPercent, percentDivisor);
 	}
 
-	function setBorrowingFee(
-		address _collateral,
-		uint256 borrowingFee
-	)
+	function setBorrowingFee(address _collateral, uint256 borrowingFee)
 		public
 		override
-		onlyOwner
+		onlyTimelock
 		safeCheck("Borrowing Fee Floor", _collateral, borrowingFee, 0, 1000) /// 0% - 10%
 	{
 		CollateralParams storage collParams = collateralParams[_collateral];
@@ -299,23 +278,22 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		emit BorrowingFeeChanged(oldBorrowing, newBorrowingFee);
 	}
 
-	function setMinNetDebt(
-		address _collateral,
-		uint256 minNetDebt
-	) public override longTimelockOnly safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether) {
+	function setMinNetDebt(address _collateral, uint256 minNetDebt)
+		public
+		override
+		onlyTimelock
+		safeCheck("Min Net Debt", _collateral, minNetDebt, 0, 1800 ether)
+	{
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldMinNet = collParams.minNetDebt;
 		collParams.minNetDebt = minNetDebt;
 		emit MinNetDebtChanged(oldMinNet, minNetDebt);
 	}
 
-	function setRedemptionFeeFloor(
-		address _collateral,
-		uint256 redemptionFeeFloor
-	)
+	function setRedemptionFeeFloor(address _collateral, uint256 redemptionFeeFloor)
 		public
 		override
-		onlyOwner
+		onlyTimelock
 		safeCheck("Redemption Fee Floor", _collateral, redemptionFeeFloor, 10, 1000) /// 0.10% - 10%
 	{
 		CollateralParams storage collParams = collateralParams[_collateral];
@@ -325,7 +303,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		emit RedemptionFeeFloorChanged(oldRedemptionFeeFloor, newRedemptionFeeFloor);
 	}
 
-	function setMintCap(address _collateral, uint256 mintCap) public override shortTimelockOnly {
+	function setMintCap(address _collateral, uint256 mintCap) public override onlyTimelock {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldMintCap = collParams.mintCap;
 		uint256 newMintCap = mintCap;
@@ -333,10 +311,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		emit MintCapChanged(oldMintCap, newMintCap);
 	}
 
-	function setRedemptionBlockTimestamp(
-		address _collateral,
-		uint256 _blockTimestamp
-	) external override shortTimelockOnly {
+	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp) external override onlyTimelock {
 		collateralParams[_collateral].redemptionBlockTimestamp = _blockTimestamp;
 		emit RedemptionBlockTimestampChanged(_collateral, _blockTimestamp);
 	}
