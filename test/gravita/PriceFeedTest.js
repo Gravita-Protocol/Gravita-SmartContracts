@@ -65,10 +65,10 @@ contract("PriceFeed", async accounts => {
 		mockChainlink = await MockChainlink.new()
 		adminContract = await AdminContract.new()
 		erc20 = await ERC20Mock.new("MOCK", "MOCK", 18)
-		ERC20Mock.setAsDeployed(erc20)
+
+		await priceFeed.initialize()
 
 		timelock = await Timelock.new(86400 * 3)
-		Timelock.setAsDeployed(timelock)
 		setBalance(timelock.address, 1e18)
 
 		// Set Chainlink latest and prev roundId's to non-zero

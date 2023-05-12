@@ -40,7 +40,8 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		stabilityPool = coreContracts.stabilityPool
 		vesselManager = coreContracts.vesselManager
 		vesselManagerOperations = coreContracts.vesselManagerOperations
-		timelock = coreContracts.timelock
+		shortTimelock = coreContracts.shortTimelock
+		longTimelock = coreContracts.longTimelock
 
 		communityIssuance = GRVTContracts.communityIssuance
 		grvtStaking = GRVTContracts.grvtStaking
@@ -62,7 +63,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 			assert.equal(stabilityPool.address, await adminContract.stabilityPool())
 			assert.equal(collSurplusPool.address, await adminContract.collSurplusPool())
 			assert.equal(priceFeed.address, await adminContract.priceFeed())
-			assert.equal(timelock.address, await adminContract.timelockAddress())
+			assert.equal(shortTimelock.address, await adminContract.timelockAddress())
 		})
 		it("BorrowerOperations: check addresses", async () => {
 			assert.equal(vesselManager.address, await borrowerOperations.vesselManager())
@@ -84,7 +85,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 			assert.equal(vesselManager.address, await debtToken.vesselManagerAddress())
 			assert.equal(stabilityPool.address, await debtToken.stabilityPool())
 			assert.equal(borrowerOperations.address, await debtToken.borrowerOperationsAddress())
-			assert.equal(timelock.address, await debtToken.timelockAddress())
+			assert.equal(longTimelock.address, await debtToken.timelockAddress())
 		})
 		it("DefaultPool: check addresses", async () => {
 			assert.equal(vesselManager.address, await defaultPool.vesselManagerAddress())
