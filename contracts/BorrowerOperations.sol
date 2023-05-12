@@ -39,10 +39,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 
 	struct LocalVariables_adjustVessel {
 		address asset;
+		bool isCollIncrease;
 		uint256 price;
 		uint256 collChange;
 		uint256 netDebtChange;
-		bool isCollIncrease;
 		uint256 debt;
 		uint256 coll;
 		uint256 oldICR;
