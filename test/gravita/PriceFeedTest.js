@@ -17,7 +17,7 @@ const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
 const WstEth2EthPriceAggregator = artifacts.require("WstEth2EthPriceAggregator")
 
-const { TestHelper } = require("../../utils/testHelpers.js")
+const { TestHelper } = require("../utils/testHelpers.js")
 const { dec, assertRevert, toBN, getLatestBlockTimestamp, fastForwardTime } = TestHelper
 
 const MAX_PRICE_DEVIATION_BETWEEN_ROUNDS = dec(5, 17) // 0.5 ether

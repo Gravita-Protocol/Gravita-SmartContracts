@@ -136,7 +136,6 @@ class DeploymentHelper {
 			contracts.vesselManagerOperations.address
 		)
 
-		await contracts.adminContract.initialize()
 		await contracts.adminContract.setAddresses(
 			GRVTContracts.communityIssuance?.address || EMPTY_ADDRESS,
 			contracts.activePool.address,
@@ -212,13 +211,13 @@ class DeploymentHelper {
 			contracts.adminContract.address
 		)
 
-		await contracts.adminContract.addNewCollateral(EMPTY_ADDRESS, dec(30, 18), 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18, false)
-		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18, false)
+		await contracts.adminContract.addNewCollateral(EMPTY_ADDRESS, dec(30, 18), 18)
+		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18)
+		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18)
 
-		await contracts.adminContract.setActive(EMPTY_ADDRESS, true)
-		await contracts.adminContract.setActive(contracts.erc20.address, true)
-		await contracts.adminContract.setActive(contracts.erc20B.address, true)
+		await contracts.adminContract.setIsActive(EMPTY_ADDRESS, true)
+		await contracts.adminContract.setIsActive(contracts.erc20.address, true)
+		await contracts.adminContract.setIsActive(contracts.erc20B.address, true)
 	}
 
 	/**
@@ -249,8 +248,8 @@ class DeploymentHelper {
 			from: treasuryAddress,
 		})
 
-		const supply = dec(32000000, 18)
-		const weeklyReward = dec(32000000 / 4, 18)
+		const supply = dec(32_000_000, 18)
+		const weeklyReward = dec(32_000_000 / 4, 18)
 
 		await GRVTContracts.grvtToken.unprotectedMint(treasuryAddress, supply)
 
@@ -258,12 +257,10 @@ class DeploymentHelper {
 		await GRVTContracts.communityIssuance.addFundToStabilityPool(weeklyReward, { from: treasuryAddress })
 		await GRVTContracts.communityIssuance.setWeeklyGrvtDistribution(weeklyReward, { from: treasuryAddress })
 
-		if (!liquitySettings) return
-
-		//Set Liquity Configs (since the tests have been designed with it)
+		// Set params expected by the test routines
 		const defaultFee = 0.005e18.toString() // 0.5%
 		await coreContracts.adminContract.setCollateralParameters(
-			ZERO_ADDRESS,
+			EMPTY_ADDRESS,
 			defaultFee, // borrowingFee
 			(1.5e18).toString(), // ccr
 			(1.1e18).toString(), // mcr

@@ -103,10 +103,9 @@ class Deployer {
 			console.log(`[${name}] NOTICE: collateral has already been added before`)
 		} else {
 			const decimals = 18
-			const isWrapped = false // TODO remove this property from the contracts (unused)
 			const gasCompensation = this.hre.ethers.utils.parseUnits("30")
 			await this.helper.sendAndWaitForTransaction(
-				this.coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
+				this.coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals)
 			)
 			console.log(`[${name}] Collateral added @ ${address}`)
 		}
