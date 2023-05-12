@@ -45,7 +45,6 @@ contract("PoolBase", async accounts => {
 			assert.equal(result[1], 80)
 			assert.equal(result[2], 70)
 		})
-
 		it("_leftSubColls(): decrease balances of some of the tokens", async () => {
 			const colls1 = [tokens, [100, 100, 100]]
 			const result = await poolBase.leftSubColls(colls1, [token2, token3], [20, 30])
@@ -53,7 +52,6 @@ contract("PoolBase", async accounts => {
 			assert.equal(result[1], 80)
 			assert.equal(result[2], 70)
 		})
-
 		it("_leftSubColls(): balances of tokens unknown to left side should not be modified", async () => {
 			const colls1 = [[token2], [100]]
 			const result = await poolBase.leftSubColls(colls1, tokens, [10, 20, 30])
@@ -64,12 +62,9 @@ contract("PoolBase", async accounts => {
 
 contract("StabilityPool", async accounts => {
 	beforeEach(async () => {
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		contracts = await deploymentHelper.deployGravitaCore()
-		stabilityPool = contracts.stabilityPool
-		erc20 = contracts.erc20
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		const { coreContracts } = await deploymentHelper.deployTestContracts(accounts[0])
+		stabilityPool = coreContracts.stabilityPool
+		erc20 = coreContracts.erc20
 	})
 	it("getAssetBalance(): gets the recorded collateral balance", async () => {
 		const balance = await stabilityPool.getCollateral(erc20.address)
@@ -83,13 +78,11 @@ contract("StabilityPool", async accounts => {
 
 contract("ActivePool", async accounts => {
 	beforeEach(async () => {
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		contracts = await deploymentHelper.deployGravitaCore()
-		activePool = contracts.activePool
-		erc20 = contracts.erc20
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-		setBalance(contracts.borrowerOperations.address, 1e18)
+		const { coreContracts } = await deploymentHelper.deployTestContracts(accounts[0])
+		activePool = coreContracts.activePool
+		borrowerOperations = coreContracts.borrowerOperations
+		erc20 = coreContracts.erc20
+		setBalance(borrowerOperations.address, 1e18)
 	})
 	it("getAssetBalance(): gets the recorded collateral balance", async () => {
 		const balance = await activePool.getAssetBalance(erc20.address)
@@ -102,7 +95,7 @@ contract("ActivePool", async accounts => {
 	it("increaseDebt(): increases the recorded debt token balance by the correct amount", async () => {
 		const balanceBefore = await activePool.getDebtTokenBalance(erc20.address)
 		assert.equal(balanceBefore, 0)
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		await impersonateAccount(borrowerOperationsAddress)
 		await activePool.increaseDebt(erc20.address, 100, { from: borrowerOperationsAddress })
 		await stopImpersonatingAccount(borrowerOperationsAddress)
@@ -111,7 +104,7 @@ contract("ActivePool", async accounts => {
 	})
 	it("decreaseDebt(): decreases the recorded debt token balance by the correct amount", async () => {
 		const debtTokenAmount = 100
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		await impersonateAccount(borrowerOperationsAddress)
 		await activePool.increaseDebt(erc20.address, debtTokenAmount, { from: borrowerOperationsAddress })
 		const balanceBefore = await activePool.getDebtTokenBalance(erc20.address)
@@ -125,13 +118,11 @@ contract("ActivePool", async accounts => {
 
 contract("DefaultPool", async accounts => {
 	beforeEach(async () => {
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		contracts = await deploymentHelper.deployGravitaCore()
-		defaultPool = contracts.defaultPool
-		erc20 = contracts.erc20
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-		setBalance(contracts.vesselManager.address, 1e18)
+		const { coreContracts } = await deploymentHelper.deployTestContracts(accounts[0])
+		vesselManager = coreContracts.vesselManager
+		defaultPool = coreContracts.defaultPool
+		erc20 = coreContracts.erc20
+		setBalance(vesselManager.address, 1e18)
 	})
 	it("getAssetBalance(): gets the recorded collateral balance", async () => {
 		const balance = await defaultPool.getAssetBalance(erc20.address)
@@ -145,7 +136,7 @@ contract("DefaultPool", async accounts => {
 		const balanceBefore = await defaultPool.getDebtTokenBalance(erc20.address)
 		assert.equal(balanceBefore, 0)
 		const debtTokenAmount = 100
-		const vesselManagerAddress = contracts.vesselManager.address
+		const vesselManagerAddress = vesselManager.address
 		await impersonateAccount(vesselManagerAddress)
 		await defaultPool.increaseDebt(erc20.address, debtTokenAmount, { from: vesselManagerAddress })
 		await stopImpersonatingAccount(vesselManagerAddress)
@@ -154,7 +145,7 @@ contract("DefaultPool", async accounts => {
 	})
 	it("decreaseDebt(): decreases the recorded debt token balance by the correct amount", async () => {
 		const debtTokenAmount = 100
-		const vesselManagerAddress = contracts.vesselManager.address
+		const vesselManagerAddress = vesselManager.address
 		await impersonateAccount(vesselManagerAddress)
 		await defaultPool.increaseDebt(erc20.address, debtTokenAmount, { from: vesselManagerAddress })
 		const balanceBefore = await defaultPool.getDebtTokenBalance(erc20.address)

@@ -3,7 +3,6 @@ const testHelpers = require("../../utils/testHelpers.js")
 
 const SortedVessels = artifacts.require("SortedVessels")
 const SortedVesselsTester = artifacts.require("SortedVesselsTester")
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -32,7 +31,7 @@ contract("SortedVessels", async accounts => {
 		}
 	}
 
-	const [owner, alice, bob, carol, dennis, erin, flyn, defaulter_1, A, B, C, D, E, F, G, H, I, J, whale] = accounts
+	const [alice, bob, carol, dennis, erin, defaulter_1, A, B, C, D, E, F, G, H, I, J, whale, treasury] = accounts
 
 	let contracts
 
@@ -48,10 +47,10 @@ contract("SortedVessels", async accounts => {
 
 	describe("SortedVessels", () => {
 		beforeEach(async () => {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+
+			const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 20))
+
+			contracts = coreContracts
 
 			borrowerOperations = contracts.borrowerOperations
 			debtToken = contracts.debtToken
@@ -60,16 +59,7 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = contracts.sortedVessels
 			vesselManager = contracts.vesselManager
 			vesselManagerOperations = contracts.vesselManagerOperations
-
-			let index = 0
-			for (const acc of accounts) {
-				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
-			}
-
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-		})
+	})
 
 		it("contains(): returns true for addresses that have opened vessels", async () => {
 			await openVessel({
@@ -403,7 +393,7 @@ contract("SortedVessels", async accounts => {
 		beforeEach(async () => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
-
+			await sortedVessels.initialize()
 			await sortedVessels.setAddresses(sortedVesselsTester.address, sortedVesselsTester.address)
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})

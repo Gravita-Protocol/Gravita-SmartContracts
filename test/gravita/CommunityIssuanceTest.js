@@ -1,50 +1,43 @@
+const { artifacts } = require("hardhat")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-const StabilityPool = artifacts.require("StabilityPool.sol")
+const CommunityIssuance = artifacts.require("CommunityIssuance")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN } = th
 
 contract("CommunityIssuance", async accounts => {
-	const ZERO_ADDRESS = th.ZERO_ADDRESS
 	const assertRevert = th.assertRevert
-	const DECIMAL_PRECISION = toBN(dec(1, 18))
-	const [owner, user, A, C, B, multisig, treasury] = accounts
+	const [owner, user, oldTreasury, treasury] = accounts
 	const timeValues = testHelpers.TimeValues
 
 	let communityIssuance
-	let stabilityPool
-	let stabilityPoolERC20
-	let grvtToken
 	let erc20
+	let grvtToken
+	let stabilityPool
 
 	describe("Community Issuance", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(treasury)
-
-			grvtToken = GRVTContracts.grvtToken
-			communityIssuance = GRVTContracts.communityIssuance
-			erc20 = contracts.erc20
-
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts, true)
-
-			stabilityPool = contracts.stabilityPool
-
-			await communityIssuance.transferOwnership(treasury)
-			await GRVTContracts.grvtToken.approve(
-				GRVTContracts.communityIssuance.address,
-				ethers.constants.MaxUint256,
-				{ from: treasury }
-			)
-		}
 		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
+			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(
+				oldTreasury,
+				accounts.slice(0, 10)
+			)
+
+			erc20 = coreContracts.erc20
+			grvtToken = GRVTContracts.grvtToken
+			stabilityPool = coreContracts.stabilityPool
+
+			communityIssuance = await CommunityIssuance.new()
+			await communityIssuance.initialize()
+			await communityIssuance.setAddresses(
+				GRVTContracts.grvtToken.address,
+				coreContracts.stabilityPool.address,
+				coreContracts.adminContract.address
+			)
+			await communityIssuance.transferOwnership(treasury, { from: owner })
+			const supply = dec(32_000_000, 18)
+			await grvtToken.unprotectedMint(treasury, supply)
+			await GRVTContracts.grvtToken.approve(communityIssuance.address, ethers.constants.MaxUint256, { from: treasury })
 		})
 
 		it("Owner(): Contract has been initialized, owner should be the treasury", async () => {

@@ -214,6 +214,15 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	uint256[] public lastAssetError_Offset;
 	uint256 public lastDebtTokenLossError_Offset;
 
+	bool public isSetupInitialized;
+
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__ReentrancyGuard_init();
+	}
+
 	// --- Contract setters ---
 
 	function setAddresses(
@@ -224,9 +233,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		address _sortedVesselsAddress,
 		address _communityIssuanceAddress,
 		address _adminContractAddress
-	) external initializer {
-		__ReentrancyGuard_init();
-		__Ownable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		activePool = IActivePool(_activePoolAddress);
@@ -236,6 +244,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		adminContract = IAdminContract(_adminContractAddress);
 
 		P = DECIMAL_PRECISION;
+		isSetupInitialized = true;
 	}
 
 	function setCommunityIssuanceAddress(address _communityIssuanceAddress) external override onlyAdminContract {
