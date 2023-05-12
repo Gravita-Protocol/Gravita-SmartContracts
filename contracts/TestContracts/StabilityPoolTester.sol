@@ -18,6 +18,14 @@ contract StabilityPoolTester is StabilityPool {
 		totalDebtTokenDeposits = _totalDebtTokenDeposits;
 	}
 
+	function leftSumColls(
+		Colls memory _coll1,
+		address[] memory _tokens,
+		uint256[] memory _amounts
+	) external pure returns (uint256[] memory) {
+		return _leftSumColls(_coll1, _tokens, _amounts);
+	}
+
 	function _leftSumColls(
 		Colls memory _coll1,
 		address[] memory _tokens,
@@ -30,8 +38,8 @@ contract StabilityPoolTester is StabilityPool {
 		uint256 coll1Len = _coll1.amounts.length;
 		uint256 tokensLen = _tokens.length;
 
-		for (uint256 i = 0; i < coll1Len; ) {
-			for (uint256 j = 0; j < tokensLen; ) {
+		for (uint256 i; i < coll1Len; ) {
+			for (uint256 j; j < tokensLen; ) {
 				if (_coll1.tokens[i] == _tokens[j]) {
 					_coll1.amounts[i] += _amounts[j];
 				}
@@ -45,14 +53,6 @@ contract StabilityPoolTester is StabilityPool {
 		}
 
 		return _coll1.amounts;
-	}
-
-	function leftSumColls(
-		Colls memory _coll1,
-		address[] memory _tokens,
-		uint256[] memory _amounts
-	) external pure returns (uint256[] memory) {
-		return _leftSumColls(_coll1, _tokens, _amounts);
 	}
 
 	function leftSubColls(

@@ -523,19 +523,26 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 		// If the Stability Pool was emptied, increment the epoch, and reset the scale and product P
 		if (newProductFactor == 0) {
-			currentEpoch = currentEpochCached + 1;
-			emit EpochUpdated(currentEpoch);
+			currentEpochCached += 1;
+			currentEpoch = currentEpochCached;
+			emit EpochUpdated(currentEpochCached);
 			currentScale = 0;
-			emit ScaleUpdated(currentScale);
+			emit ScaleUpdated(0);
 			newP = DECIMAL_PRECISION;
 
 			// If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
-		} else if ((currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR) {
-			newP = (currentP * newProductFactor * SCALE_FACTOR) / DECIMAL_PRECISION;
-			currentScale = currentScaleCached + 1;
-			emit ScaleUpdated(currentScale);
 		} else {
-			newP = (currentP * newProductFactor) / DECIMAL_PRECISION;
+			uint256 mulCached = currentP * newProductFactor;
+			uint256 mulDivCached = mulCached / DECIMAL_PRECISION;
+
+			if (mulDivCached < SCALE_FACTOR) {
+				newP = (mulCached * SCALE_FACTOR) / DECIMAL_PRECISION;
+				currentScaleCached += 1;
+				currentScale = currentScaleCached;
+				emit ScaleUpdated(currentScaleCached);
+			} else {
+				newP = mulDivCached;
+			}
 		}
 
 		require(newP != 0, "StabilityPool: P = 0");
@@ -843,7 +850,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		emit DepositSnapshotUpdated(_depositor, currentP, currentG);
 	}
 
-	function S(address _depositor, address _asset) public view returns (uint256) {
+	function S(address _depositor, address _asset) external view returns (uint256) {
 		return depositSnapshots[_depositor].S[_asset];
 	}
 
@@ -884,16 +891,20 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @notice check ICR of bottom vessel (per asset) in SortedVessels
 	 */
 	function _requireNoUnderCollateralizedVessels() internal {
-		address[] memory assets = adminContract.getValidCollateral();
+		IVesselManager vesselManagerCached = vesselManager;
+		IAdminContract adminContractCached = adminContract;
+		ISortedVessels sortedVesselsCached = sortedVessels;
+		IPriceFeed priceFeedCached = adminContractCached.priceFeed();
+		address[] memory assets = adminContractCached.getValidCollateral();
 		uint256 assetsLen = assets.length;
 		for (uint256 i = 0; i < assetsLen; ) {
 			address assetAddress = assets[i];
-			address lowestVessel = sortedVessels.getLast(assetAddress);
+			address lowestVessel = sortedVesselsCached.getLast(assetAddress);
 			if (lowestVessel != address(0)) {
-				uint256 price = adminContract.priceFeed().fetchPrice(assetAddress);
-				uint256 ICR = vesselManager.getCurrentICR(assetAddress, lowestVessel, price);
+				uint256 price = priceFeedCached.fetchPrice(assetAddress);
+				uint256 ICR = vesselManagerCached.getCurrentICR(assetAddress, lowestVessel, price);
 				require(
-					ICR >= adminContract.getMcr(assetAddress),
+					ICR >= adminContractCached.getMcr(assetAddress),
 					"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
 				);
 			}
@@ -904,11 +915,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	}
 
 	function _requireUserHasDeposit(uint256 _initialDeposit) internal pure {
-		require(_initialDeposit > 0, "StabilityPool: User must have a non-zero deposit");
+		require(_initialDeposit != 0, "StabilityPool: User must have a non-zero deposit");
 	}
 
 	function _requireNonZeroAmount(uint256 _amount) internal pure {
-		require(_amount > 0, "StabilityPool: Amount must be non-zero");
+		require(_amount != 0, "StabilityPool: Amount must be non-zero");
 	}
 
 	// --- Modifiers ---

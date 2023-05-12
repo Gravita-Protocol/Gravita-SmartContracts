@@ -176,7 +176,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 		setRedemptionFeeFloor(_collateral, redemptionFeeFloor);
 	}
 
-	function setIsActive(address _collateral, bool _active) public onlyTimelock {
+	function setIsActive(address _collateral, bool _active) external onlyTimelock {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}

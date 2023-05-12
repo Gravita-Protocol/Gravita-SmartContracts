@@ -138,7 +138,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			totals.totalDebtToOffset,
 			totals.totalCollToSendToSP
 		);
-		if (totals.totalCollSurplus > 0) {
+		if (totals.totalCollSurplus != 0) {
 			contractsCache.activePool.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
@@ -196,7 +196,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			totals.totalDebtToOffset,
 			totals.totalCollToSendToSP
 		);
-		if (totals.totalCollSurplus > 0) {
+		if (totals.totalCollSurplus != 0) {
 			activePoolCached.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
@@ -262,7 +262,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		if (_maxIterations == 0) {
 			_maxIterations = type(uint256).max;
 		}
-		while (currentBorrower != address(0) && totals.remainingDebt > 0 && _maxIterations > 0) {
+		while (currentBorrower != address(0) && totals.remainingDebt != 0 && _maxIterations != 0) {
 			_maxIterations--;
 			// Save the address of the vessel preceding the current one, before potentially modifying the list
 			address nextUserToCheck = contractsCache.sortedVessels.getPrev(_asset, currentBorrower);
@@ -371,7 +371,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			vars.maxIterations = type(uint256).max;
 		}
 
-		while (currentVesselBorrower != address(0) && remainingDebt > 0 && vars.maxIterations-- > 0) {
+		while (currentVesselBorrower != address(0) && remainingDebt != 0 && vars.maxIterations-- != 0) {
 			uint256 currentVesselNetDebt = _getNetDebt(
 				vars.asset,
 				vesselManager.getVesselDebt(vars.asset, currentVesselBorrower) +
@@ -479,12 +479,12 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		for (vars.i = 0; vars.i < _vesselArray.length; ) {
-			vars.user = _vesselArray[vars.i];
+		for (uint i = 0; i < _vesselArray.length; ) {
+			vars.user = _vesselArray[i];
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
 				unchecked {
-					vars.i++;
+					++i;
 				}
 				continue;
 			}
@@ -494,7 +494,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				// Skip this vessel if ICR is greater than MCR and Stability Pool is empty
 				if (vars.ICR >= adminContract.getMcr(_asset) && vars.remainingDebtTokenInStabPool == 0) {
 					unchecked {
-						vars.i++;
+						++i;
 					}
 					continue;
 				}
@@ -535,7 +535,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			}
 			unchecked {
-				vars.i++;
+				++i;
 			}
 		}
 	}
@@ -551,8 +551,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _vesselArray.length; ) {
-			vars.user = _vesselArray[vars.i];
+		for (uint i = 0; i < _vesselArray.length; ) {
+			vars.user = _vesselArray[i];
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (vars.ICR < adminContract.getMcr(_asset)) {
@@ -563,7 +563,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			}
 			unchecked {
-				vars.i++;
+				++i;
 			}
 		}
 	}
@@ -599,7 +599,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
-		for (vars.i = 0; vars.i < _n; ) {
+		for (uint i = 0; i < _n; ) {
 			vars.user = sortedVesselsCached.getLast(_asset);
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -612,7 +612,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
 			unchecked {
-				vars.i++;
+				++i;
 			}
 		}
 	}
@@ -748,7 +748,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			);
 
 			vesselManagerCached.closeVesselLiquidation(_asset, _borrower);
-			if (singleLiquidation.collSurplus > 0) {
+			if (singleLiquidation.collSurplus != 0) {
 				collSurplusPool.accountSurplus(_asset, _borrower, singleLiquidation.collSurplus);
 			}
 			emit VesselLiquidated(
@@ -778,26 +778,22 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 _debtTokenInStabPool,
 		uint256 _n
 	) internal returns (LiquidationTotals memory totals) {
-		LocalVariables_AssetBorrowerPrice memory assetVars = LocalVariables_AssetBorrowerPrice({
-			_asset: _asset,
-			_price: _price
-		});
 
 		LocalVariables_LiquidationSequence memory vars;
 		LiquidationValues memory singleLiquidation;
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 		vars.backToNormalMode = false;
-		vars.entireSystemDebt = getEntireSystemDebt(assetVars._asset);
-		vars.entireSystemColl = getEntireSystemColl(assetVars._asset);
+		vars.entireSystemDebt = getEntireSystemDebt(_asset);
+		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		vars.user = _contractsCache.sortedVessels.getLast(assetVars._asset);
-		address firstUser = _contractsCache.sortedVessels.getFirst(assetVars._asset);
-		for (vars.i = 0; vars.i < _n && vars.user != firstUser; ) {
+		vars.user = _contractsCache.sortedVessels.getLast(_asset);
+		address firstUser = _contractsCache.sortedVessels.getFirst(_asset);
+		for (uint i = 0; i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
-			address nextUser = _contractsCache.sortedVessels.getPrev(assetVars._asset, vars.user);
+			address nextUser = _contractsCache.sortedVessels.getPrev(_asset, vars.user);
 
-			vars.ICR = vesselManager.getCurrentICR(assetVars._asset, vars.user, assetVars._price);
+			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (!vars.backToNormalMode) {
 				// Break the loop if ICR is greater than MCR and Stability Pool is empty
@@ -805,15 +801,15 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 					break;
 				}
 
-				uint256 TCR = GravitaMath._computeCR(vars.entireSystemColl, vars.entireSystemDebt, assetVars._price);
+				uint256 TCR = GravitaMath._computeCR(vars.entireSystemColl, vars.entireSystemDebt, _price);
 
 				singleLiquidation = _liquidateRecoveryMode(
-					assetVars._asset,
+					_asset,
 					vars.user,
 					vars.ICR,
 					vars.remainingDebtTokenInStabPool,
 					TCR,
-					assetVars._price
+					_price
 				);
 
 				// Update aggregate trackers
@@ -832,10 +828,10 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 					_asset,
 					vars.entireSystemColl,
 					vars.entireSystemDebt,
-					assetVars._price
+					_price
 				);
 			} else if (vars.backToNormalMode && vars.ICR < adminContract.getMcr(_asset)) {
-				singleLiquidation = _liquidateNormalMode(assetVars._asset, vars.user, vars.remainingDebtTokenInStabPool);
+				singleLiquidation = _liquidateNormalMode(_asset, vars.user, vars.remainingDebtTokenInStabPool);
 
 				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
 
@@ -845,7 +841,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 			vars.user = nextUser;
 			unchecked {
-				vars.i++;
+				++i;
 			}
 		}
 	}
@@ -862,7 +858,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		pure
 		returns (uint256 debtToOffset, uint256 collToSendToSP, uint256 debtToRedistribute, uint256 collToRedistribute)
 	{
-		if (_debtTokenInStabPool > 0) {
+		if (_debtTokenInStabPool != 0) {
 			/*
 			 * Offset as much debt & collateral as possible against the Stability Pool, and redistribute the remainder
 			 * between all active vessels.

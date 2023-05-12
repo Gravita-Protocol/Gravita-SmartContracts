@@ -50,7 +50,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 	}
 
-	function setSetupIsInitialized() public onlyOwner {
+	function setSetupIsInitialized() external onlyOwner {
 		isSetupInitialized = true;
 	}
 
@@ -91,7 +91,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	function addWhitelist(address _address) external override onlyTimelock {
 		whitelistedContracts[_address] = true;
 
-		emit WhitelistChanged(_address, true); 
+		emit WhitelistChanged(_address, true);
 	}
 
 	function removeWhitelist(address _address) external override onlyOwner {
