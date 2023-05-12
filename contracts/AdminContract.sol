@@ -306,9 +306,8 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 	function setMintCap(address _collateral, uint256 mintCap) public override onlyTimelock {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		uint256 oldMintCap = collParams.mintCap;
-		uint256 newMintCap = mintCap;
-		collParams.mintCap = newMintCap;
-		emit MintCapChanged(oldMintCap, newMintCap);
+		collParams.mintCap = mintCap;
+		emit MintCapChanged(oldMintCap, mintCap);
 	}
 
 	function setRedemptionBlockTimestamp(address _collateral, uint256 _blockTimestamp) external override onlyTimelock {
