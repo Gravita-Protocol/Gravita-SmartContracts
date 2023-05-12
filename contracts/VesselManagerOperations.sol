@@ -777,10 +777,6 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 		uint256 _debtTokenInStabPool,
 		uint256 _n
 	) internal returns (LiquidationTotals memory totals) {
-		LocalVariables_AssetBorrowerPrice memory assetVars = LocalVariables_AssetBorrowerPrice({
-			_asset: _asset,
-			_price: _price
-		});
 
 		LocalVariables_LiquidationSequence memory vars;
 		LiquidationValues memory singleLiquidation;
@@ -794,9 +790,9 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 		address firstUser = _contractsCache.sortedVessels.getFirst(assetVars._asset);
 		for (vars.i = 0; vars.i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
-			address nextUser = _contractsCache.sortedVessels.getPrev(assetVars._asset, vars.user);
+			address nextUser = _contractsCache.sortedVessels.getPrev(_asset, vars.user);
 
-			vars.ICR = vesselManager.getCurrentICR(assetVars._asset, vars.user, assetVars._price);
+			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (!vars.backToNormalMode) {
 				// Break the loop if ICR is greater than MCR and Stability Pool is empty
@@ -804,15 +800,15 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 					break;
 				}
 
-				uint256 TCR = GravitaMath._computeCR(vars.entireSystemColl, vars.entireSystemDebt, assetVars._price);
+				uint256 TCR = GravitaMath._computeCR(vars.entireSystemColl, vars.entireSystemDebt, _price);
 
 				singleLiquidation = _liquidateRecoveryMode(
-					assetVars._asset,
+					_asset,
 					vars.user,
 					vars.ICR,
 					vars.remainingDebtTokenInStabPool,
 					TCR,
-					assetVars._price
+					_price
 				);
 
 				// Update aggregate trackers
@@ -831,10 +827,10 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 					_asset,
 					vars.entireSystemColl,
 					vars.entireSystemDebt,
-					assetVars._price
+					_price
 				);
 			} else if (vars.backToNormalMode && vars.ICR < adminContract.getMcr(_asset)) {
-				singleLiquidation = _liquidateNormalMode(assetVars._asset, vars.user, vars.remainingDebtTokenInStabPool);
+				singleLiquidation = _liquidateNormalMode(_asset, vars.user, vars.remainingDebtTokenInStabPool);
 
 				vars.remainingDebtTokenInStabPool = vars.remainingDebtTokenInStabPool - singleLiquidation.debtToOffset;
 
