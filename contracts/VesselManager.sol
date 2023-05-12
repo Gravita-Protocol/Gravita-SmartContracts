@@ -437,15 +437,17 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		activePool.sendAsset(_asset, address(defaultPool), _coll);
 	}
 
-	function updateSystemSnapshots_excludeCollRemainder(
-		address _asset,
-		uint256 _collRemainder
-	) external onlyVesselManagerOperations {
-		totalStakesSnapshot[_asset] = totalStakes[_asset];
+	function updateSystemSnapshots_excludeCollRemainder(address _asset, uint256 _collRemainder)
+		external
+		onlyVesselManagerOperations
+	{
+		uint256 _totalStakes = totalStakes[_asset];
+		totalStakesSnapshot[_asset] = _totalStakes;
 		uint256 activeColl = adminContract.activePool().getAssetBalance(_asset);
 		uint256 liquidatedColl = adminContract.defaultPool().getAssetBalance(_asset);
-		totalCollateralSnapshot[_asset] = activeColl - _collRemainder + liquidatedColl;
-		emit SystemSnapshotsUpdated(_asset, totalStakesSnapshot[_asset], totalCollateralSnapshot[_asset]);
+		uint256 _totalCollateralSnapshot = activeColl - _collRemainder + liquidatedColl;
+		totalCollateralSnapshot[_asset] = _totalCollateralSnapshot;
+		emit SystemSnapshotsUpdated(_asset, _totalStakes, _totalCollateralSnapshot);
 	}
 
 	function closeVessel(
