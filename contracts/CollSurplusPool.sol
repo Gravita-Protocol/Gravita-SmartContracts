@@ -23,6 +23,8 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 	// Collateral surplus claimable by vessel owners
 	mapping(address => mapping(address => uint256)) internal userBalances;
 
+	bool public isSetupInitialized;
+
 	// --- Initializer ---
 
 	function initialize() public initializer {
@@ -37,10 +39,12 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		activePoolAddress = _activePoolAddress;
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	/* Returns the Asset state variable at ActivePool address.

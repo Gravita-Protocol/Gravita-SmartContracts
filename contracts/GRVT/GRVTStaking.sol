@@ -46,6 +46,8 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	address public vesselManagerAddress;
 	address public treasury;
 
+	bool public isSetupInitialized;
+
 	// --- Initializer ---
 
 	function initialize() public initializer {
@@ -63,6 +65,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		address _vesselManagerAddress,
 		address _treasury
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		require(_treasury != address(0), "Invalid Treasury Address");
 		
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
@@ -73,6 +76,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
 		ASSET_TYPE.push(ETH_REF_ADDRESS);
+		isSetupInitialized = true;
 	}
 
 	// If caller has a pre-existing stake, send any accumulated asset and debtToken gains to them.

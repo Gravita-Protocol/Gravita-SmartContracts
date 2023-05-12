@@ -32,6 +32,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;
 
+	bool public isSetupInitialized;
+
 	// Initializer ------------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
@@ -41,8 +43,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	// Dependency setter ------------------------------------------------------------------------------------------------
 
 	function setAddresses(address _adminContractAddress, address _timelockAddress) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		timelockAddress = _timelockAddress;
 		adminContractAddress = _adminContractAddress;
+		isSetupInitialized = true;
 	}
 
 	// Admin routines ---------------------------------------------------------------------------------------------------

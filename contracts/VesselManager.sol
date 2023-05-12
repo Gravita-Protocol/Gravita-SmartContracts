@@ -91,6 +91,8 @@ contract VesselManager is IVesselManager, GravitaBase {
 	mapping(address => uint256) public lastCollError_Redistribution;
 	mapping(address => uint256) public lastDebtError_Redistribution;
 
+	bool public isSetupInitialized;
+
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
@@ -133,6 +135,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _vesselManagerOperationsAddress,
 		address _adminContractAddress
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperations = _borrowerOperationsAddress;
 		vesselManagerOperations = _vesselManagerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -142,6 +145,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		feeCollector = IFeeCollector(_feeCollectorAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// External/public functions --------------------------------------------------------------------------------------

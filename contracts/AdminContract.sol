@@ -31,8 +31,6 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	bool public isSetupInitialized;
-
 	address public shortTimelock;
 	address public longTimelock;
 
@@ -52,6 +50,8 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 	// list of all collateral types in collateralParams (active and deprecated)
 	// Addresses for easy access
 	address[] public validCollateral; // index maps to token address.
+
+	bool public isSetupInitialized;
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
@@ -125,6 +125,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		address _shortTimelock,
 		address _longTimelock
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
 		activePool = IActivePool(_activePoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
@@ -136,8 +137,8 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 	}
 
 	/**
-	 * @dev The deployment script will call this function after all collaterals have been configured; 
-	 *      after this is set, all subsequent config/setters will need to go through the timelocks.
+	 * @dev The deployment script will call this function when all initial collaterals have been configured; 
+	 *      after this is set to true, all subsequent config/setters will need to go through the timelocks.
 	 */
 	function setSetupIsInitialized() external onlyOwner {
 		isSetupInitialized = true;

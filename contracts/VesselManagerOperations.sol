@@ -43,6 +43,7 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 	IStabilityPool public stabilityPool;
 	ICollSurplusPool public collSurplusPool;
 	IDebtToken public debtToken;
+	bool public isSetupInitialized;
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
@@ -69,12 +70,14 @@ contract VesselManagerOperations is IVesselManagerOperations, GravitaBase {
 		address _debtTokenAddress,
 		address _adminContractAddress
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		debtToken = IDebtToken(_debtTokenAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// Liquidation external functions -----------------------------------------------------------------------------------

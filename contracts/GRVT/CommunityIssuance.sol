@@ -15,18 +15,20 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CommunityIssuance";
+
 	uint256 public constant DISTRIBUTION_DURATION = 7 days / 60;
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
-
-	IERC20Upgradeable public grvtToken;
-	IStabilityPool public stabilityPool;
 
 	uint256 public totalGRVTIssued;
 	uint256 public lastUpdateTime;
 	uint256 public GRVTSupplyCap;
 	uint256 public grvtDistribution;
 
+	IERC20Upgradeable public grvtToken;
+	IStabilityPool public stabilityPool;
+
 	address public adminContract;
+	bool public isSetupInitialized;
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
@@ -55,9 +57,11 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		address _stabilityPoolAddress,
 		address _adminContract
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		adminContract = _adminContract;
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
+		isSetupInitialized = true;
 	}
 
 	function setAdminContract(address _admin) external onlyOwner {

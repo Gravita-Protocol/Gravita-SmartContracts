@@ -20,13 +20,13 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 
 	address public immutable timelockAddress;
 
-	bool public isInitialized;
+	bool public isSetupInitialized;
 
 	error DebtToken__TimelockOnly();
 	error DebtToken__OwnerOnly();
 
 	modifier onlyTimelock() {
-		if (isInitialized) {
+		if (isSetupInitialized) {
 			if (msg.sender != timelockAddress) {
 				revert DebtToken__TimelockOnly();
 			}
@@ -50,8 +50,8 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 	}
 
-	function setInitialized() public onlyOwner {
-		isInitialized = true;
+	function setSetupIsInitialized() public onlyOwner {
+		isSetupInitialized = true;
 	}
 
 	// --- Functions for intra-Gravita calls ---

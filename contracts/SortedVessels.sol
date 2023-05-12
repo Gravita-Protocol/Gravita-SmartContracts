@@ -46,6 +46,8 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	IVesselManager public vesselManager;
 
+	bool public isSetupInitialized;
+
 	// Information for a node in the list
 	struct Node {
 		bool exists;
@@ -77,8 +79,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		address _vesselManagerAddress,
 		address _borrowerOperationsAddress
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	/*

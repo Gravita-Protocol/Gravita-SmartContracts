@@ -36,6 +36,8 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
 
+	bool public isSetupInitialized;
+
 	// --- Modifiers ---
 
 	modifier callerIsBorrowerOpsOrDefaultPool() {
@@ -92,12 +94,14 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
 		stabilityPoolAddress = _stabilityPoolAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---

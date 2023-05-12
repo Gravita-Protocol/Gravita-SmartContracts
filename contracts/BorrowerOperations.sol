@@ -29,6 +29,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	IDebtToken public debtToken;
 	ISortedVessels public sortedVessels; // double-linked list, sorted by their collateral ratios
 
+	bool public isSetupInitialized;
+
 	/* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -103,6 +105,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _feeCollectorAddress,
 		address _adminContractAddress
 	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;
@@ -111,6 +114,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		debtToken = IDebtToken(_debtTokenAddress);
 		feeCollector = IFeeCollector(_feeCollectorAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// --- Borrower Vessel Operations ---
