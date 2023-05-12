@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 library GravitaMath {
 	uint256 internal constant DECIMAL_PRECISION = 1 ether;
