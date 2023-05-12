@@ -483,7 +483,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 			// Skip non-active vessels
 			if (vesselManager.getVesselStatus(_asset, vars.user) != uint256(IVesselManager.Status.active)) {
 				unchecked {
-					vars.i++;
+					i++;
 				}
 				continue;
 			}
@@ -493,7 +493,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				// Skip this vessel if ICR is greater than MCR and Stability Pool is empty
 				if (vars.ICR >= adminContract.getMcr(_asset) && vars.remainingDebtTokenInStabPool == 0) {
 					unchecked {
-						vars.i++;
+						i++;
 					}
 					continue;
 				}
@@ -534,7 +534,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			}
 			unchecked {
-				vars.i++;
+				i++;
 			}
 		}
 	}
@@ -562,7 +562,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			}
 			unchecked {
-				vars.i++;
+				i++;
 			}
 		}
 	}
@@ -611,7 +611,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 				totals = _addLiquidationValuesToTotals(totals, singleLiquidation);
 			} else break; // break if the loop reaches a Vessel with ICR >= MCR
 			unchecked {
-				vars.i++;
+				i++;
 			}
 		}
 	}
@@ -840,7 +840,7 @@ contract VesselManagerOperations is IVesselManagerOperations, ReentrancyGuardUpg
 
 			vars.user = nextUser;
 			unchecked {
-				vars.i++;
+				i++;
 			}
 		}
 	}
