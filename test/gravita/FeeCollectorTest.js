@@ -5,6 +5,9 @@ const {
 	stopImpersonatingAccount,
 } = require("@nomicfoundation/hardhat-network-helpers")
 
+const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const testHelpers = require("../../utils/testHelpers.js")
+
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
 const { assert } = require("hardhat")

@@ -8,9 +8,6 @@ const { ecsign } = require("ethereumjs-util")
 // the second account our hardhatenv creates (for EOA A)
 // from https://github.com/liquity/dev/blob/main/packages/contracts/hardhatAccountsList2k.js#L3
 
-const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
-
 const th = testHelpers.TestHelper
 const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
 

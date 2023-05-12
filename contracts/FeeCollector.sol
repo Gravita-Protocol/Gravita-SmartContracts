@@ -3,6 +3,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -10,7 +11,7 @@ import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
 
-contract FeeCollector is IFeeCollector, OwnableUpgradeable {
+contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	// Constants --------------------------------------------------------------------------------------------------------
@@ -38,6 +39,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 
 	function initialize() public initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 	}
 
 	// Dependency setter ------------------------------------------------------------------------------------------------
@@ -362,4 +364,10 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		}
 		_;
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

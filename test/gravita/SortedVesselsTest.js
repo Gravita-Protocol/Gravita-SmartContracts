@@ -1,9 +1,6 @@
 const SortedVessels = artifacts.require("SortedVessels")
 const SortedVesselsTester = artifacts.require("SortedVesselsTester")
 
-const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
-
 const th = testHelpers.TestHelper
 const dec = th.dec
 const toBN = th.toBN

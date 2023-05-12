@@ -9,7 +9,7 @@ import "./Dependencies/GravitaBase.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
 
-contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBase {
+contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 
 	// Constants ------------------------------------------------------------------------------------------------------
 
@@ -123,6 +123,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 
 	function initialize() public initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 	}
 	
 	// Dependency setter ------------------------------------------------------------------------------------------------
@@ -736,4 +737,10 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		}
 		return newDebt;
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

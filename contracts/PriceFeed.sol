@@ -3,14 +3,15 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
 
 import "./Interfaces/IPriceFeed.sol";
 
-contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
-	// Constants --------------------------------------------------------------------------------------------------------
+contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath {
+	/** Constants ---------------------------------------------------------------------------------------------------- */
 
 	string public constant NAME = "PriceFeed";
 
@@ -38,6 +39,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 
 	function initialize() public initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 	}
 
 	// Dependency setter ------------------------------------------------------------------------------------------------
@@ -281,4 +283,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			revert PriceFeed__TimelockOnly();
 		}
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

@@ -141,7 +141,7 @@ import "./Interfaces/IVesselManager.sol";
  * The product P (and snapshot P_t) is re-used, as the ratio P/P_t tracks a deposit's depletion due to liquidations.
  *
  */
-contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPool {
+contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBase, IStabilityPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
@@ -221,6 +221,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	function initialize() public initializer {
 		__Ownable_init();
 		__ReentrancyGuard_init();
+		__UUPSUpgradeable_init();
 	}
 
 	// --- Contract setters ---
@@ -941,4 +942,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 		totalColl.amounts[collateralIndex] = newAssetBalance;
 		emit StabilityPoolAssetBalanceUpdated(_asset, newAssetBalance);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
