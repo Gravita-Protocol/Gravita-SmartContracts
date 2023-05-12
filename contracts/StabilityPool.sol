@@ -903,11 +903,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, GravitaBase, IStabilityPoo
 	}
 
 	function _requireUserHasDeposit(uint256 _initialDeposit) internal pure {
-		require(_initialDeposit > 0, "StabilityPool: User must have a non-zero deposit");
+		require(_initialDeposit != 0, "StabilityPool: User must have a non-zero deposit");
 	}
 
 	function _requireNonZeroAmount(uint256 _amount) internal pure {
-		require(_amount > 0, "StabilityPool: Amount must be non-zero");
+		require(_amount != 0, "StabilityPool: Amount must be non-zero");
 	}
 
 	// --- Modifiers ---

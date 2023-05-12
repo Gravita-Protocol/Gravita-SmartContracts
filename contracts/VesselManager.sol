@@ -346,7 +346,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		uint256 redeemedDebtFraction = (_assetDrawn * _price) / _totalDebtTokenSupply;
 		uint256 newBaseRate = decayedBaseRate + (redeemedDebtFraction / BETA);
 		newBaseRate = GravitaMath._min(newBaseRate, DECIMAL_PRECISION);
-		assert(newBaseRate > 0);
+		assert(newBaseRate != 0);
 		baseRate[_asset] = newBaseRate;
 		emit BaseRateUpdated(_asset, newBaseRate);
 		_updateLastFeeOpTime(_asset);
@@ -469,10 +469,10 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		uint256 _debtTokenAmount,
 		uint256 _assetAmount
 	) external nonReentrant onlyVesselManagerOperations {
-		if (_debtTokenAmount > 0) {
+		if (_debtTokenAmount != 0) {
 			debtToken.returnFromPool(gasPoolAddress, _liquidator, _debtTokenAmount);
 		}
-		if (_assetAmount > 0) {
+		if (_assetAmount != 0) {
 			adminContract.activePool().sendAsset(_asset, _liquidator, _assetAmount);
 		}
 	}
@@ -588,7 +588,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 			 * - When we close or liquidate a vessel, we redistribute the pending rewards, so if all vessels were closed/liquidated,
 			 * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
 			 */
-			assert(assetStakes > 0);
+			assert(assetStakes != 0);
 			stake = (_coll * assetStakes) / assetColl;
 		}
 	}
@@ -740,7 +740,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		uint256 paybackFraction = (_debtDecrease * 1 ether) / oldDebt;
 		uint256 newDebt = oldDebt - _debtDecrease;
 		vessel.debt = newDebt;
-		if (paybackFraction > 0) {
+		if (paybackFraction != 0) {
 			feeCollector.decreaseDebt(_borrower, _asset, paybackFraction);
 		}
 		return newDebt;

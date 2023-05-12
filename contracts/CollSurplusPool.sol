@@ -76,7 +76,7 @@ contract CollSurplusPool is OwnableUpgradeable, ICollSurplusPool {
 
 		uint256 safetyTransferclaimableColl = SafetyTransfer.decimalsCorrection(_asset, claimableCollEther);
 
-		require(safetyTransferclaimableColl > 0, "CollSurplusPool: No collateral available to claim");
+		require(safetyTransferclaimableColl != 0, "CollSurplusPool: No collateral available to claim");
 
 		userBalance[_asset] = 0;
 		emit CollBalanceUpdated(_account, 0);

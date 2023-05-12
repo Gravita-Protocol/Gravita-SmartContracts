@@ -157,7 +157,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 
 		// ICR is based on the composite debt, i.e. the requested debt token amount + borrowing fee + gas comp.
 		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
-		assert(vars.compositeDebt > 0);
+		assert(vars.compositeDebt != 0);
 
 		vars.ICR = GravitaMath._computeCR(_assetAmount, vars.compositeDebt, vars.price);
 		vars.NICR = GravitaMath._computeNominalCR(_assetAmount, vars.compositeDebt);
@@ -307,7 +307,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 
 		// Confirm the operation is either a borrower adjusting their own vessel, or a pure asset transfer from the Stability Pool to a vessel
 		assert(
-			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent > 0 && _debtTokenChange == 0)
+			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent != 0 && _debtTokenChange == 0)
 		);
 
 		contractsCache.vesselManager.applyPendingRewards(vars.asset, _borrower);
@@ -348,7 +348,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 		_requireValidAdjustmentInCurrentMode(vars.asset, isRecoveryMode, _collWithdrawal, _isDebtIncrease, vars);
 
 		// When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough debt tokens
-		if (!_isDebtIncrease && _debtTokenChange > 0) {
+		if (!_isDebtIncrease && _debtTokenChange != 0) {
 			_requireAtLeastMinNetDebt(vars.asset, _getNetDebt(vars.asset, vars.debt) - vars.netDebtChange);
 			_requireValidDebtTokenRepayment(vars.asset, vars.debt, vars.netDebtChange);
 			_requireSufficientDebtTokenBalance(contractsCache.debtToken, _borrower, vars.netDebtChange);
@@ -581,7 +581,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 	}
 
 	function _requireNonZeroDebtChange(uint256 _debtTokenChange) internal pure {
-		require(_debtTokenChange > 0, "BorrowerOps: Debt increase requires non-zero debtChange");
+		require(_debtTokenChange != 0, "BorrowerOps: Debt increase requires non-zero debtChange");
 	}
 
 	function _requireNotInRecoveryMode(address _asset, uint256 _price) internal view {
