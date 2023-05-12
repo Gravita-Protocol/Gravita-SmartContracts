@@ -342,7 +342,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 			_isDebtIncrease,
 			vars.price
 		);
-		require(_collWithdrawal <= vars.coll, "BorrowerOps: Trying to remove more than the vessel holds");
+		require(_collWithdrawal <= vars.coll, "BorrowerOps: bad _collWithdrawal");
 
 		// Check the adjustment satisfies all conditions for the current system mode
 		_requireValidAdjustmentInCurrentMode(vars.asset, isRecoveryMode, _collWithdrawal, _isDebtIncrease, vars);
@@ -536,7 +536,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, IBorrowe
 		uint256 newTotalAssetDebt = _activePool.getDebtTokenBalance(_asset) +
 			adminContract.defaultPool().getDebtTokenBalance(_asset) +
 			_netDebtIncrease;
-		require(newTotalAssetDebt <= adminContract.getMintCap(_asset), "BorrowerOperations: Exceeds mint cap");
+		require(newTotalAssetDebt <= adminContract.getMintCap(_asset), "Exceeds mint cap");
 		_activePool.increaseDebt(_asset, _netDebtIncrease);
 		_debtToken.mint(_asset, _account, _debtTokenAmount);
 	}
