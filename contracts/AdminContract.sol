@@ -134,7 +134,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 	}
 
 	/**
-	 * @dev The deployment script will call this function when all initial collaterals have been configured;
+	 * @dev The deployment script will call this function when all initial collaterals have been configured; 
 	 *      after this is set to true, all subsequent config/setters will need to go through the timelocks.
 	 */
 	function setSetupIsInitialized() external onlyOwner {

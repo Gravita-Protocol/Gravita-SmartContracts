@@ -4,8 +4,6 @@ const testHelpers = require("../utils/testHelpers.js")
 const th = testHelpers.TestHelper
 
 contract("Deployment script - Sets correct contract addresses dependencies after deployment", async accounts => {
-	let coreContracts
-	let GRVTContracts
 
 	let activePool
 	let adminContract
@@ -27,8 +25,8 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 	let grvtToken
 
 	before(async () => {
-		coreContracts = await deploymentHelper.deployGravitaCore()
-		GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+
+		const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(accounts[0])
 
 		activePool = coreContracts.activePool
 		adminContract = coreContracts.adminContract
@@ -37,21 +35,18 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		debtToken = coreContracts.debtToken
 		defaultPool = coreContracts.defaultPool
 		feeCollector = coreContracts.feeCollector
-		functionCaller = coreContracts.functionCaller
 		gasPool = coreContracts.gasPool
 		priceFeed = coreContracts.priceFeedTestnet
 		sortedVessels = coreContracts.sortedVessels
 		stabilityPool = coreContracts.stabilityPool
 		vesselManager = coreContracts.vesselManager
 		vesselManagerOperations = coreContracts.vesselManagerOperations
-		timelock = coreContracts.timelock
+		shortTimelock = coreContracts.shortTimelock
+		longTimelock = coreContracts.longTimelock
 
 		communityIssuance = GRVTContracts.communityIssuance
 		grvtStaking = GRVTContracts.grvtStaking
 		grvtToken = GRVTContracts.grvtToken
-
-		await deploymentHelper.connectCoreContracts(coreContracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, coreContracts)
 	})
 
 	describe("Core Contracts", async () => {
@@ -69,7 +64,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 			assert.equal(stabilityPool.address, await adminContract.stabilityPool())
 			assert.equal(collSurplusPool.address, await adminContract.collSurplusPool())
 			assert.equal(priceFeed.address, await adminContract.priceFeed())
-			assert.equal(timelock.address, await adminContract.timelockAddress())
+			assert.equal(shortTimelock.address, await adminContract.timelockAddress())
 		})
 		it("BorrowerOperations: check addresses", async () => {
 			assert.equal(vesselManager.address, await borrowerOperations.vesselManager())
@@ -91,7 +86,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 			assert.equal(vesselManager.address, await debtToken.vesselManagerAddress())
 			assert.equal(stabilityPool.address, await debtToken.stabilityPool())
 			assert.equal(borrowerOperations.address, await debtToken.borrowerOperationsAddress())
-			assert.equal(timelock.address, await debtToken.timelockAddress())
+			assert.equal(longTimelock.address, await debtToken.timelockAddress())
 		})
 		it("DefaultPool: check addresses", async () => {
 			assert.equal(vesselManager.address, await defaultPool.vesselManagerAddress())

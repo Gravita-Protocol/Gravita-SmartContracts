@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
 
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
 
-contract VesselManager is IVesselManager, GravitaBase {
+contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBase {
 
 	// Constants ------------------------------------------------------------------------------------------------------
 
@@ -92,6 +94,8 @@ contract VesselManager is IVesselManager, GravitaBase {
 	mapping(address => uint256) public lastCollError_Redistribution;
 	mapping(address => uint256) public lastDebtError_Redistribution;
 
+	bool public isSetupInitialized;
+
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
@@ -117,6 +121,12 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
+	function initialize() public initializer {
+		__Ownable_init();
+	}
+	
+	// Dependency setter ------------------------------------------------------------------------------------------------
+
 	function setAddresses(
 		address _borrowerOperationsAddress,
 		address _stabilityPoolAddress,
@@ -127,8 +137,8 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _sortedVesselsAddress,
 		address _vesselManagerOperationsAddress,
 		address _adminContractAddress
-	) external initializer {
-		__Ownable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperations = _borrowerOperationsAddress;
 		vesselManagerOperations = _vesselManagerOperationsAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -138,6 +148,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		feeCollector = IFeeCollector(_feeCollectorAddress);
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// External/public functions --------------------------------------------------------------------------------------
@@ -167,11 +178,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	// Return the current collateral ratio (ICR) of a given Vessel. Takes a vessel's pending coll and debt rewards from redistributions into account.
-	function getCurrentICR(
-		address _asset,
-		address _borrower,
-		uint256 _price
-	) public view override returns (uint256) {
+	function getCurrentICR(address _asset, address _borrower, uint256 _price) public view override returns (uint256) {
 		(uint256 currentAsset, uint256 currentDebt) = _getCurrentVesselAmounts(_asset, _borrower);
 		uint256 ICR = GravitaMath._computeCR(currentAsset, currentDebt, _price);
 		return ICR;
@@ -185,7 +192,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 			return 0;
 		}
 		uint256 stake = Vessels[_borrower][_asset].stake;
-		uint256 pendingAssetReward = stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+		uint256 pendingAssetReward = (stake * rewardPerUnitStaked) / DECIMAL_PRECISION;
 		return pendingAssetReward;
 	}
 
@@ -197,7 +204,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 			return 0;
 		}
 		uint256 stake = Vessels[_borrower][_asset].stake;
-		return stake * rewardPerUnitStaked / DECIMAL_PRECISION;
+		return (stake * rewardPerUnitStaked) / DECIMAL_PRECISION;
 	}
 
 	function hasPendingRewards(address _asset, address _borrower) public view override returns (bool) {
@@ -207,17 +214,10 @@ contract VesselManager is IVesselManager, GravitaBase {
 		return (rewardSnapshots[_borrower][_asset].asset < L_Colls[_asset]);
 	}
 
-	function getEntireDebtAndColl(address _asset, address _borrower)
-		public
-		view
-		override
-		returns (
-			uint256 debt,
-			uint256 coll,
-			uint256 pendingDebtReward,
-			uint256 pendingCollReward
-		)
-	{
+	function getEntireDebtAndColl(
+		address _asset,
+		address _borrower
+	) public view override returns (uint256 debt, uint256 coll, uint256 pendingDebtReward, uint256 pendingCollReward) {
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		Vessel memory vessel = Vessels[_borrower][_asset];
@@ -242,7 +242,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function getBorrowingFee(address _asset, uint256 _debt) external view override returns (uint256) {
-		return adminContract.getBorrowingFee(_asset) *_debt / DECIMAL_PRECISION;
+		return (adminContract.getBorrowingFee(_asset) * _debt) / DECIMAL_PRECISION;
 	}
 
 	function getRedemptionFee(address _asset, uint256 _assetDraw) public view returns (uint256) {
@@ -263,12 +263,10 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	// Called by Gravita contracts ------------------------------------------------------------------------------------
 
-	function addVesselOwnerToArray(address _asset, address _borrower)
-		external
-		override
-		onlyBorrowerOperations
-		returns (uint256 index)
-	{
+	function addVesselOwnerToArray(
+		address _asset,
+		address _borrower
+	) external override onlyBorrowerOperations returns (uint256 index) {
 		address[] storage assetOwners = VesselOwners[_asset];
 		assetOwners.push(_borrower);
 		index = assetOwners.length - 1;
@@ -280,7 +278,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _asset,
 		address _borrower,
 		uint256 _newColl
-	) external override onlyVesselManagerOperations {
+	) external override nonReentrant onlyVesselManagerOperations {
 		_removeStake(_asset, _borrower);
 		_closeVessel(_asset, _borrower, Status.closedByRedemption);
 		_redeemCloseVessel(_asset, _borrower, adminContract.getDebtTokenGasCompensation(_asset), _newColl);
@@ -338,7 +336,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 _totalDebtTokenSupply
 	) external override onlyVesselManagerOperations returns (uint256) {
 		uint256 decayedBaseRate = _calcDecayedBaseRate(_asset);
-		uint256 redeemedDebtFraction = _assetDrawn * _price / _totalDebtTokenSupply;
+		uint256 redeemedDebtFraction = (_assetDrawn * _price) / _totalDebtTokenSupply;
 		uint256 newBaseRate = decayedBaseRate + (redeemedDebtFraction / BETA);
 		newBaseRate = GravitaMath._min(newBaseRate, DECIMAL_PRECISION);
 		assert(newBaseRate > 0);
@@ -350,7 +348,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	function applyPendingRewards(address _asset, address _borrower)
 		external
-		override
+		override nonReentrant
 		onlyVesselManagerOperationsOrBorrowerOperations
 	{
 		return _applyPendingRewards(_asset, _borrower);
@@ -370,20 +368,17 @@ contract VesselManager is IVesselManager, GravitaBase {
 		return _updateVesselRewardSnapshots(_asset, _borrower);
 	}
 
-	function updateStakeAndTotalStakes(address _asset, address _borrower)
-		external
-		override
-		onlyBorrowerOperations
-		returns (uint256)
-	{
+	function updateStakeAndTotalStakes(
+		address _asset,
+		address _borrower
+	) external override onlyBorrowerOperations returns (uint256) {
 		return _updateStakeAndTotalStakes(_asset, _borrower);
 	}
 
-	function removeStake(address _asset, address _borrower)
-		external
-		override
-		onlyVesselManagerOperationsOrBorrowerOperations
-	{
+	function removeStake(
+		address _asset,
+		address _borrower
+	) external override onlyVesselManagerOperationsOrBorrowerOperations {
 		return _removeStake(_asset, _borrower);
 	}
 
@@ -393,7 +388,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		uint256 _coll,
 		uint256 _debtToOffset,
 		uint256 _collToSendToStabilityPool
-	) external override onlyVesselManagerOperations {
+	) external override nonReentrant onlyVesselManagerOperations {
 		stabilityPool.offset(_debtToOffset, _asset, _collToSendToStabilityPool);
 
 		if (_debt == 0) {
@@ -435,10 +430,10 @@ contract VesselManager is IVesselManager, GravitaBase {
 		activePool.sendAsset(_asset, address(defaultPool), _coll);
 	}
 
-	function updateSystemSnapshots_excludeCollRemainder(address _asset, uint256 _collRemainder)
-		external
-		onlyVesselManagerOperations
-	{
+	function updateSystemSnapshots_excludeCollRemainder(
+		address _asset,
+		uint256 _collRemainder
+	) external onlyVesselManagerOperations {
 		totalStakesSnapshot[_asset] = totalStakes[_asset];
 		uint256 activeColl = adminContract.activePool().getAssetBalance(_asset);
 		uint256 liquidatedColl = adminContract.defaultPool().getAssetBalance(_asset);
@@ -446,11 +441,10 @@ contract VesselManager is IVesselManager, GravitaBase {
 		emit SystemSnapshotsUpdated(_asset, totalStakesSnapshot[_asset], totalCollateralSnapshot[_asset]);
 	}
 
-	function closeVessel(address _asset, address _borrower)
-		external
-		override
-		onlyVesselManagerOperationsOrBorrowerOperations
-	{
+	function closeVessel(
+		address _asset,
+		address _borrower
+	) external override onlyVesselManagerOperationsOrBorrowerOperations {
 		return _closeVessel(_asset, _borrower, Status.closedByOwner);
 	}
 
@@ -465,7 +459,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		address _liquidator,
 		uint256 _debtTokenAmount,
 		uint256 _assetAmount
-	) external onlyVesselManagerOperations {
+	) external nonReentrant onlyVesselManagerOperations {
 		if (_debtTokenAmount > 0) {
 			debtToken.returnFromPool(gasPoolAddress, _liquidator, _debtTokenAmount);
 		}
@@ -504,11 +498,10 @@ contract VesselManager is IVesselManager, GravitaBase {
 		defaultPool.sendAssetToActivePool(_asset, _assetAmount);
 	}
 
-	function _getCurrentVesselAmounts(address _asset, address _borrower)
-		internal
-		view
-		returns (uint256 coll, uint256 debt)
-	{
+	function _getCurrentVesselAmounts(
+		address _asset,
+		address _borrower
+	) internal view returns (uint256 coll, uint256 debt) {
 		uint256 pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		Vessel memory vessel = Vessels[_borrower][_asset];
@@ -587,15 +580,11 @@ contract VesselManager is IVesselManager, GravitaBase {
 			 * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
 			 */
 			assert(assetStakes > 0);
-			stake = _coll * assetStakes / assetColl;
+			stake = (_coll * assetStakes) / assetColl;
 		}
 	}
 
-	function _closeVessel(
-		address _asset,
-		address _borrower,
-		Status closedStatus
-	) internal {
+	function _closeVessel(address _asset, address _borrower, Status closedStatus) internal {
 		assert(closedStatus != Status.nonExistent && closedStatus != Status.active);
 
 		uint256 VesselOwnersArrayLength = VesselOwners[_asset].length;
@@ -616,11 +605,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 		sortedVessels.remove(_asset, _borrower);
 	}
 
-	function _removeVesselOwner(
-		address _asset,
-		address _borrower,
-		uint256 VesselOwnersArrayLength
-	) internal {
+	function _removeVesselOwner(address _asset, address _borrower, uint256 VesselOwnersArrayLength) internal {
 		Vessel memory vessel = Vessels[_borrower][_asset];
 		assert(vessel.status != Status.nonExistent && vessel.status != Status.active);
 
@@ -645,7 +630,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	}
 
 	function _calcRedemptionFee(uint256 _redemptionRate, uint256 _assetDraw) internal pure returns (uint256) {
-		uint256 redemptionFee = _redemptionRate * _assetDraw / DECIMAL_PRECISION;
+		uint256 redemptionFee = (_redemptionRate * _assetDraw) / DECIMAL_PRECISION;
 		if (redemptionFee >= _assetDraw) {
 			revert VesselManager__FeeBiggerThanAssetDraw();
 		}
@@ -664,7 +649,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 	function _calcDecayedBaseRate(address _asset) internal view returns (uint256) {
 		uint256 minutesPassed = _minutesPassedSinceLastFeeOp(_asset);
 		uint256 decayFactor = GravitaMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
-		return baseRate[_asset] * decayFactor / DECIMAL_PRECISION;
+		return (baseRate[_asset] * decayFactor) / DECIMAL_PRECISION;
 	}
 
 	function _minutesPassedSinceLastFeeOp(address _asset) internal view returns (uint256) {
@@ -699,11 +684,7 @@ contract VesselManager is IVesselManager, GravitaBase {
 
 	// --- Vessel property setters, called by Gravita's BorrowerOperations/VMRedemptions/VMLiquidations ---------------
 
-	function setVesselStatus(
-		address _asset,
-		address _borrower,
-		uint256 _num
-	) external override onlyBorrowerOperations {
+	function setVesselStatus(address _asset, address _borrower, uint256 _num) external override onlyBorrowerOperations {
 		Vessels[_borrower][_asset].status = Status(_num);
 	}
 

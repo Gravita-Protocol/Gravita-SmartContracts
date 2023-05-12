@@ -20,19 +20,15 @@ contract("CollSurplusPool", async accounts => {
 	const openVessel = async params => th.openVessel(contracts, params)
 
 	beforeEach(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		VesselManagerTester.setAsDeployed(contracts.vesselManager)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+
+		const { coreContracts } = await deploymentHelper.deployTestContracts(accounts[0])
+
+		contracts = coreContracts
 
 		priceFeed = contracts.priceFeedTestnet
 		collSurplusPool = contracts.collSurplusPool
 		borrowerOperations = contracts.borrowerOperations
 		erc20 = contracts.erc20
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 
 		let index = 0
 			for (const acc of accounts) {

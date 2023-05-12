@@ -1,8 +1,5 @@
-const VesselManagerTester = artifacts.require("VesselManagerTester")
-
-const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
-
+const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const testHelpers = require("../../utils/testHelpers.js")
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
 
@@ -10,12 +7,11 @@ contract("AdminContract", async accounts => {
 	const ZERO_ADDRESS = th.ZERO_ADDRESS
 	const assertRevert = th.assertRevert
 	const DECIMAL_PRECISION = toBN(dec(1, 18))
-	const [owner, user, A, C, B] = accounts
+	const [owner, user, A, C, B, treasury] = accounts
 
 	let contracts
-	let priceFeed
-	let borrowerOperations
 	let adminContract
+	let borrowerOperations
 	let erc20
 
 	let MCR
@@ -51,9 +47,14 @@ contract("AdminContract", async accounts => {
 		return DECIMAL_PRECISION.div(toBN(10000)).mul(toBN(value.toString()))
 	}
 
-	before(async () => {
-		const AdminContract = artifacts.require("AdminContract")
-		adminContract = await AdminContract.new()
+	beforeEach(async () => {
+		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 5))
+		contracts = coreContracts
+		adminContract = contracts.adminContract
+		borrowerOperations = contracts.borrowerOperations
+		erc20 = contracts.erc20
+		vesselManager = contracts.vesselManager
+
 		MCR = await adminContract.MCR_DEFAULT()
 		CCR = await adminContract.CCR_DEFAULT()
 		GAS_COMPENSATION = toBN(dec(30, 18))
@@ -62,25 +63,6 @@ contract("AdminContract", async accounts => {
 		BORROWING_FEE = await adminContract.BORROWING_FEE_DEFAULT()
 		REDEMPTION_FEE_FLOOR = await adminContract.REDEMPTION_FEE_FLOOR_DEFAULT()
 		MINT_CAP = await adminContract.MINT_CAP_DEFAULT()
-	})
-
-	beforeEach(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-		priceFeed = contracts.priceFeedTestnet
-		vesselManager = contracts.vesselManager
-		activePool = contracts.activePool
-		defaultPool = contracts.defaultPool
-		borrowerOperations = contracts.borrowerOperations
-		adminContract = contracts.adminContract
-		erc20 = contracts.erc20
-
-		for (const acc of [A, B, C]) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-		}
 	})
 
 	it("Formula Checks: Call every function with default value, Should match default values", async () => {
@@ -115,7 +97,6 @@ contract("AdminContract", async accounts => {
 				{ from: user }
 			)
 		)
-
 		await assertRevert(adminContract.setMCR(ZERO_ADDRESS, MCR, { from: user }))
 		await assertRevert(adminContract.setCCR(ZERO_ADDRESS, CCR, { from: user }))
 		await assertRevert(adminContract.setMinNetDebt(ZERO_ADDRESS, MIN_NET_DEBT, { from: user }))

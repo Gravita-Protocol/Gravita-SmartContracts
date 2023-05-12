@@ -3,9 +3,8 @@ require("@nomiclabs/hardhat-truffle5")
 require("@nomiclabs/hardhat-ethers")
 require("@nomiclabs/hardhat-etherscan")
 require("@openzeppelin/hardhat-upgrades")
-require("@openzeppelin/hardhat-defender")
-require("hardhat-contract-sizer")
 // require("hardhat-gas-reporter")
+// require("hardhat-contract-sizer")
 // require("hardhat-interface-generator")
 require("solidity-coverage")
 require("dotenv").config()
@@ -42,7 +41,7 @@ module.exports = {
 	solidity: {
 		compilers: [
 			{
-				version: "0.8.19",
+				version: "0.8.20",
 				settings: {
 					optimizer: {
 						enabled: true,

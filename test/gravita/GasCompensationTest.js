@@ -1,10 +1,5 @@
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-
-const VesselManagerTester = artifacts.require("VesselManagerTester")
-const BorrowerOperationsTester = artifacts.require("BorrowerOperationsTester")
-
-const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
+const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const testHelpers = require("../../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -12,22 +7,11 @@ const toBN = th.toBN
 const mv = testHelpers.MoneyValues
 
 contract("Gas compensation tests", async accounts => {
-	const [
-		liquidator,
-		alice,
-		bob,
-		carol,
-		dennis,
-		erin,
-		flyn,
-		harriet,
-		whale,
-	] = accounts
+	const [liquidator, alice, bob, carol, dennis, erin, flyn, harriet, whale, treasury] = accounts
 
 	let contracts
 
 	let borrowerOperations
-	let community
 	let defaultPool
 	let erc20
 	let priceFeed
@@ -42,34 +26,17 @@ contract("Gas compensation tests", async accounts => {
 			console.log(`account: ${i + 1} ICR: ${ICRList[i].toString()}`)
 		}
 	}
-	async function deployContractsFixture() {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts.borrowerOperations = await BorrowerOperationsTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
 
+	beforeEach(async () => {
+		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 25))
+		contracts = coreContracts
 		borrowerOperations = contracts.borrowerOperations
-		community = GRVTContracts.communityIssuance
 		defaultPool = contracts.defaultPool
 		erc20 = contracts.erc20
 		priceFeed = contracts.priceFeedTestnet
 		stabilityPoolERC20 = contracts.stabilityPool
 		vesselManager = contracts.vesselManager
 		vesselManagerOperations = contracts.vesselManagerOperations
-
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			if (++index >= 100) break
-		}
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-	}
-
-	beforeEach(async () => {
-		await loadFixture(deployContractsFixture)
 	})
 
 	// --- Raw gas compensation calculations ---
@@ -1683,7 +1650,7 @@ contract("Gas compensation tests", async accounts => {
 						assert.isTrue(ICRERC20.gte(prevICRERC20))
 					} catch (error) {
 						console.log(`ETH price at which vessel ordering breaks: ${price}`)
-						logICRs(ICRListERC20)
+						// logICRs(ICRListERC20)
 					}
 				}
 
@@ -1730,7 +1697,7 @@ contract("Gas compensation tests", async accounts => {
 						assert.isTrue(ICRERC20.gte(prevICRERC20))
 					} catch (error) {
 						console.log(`ETH price at which vessel ordering breaks: ${price}`)
-						logICRs(ICRListERC20)
+						// logICRs(ICRListERC20)
 					}
 				}
 
@@ -1782,7 +1749,7 @@ contract("Gas compensation tests", async accounts => {
 					} catch (error) {
 						console.log(error)
 						console.log(`ETH price at which vessel ordering breaks: ${price}`)
-						logICRs(ICRListERC20)
+						// logICRs(ICRListERC20)
 					}
 				}
 

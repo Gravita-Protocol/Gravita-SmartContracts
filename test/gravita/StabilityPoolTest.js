@@ -1,13 +1,7 @@
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-
-const VesselManagerTester = artifacts.require("VesselManagerTester")
-
-const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
-
+const deploymentHelper = require("../../utils/deploymentHelpers.js")
+const testHelpers = require("../../utils/testHelpers.js")
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN } = th
 const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
 
@@ -28,6 +22,7 @@ contract("StabilityPool", async accounts => {
 		erin,
 		flyn,
 		graham,
+		treasury
 	] = accounts
 
 	let contracts
@@ -89,12 +84,10 @@ contract("StabilityPool", async accounts => {
 	}
 
 	describe("Stability Pool Mechanisms", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		beforeEach(async () => {
+			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 20))
 
+			contracts = coreContracts
 			activePool = contracts.activePool
 			borrowerOperations = contracts.borrowerOperations
 			debtToken = contracts.debtToken
@@ -108,20 +101,6 @@ contract("StabilityPool", async accounts => {
 			vesselManagerOperations = contracts.vesselManagerOperations
 
 			grvtToken = GRVTContracts.grvtToken
-
-			let index = 0
-			for (const acc of accounts) {
-				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				await erc20B.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
-			}
-
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-		}
-
-		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
 		})
 
 		describe("Providing", async () => {

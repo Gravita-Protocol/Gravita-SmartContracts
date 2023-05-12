@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -26,12 +26,21 @@ contract DefaultPool is OwnableUpgradeable, IDefaultPool {
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
 
+	bool public isSetupInitialized;
+
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+	}
+
 	// --- Dependency setters ---
 
-	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external initializer {
-		__Ownable_init();
+	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManagerAddress = _vesselManagerAddress;
 		activePoolAddress = _activePoolAddress;
+		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---

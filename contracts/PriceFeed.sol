@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -10,7 +10,7 @@ import "./Dependencies/GravitaMath.sol";
 import "./Interfaces/IPriceFeed.sol";
 
 contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
-	/** Constants ---------------------------------------------------------------------------------------------------- */
+	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "PriceFeed";
 
@@ -24,7 +24,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	uint256 public constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT = 0.2 ether;
 	uint256 public constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT = 0.5 ether;
 
-	/** State -------------------------------------------------------------------------------------------------------- */
+	// State ------------------------------------------------------------------------------------------------------------
 
 	address public adminContractAddress;
 	address public timelockAddress;
@@ -32,15 +32,24 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;
 
-	/** Initializer -------------------------------------------------------------------------------------------------- */
+	bool public isSetupInitialized;
 
-	function setAddresses(address _adminContractAddress, address _timelockAddress) external initializer {
+	// Initializer ------------------------------------------------------------------------------------------------------
+
+	function initialize() public initializer {
 		__Ownable_init();
-		timelockAddress = _timelockAddress;
-		adminContractAddress = _adminContractAddress;
 	}
 
-	/** Admin routines ----------------------------------------------------------------------------------------------- */
+	// Dependency setter ------------------------------------------------------------------------------------------------
+
+	function setAddresses(address _adminContractAddress, address _timelockAddress) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
+		timelockAddress = _timelockAddress;
+		adminContractAddress = _adminContractAddress;
+		isSetupInitialized = true;
+	}
+
+	// Admin routines ---------------------------------------------------------------------------------------------------
 
 	function setOracle(
 		address _token,
@@ -83,7 +92,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		emit NewOracleRegistered(_token, _chainlinkOracle, _isEthIndexed);
 	}
 
-	/** Public functions --------------------------------------------------------------------------------------------- */
+	// Public functions -------------------------------------------------------------------------------------------------
 
 	/**
 	 * Callers:
@@ -106,7 +115,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		return _processFeedResponses(_token, oracle, currResponse, prevResponse);
 	}
 
-	/** Internal functions ------------------------------------------------------------------------------------------- */
+	// Internal functions -----------------------------------------------------------------------------------------------
 
 	function _processFeedResponses(
 		address _token,
@@ -146,11 +155,9 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		return (ethPrice * ethAmount) / 1 ether;
 	}
 
-	function _fetchFeedResponses(AggregatorV3Interface oracle)
-		internal
-		view
-		returns (FeedResponse memory currResponse, FeedResponse memory prevResponse)
-	{
+	function _fetchFeedResponses(
+		AggregatorV3Interface oracle
+	) internal view returns (FeedResponse memory currResponse, FeedResponse memory prevResponse) {
 		currResponse = _fetchCurrentFeedResponse(oracle);
 		prevResponse = _fetchPrevFeedResponse(oracle, currResponse.roundId, currResponse.decimals);
 	}
@@ -159,11 +166,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		return block.timestamp - _priceTimestamp > RESPONSE_TIMEOUT;
 	}
 
-	function _isFeedWorking(FeedResponse memory _currentResponse, FeedResponse memory _prevResponse)
-		internal
-		view
-		returns (bool)
-	{
+	function _isFeedWorking(
+		FeedResponse memory _currentResponse,
+		FeedResponse memory _prevResponse
+	) internal view returns (bool) {
 		return _isValidResponse(_currentResponse) && _isValidResponse(_prevResponse);
 	}
 
@@ -200,36 +206,26 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 	function _scalePriceByDigits(uint256 _price, uint256 _answerDigits) internal pure returns (uint256 price) {
 		if (_answerDigits >= TARGET_DIGITS) {
 			// Scale the returned price value down to Gravita's target precision
-			price = _price / (10**(_answerDigits - TARGET_DIGITS));
+			price = _price / (10 ** (_answerDigits - TARGET_DIGITS));
 		} else if (_answerDigits < TARGET_DIGITS) {
 			// Scale the returned price value up to Gravita's target precision
-			price = _price * (10**(TARGET_DIGITS - _answerDigits));
+			price = _price * (10 ** (TARGET_DIGITS - _answerDigits));
 		}
 	}
 
-	function _updateFeedStatus(
-		address _token,
-		OracleRecord memory _oracle,
-		bool _isWorking
-	) internal {
+	function _updateFeedStatus(address _token, OracleRecord memory _oracle, bool _isWorking) internal {
 		oracleRecords[_token].isFeedWorking = _isWorking;
 		emit PriceFeedStatusUpdated(_token, address(_oracle.chainLinkOracle), _isWorking);
 	}
 
-	function _storePrice(
-		address _token,
-		uint256 _price,
-		uint256 _timestamp
-	) internal {
+	function _storePrice(address _token, uint256 _price, uint256 _timestamp) internal {
 		priceRecords[_token] = PriceRecord({ scaledPrice: _price, timestamp: _timestamp });
 		emit PriceRecordUpdated(_token, _price);
 	}
 
-	function _fetchCurrentFeedResponse(AggregatorV3Interface _priceAggregator)
-		internal
-		view
-		returns (FeedResponse memory response)
-	{
+	function _fetchCurrentFeedResponse(
+		AggregatorV3Interface _priceAggregator
+	) internal view returns (FeedResponse memory response) {
 		try _priceAggregator.decimals() returns (uint8 decimals) {
 			// If call to Chainlink succeeds, record the current decimal precision
 			response.decimals = decimals;
@@ -240,7 +236,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		try _priceAggregator.latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
-			uint256, /* startedAt */
+			uint256 /* startedAt */,
 			uint256 timestamp,
 			uint80 /* answeredInRound */
 		) {
@@ -267,7 +263,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 			try _priceAggregator.getRoundData(_currentRoundId - 1) returns (
 				uint80 roundId,
 				int256 answer,
-				uint256, /* startedAt */
+				uint256 /* startedAt */,
 				uint256 timestamp,
 				uint80 /* answeredInRound */
 			) {
@@ -286,4 +282,3 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, BaseMath {
 		}
 	}
 }
-

@@ -11,40 +11,31 @@ const toBN = th.toBN
 const mv = testHelpers.MoneyValues
 
 contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async accounts => {
-	const [alice, bob, carol, whale] = accounts
+	const [alice, bob, carol, whale, treasury] = accounts
 
 	let contracts
 
 	let erc20
 	let priceFeed
 	let sortedVessels
-	let stabilityPoolERC20
+	let stabilityPool
 	let vesselManager
 	let vesselManagerOperations
 
 	const openVessel = async params => th.openVessel(contracts, params)
 
 	async function deployContractsFixture() {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
 
+		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 5))
+
+		contracts = coreContracts
 		erc20 = contracts.erc20
 		priceFeed = contracts.priceFeedTestnet
 		sortedVessels = contracts.sortedVessels
-		stabilityPoolERC20 = contracts.stabilityPool
+		stabilityPool = contracts.stabilityPool
 		vesselManager = contracts.vesselManager
 		vesselManagerOperations = contracts.vesselManagerOperations
 
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			if (++index >= 20) break
-		}
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
 	}
 
 	beforeEach(async () => {
@@ -77,7 +68,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				extraVUSDAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
-			await stabilityPoolERC20.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
 
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -152,8 +143,8 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				price,
 			} = await setup()
 
-			const spEthBefore_Asset = await stabilityPoolERC20.getCollateral(erc20.address)
-			const spVUSDBefore_Asset = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+			const spEthBefore_Asset = await stabilityPool.getCollateral(erc20.address)
+			const spVUSDBefore_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 
 			const txAsset = await vesselManagerOperations.batchLiquidateVessels(erc20.address, [alice, carol])
 
@@ -167,8 +158,8 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			assert.equal((await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_STATUS_INDEX], "3")
 			assert.equal((await vesselManager.Vessels(carol, erc20.address))[th.VESSEL_STATUS_INDEX], "3")
 
-			const spEthAfter_Asset = await stabilityPoolERC20.getCollateral(erc20.address)
-			const spGRVTfter_Asset = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+			const spEthAfter_Asset = await stabilityPool.getCollateral(erc20.address)
+			const spGRVTfter_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 
 			// liquidate collaterals with the gas compensation fee subtracted
 
@@ -228,7 +219,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				extraVUSDAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
-			await stabilityPoolERC20.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
 
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -288,7 +279,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				extraVUSDAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
-			await stabilityPoolERC20.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
 
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
