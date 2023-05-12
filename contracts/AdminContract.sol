@@ -248,7 +248,7 @@ contract AdminContract is IAdminContract, OwnableUpgradeable {
 		emit CCRChanged(oldCCR, newCCR);
 	}
 
-	function setActive(address _collateral, bool _active) public onlyTimelock {
+	function setActive(address _collateral, bool _active) external onlyTimelock {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}

@@ -66,7 +66,6 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	// Collateral type address => ordered list
 	mapping(address => Data) public data;
-
 	// --- Initializer ---
 
 	function initialize() public initializer {

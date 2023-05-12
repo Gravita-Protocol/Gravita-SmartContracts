@@ -170,7 +170,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 	}
 
 	// Return the nominal collateral ratio (ICR) of a given Vessel, without the price. Takes a vessel's pending coll and debt rewards from redistributions into account.
-	function getNominalICR(address _asset, address _borrower) public view override returns (uint256) {
+	function getNominalICR(address _asset, address _borrower) external view override returns (uint256) {
 		(uint256 currentAsset, uint256 currentDebt) = _getCurrentVesselAmounts(_asset, _borrower);
 
 		uint256 NICR = GravitaMath._computeNominalCR(currentAsset, currentDebt);
@@ -214,10 +214,17 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		return (rewardSnapshots[_borrower][_asset].asset < L_Colls[_asset]);
 	}
 
-	function getEntireDebtAndColl(
-		address _asset,
-		address _borrower
-	) public view override returns (uint256 debt, uint256 coll, uint256 pendingDebtReward, uint256 pendingCollReward) {
+	function getEntireDebtAndColl(address _asset, address _borrower)
+		external
+		view
+		override
+		returns (
+			uint256 debt,
+			uint256 coll,
+			uint256 pendingDebtReward,
+			uint256 pendingCollReward
+		)
+	{
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		Vessel memory vessel = Vessels[_borrower][_asset];
@@ -237,7 +244,7 @@ contract VesselManager is IVesselManager, ReentrancyGuardUpgradeable, GravitaBas
 		return _checkRecoveryMode(_asset, _price);
 	}
 
-	function getBorrowingRate(address _asset) public view override returns (uint256) {
+	function getBorrowingRate(address _asset) external view override returns (uint256) {
 		return adminContract.getBorrowingFee(_asset);
 	}
 
