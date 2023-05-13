@@ -229,7 +229,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	{
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
-		Vessel memory vessel = Vessels[_borrower][_asset];
+		Vessel storage vessel = Vessels[_borrower][_asset];
 		debt = vessel.debt + pendingDebtReward;
 		coll = vessel.coll + pendingCollReward;
 	}
