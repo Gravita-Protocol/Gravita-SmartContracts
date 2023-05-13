@@ -129,17 +129,17 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	) external view override returns (uint256) {
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
 		require(_paybackFraction != 0, "Payback fraction cannot be zero");
-		FeeRecord storage mRecord = feeRecords[_borrower][_asset];
-		if (mRecord.amount == 0 || mRecord.to < block.timestamp) {
+		FeeRecord storage record = feeRecords[_borrower][_asset];
+		if (record.amount == 0 || record.to < block.timestamp) {
 			return 0;
 		}
-		uint256 expiredAmount = _calcExpiredAmount(mRecord.from, mRecord.to, mRecord.amount);
+		uint256 expiredAmount = _calcExpiredAmount(record.from, record.to, record.amount);
 		if (_paybackFraction == 1e18) {
 			// full payback
-			return mRecord.amount - expiredAmount;
+			return record.amount - expiredAmount;
 		} else {
 			// calc refund amount proportional to the payment
-			return ((mRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
+			return ((record.amount - expiredAmount) * _paybackFraction) / 1 ether;
 		}
 	}
 

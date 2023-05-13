@@ -158,7 +158,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 
 		// ICR is based on the composite debt, i.e. the requested debt token amount + borrowing fee + gas comp.
 		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
-		require(vars.compositeDebt != 0, "compositeDebt == 0");
+		require(vars.compositeDebt != 0, "compositeDebt cannot be 0");
 
 		vars.ICR = GravitaMath._computeCR(_assetAmount, vars.compositeDebt, vars.price);
 		vars.NICR = GravitaMath._computeNominalCR(_assetAmount, vars.compositeDebt);
