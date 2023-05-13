@@ -71,8 +71,9 @@ contract Timelock {
 		_;
 	}
 
-	constructor(uint _delay) isValidDelay(_delay) {
-		admin = msg.sender;
+	constructor(uint _delay, address _adminAddress) isValidDelay(_delay) {
+		require(_adminAddress != address(0));
+		admin = _adminAddress;
 		delay = _delay;
 	}
 

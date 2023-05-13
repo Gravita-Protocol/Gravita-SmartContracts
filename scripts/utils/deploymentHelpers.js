@@ -14,7 +14,7 @@ class DeploymentHelper {
 		return "mainnet" == this.configParams.targetNetwork
 	}
 
-	async loadOrDeployCoreContracts(deploymentState) {
+	async loadOrDeployCoreContracts(deploymentState, config) {
 		const deployUpgradable = async (factory, name, params = []) =>
 			await this.loadOrDeploy(factory, name, deploymentState, true, params)
 
@@ -55,8 +55,8 @@ class DeploymentHelper {
 
 		// Non-upgradable contracts
 		const gasPool = await deployNonUpgradable(gasPoolFactory, "GasPool")
-		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortTimelockDelay])
-		const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longTimelockDelay])
+		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortTimelockDelay, config.SYSTEM_PARAMS_ADMIN])
+		//const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longTimelockDelay])
 
 		const debtTokenParams = [
 			vesselManager.address,
@@ -80,7 +80,7 @@ class DeploymentHelper {
 			priceFeed,
 			sortedVessels,
 			shortTimelock,
-			longTimelock,
+			//longTimelock,
 			stabilityPool,
 			vesselManager,
 			vesselManagerOperations,
@@ -329,7 +329,7 @@ class DeploymentHelper {
 			try {
 				let contract
 				if (proxy) {
-					let opts = factory.interface.functions.initialize ? { initializer: "initialize()" } : {}
+					let opts = factory.interface.functions.initialize ? { initializer: "initialize()", kind: 'uups' } : {kind: 'uups'}
 					contract = await upgrades.deployProxy(factory, opts)
 				} else {
 					contract = await factory.deploy(...params)
@@ -414,7 +414,7 @@ class DeploymentHelper {
 			await this.verifyContract("VesselManager", deploymentState)
 			await this.verifyContract("VesselManagerOperations", deploymentState)
 			await this.verifyContract("ShortTimelock", deploymentState)
-			await this.verifyContract("LongTimelock", deploymentState)
+			//await this.verifyContract("LongTimelock", deploymentState)
 		}
 	}
 

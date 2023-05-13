@@ -9,6 +9,6 @@ contract TimelockTester is Timelock {
 		_;
 	}
 
-	constructor(uint _delay) Timelock(_delay) {
+	constructor(uint _delay, address _admin) Timelock(_delay, _admin) {
 	}
 }

@@ -40,7 +40,7 @@ class Deployer {
 		this.initConfigArgs()
 		await this.printDeployerBalance()
 
-		this.coreContracts = await this.helper.loadOrDeployCoreContracts(this.deploymentState)
+		this.coreContracts = await this.helper.loadOrDeployCoreContracts(this.deploymentState, this.config)
 
 		await this.helper.connectCoreContracts(this.coreContracts, this.grvtContracts, this.config.TREASURY_WALLET)
 
@@ -48,8 +48,6 @@ class Deployer {
 
 		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
 		await this.toggleContractSetupInitialization(this.coreContracts.debtToken)
-
-		// TODO timelock.setPendingAdmin() via queueTransaction()
 
 		this.helper.saveDeployment(this.deploymentState)
 
@@ -175,12 +173,12 @@ class Deployer {
 	}
 
 	/**
-	 * Transfers the ownership of all Ownable contracts to the address defined on config's SYSTEM_PARAMS_ADMIN.
+	 * Transfers the ownership of all Ownable contracts to the address defined on config's UPGRADES_PROXY_ADMIN.
 	 */
 	async transferContractsOwnerships() {
-		const sysAdminAddress = this.config.SYSTEM_PARAMS_ADMIN
-		if (!sysAdminAddress || sysAdminAddress == this.hre.ethers.constants.AddressZero) {
-			throw Error("Provide an address for SYSTEM_PARAMS_ADMIN in the config file before transferring the ownerships.")
+		const upgradesAdmin = this.config.UPGRADES_PROXY_ADMIN
+		if (!upgradesAdmin || upgradesAdmin == this.hre.ethers.constants.AddressZero) {
+			throw Error("Provide an address for UPGRADES_PROXY_ADMIN in the config file before transferring the ownerships.")
 		}
 		console.log(`Transferring contract ownerships...`)
 		for (const contract of Object.values(this.coreContracts)) {
@@ -188,12 +186,12 @@ class Deployer {
 				console.log(` - ${await contract.NAME()} is NOT Ownable`)
 			} else {
 				const currentOwner = await contract.owner()
-				if (currentOwner == sysAdminAddress) {
-					console.log(` - ${await contract.NAME()} -> Owner had already been set to @ ${sysAdminAddress}`)
+				if (currentOwner == upgradesAdmin) {
+					console.log(` - ${await contract.NAME()} -> Owner had already been set to @ ${upgradesAdmin}`)
 				} else {
 					try {
-						await this.helper.sendAndWaitForTransaction(contract.transferOwnership(sysAdminAddress))
-						console.log(` - ${await contract.NAME()} -> Owner set to SYSTEM_PARAMS_ADMIN @ ${sysAdminAddress}`)
+						await this.helper.sendAndWaitForTransaction(contract.transferOwnership(upgradesAdmin))
+						console.log(` - ${await contract.NAME()} -> Owner set to UPGRADES_PROXY_ADMIN @ ${upgradesAdmin}`)
 					} catch (e) {
 						const parsedEthersError = getParsedEthersError(e)
 						const errorMsg = parsedEthersError.context || parsedEthersError.errorCode
@@ -213,6 +211,7 @@ class Deployer {
 		}
 		this.config = configParams
 		this.deployerWallet = new this.hre.ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, this.hre.ethers.provider)
+		console.log(this.deployerWallet)
 		this.helper = new DeploymentHelper(configParams, this.deployerWallet)
 		this.deploymentState = this.helper.loadPreviousDeployment()
 	}
