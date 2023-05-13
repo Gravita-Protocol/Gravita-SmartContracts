@@ -5,40 +5,59 @@ const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 const VesselManagerTester = artifacts.require("./VesselManagerTester")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN } = th
 const mv = testHelpers.MoneyValues
+
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	erc20B = contracts.core.erc20B
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async accounts => {
 	const [alice, bob, carol, whale, treasury] = accounts
 
-	let contracts
+	const openVessel = async params => th.openVessel(contracts.core, params)
 
-	let erc20
-	let priceFeed
-	let sortedVessels
-	let stabilityPool
-	let vesselManager
-	let vesselManagerOperations
-
-	const openVessel = async params => th.openVessel(contracts, params)
-
-	async function deployContractsFixture() {
-
-		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 5))
-
-		contracts = coreContracts
-		erc20 = contracts.erc20
-		priceFeed = contracts.priceFeedTestnet
-		sortedVessels = contracts.sortedVessels
-		stabilityPool = contracts.stabilityPool
-		vesselManager = contracts.vesselManager
-		vesselManagerOperations = contracts.vesselManagerOperations
-
-	}
+	before(async () => {
+		await deploy(treasury, accounts.slice(0, 20))
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
 
 	beforeEach(async () => {
-		await loadFixture(deployContractsFixture)
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
+
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
 	context("Batch liquidations", () => {
@@ -72,10 +91,10 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
 			const price = await priceFeed.getPrice(erc20.address)
-			const TCR_Asset = await th.getTCR(contracts, erc20.address)
+			const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 			// Check Recovery Mode is active
-			assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// Check vessels A, B are in range 110% < ICR < TCR, C is below 100%
 
@@ -103,8 +122,8 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await setup()
 			await vesselManagerOperations.batchLiquidateVessels(erc20.address, [alice])
 
-			await th.getTCR(contracts, erc20.address)
-			assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+			await th.getTCR(contracts.core, erc20.address)
+			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 		})
 
 		it("Two vessels over MCR are liquidated", async () => {
@@ -223,10 +242,10 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
 			const price = await priceFeed.getPrice(erc20.address)
-			const TCR_Asset = await th.getTCR(contracts, erc20.address)
+			const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 			// Check Recovery Mode is active
-			assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// Check vessels A, B are in range 110% < ICR < TCR, C is below 100%
 
@@ -283,10 +302,10 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
 			const price = await priceFeed.getPrice(erc20.address)
-			const TCR_Asset = await th.getTCR(contracts, erc20.address)
+			const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 			// Check Recovery Mode is active
-			assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// Check vessels A, B are in range 110% < ICR < TCR, C is below 100%
 
@@ -309,8 +328,8 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 		it("First vessel only doesn’t get out of Recovery Mode", async () => {
 			await setup()
 
-			await th.getTCR(contracts, erc20.address)
-			assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+			await th.getTCR(contracts.core, erc20.address)
+			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 		})
 
 		it("Two vessels over MCR are liquidated", async () => {
