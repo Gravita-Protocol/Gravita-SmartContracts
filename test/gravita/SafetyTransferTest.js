@@ -4,9 +4,8 @@ const ERC20DecimalsMock = artifacts.require("ERC20DecimalsMock")
 const testHelpers = require("../utils/testHelpers.js")
 
 const { dec, toBN } = testHelpers.TestHelper
-const { assert } = require("hardhat")
 
-contract("SafetyTransfer", async accounts => {
+contract("SafetyTransfer", async () => {
 	let safetyTransfer
   let amount = toBN(dec(1, "ether"))
 

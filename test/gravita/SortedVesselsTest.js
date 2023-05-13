@@ -5,11 +5,40 @@ const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
-const ZERO_ADDRESS = th.ZERO_ADDRESS
+const { dec, toBN, ZERO_ADDRESS } = th
+
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const openVessel = async params => th.openVessel(contracts.core, params)
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("SortedVessels", async accounts => {
+
 	const assertSortedListIsOrdered = async contracts => {
 		const price = await contracts.priceFeedTestnet.getPrice()
 		let vessel = await contracts.sortedVessels.getLast()
@@ -33,33 +62,24 @@ contract("SortedVessels", async accounts => {
 
 	const [alice, bob, carol, dennis, erin, defaulter_1, A, B, C, D, E, F, G, H, I, J, whale, treasury] = accounts
 
-	let contracts
-
-	let borrowerOperations
-	let debtToken
-	let erc20
-	let priceFeed
-	let sortedVessels
-	let vesselManager
-	let vesselManagerOperations
-
-	const openVessel = async params => th.openVessel(contracts, params)
-
 	describe("SortedVessels", () => {
+
+		before(async () => {
+			await deploy(treasury, accounts.slice(0, 20))
+			initialSnapshotId = await network.provider.send("evm_snapshot")
+		})
+
 		beforeEach(async () => {
+			snapshotId = await network.provider.send("evm_snapshot")
+		})
 
-			const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 20))
+		afterEach(async () => {
+			await network.provider.send("evm_revert", [snapshotId])
+		})
 
-			contracts = coreContracts
-
-			borrowerOperations = contracts.borrowerOperations
-			debtToken = contracts.debtToken
-			erc20 = contracts.erc20
-			priceFeed = contracts.priceFeedTestnet
-			sortedVessels = contracts.sortedVessels
-			vesselManager = contracts.vesselManager
-			vesselManagerOperations = contracts.vesselManagerOperations
-	})
+		after(async () => {
+			await network.provider.send("evm_revert", [initialSnapshotId])
+		})
 
 		it("contains(): returns true for addresses that have opened vessels", async () => {
 			await openVessel({

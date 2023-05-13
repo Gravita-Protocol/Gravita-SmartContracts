@@ -78,7 +78,7 @@ contract Timelock {
 
 	receive() external payable {}
 
-	function setDelay(uint _delay) public isValidDelay(_delay) {
+	function setDelay(uint _delay) external isValidDelay(_delay) {
 		if (msg.sender != address(this)) {
 			revert Timelock__TimelockOnly();
 		}
@@ -87,23 +87,23 @@ contract Timelock {
 		emit NewDelay(_delay);
 	}
 
-	function acceptAdmin() public {
+	function acceptAdmin() external {
 		if (msg.sender != pendingAdmin) {
 			revert Timelock__PendingAdminOnly();
 		}
 		admin = msg.sender;
 		pendingAdmin = address(0);
 
-		emit NewAdmin(admin);
+		emit NewAdmin(msg.sender);
 	}
 
-	function setPendingAdmin(address pendingAdmin_) public {
+	function setPendingAdmin(address _pendingAdmin) external {
 		if (msg.sender != address(this)) {
 			revert Timelock__TimelockOnly();
 		}
-		pendingAdmin = pendingAdmin_;
+		pendingAdmin = _pendingAdmin;
 
-		emit NewPendingAdmin(pendingAdmin);
+		emit NewPendingAdmin(_pendingAdmin);
 	}
 
 	function queueTransaction(
@@ -112,7 +112,7 @@ contract Timelock {
 		string memory signature,
 		bytes memory data,
 		uint eta
-	) public adminOnly returns (bytes32) {
+	) external adminOnly returns (bytes32) {
 		if (eta < block.timestamp + delay || eta > block.timestamp + delay + GRACE_PERIOD) {
 			revert Timelock__ETAMustSatisfyDelay();
 		}
@@ -133,7 +133,7 @@ contract Timelock {
 		string memory signature,
 		bytes memory data,
 		uint eta
-	) public adminOnly {
+	) external adminOnly {
 		bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
 		if (!queuedTransactions[txHash]) {
 			revert Timelock__TxNoQueued();
@@ -149,7 +149,7 @@ contract Timelock {
 		string memory signature,
 		bytes memory data,
 		uint eta
-	) public payable adminOnly returns (bytes memory) {
+	) external payable adminOnly returns (bytes memory) {
 		bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
 		if (!queuedTransactions[txHash]) {
 			revert Timelock__TxNoQueued();

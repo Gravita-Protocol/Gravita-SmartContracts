@@ -1,9 +1,40 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const th = testHelpers.TestHelper
-const { dec, toBN } = th
+const { dec, toBN, assertRevert } = th
 const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
+
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const openVessel = async params => th.openVessel(contracts.core, params)
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	erc20B = contracts.core.erc20B
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("StabilityPool", async accounts => {
 	const [
@@ -22,34 +53,17 @@ contract("StabilityPool", async accounts => {
 		erin,
 		flyn,
 		graham,
-		treasury
+		treasury,
 	] = accounts
 
-	let contracts
-
-	let activePool
-	let borrowerOperations
-	let debtToken
-	let defaultPool
-	let erc20
-	let erc20B
-	let grvtToken
-	let priceFeed
-	let sortedVessels
-	let stabilityPool
-	let vesselManager
-	let vesselManagerOperations
-
-	const getOpenVesselVUSDAmount = async (totalDebt, asset) => th.getOpenVesselVUSDAmount(contracts, totalDebt, asset)
-	const openVessel = async params => th.openVessel(contracts, params)
-	const assertRevert = th.assertRevert
+	const getOpenVesselVUSDAmount = async (totalDebt, asset) => th.getOpenVesselVUSDAmount(contracts.core, totalDebt, asset)
 
 	async function _openVessel(erc20Contract, extraDebtTokenAmt, sender) {
 		await _openVesselWithICR(erc20Contract, extraDebtTokenAmt, 2, sender)
 	}
 
 	async function _openVesselWithICR(erc20Contract, extraDebtTokenAmt, icr, sender) {
-		await th.openVessel(contracts, {
+		await th.openVessel(contracts.core, {
 			asset: erc20Contract.address,
 			extraVUSDAmount: toBN(dec(extraDebtTokenAmt, 18)),
 			ICR: toBN(dec(icr, 18)),
@@ -58,7 +72,7 @@ contract("StabilityPool", async accounts => {
 	}
 
 	async function _openVesselWithCollAmt(erc20Contract, collAmt, extraDebtTokenAmt, sender) {
-		await th.openVessel(contracts, {
+		await th.openVessel(contracts.core, {
 			asset: erc20Contract.address,
 			assetSent: toBN(dec(collAmt, 18)),
 			extraVUSDAmount: toBN(dec(extraDebtTokenAmt, 18)),
@@ -84,25 +98,22 @@ contract("StabilityPool", async accounts => {
 	}
 
 	describe("Stability Pool Mechanisms", async () => {
-		beforeEach(async () => {
-			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 20))
-
-			contracts = coreContracts
-			activePool = contracts.activePool
-			borrowerOperations = contracts.borrowerOperations
-			debtToken = contracts.debtToken
-			defaultPool = contracts.defaultPool
-			erc20 = contracts.erc20
-			erc20B = contracts.erc20B
-			priceFeed = contracts.priceFeedTestnet
-			sortedVessels = contracts.sortedVessels
-			stabilityPool = contracts.stabilityPool
-			vesselManager = contracts.vesselManager
-			vesselManagerOperations = contracts.vesselManagerOperations
-
-			grvtToken = GRVTContracts.grvtToken
+		before(async () => {
+			await deploy(treasury, accounts.slice(0, 20))
+			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
 
+		beforeEach(async () => {
+			snapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		afterEach(async () => {
+			await network.provider.send("evm_revert", [snapshotId])
+		})
+
+		after(async () => {
+			await network.provider.send("evm_revert", [initialSnapshotId])
+		})
 		describe("Providing", async () => {
 			it("provideToSP(): increases the Stability Pool balance", async () => {
 				await _openVessel(erc20, (extraDebtTokenAmt = 200), alice)
@@ -436,7 +447,7 @@ contract("StabilityPool", async accounts => {
 				const defaultedDebt_BeforeERC20 = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
 				const activeColl_BeforeERC20 = (await activePool.getAssetBalance(erc20.address)).toString()
 				const defaultedColl_BeforeERC20 = (await defaultPool.getAssetBalance(erc20.address)).toString()
-				const TCR_BeforeERC20 = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_BeforeERC20 = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// D makes an SP deposit
 				await stabilityPool.provideToSP(dec(1000, 18), { from: dennis })
@@ -446,7 +457,7 @@ contract("StabilityPool", async accounts => {
 				const defaultedDebt_AfterERC20 = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
 				const activeColl_AfterERC20 = (await activePool.getAssetBalance(erc20.address)).toString()
 				const defaultedColl_AfterERC20 = (await defaultPool.getAssetBalance(erc20.address)).toString()
-				const TCR_AfterERC20 = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_AfterERC20 = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// Check total system debt, collateral and TCR have not changed after a Stability deposit is made
 				assert.equal(activeDebt_BeforeERC20, activeDebt_AfterERC20)
@@ -709,7 +720,7 @@ contract("StabilityPool", async accounts => {
 
 				// Price drops, defaulter is liquidated, A, B and C earn collateral
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
@@ -800,7 +811,7 @@ contract("StabilityPool", async accounts => {
 
 				// Price drops, defaulter is liquidated, A, B, C, D earn collaterals
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
@@ -997,7 +1008,7 @@ contract("StabilityPool", async accounts => {
 
 				const expectedNewDeposit_A = compoundedDeposit_A.sub(toBN(dec(9_000, 18)))
 
-				// check Alice's deposit has been updated to equal her compounded deposit minus her withdrawal 
+				// check Alice's deposit has been updated to equal her compounded deposit minus her withdrawal
 				const newDeposit = (await stabilityPool.deposits(alice)).toString()
 				assert.isAtMost(th.getDifference(newDeposit, expectedNewDeposit_A), 100_000)
 
@@ -1035,7 +1046,7 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(dec(9_000, 18), { from: alice })
 
 				// Check SP has reduced from 2 liquidations and Alice's withdrawal
-	  			// Expected tokens in SP = (200_000 - liquidatedDebt1 - liquidatedDebt2 - 9_000)
+				// Expected tokens in SP = (200_000 - liquidatedDebt1 - liquidatedDebt2 - 9_000)
 				const expectedPoolDeposits = toBN(dec(200_000, 18))
 					.sub(toBN(liquidatedDebt1))
 					.sub(toBN(liquidatedDebt2))
@@ -1447,7 +1458,7 @@ contract("StabilityPool", async accounts => {
 				const defaultedDebt_BeforeERC20 = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
 				const activeColl_BeforeERC20 = (await activePool.getAssetBalance(erc20.address)).toString()
 				const defaultedColl_BeforeERC20 = (await defaultPool.getAssetBalance(erc20.address)).toString()
-				const TCR_BeforeERC20 = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_BeforeERC20 = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// Carol withdraws her Stability deposit
 				assert.equal((await stabilityPool.deposits(carol)).toString(), dec(30000, 18))
@@ -1458,7 +1469,7 @@ contract("StabilityPool", async accounts => {
 				const defaultedDebt_AfterERC20 = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
 				const activeColl_AfterERC20 = (await activePool.getAssetBalance(erc20.address)).toString()
 				const defaultedColl_AfterERC20 = (await defaultPool.getAssetBalance(erc20.address)).toString()
-				const TCR_AfterERC20 = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_AfterERC20 = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// Check total system debt, collateral and TCR have not changed after a Stability deposit is made
 				assert.equal(activeDebt_BeforeERC20, activeDebt_AfterERC20)
@@ -1681,7 +1692,7 @@ contract("StabilityPool", async accounts => {
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
 
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Defaulter 1 liquidated, full offset
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
@@ -1909,7 +1920,7 @@ contract("StabilityPool", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate defaulter 1
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
@@ -1937,7 +1948,7 @@ contract("StabilityPool", async accounts => {
 				// Price rises
 				await priceFeed.setPrice(erc20.address, dec(220, 18))
 
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// A, B, C withdraw their full deposits from the Stability Pool
 				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: alice })
@@ -2080,8 +2091,8 @@ contract("StabilityPool", async accounts => {
 				await dropPriceByPercent(erc20, 50)
 				await dropPriceByPercent(erc20B, 50)
 
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20B.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20B.address))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 				await vesselManagerOperations.liquidate(erc20B.address, defaulter_2)
@@ -2189,7 +2200,7 @@ contract("StabilityPool", async accounts => {
 
 				// perform a liquidation to make 0 < P < 1, and S > 0
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_1))
@@ -2279,4 +2290,3 @@ contract("StabilityPool", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
-

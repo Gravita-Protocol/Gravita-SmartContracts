@@ -1,52 +1,38 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
-const th = testHelpers.TestHelper
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("Deployment script - Sets correct contract addresses dependencies after deployment", async accounts => {
-
-	let activePool
-	let adminContract
-	let borrowerOperations
-	let collSurplusPool
-	let debtToken
-	let defaultPool
-	let feeCollector
-	let gasPool
-	let priceFeed
-	let sortedVessels
-	let stabilityPool
-	let vesselManager
-	let vesselManagerOperations
-	let timelock
-
-	let communityIssuance
-	let grvtStaking
-	let grvtToken
-
 	before(async () => {
-
-		const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(accounts[0])
-
-		activePool = coreContracts.activePool
-		adminContract = coreContracts.adminContract
-		borrowerOperations = coreContracts.borrowerOperations
-		collSurplusPool = coreContracts.collSurplusPool
-		debtToken = coreContracts.debtToken
-		defaultPool = coreContracts.defaultPool
-		feeCollector = coreContracts.feeCollector
-		gasPool = coreContracts.gasPool
-		priceFeed = coreContracts.priceFeedTestnet
-		sortedVessels = coreContracts.sortedVessels
-		stabilityPool = coreContracts.stabilityPool
-		vesselManager = coreContracts.vesselManager
-		vesselManagerOperations = coreContracts.vesselManagerOperations
-		shortTimelock = coreContracts.shortTimelock
-		longTimelock = coreContracts.longTimelock
-
-		communityIssuance = GRVTContracts.communityIssuance
-		grvtStaking = GRVTContracts.grvtStaking
-		grvtToken = GRVTContracts.grvtToken
+		await deploy(accounts[0], [])
 	})
 
 	describe("Core Contracts", async () => {

@@ -96,6 +96,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 
 	function initialize() public initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 	}
 
 	// External Functions -----------------------------------------------------------------------------------------------
@@ -176,7 +177,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 		setRedemptionFeeFloor(_collateral, redemptionFeeFloor);
 	}
 
-	function setIsActive(address _collateral, bool _active) public onlyTimelock {
+	function setIsActive(address _collateral, bool _active) external onlyTimelock {
 		CollateralParams storage collParams = collateralParams[_collateral];
 		collParams.active = _active;
 	}

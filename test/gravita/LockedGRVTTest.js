@@ -1,27 +1,48 @@
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-
-const VesselManagerTester = artifacts.require("VesselManagerTester")
+const { web3 } = require("@openzeppelin/test-helpers/src/setup")
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
+const timeValues = testHelpers.TimeValues
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
+
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+	lockedGRVT = contracts.grvt.lockedGRVT
+}
 
 contract("LockedGRVTTest", async accounts => {
-	const ZERO_ADDRESS = th.ZERO_ADDRESS
-	const assertRevert = th.assertRevert
-	const timeValues = testHelpers.TimeValues
-
 	const [owner, user, A, B, C, D, E, treasury] = accounts
 
 	const SIX_MONTHS = toBN("15724800")
 	const TWO_YEARS = toBN("63072000")
 
-	let contracts
-	let lockedGRVT
-	let grvtToken
 	let TOTAL_GRVT
 
 	async function applyVestingFormula(vestingRule, ignoreClaimed) {
@@ -38,22 +59,27 @@ contract("LockedGRVTTest", async accounts => {
 	}
 
 	describe("Locked GRVT", async () => {
-		beforeEach(async () => {
-			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(
-				treasury,
-				accounts.slice(0, 5)
-			)
-			contracts = coreContracts
+		before(async () => {
+			await deploy(treasury, accounts.slice(0, 5))
 
-			lockedGRVT = GRVTContracts.lockedGRVT
-			grvtToken = GRVTContracts.grvtToken
-
-			await GRVTContracts.grvtToken.approve(lockedGRVT.address, ethers.constants.MaxUint256, {
-				from: treasury,
-			})
+			await grvtToken.approve(lockedGRVT.address, ethers.constants.MaxUint256, { from: treasury })
 
 			await lockedGRVT.transferOwnership(treasury)
-			TOTAL_GRVT = await GRVTContracts.grvtToken.balanceOf(treasury)
+			TOTAL_GRVT = await grvtToken.balanceOf(treasury)
+
+			initialSnapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		beforeEach(async () => {
+			snapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		afterEach(async () => {
+			await network.provider.send("evm_revert", [snapshotId])
+		})
+
+		after(async () => {
+			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
 
 		it("Validate Time Constants", async () => {

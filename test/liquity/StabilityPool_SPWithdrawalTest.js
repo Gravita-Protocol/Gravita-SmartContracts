@@ -104,7 +104,7 @@ contract("StabilityPool - Withdrawal of stability deposit - Reward calculations"
 		// --- withdrawFromSP()
 
 		// --- Identical deposits, identical liquidation amounts---
-		it.only("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after one liquidation", async () => {
+		it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after one liquidation", async () => {
 			// Whale opens Vessel with 100k ETH
 			await borrowerOperations.openVessel(
 				erc20.address,
@@ -182,7 +182,7 @@ contract("StabilityPool - Withdrawal of stability deposit - Reward calculations"
 			assert.isAtMost(th.getDifference(carol_ETHWithdrawnERC20, "3316666666"), 10000)
 		})
 
-		it.only("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after two identical liquidations", async () => {
+		it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after two identical liquidations", async () => {
 			// Whale opens Vessel with 100k ETH
 			await borrowerOperations.openVessel(
 				erc20.address,
@@ -353,7 +353,7 @@ contract("StabilityPool - Withdrawal of stability deposit - Reward calculations"
 		})
 
 		// --- Identical deposits, increasing liquidation amounts ---
-		it.only("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after two liquidations of increasing VUSD", async () => {
+		it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and ETH Gain after two liquidations of increasing VUSD", async () => {
 			// Whale opens Vessel with 100k ETH
 			await borrowerOperations.openVessel(
 				erc20.address,
