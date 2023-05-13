@@ -143,7 +143,7 @@ class DeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeedTestnet.address,
-			contracts.shortTimelock.address,
+			contracts.shortTimelock.address
 		)
 
 		await contracts.borrowerOperations.setAddresses(
@@ -215,6 +215,11 @@ class DeploymentHelper {
 		await contracts.adminContract.addNewCollateral(contracts.erc20.address, dec(200, 18), 18)
 		await contracts.adminContract.addNewCollateral(contracts.erc20B.address, dec(30, 18), 18)
 
+		// Redemption are disabled by default; enable them for testing
+		await contracts.adminContract.setRedemptionBlockTimestamp(EMPTY_ADDRESS, 0)
+		await contracts.adminContract.setRedemptionBlockTimestamp(contracts.erc20.address, 0)
+		await contracts.adminContract.setRedemptionBlockTimestamp(contracts.erc20B.address, 0)
+
 		await contracts.adminContract.setIsActive(EMPTY_ADDRESS, true)
 		await contracts.adminContract.setIsActive(contracts.erc20.address, true)
 		await contracts.adminContract.setIsActive(contracts.erc20B.address, true)
@@ -257,8 +262,8 @@ class DeploymentHelper {
 		await GRVTContracts.communityIssuance.addFundToStabilityPool(weeklyReward, { from: treasuryAddress })
 		await GRVTContracts.communityIssuance.setWeeklyGrvtDistribution(weeklyReward, { from: treasuryAddress })
 
-		// Set params expected by the test routines
-		const defaultFee = 0.005e18.toString() // 0.5%
+		// Set configs (since the tests have been designed with it)
+		const defaultFee = (0.005e18).toString() // 0.5%
 		await coreContracts.adminContract.setCollateralParameters(
 			EMPTY_ADDRESS,
 			defaultFee, // borrowingFee
@@ -275,7 +280,7 @@ class DeploymentHelper {
 			(1.5e18).toString(), // ccr
 			(1.1e18).toString(), // mcr
 			dec(1_800, 18), // minNetDebt
-			dec(10_000_000_000, 18), //mintCap
+			dec(10_000_000_000, 18), // mintCap
 			200, // percentDivisor
 			defaultFee // redemptionFeeFloor
 		)
@@ -291,4 +296,5 @@ class DeploymentHelper {
 		)
 	}
 }
+
 module.exports = DeploymentHelper

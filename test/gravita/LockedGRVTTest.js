@@ -1,8 +1,6 @@
 const { web3 } = require("@openzeppelin/test-helpers/src/setup")
-
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
-
 const timeValues = testHelpers.TimeValues
 const th = testHelpers.TestHelper
 const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
