@@ -58,7 +58,7 @@ contract("LockedGRVTTest", async accounts => {
 
 	describe("Locked GRVT", async () => {
 		before(async () => {
-			await deploy(treasury, accounts.slice(0, 5))
+			await deploy(treasury)
 
 			await grvtToken.approve(lockedGRVT.address, ethers.constants.MaxUint256, { from: treasury })
 
