@@ -88,7 +88,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		_burn(_account, _amount);
 	}
 
-	function addWhitelist(address _address) external override onlyTimelock {
+	function addWhitelist(address _address) external override onlyOwner { 
 		whitelistedContracts[_address] = true;
 
 		emit WhitelistChanged(_address, true);
