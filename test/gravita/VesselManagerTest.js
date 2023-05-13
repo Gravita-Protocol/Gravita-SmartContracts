@@ -10,6 +10,36 @@ const timeValues = testHelpers.TimeValues
 const { ethers } = require("hardhat")
 const f = v => ethers.utils.formatEther(v.toString())
 
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	erc20B = contracts.core.erc20B
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
+
 /* NOTE: Some tests involving ETH redemption fees do not test for specific fee values.
  * Some only test that the fees are non-zero when they should occur.
  *
@@ -47,65 +77,43 @@ contract("VesselManager", async accounts => {
 
 	const multisig = accounts[999]
 
-	let contracts
-
-	let activePool
-	let adminContract
-	let borrowerOperations
-	let collSurplusPool
-	let debtToken
-	let defaultPool
-	let erc20
-	let priceFeed
-	let sortedVessels
-	let stabilityPool
-	let vesselManager
-	let vesselManagerOperations
-
 	let REDEMPTION_SOFTENING_PARAM
 
-	const getOpenVesselVUSDAmount = async (totalDebt, asset) => th.getOpenVesselVUSDAmount(contracts, totalDebt, asset)
-	const getNetBorrowingAmount = async (debtWithFee, asset) => th.getNetBorrowingAmount(contracts, debtWithFee, asset)
-	const openVessel = async params => th.openVessel(contracts, params)
-	const withdrawVUSD = async params => th.withdrawVUSD(contracts, params)
+	const getOpenVesselVUSDAmount = async (totalDebt, asset) =>
+		th.getOpenVesselVUSDAmount(contracts.core, totalDebt, asset)
+	const getNetBorrowingAmount = async (debtWithFee, asset) =>
+		th.getNetBorrowingAmount(contracts.core, debtWithFee, asset)
+	const openVessel = async params => th.openVessel(contracts.core, params)
+	const withdrawVUSD = async params => th.withdrawVUSD(contracts.core, params)
 	const calcSoftnedAmount = (collAmount, price) =>
 		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
 
 	describe("Vessel Manager", async () => {
-		beforeEach(async () => {
-			const { coreContracts, GRVTContracts } = await deploymentHelper.deployTestContracts(treasury)
-
-			contracts = coreContracts
-			activePool = contracts.activePool
-			adminContract = contracts.adminContract
-			borrowerOperations = contracts.borrowerOperations
-			collSurplusPool = contracts.collSurplusPool
-			debtToken = contracts.debtToken
-			defaultPool = contracts.defaultPool
-			erc20 = contracts.erc20
-			priceFeed = contracts.priceFeedTestnet
-			sortedVessels = contracts.sortedVessels
-			stabilityPool = contracts.stabilityPool
-			vesselManager = contracts.vesselManager
-			vesselManagerOperations = contracts.vesselManagerOperations
-
-			communityIssuance = GRVTContracts.communityIssuance
-			grvtStaking = GRVTContracts.grvtStaking
-			grvtToken = GRVTContracts.grvtToken
+		before(async () => {
+			await deploy(treasury, accounts.slice(0, 20))
 
 			await grvtToken.unprotectedMint(multisig, dec(1, 24))
-
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
-
 			for (const acc of accounts.slice(0, 20)) {
-				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), {
-					from: acc,
-				})
+				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), { from: acc })
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
-
 			REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
+
+			initialSnapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		beforeEach(async () => {
+			snapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		afterEach(async () => {
+			await network.provider.send("evm_revert", [snapshotId])
+		})
+
+		after(async () => {
+			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
 
 		describe("Liquidations", async () => {
@@ -120,7 +128,7 @@ contract("VesselManager", async accounts => {
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: alice },
 				})
-				await th.logActiveAccounts(contracts, 10)
+				await th.logActiveAccounts(contracts.core, 10)
 				const price = await priceFeed.getPrice(erc20.address)
 				const ICR_Before_Asset = await vesselManager.getCurrentICR(erc20.address, alice, price)
 				assert.equal(ICR_Before_Asset, dec(4, 18))
@@ -144,7 +152,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// close Vessel
 				await vesselManagerOperations.liquidate(erc20.address, alice, { from: owner })
@@ -185,7 +193,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				/* close Bob's Vessel. Should liquidate his ether and VUSD,
     leaving Alice’s ether and VUSD debt in the ActivePool. */
@@ -229,7 +237,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// close Bob's Vessel
 				await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
@@ -267,7 +275,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Close Bob's Vessel
 				await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
@@ -395,7 +403,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// close Bob's Vessel.  His ether*0.995 and VUSD should be added to the DefaultPool.
 				await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
@@ -441,7 +449,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// close Carol's Vessel.
 				assert.isTrue(await sortedVessels.contains(erc20.address, carol))
@@ -470,7 +478,7 @@ contract("VesselManager", async accounts => {
 				})
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// price drops to 1ETH:50VUSD, reducing Bob's ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(50, 18))
@@ -533,7 +541,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "105000000000000000000")
 				const price = await priceFeed.getPrice(erc20.address)
 
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				const alice_ICR_Asset = (await vesselManager.getCurrentICR(erc20.address, alice, price)).toString()
 				assert.equal(alice_ICR_Asset, "1050000000000000000")
@@ -543,7 +551,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(activeVesselsCount_Before_Asset, 2)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate the vessel
 				await vesselManagerOperations.liquidate(erc20.address, alice, { from: owner })
@@ -576,7 +584,7 @@ contract("VesselManager", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, carol))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				try {
 					const txCarol = await vesselManagerOperations.liquidate(erc20.address, carol)
@@ -618,7 +626,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(await vesselManager.getVesselStatus(erc20.address, carol), 3) // check vessel closed by liquidation
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				try {
 					const txCarol_L2 = await vesselManagerOperations.liquidate(erc20.address, carol)
@@ -641,7 +649,7 @@ contract("VesselManager", async accounts => {
 					extraParams: { from: bob },
 				})
 
-				const TCR_Before_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_Before_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 				const listSize_Before_Asset = (await sortedVessels.getSize(erc20.address)).toString()
 
 				const price = await priceFeed.getPrice(erc20.address)
@@ -651,7 +659,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(bob_ICR_Asset.gte(mv._MCR))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Attempt to liquidate bob
 				await assertRevert(vesselManagerOperations.liquidate(erc20.address, bob), "VesselManager: nothing to liquidate")
@@ -660,7 +668,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(await sortedVessels.contains(erc20.address, bob))
 				assert.isTrue(await sortedVessels.contains(erc20.address, whale))
 
-				const TCR_After_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_After_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 				const listSize_After_Asset = (await sortedVessels.getSize(erc20.address)).toString()
 
 				assert.equal(TCR_Before_Asset, TCR_After_Asset)
@@ -699,7 +707,7 @@ contract("VesselManager", async accounts => {
 					extraParams: { from: dennis },
 				})
 
-				const TCR_Before_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_Before_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				await openVessel({
 					asset: erc20.address,
@@ -731,7 +739,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// All defaulters liquidated
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
@@ -749,7 +757,7 @@ contract("VesselManager", async accounts => {
 				// Price bounces back
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
-				const TCR_After_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_After_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 				assert.equal(TCR_Before_Asset, TCR_After_Asset)
 			})
 
@@ -815,30 +823,30 @@ contract("VesselManager", async accounts => {
 
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 
-				const TCR_1_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_1_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Check TCR improves with each liquidation that is offset with Pool
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_1))
-				const TCR_2_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_2_Asset = await th.getTCR(contracts.core, erc20.address)
 				assert.isTrue(TCR_2_Asset.gte(TCR_1_Asset))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_2)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_2))
-				const TCR_3_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_3_Asset = await th.getTCR(contracts.core, erc20.address)
 				assert.isTrue(TCR_3_Asset.gte(TCR_2_Asset))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_3)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_3))
-				const TCR_4_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_4_Asset = await th.getTCR(contracts.core, erc20.address)
 				assert.isTrue(TCR_4_Asset.gte(TCR_3_Asset))
 
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_4)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_4))
-				const TCR_5_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_5_Asset = await th.getTCR(contracts.core, erc20.address)
 				assert.isTrue(TCR_5_Asset.gte(TCR_4_Asset))
 			})
 
@@ -899,7 +907,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
-				const TCR_0_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_0_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				const entireSystemCollBefore_Asset = await vesselManager.getEntireSystemColl(erc20.address)
 				const entireSystemDebtBefore_Asset = await vesselManager.getEntireSystemDebt(erc20.address)
@@ -909,7 +917,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(expectedTCR_0_Asset.eq(TCR_0_Asset))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Check TCR does not decrease with each liquidation
 				const liquidationTx_1_Asset = await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
@@ -918,7 +926,7 @@ contract("VesselManager", async accounts => {
 					th.getEmittedLiquidationValues(liquidationTx_1_Asset)
 
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_1))
-				const TCR_1_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_1_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				// Expect only change to TCR to be due to the issued gas compensation	.div(entireSystemDebtBefore)
 				const expectedTCR_1_Asset = entireSystemCollBefore_Asset
@@ -933,7 +941,7 @@ contract("VesselManager", async accounts => {
 					th.getEmittedLiquidationValues(liquidationTx_2_Asset)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_2))
 
-				const TCR_2_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_2_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				const expectedTCR_2_Asset = entireSystemCollBefore_Asset
 					.sub(gasComp_1_Asset)
@@ -949,7 +957,7 @@ contract("VesselManager", async accounts => {
 					th.getEmittedLiquidationValues(liquidationTx_3_Asset)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_3))
 
-				const TCR_3_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_3_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				const expectedTCR_3_Asset = entireSystemCollBefore_Asset
 					.sub(gasComp_1_Asset)
@@ -965,7 +973,7 @@ contract("VesselManager", async accounts => {
 					th.getEmittedLiquidationValues(liquidationTx_4_Asset)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_4))
 
-				const TCR_4_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_4_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				const expectedTCR_4_Asset = entireSystemCollBefore_Asset
 					.sub(gasComp_1_Asset)
@@ -1020,7 +1028,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(dennis_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Attempt to liquidate Dennis
 
@@ -1084,7 +1092,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Attempt to liquidate Bob
 				await assertRevert(vesselManagerOperations.liquidate(erc20.address, bob), "VesselManager: nothing to liquidate")
@@ -1149,7 +1157,7 @@ contract("VesselManager", async accounts => {
 				await stabilityPool.provideToSP(A_spDeposit, { from: alice })
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate Bob
 				await vesselManagerOperations.liquidate(erc20.address, bob)
@@ -1240,7 +1248,7 @@ contract("VesselManager", async accounts => {
 				assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "4")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate A, B and C
 				await activePool.getDebtTokenBalance(erc20.address)
@@ -1318,7 +1326,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(carol_ICR_Before_Asset.lte(mv._MCR))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				/* Liquidate defaulter. 30 VUSD and 0.3 ETH is distributed between A, B and C.
 
@@ -1358,7 +1366,7 @@ contract("VesselManager", async accounts => {
 					ICR: toBN(dec(20, 18)),
 					extraParams: { from: whale },
 				})
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate Alice, Bob, Carol
 				await assertRevert(
@@ -1425,7 +1433,7 @@ contract("VesselManager", async accounts => {
 				// Price drops to 1ETH:100VUSD, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate vessel
 
@@ -1489,7 +1497,7 @@ contract("VesselManager", async accounts => {
 				// Price drops to 1ETH:100VUSD, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// liquidate vessel
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
@@ -1537,7 +1545,7 @@ contract("VesselManager", async accounts => {
 				let price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// A gets liquidated, creates pending rewards for all
 				const liqTxA_Asset = await vesselManagerOperations.liquidate(erc20.address, A)
@@ -1551,7 +1559,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				price = await priceFeed.getPrice(erc20.address)
 				// Confirm system is now in Recovery Mode
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm C has ICR > TCR
 				const TCR_Asset = await vesselManager.getTCR(erc20.address, price)
@@ -1593,7 +1601,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(pendingVUSDDebt_C_Asset, defaultPoolVUSDDebt_Asset), 1000)
 
 				// Confirm system is still in Recovery Mode
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// D and E fill the Stability Pool, enough to completely absorb C's debt of 70
 				await stabilityPool.provideToSP(dec(50, 18), { from: D })
@@ -1675,7 +1683,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm vessels A-E are ICR < 110%
 
@@ -1758,7 +1766,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				await vesselManagerOperations.liquidateVessels(erc20.address, 3)
 
@@ -1832,7 +1840,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(await sortedVessels.contains(erc20.address, bob))
 				assert.isTrue(await sortedVessels.contains(erc20.address, carol))
 
-				const TCR_Before_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_Before_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 				const listSize_Before_Asset = (await sortedVessels.getSize(erc20.address)).toString()
 
 				assert.isTrue((await vesselManager.getCurrentICR(erc20.address, whale, price)).gte(mv._MCR))
@@ -1841,7 +1849,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue((await vesselManager.getCurrentICR(erc20.address, carol, price)).gte(mv._MCR))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Attempt liqudation sequence
 				await assertRevert(
@@ -1856,7 +1864,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(await sortedVessels.contains(erc20.address, bob))
 				assert.isTrue(await sortedVessels.contains(erc20.address, carol))
 
-				const TCR_After_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_After_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 				const listSize_After_Asset = (await sortedVessels.getSize(erc20.address)).toString()
 
 				assert.equal(TCR_Before_Asset, TCR_After_Asset)
@@ -1938,7 +1946,7 @@ contract("VesselManager", async accounts => {
 				})
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				//liquidate A, B, C
 				await vesselManagerOperations.liquidateVessels(erc20.address, 10)
@@ -1980,7 +1988,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
-				const TCR_Before_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_Before_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// Confirm A, B, C ICRs are below 110%
 
@@ -1993,7 +2001,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(carol_ICR_Asset.lte(mv._MCR))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidation with n = 0
 				await assertRevert(
@@ -2008,7 +2016,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(await sortedVessels.contains(erc20.address, bob))
 				assert.isTrue(await sortedVessels.contains(erc20.address, carol))
 
-				const TCR_After_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_After_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// Check TCR has not changed after liquidation
 				assert.equal(TCR_Before_Asset, TCR_After_Asset)
@@ -2084,7 +2092,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(flyn_ICR_Asset.lte(mv._MCR))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				//Liquidate sequence
 				await vesselManagerOperations.liquidateVessels(erc20.address, 10)
@@ -2143,7 +2151,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				//Liquidate sequence
 				await vesselManagerOperations.liquidateVessels(erc20.address, 10)
@@ -2229,13 +2237,13 @@ contract("VesselManager", async accounts => {
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 
-				const TCR_Before_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_Before_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				// Check pool has 500 VUSD
 				assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), dec(500, 18))
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate vessels
 				await vesselManagerOperations.liquidateVessels(erc20.address, 10)
@@ -2254,7 +2262,7 @@ contract("VesselManager", async accounts => {
 				assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "5")
 
 				// Check that the liquidation sequence has improved the TCR
-				const TCR_After_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_After_Asset = await th.getTCR(contracts.core, erc20.address)
 				assert.isTrue(TCR_After_Asset.gte(TCR_Before_Asset))
 			})
 
@@ -2332,14 +2340,14 @@ contract("VesselManager", async accounts => {
 				const price = toBN(dec(100, 18))
 				await priceFeed.setPrice(erc20.address, price)
 
-				const TCR_Before_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_Before_Asset = await th.getTCR(contracts.core, erc20.address)
 				assert.isAtMost(th.getDifference(TCR_Before_Asset, totalColl_Asset.mul(price).div(totalDebt_Asset)), 1000)
 
 				// Check pool is empty before liquidation
 				assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), "0")
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate
 				await vesselManagerOperations.liquidateVessels(erc20.address, 10)
@@ -2355,7 +2363,7 @@ contract("VesselManager", async accounts => {
 				assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "5")
 
 				// Check that the liquidation sequence has reduced the TCR
-				const TCR_After_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_After_Asset = await th.getTCR(contracts.core, erc20.address)
 				// ((100+1+7+2+20)+(1+2+3+4)*0.995)*100/(2050+50+50+50+50+101+257+328+480)
 
 				assert.isAtMost(
@@ -2423,7 +2431,7 @@ contract("VesselManager", async accounts => {
 				assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), totalDeposits)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate
 				await vesselManagerOperations.liquidateVessels(erc20.address, 10)
@@ -2577,7 +2585,7 @@ contract("VesselManager", async accounts => {
 				// Price drops to 1ETH:100VUSD, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate vessels
 
@@ -2649,7 +2657,7 @@ contract("VesselManager", async accounts => {
 				// Price drops to 1ETH:100VUSD, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// liquidate vessels
 
@@ -2701,7 +2709,7 @@ contract("VesselManager", async accounts => {
 				let price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// A gets liquidated, creates pending rewards for all
 				const liqTxA_Asset = await vesselManagerOperations.liquidate(erc20.address, A)
@@ -2715,7 +2723,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				price = await priceFeed.getPrice(erc20.address)
 				// Confirm system is now in Recovery Mode
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm C has ICR > TCR
 
@@ -2760,7 +2768,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(pendingVUSDDebt_C_Asset, defaultPoolVUSDDebt_Asset), 1000)
 
 				// Confirm system is still in Recovery Mode
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// D and E fill the Stability Pool, enough to completely absorb C's debt of 70
 
@@ -2826,7 +2834,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm vessels A-C are ICR < 110%
 
@@ -2911,7 +2919,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm vessels A-E are ICR < 110%
 
@@ -2997,7 +3005,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm vessels A-C are ICR < 110%
 
@@ -3079,7 +3087,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				liquidationArray = []
 				try {
@@ -3136,7 +3144,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm vessels A-B are ICR < 110%
 
@@ -3180,7 +3188,7 @@ contract("VesselManager", async accounts => {
 				)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
 			it("batchLiquidateVessels(): skips if a vessel has been closed", async () => {
@@ -3248,7 +3256,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(await vesselManager.getVesselStatus(erc20.address, carol), 2) // check vessel closed
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Confirm vessels A-B are ICR < 110%
 
@@ -3290,7 +3298,7 @@ contract("VesselManager", async accounts => {
 				)
 
 				// Confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
 			it("batchLiquidateVessels: when SP > 0, triggers GRVT reward event - increases the sum G", async () => {
@@ -3339,7 +3347,7 @@ contract("VesselManager", async accounts => {
 				// Price drops to 1ETH:100VUSD, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// Liquidate vessels
 
@@ -3408,7 +3416,7 @@ contract("VesselManager", async accounts => {
 				// Price drops to 1ETH:100VUSD, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// liquidate vessels
 
@@ -4216,7 +4224,7 @@ contract("VesselManager", async accounts => {
 
 				// redemption is $55_000
 				const redemptionAmount = dec(55_000, 18)
-				await th.redeemCollateralAndGetTxObject(B, contracts, redemptionAmount, erc20.address)
+				await th.redeemCollateralAndGetTxObject(B, contracts.core, redemptionAmount, erc20.address)
 
 				// check that A remains active but B and C are closed
 				assert.isTrue(await sortedVessels.contains(erc20.address, A))
@@ -4266,7 +4274,7 @@ contract("VesselManager", async accounts => {
 
 				// VUSD redemption is 55000 VUSD
 				const VUSDRedemption = dec(55000, 18)
-				await th.redeemCollateralAndGetTxObject(B, contracts, VUSDRedemption, erc20.address)
+				await th.redeemCollateralAndGetTxObject(B, contracts.core, VUSDRedemption, erc20.address)
 
 				// Check B, C closed and A remains active
 
@@ -4608,13 +4616,13 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, "110" + _18_zeros)
 				const price = await priceFeed.getPrice(erc20.address)
 
-				const TCR_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
 				await assertRevert(
-					th.redeemCollateral(carol, contracts, dec(270, 18), erc20.address),
+					th.redeemCollateral(carol, contracts.core, dec(270, 18), erc20.address),
 					"VesselManager: Cannot redeem when TCR < MCR"
 				)
 			})
@@ -4701,11 +4709,11 @@ contract("VesselManager", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, dec(10, 18), erc20.address, dec(2, 18)),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, dec(10, 18), erc20.address, dec(2, 18)),
 					"Max fee percentage must be between 0.5% and 100%"
 				)
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, dec(10, 18), erc20.address, "1000000000000000001"),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, dec(10, 18), erc20.address, "1000000000000000001"),
 					"Max fee percentage must be between 0.5% and 100%"
 				)
 			})
@@ -4740,15 +4748,15 @@ contract("VesselManager", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, dec(10, 18), erc20.address, 0),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, dec(10, 18), erc20.address, 0),
 					"Max fee percentage must be between 0.5% and 100%"
 				)
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, dec(10, 18), erc20.address, 1),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, dec(10, 18), erc20.address, 1),
 					"Max fee percentage must be between 0.5% and 100%"
 				)
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, dec(10, 18), erc20.address, "4999999999999999"),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, dec(10, 18), erc20.address, "4999999999999999"),
 					"Max fee percentage must be between 0.5% and 100%"
 				)
 			})
@@ -4790,7 +4798,7 @@ contract("VesselManager", async accounts => {
 				// Max fee is <5%
 				const lessThan5pct = "49999999999999999"
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, attemptedVUSDRedemption_Asset, erc20.address, lessThan5pct),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, attemptedVUSDRedemption_Asset, erc20.address, lessThan5pct),
 					"Fee exceeded provided maximum"
 				)
 
@@ -4798,7 +4806,7 @@ contract("VesselManager", async accounts => {
 
 				// Max fee is 1%
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, attemptedVUSDRedemption_Asset, erc20.address, dec(1, 16)),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, attemptedVUSDRedemption_Asset, erc20.address, dec(1, 16)),
 					"Fee exceeded provided maximum"
 				)
 
@@ -4806,7 +4814,7 @@ contract("VesselManager", async accounts => {
 
 				// Max fee is 3.754%
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, attemptedVUSDRedemption_Asset, erc20.address, dec(3754, 13)),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, attemptedVUSDRedemption_Asset, erc20.address, dec(3754, 13)),
 					"Fee exceeded provided maximum"
 				)
 
@@ -4814,7 +4822,7 @@ contract("VesselManager", async accounts => {
 
 				// Max fee is 0.5%
 				await assertRevert(
-					th.redeemCollateralAndGetTxObject(A, contracts, attemptedVUSDRedemption_Asset, erc20.address, dec(5, 15)),
+					th.redeemCollateralAndGetTxObject(A, contracts.core, attemptedVUSDRedemption_Asset, erc20.address, dec(5, 15)),
 					"Fee exceeded provided maximum"
 				)
 			})
@@ -4861,7 +4869,7 @@ contract("VesselManager", async accounts => {
 
 				const tx1_Asset = await th.redeemCollateralAndGetTxObject(
 					A,
-					contracts,
+					contracts.core,
 					attemptedVUSDRedemption_Asset,
 					erc20.address,
 					slightlyMoreThanFee_Asset
@@ -4875,7 +4883,7 @@ contract("VesselManager", async accounts => {
 
 				const tx2_Asset = await th.redeemCollateralAndGetTxObject(
 					C,
-					contracts,
+					contracts.core,
 					attemptedVUSDRedemption_Asset,
 					erc20.address,
 					exactSameFee_Asset
@@ -4887,7 +4895,7 @@ contract("VesselManager", async accounts => {
 				// Max fee is 10%
 				const tx3_Asset = await th.redeemCollateralAndGetTxObject(
 					B,
-					contracts,
+					contracts.core,
 					attemptedVUSDRedemption_Asset,
 					erc20.address,
 					dec(1, 17)
@@ -4900,7 +4908,7 @@ contract("VesselManager", async accounts => {
 
 				const tx4_Asset = await th.redeemCollateralAndGetTxObject(
 					A,
-					contracts,
+					contracts.core,
 					attemptedVUSDRedemption_Asset,
 					erc20.address,
 					dec(37659, 13)
@@ -4913,7 +4921,7 @@ contract("VesselManager", async accounts => {
 
 				const tx5_Asset = await th.redeemCollateralAndGetTxObject(
 					C,
-					contracts,
+					contracts.core,
 					attemptedVUSDRedemption_Asset,
 					erc20.address,
 					dec(1, 18)
@@ -5014,7 +5022,7 @@ contract("VesselManager", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
 				// Erin redeems VUSD
-				await th.redeemCollateral(erin, contracts, redemptionAmount_Asset, erc20.address, th._100pct)
+				await th.redeemCollateral(erin, contracts.core, redemptionAmount_Asset, erc20.address, th._100pct)
 
 				price = await priceFeed.getPrice(erc20.address)
 
@@ -5566,7 +5574,7 @@ contract("VesselManager", async accounts => {
 
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
-				await th.redeemCollateral(A, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
 				// Check A's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5612,7 +5620,7 @@ contract("VesselManager", async accounts => {
 				const B_balanceBefore = await debtToken.balanceOf(B)
 
 				// A redeems 10 VUSD
-				const redemptionTx_A_Asset = await th.redeemCollateralAndGetTxObject(A, contracts, dec(10, 18), erc20.address)
+				const redemptionTx_A_Asset = await th.redeemCollateralAndGetTxObject(A, contracts.core, dec(10, 18), erc20.address)
 				const timeStamp_A_Asset = await th.getTimestampFromTx(redemptionTx_A_Asset, web3)
 
 				// Check A's balance has decreased by 10 VUSD
@@ -5625,7 +5633,7 @@ contract("VesselManager", async accounts => {
 
 				// B redeems 10 VUSD
 
-				const redemptionTx_B_Asset = await th.redeemCollateralAndGetTxObject(B, contracts, dec(10, 18), erc20.address)
+				const redemptionTx_B_Asset = await th.redeemCollateralAndGetTxObject(B, contracts.core, dec(10, 18), erc20.address)
 				const timeStamp_B_Asset = await th.getTimestampFromTx(redemptionTx_B_Asset, web3)
 
 				// Check B's balance has decreased by 10 VUSD
@@ -5671,7 +5679,7 @@ contract("VesselManager", async accounts => {
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
 				// A redeems 10 VUSD
-				await th.redeemCollateral(A, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
 				// Check A's balance has decreased by 10 VUSD
 				assert.equal(A_balanceBefore.sub(await debtToken.balanceOf(A)).toString(), toBN(dec(10, 18)).toString())
@@ -5687,7 +5695,7 @@ contract("VesselManager", async accounts => {
 				th.fastForwardTime(45, web3.currentProvider)
 
 				// Borrower A triggers a fee
-				await th.redeemCollateral(A, contracts, dec(1, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(1, 18), erc20.address)
 
 				const lastFeeOpTime_2_Asset = await vesselManager.lastFeeOperationTime(erc20.address)
 
@@ -5703,7 +5711,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(toBN(timeNow).sub(lastFeeOpTime_1_Asset).gte(3600))
 
 				// Borrower A triggers a fee
-				await th.redeemCollateral(A, contracts, dec(1, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(1, 18), erc20.address)
 
 				const lastFeeOpTime_3_Asset = await vesselManager.lastFeeOperationTime(erc20.address)
 
@@ -5749,7 +5757,7 @@ contract("VesselManager", async accounts => {
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
 				// A redeems 10 VUSD
-				await th.redeemCollateral(A, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
 				// Check A's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5804,7 +5812,7 @@ contract("VesselManager", async accounts => {
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
 				// A redeems 10 VUSD
-				await th.redeemCollateral(A, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
 				// Check A's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5855,7 +5863,7 @@ contract("VesselManager", async accounts => {
 				const B_balanceBefore = await debtToken.balanceOf(B)
 
 				// A redeems 10 VUSD
-				await th.redeemCollateral(A, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
 				// Check A's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5868,7 +5876,7 @@ contract("VesselManager", async accounts => {
 				const treasuryBalanceBefore = await erc20.balanceOf(treasury)
 
 				// B redeems 10 VUSD
-				await th.redeemCollateral(B, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(B, contracts.core, dec(10, 18), erc20.address)
 
 				// Check B's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5916,7 +5924,7 @@ contract("VesselManager", async accounts => {
 				const B_balanceBefore = await debtToken.balanceOf(B)
 
 				// A redeems 10 VUSD
-				await th.redeemCollateral(A, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
 				// Check A's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5929,7 +5937,7 @@ contract("VesselManager", async accounts => {
 				const treasuryBalanceBefore = await erc20.balanceOf(treasury)
 
 				// B redeems 10 VUSD
-				await th.redeemCollateral(B, contracts, dec(10, 18), erc20.address)
+				await th.redeemCollateral(B, contracts.core, dec(10, 18), erc20.address)
 
 				// Check B's balance has decreased by 10 VUSD
 				assert.equal(await debtToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
@@ -5983,7 +5991,7 @@ contract("VesselManager", async accounts => {
 
 				// A redeems $9
 				const redemptionAmount = toBN(dec(9, 18))
-				await th.redeemCollateral(A, contracts, redemptionAmount, erc20.address)
+				await th.redeemCollateral(A, contracts.core, redemptionAmount, erc20.address)
 
 				// At Coll:USD price of 200:
 				// collDrawn = (9 / 200) = 0.045 -> 0.04365 after softening
@@ -6058,7 +6066,7 @@ contract("VesselManager", async accounts => {
 				const C_balanceBefore_Asset = toBN(await erc20.balanceOf(C))
 
 				// whale redeems 360 VUSD.  Expect this to fully redeem A, B, C, and partially redeem D.
-				await th.redeemCollateral(whale, contracts, redemptionAmount_Asset, erc20.address)
+				await th.redeemCollateral(whale, contracts.core, redemptionAmount_Asset, erc20.address)
 
 				// Check A, B, C have been closed
 
@@ -6127,7 +6135,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(baseRate_Asset, "0")
 
 				// whale redeems VUSD.  Expect this to fully redeem A, B, C, and partially redeem D.
-				await th.redeemCollateral(whale, contracts, redemptionAmount_Asset, erc20.address)
+				await th.redeemCollateral(whale, contracts.core, redemptionAmount_Asset, erc20.address)
 
 				// Check A, B, C have been closed
 
@@ -6234,7 +6242,7 @@ contract("VesselManager", async accounts => {
 
 				const redemptionTx_Asset = await th.redeemCollateralAndGetTxObject(
 					whale,
-					contracts,
+					contracts.core,
 					redemptionAmount_Asset,
 					erc20.address,
 					th._100pct
@@ -6641,11 +6649,11 @@ contract("VesselManager", async accounts => {
 
 				await priceFeed.setPrice(erc20.address, "99999999999999999999")
 
-				const TCR_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				assert.isTrue(TCR_Asset.lte(toBN("1500000000000000000")))
 
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
 			// TCR == 150%
@@ -6663,11 +6671,11 @@ contract("VesselManager", async accounts => {
 					extraParams: { from: bob },
 				})
 
-				const TCR_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				assert.equal(TCR_Asset, "1500000000000000000")
 
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
 			// > 150%
@@ -6687,11 +6695,11 @@ contract("VesselManager", async accounts => {
 
 				await priceFeed.setPrice(erc20.address, "100000000000000000001")
 
-				const TCR_Asset = await th.getTCR(contracts, erc20.address)
+				const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
 
 				assert.isTrue(TCR_Asset.gte(toBN("1500000000000000000")))
 
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
 			// check 0
@@ -6711,11 +6719,11 @@ contract("VesselManager", async accounts => {
 
 				await priceFeed.setPrice(erc20.address, 0)
 
-				const TCR_Asset = (await th.getTCR(contracts, erc20.address)).toString()
+				const TCR_Asset = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				assert.equal(TCR_Asset, 0)
 
-				assert.isTrue(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 		})
 

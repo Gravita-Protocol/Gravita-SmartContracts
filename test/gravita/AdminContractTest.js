@@ -1,18 +1,40 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 const th = testHelpers.TestHelper
-const { dec, toBN } = th
+const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
+
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const openVessel = async params => th.openVessel(contracts.core, params)
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("AdminContract", async accounts => {
-	const ZERO_ADDRESS = th.ZERO_ADDRESS
-	const assertRevert = th.assertRevert
-	const DECIMAL_PRECISION = toBN(dec(1, 18))
 	const [owner, user, A, C, B, treasury] = accounts
-
-	let contracts
-	let adminContract
-	let borrowerOperations
-	let erc20
 
 	let BORROWING_FEE
 	let CCR
@@ -40,15 +62,8 @@ contract("AdminContract", async accounts => {
 	const REDEMPTION_FEE_FLOOR_SAFETY_MAX = toBN((0.1e18).toString()) // 10%
 	const REDEMPTION_FEE_FLOOR_SAFETY_MIN = toBN((0.001e18).toString()) // 0.1%
 
-	const openVessel = async params => th.openVessel(contracts, params)
-
-	beforeEach(async () => {
-		const { coreContracts } = await deploymentHelper.deployTestContracts(treasury, accounts.slice(0, 5))
-		contracts = coreContracts
-		adminContract = contracts.adminContract
-		borrowerOperations = contracts.borrowerOperations
-		erc20 = contracts.erc20
-		vesselManager = contracts.vesselManager
+	before(async () => {
+		await deploy(treasury, accounts.slice(0, 5))
 
 		BORROWING_FEE = await adminContract.BORROWING_FEE_DEFAULT()
 		CCR = await adminContract.CCR_DEFAULT()
@@ -57,6 +72,20 @@ contract("AdminContract", async accounts => {
 		MINT_CAP = await adminContract.MINT_CAP_DEFAULT()
 		PERCENT_DIVISOR = await adminContract.PERCENT_DIVISOR_DEFAULT()
 		REDEMPTION_FEE_FLOOR = await adminContract.REDEMPTION_FEE_FLOOR_DEFAULT()
+
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	beforeEach(async () => {
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
+
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
 	it("Formula Checks: Call every function with default value, Should match default values", async () => {

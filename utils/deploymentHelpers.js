@@ -32,19 +32,19 @@ const TIMELOCK_LONG_DELAY = 86400 * 7
  */
 class DeploymentHelper {
 	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = []) {
-		const coreContracts = await this._deployCoreContracts()
-		const GRVTContracts = await this._deployGrvtContracts(treasuryAddress)
+		const core = await this._deployCoreContracts()
+		const grvt = await this._deployGrvtContracts(treasuryAddress)
 
-		await this._connectCoreContracts(coreContracts, GRVTContracts, treasuryAddress)
-		await this._connectGrvtContracts(GRVTContracts, coreContracts)
+		await this._connectCoreContracts(core, grvt, treasuryAddress)
+		await this._connectGrvtContracts(grvt, core)
 
 		for (const acc of collateralMintingAccounts) {
 			const mintingValue = dec(100_000_000, 18)
-			await coreContracts.erc20.mint(acc, mintingValue)
-			await coreContracts.erc20B.mint(acc, mintingValue)
+			await core.erc20.mint(acc, mintingValue)
+			await core.erc20B.mint(acc, mintingValue)
 		}
 
-		return { coreContracts, GRVTContracts }
+		return { core, grvt }
 	}
 
 	static async _deployCoreContracts() {
