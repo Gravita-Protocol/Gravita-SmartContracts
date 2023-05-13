@@ -51,7 +51,7 @@ class Deployer {
 
 		this.helper.saveDeployment(this.deploymentState)
 
-		await this.transferUpgradesProxyAdminOwnerships()
+		//await this.transferUpgradesProxyAdminOwnerships()
 
 		await this.transferContractsOwnerships()
 
