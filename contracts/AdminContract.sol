@@ -96,6 +96,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 
 	function initialize() public initializer {
 		__Ownable_init();
+		__UUPSUpgradeable_init();
 	}
 
 	// External Functions -----------------------------------------------------------------------------------------------
