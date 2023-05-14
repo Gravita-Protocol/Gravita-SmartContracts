@@ -24,6 +24,8 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 
 	error DebtToken__TimelockOnly();
 	error DebtToken__OwnerOnly();
+	error DebtToken__InvalidRecipient();
+	error DebtToken__InvalidCaller();
 
 	modifier onlyTimelock() {
 		if (isSetupInitialized) {
@@ -137,16 +139,25 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	// --- 'require' functions ---
 
 	function _requireValidRecipient(address _recipient) internal view {
-		require(
-			_recipient != address(0) && _recipient != address(this),
-			"DebtToken: Cannot transfer tokens directly to the token contract or the zero address"
-		);
-		require(
-			address(stabilityPool) != _recipient &&
-				_recipient != vesselManagerAddress &&
-				_recipient != borrowerOperationsAddress,
-			"DebtToken: Cannot transfer tokens directly to the StabilityPool, VesselManager or BorrowerOps"
-		);
+		if (_recipient == address(0)) {
+			revert DebtToken__InvalidRecipient();
+		}
+		
+		if (_recipient == address(this)) {
+			revert DebtToken__InvalidRecipient();
+		}
+
+		if (_recipient == address(stabilityPool)) {
+			revert DebtToken__InvalidRecipient();
+		}
+
+		if (_recipient == vesselManagerAddress) {
+			revert DebtToken__InvalidRecipient();
+		}
+
+		if (_recipient == borrowerOperationsAddress) {
+			revert DebtToken__InvalidRecipient();
+		}
 	}
 
 	function _requireCallerIsWhitelistedContract() internal view {
@@ -154,26 +165,28 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	}
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(msg.sender == borrowerOperationsAddress, "DebtToken: Caller is not BorrowerOperations");
+		if (msg.sender != borrowerOperationsAddress) {
+			revert DebtToken__InvalidCaller();
+		}
 	}
 
 	function _requireCallerIsBOorVesselMorSP() internal view {
-		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == vesselManagerAddress ||
-				address(stabilityPool) == msg.sender,
-			"DebtToken: Caller is neither BorrowerOperations nor VesselManager nor StabilityPool"
-		);
+		if (msg.sender != borrowerOperationsAddress &&
+				msg.sender != vesselManagerAddress &&
+				address(stabilityPool) != msg.sender) {
+					revert DebtToken__InvalidCaller();
+				}
 	}
 
 	function _requireCallerIsStabilityPool() internal view {
-		require(address(stabilityPool) == msg.sender, "DebtToken: Caller is not the StabilityPool");
+		if (address(stabilityPool) != msg.sender) {
+			revert DebtToken__InvalidCaller();
+		}
 	}
 
 	function _requireCallerIsVesselMorSP() internal view {
-		require(
-			msg.sender == vesselManagerAddress || address(stabilityPool) == msg.sender,
-			"DebtToken: Caller is neither VesselManager nor StabilityPool"
-		);
+		if (msg.sender != vesselManagerAddress && address(stabilityPool) != msg.sender) {
+			revert DebtToken__InvalidCaller();
+		}
 	}
 }
