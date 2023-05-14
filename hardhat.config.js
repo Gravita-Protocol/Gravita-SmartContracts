@@ -6,6 +6,7 @@ require("@openzeppelin/hardhat-upgrades")
 // require("hardhat-gas-reporter")
 // require("hardhat-contract-sizer")
 // require("hardhat-interface-generator")
+require("@openzeppelin/hardhat-defender")
 require("solidity-coverage")
 require("dotenv").config()
 
@@ -52,10 +53,7 @@ module.exports = {
 	networks: {
 		hardhat: {
 			allowUnlimitedContractSize: true,
-			accounts: [
-				{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: 10e18.toString() }, 
-				...accountsList
-			],
+			accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 		},
 		localhost: {
 			url: "http://localhost:8545",
@@ -85,3 +83,4 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
+
