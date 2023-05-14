@@ -51,8 +51,6 @@ class Deployer {
 
 		this.helper.saveDeployment(this.deploymentState)
 
-		//await this.transferUpgradesProxyAdminOwnerships()
-
 		await this.transferContractsOwnerships()
 
 		await this.printDeployerBalance()
@@ -144,41 +142,12 @@ class Deployer {
 	// Contract ownership -------------------------------------------------------------------------------------------------
 
 	/**
-	 * Transfers the ProxyAdmin's Upgrades ownerships to the address defined on config's UPGRADES_PROXY_ADMIN.
-	 */
-	async transferUpgradesProxyAdminOwnerships() {
-		const gnosisSafeAddress = this.config.UPGRADES_PROXY_ADMIN
-		if (!gnosisSafeAddress) {
-			throw Error("Provide an address for UPGRADES_PROXY_ADMIN in the config file before transferring the ownership.")
-		}
-		console.log("Transferring ownership of ProxyAdmin (Upgrades)...")
-
-		const manifest = await Manifest.forNetwork(this.hre.network.provider)
-		const manifestAdmin = await manifest.getAdmin()
-		const proxyAdminAddress = manifestAdmin?.address
-		if (proxyAdminAddress === undefined) {
-			throw new Error("No ProxyAdmin (Upgrades) was found in the network manifest")
-		}
-		if (proxyAdminAddress != this.deployerWallet.address) {
-			console.log(
-				`Manifest's ProxyAdmin (${proxyAdminAddress}) does not match deployer (${this.deployerWallet.address})`
-			)
-		}
-		if (proxyAdminAddress == gnosisSafeAddress) {
-			console.log(`ProxyAdmin (Upgrades) is already set to destination address ${gnosisSafeAddress}`)
-		} else {
-			await upgrades.admin.transferProxyAdminOwnership(gnosisSafeAddress)
-			console.log(`Transferred ownership of ProxyAdmin (Upgrades) to UPGRADES_PROXY_ADMIN @ ${gnosisSafeAddress}`)
-		}
-	}
-
-	/**
-	 * Transfers the ownership of all Ownable contracts to the address defined on config's UPGRADES_PROXY_ADMIN.
+	 * Transfers the ownership of all Ownable contracts to the address defined on config's CONTRACT_UPGRADES_ADMIN.
 	 */
 	async transferContractsOwnerships() {
-		const upgradesAdmin = this.config.UPGRADES_PROXY_ADMIN
+		const upgradesAdmin = this.config.CONTRACT_UPGRADES_ADMIN
 		if (!upgradesAdmin || upgradesAdmin == this.hre.ethers.constants.AddressZero) {
-			throw Error("Provide an address for UPGRADES_PROXY_ADMIN in the config file before transferring the ownerships.")
+			throw Error("Provide an address for CONTRACT_UPGRADES_ADMIN in the config file before transferring the ownerships.")
 		}
 		console.log(`Transferring contract ownerships...`)
 		for (const contract of Object.values(this.coreContracts)) {
@@ -191,7 +160,7 @@ class Deployer {
 				} else {
 					try {
 						await this.helper.sendAndWaitForTransaction(contract.transferOwnership(upgradesAdmin))
-						console.log(` - ${await contract.NAME()} -> Owner set to UPGRADES_PROXY_ADMIN @ ${upgradesAdmin}`)
+						console.log(` - ${await contract.NAME()} -> Owner set to CONTRACT_UPGRADES_ADMIN @ ${upgradesAdmin}`)
 					} catch (e) {
 						const parsedEthersError = getParsedEthersError(e)
 						const errorMsg = parsedEthersError.context || parsedEthersError.errorCode
