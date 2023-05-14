@@ -1,4 +1,5 @@
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const { getImplementationAddress } = require("@openzeppelin/upgrades-core")
 const fs = require("fs")
 
 class CoreDeploymentHelper {
@@ -55,7 +56,10 @@ class CoreDeploymentHelper {
 
 		// Non-upgradable contracts
 		const gasPool = await deployNonUpgradable(gasPoolFactory, "GasPool")
-		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortTimelockDelay, config.SYSTEM_PARAMS_ADMIN])
+		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [
+			this.shortTimelockDelay,
+			config.SYSTEM_PARAMS_ADMIN,
+		])
 		//const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longTimelockDelay])
 
 		const debtTokenParams = [
@@ -108,7 +112,7 @@ class CoreDeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeed.address,
-			contracts.shortTimelock.address
+			contracts.shortTimelock.address,
 		])
 
 		await this.setAddresses("BorrowerOperations", contracts.borrowerOperations, [
@@ -225,9 +229,11 @@ class CoreDeploymentHelper {
 			timeout = 600_000 // milliseconds
 		while (++retry < maxRetries) {
 			try {
-				let contract
+				let contract, implAddress
 				if (proxy) {
-					let opts = factory.interface.functions.initialize ? { initializer: "initialize()", kind: 'uups' } : {kind: 'uups'}
+					let opts = factory.interface.functions.initialize
+						? { initializer: "initialize()", kind: "uups" }
+						: { kind: "uups" }
 					contract = await upgrades.deployProxy(factory, opts)
 				} else {
 					contract = await factory.deploy(...params)
@@ -240,6 +246,10 @@ class CoreDeploymentHelper {
 				deploymentState[name] = {
 					address: contract.address,
 					txHash: contract.deployTransaction.hash,
+				}
+				if (proxy) {
+					implAddress = await getImplementationAddress(this.deployerWallet.provider, contract.address)
+					deploymentState[name].implAddress = implAddress
 				}
 				this.saveDeployment(deploymentState)
 				return contract

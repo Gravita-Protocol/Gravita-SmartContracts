@@ -1,62 +1,69 @@
 {
   "ActivePool": {
-    "address": "0x2df77eE5a6FcF23F666650ed53bE071E7288eCb6",
-    "txHash": "0x470d8f37b37eb769c552699330be5c494d73390861fe8357f65e58479f39f91a"
+    "address": "0xb192EC8Bd564F4626c7392517eaB91d9d9694A82",
+    "txHash": "0x62adf8a461a1e5b595ab1f0ea813ce2cf0f5a69f7ae76560e4610f72ea2083cc",
+    "implAddress": "0x4382f14c2603240B370193ca6FA632aCAdb9dbC3"
   },
   "AdminContract": {
-    "address": "0x17e028AdC86714A0513d507d9c01Fa753CcDd741",
-    "txHash": "0x7ec20a91e29337328519daec9b52c82ffe75b858e5149a2acc32809147065245"
+    "address": "0xe5B8E3caC86A3F943FEb5470AB1241606d93C202",
+    "txHash": "0x7a036ac6ea38448a6da08dea1d96f404add560f3a76d540f7bfc95196c4707ad",
+    "implAddress": "0xbE546eDCf47E21aCDAED262AF7aD32C6d7ABdb7A"
   },
   "BorrowerOperations": {
-    "address": "0x48A8fB68Beb55F99C419F5ead8c7847031B161aF",
-    "txHash": "0xad880746724158f5b808671c0a62068d19c240f4afa4d69f064112d3263b1a2b"
+    "address": "0x652dbFCBcB0d3A2EA1DF9402085cd9E5b94D6E6D",
+    "txHash": "0x1ef52c12aff6b3f710cb554b80a6e87763413da8b14c40fcc7a5742edc42557b",
+    "implAddress": "0x14f83c539b22b6Ab5C9C86260e45329093Cf810b"
   },
   "CollSurplusPool": {
-    "address": "0x4776Ebaf65F3B2601c6Adb92DCb091474A22b828",
-    "txHash": "0x0d89248c421f557349ce63b11f0672501354785c6343937fbe2abe737810a08f"
+    "address": "0xBF4145c4C2E9D448787f3be6d90a677b54aec9ef",
+    "txHash": "0x7b257e75f4658373ef8a382e3d93cc70653b652bb673bd9ae052cae8032ac720",
+    "implAddress": "0xe2FD5bdF611074715218A6efa1F7777147aa46Da"
   },
   "DefaultPool": {
-    "address": "0x5c38bbb60cba1af6261A82fA0f51d6B9eA9B7f4F",
-    "txHash": "0x9613a060843c0ec1049e2879b2e0f01d2b366e41edb8939822d84bd7dfe61a71"
+    "address": "0x654C7A8BE021d6C2bCfca462c734f3032706865b",
+    "txHash": "0x38889bc63432c2ac90f4fa322e137caf1387a11aaaa57e045bd29cd59224f1aa",
+    "implAddress": "0xd69d2D83a47Fdd8fCC508E5667868c6750621656"
   },
   "FeeCollector": {
-    "address": "0xA2086aC52CF91530D81Af544071b6911D8566AC8",
-    "txHash": "0x5a702e1504523305084c6e8e84b5d983e2d352b492e579ff618ccc9ff12516ac"
+    "address": "0x8231ff166EF9587F408b03264B2c52e5B53A1870",
+    "txHash": "0x40c4037241d5833c309725c648e8c7084db1899b8c9c9e0b094017339eecebcb",
+    "implAddress": "0x30B52bfa3A923D14BbBA08BDfC3Ff05A7a02527E"
   },
   "PriceFeed": {
-    "address": "0xf334d6dE2CE3d9E4A7031edfEEE731473f5063e5",
-    "txHash": "0xdaa6413917f8c2da17fac771b4a02555368331a615455a02621ce7e118a3fc10"
+    "address": "0xfE4d1A4616Db87a669B9A5eA9E9092cb0cA36511",
+    "txHash": "0x071a1619120e3625dc15af8f5f647f894d05fe5128f4ae6652db738466a937c3",
+    "implAddress": "0x6001E43a15c3c253960eB17ae062AC5F5436fe25"
   },
   "SortedVessels": {
-    "address": "0xe63696C42FbAb65FFE1D5DCB969E3F4D32edE375",
-    "txHash": "0x5663808e69ba1a6e890bf8608d2508bd40b7636023a9ee8d451004897c6b2605"
+    "address": "0xA96490D266bfb432884A4350E4733a4F9A2B8820",
+    "txHash": "0x24707f38794f3b2982aa6e98d5a9ea3065452bb6246aaa4a637f1594b6496463",
+    "implAddress": "0x9CD4c90559573C617CD5674F5fA644294454aa7C"
   },
   "StabilityPool": {
-    "address": "0x8c4A85b04882Bc5712d3F9d400F2e7Cbd218C735",
-    "txHash": "0xf4ab07fd2b112d784783126a186aeb5cfc27be501d190ce879d0b2e3a2c550cc"
+    "address": "0xd0cC1C17066B421f1C848899E5cEa216A5b04d2e",
+    "txHash": "0xcc20bc50a77ed8ca861c2846b5c415beafd233adb1d71923d2a50f7ebcfade3b",
+    "implAddress": "0xD202c6617525B9f6559F84da9BA52f57F810678f"
   },
   "VesselManager": {
-    "address": "0x77243CD7FB63aAf6C6cc531839f728388c5ecFD6",
-    "txHash": "0x4f5d0864980d10792d83d6e0ecd5111f00ed7a0d78f7d205c29ec7c5c4105e89"
+    "address": "0x9c0D3da3F0574CFf6952E1eA6F36E527129153ad",
+    "txHash": "0x590d843cfe256e60f1be1d8dec39b9f8650d0fda272e96c888220b46b95035bc",
+    "implAddress": "0xb0e99590cF3Ddfdc19e68F91f7fe0626790cDb53"
   },
   "VesselManagerOperations": {
-    "address": "0x8aFe15C97e31B4448F954687AEEa149e6e49B372",
-    "txHash": "0x6b35e2e78352fe547d81c1113243f71e64f3b0d4ed38702891fdb6d92d8f99c5"
+    "address": "0xAE413BFAC4fa90Fb8d2cab2521AcC560f28936f3",
+    "txHash": "0x0c6276904aff1f3649b75080c0788af4455aced12eebc6fba002285fe7358680",
+    "implAddress": "0x3dE48b96F06C79E631794e87c303272710ED351C"
   },
   "GasPool": {
-    "address": "0xD40EDdF9080b33bFf5Bb8C5D69a8edB2e6113F15",
-    "txHash": "0xf1fea0912f2e231a4a0542cb09c2cd27eddeaac02a8cf238665391d9cd631625"
+    "address": "0x1fd5DAbA07840951e75eA91A4585424C4170ae0F",
+    "txHash": "0x39002b004dce80c402b65221f6455ac1380fe81318e9ae993be226b2e037d7ca"
   },
   "ShortTimelock": {
-    "address": "0x2E6f3db4a4808716f2658398bd7FB6c2c2a58919",
-    "txHash": "0x4bcbbd520e120fdc3a05a877f8aee12bcf7d6305137216701a33d178cf5de61b"
-  },
-  "LongTimelock": {
-    "address": "0x43F0C2b5845A719372F2A6A3Bb1e6878E4A6CEF8",
-    "txHash": "0xb0e1b3eaa3400787a42086ec32a3a6146c7d2757219b8ce94439142ac6803865"
+    "address": "0x72727EB74B8268fa72E3E4C521c3c6FDb81d144e",
+    "txHash": "0x017bc856038ac58d5867ca1d1439d3ba527c114bae6e6be221c4547a21e41aaa"
   },
   "DebtToken": {
-    "address": "0x122Ace53816e3100385A8793e42054d3fE889B47",
-    "txHash": "0xf0c8b27e0828819fc24796735f46a1ddc6f3ecfe6f3088e95b993e2067f24a8b"
+    "address": "0xFD304F510a06C718a01c304417Ed9BBF341641b1",
+    "txHash": "0x6ad625190b75a9bafd7c1359fbe82273b9855da9afd7fba06615fe9fff849239"
   }
 }
