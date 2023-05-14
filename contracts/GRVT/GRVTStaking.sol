@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -46,6 +46,17 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	address public vesselManagerAddress;
 	address public treasury;
 
+	bool public isSetupInitialized;
+
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__ReentrancyGuard_init();
+		__Pausable_init();
+		_pause();
+	}
+
 	// --- Functions ---
 	function setAddresses(
 		address _grvtTokenAddress,
@@ -53,14 +64,10 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		address _feeCollectorAddress,
 		address _vesselManagerAddress,
 		address _treasury
-	) external initializer {
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		require(_treasury != address(0), "Invalid Treasury Address");
-
-		__Pausable_init();
-		__ReentrancyGuard_init();
-		__Ownable_init();
-		_pause();
-
+		
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		debtToken = IERC20Upgradeable(_debtTokenAddress);
 		feeCollectorAddress = _feeCollectorAddress;
@@ -69,6 +76,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
 		ASSET_TYPE.push(ETH_REF_ADDRESS);
+		isSetupInitialized = true;
 	}
 
 	// If caller has a pre-existing stake, send any accumulated asset and debtToken gains to them.
@@ -184,7 +192,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		uint256 assetFeePerGRVTStaked;
 
 		if (totalGRVTStaked > 0) {
-			assetFeePerGRVTStaked = _assetFee * DECIMAL_PRECISION / totalGRVTStaked;
+			assetFeePerGRVTStaked = (_assetFee * DECIMAL_PRECISION) / totalGRVTStaked;
 		}
 
 		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerGRVTStaked;
@@ -199,7 +207,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 		uint256 feePerGRVTStaked;
 		if (totalGRVTStaked > 0) {
-			feePerGRVTStaked = _debtTokenFee * DECIMAL_PRECISION / totalGRVTStaked;
+			feePerGRVTStaked = (_debtTokenFee * DECIMAL_PRECISION) / totalGRVTStaked;
 		}
 
 		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerGRVTStaked;
@@ -220,7 +228,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function _getPendingAssetGain(address _asset, address _user) internal view returns (uint256) {
 		uint256 F_ASSET_Snapshot = snapshots[_user].F_ASSETS_Snapshot[_asset];
-		uint256 AssetGain = stakes[_user] * (F_ASSETS[_asset] - F_ASSET_Snapshot) / DECIMAL_PRECISION;
+		uint256 AssetGain = (stakes[_user] * (F_ASSETS[_asset] - F_ASSET_Snapshot)) / DECIMAL_PRECISION;
 		return AssetGain;
 	}
 
@@ -230,7 +238,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function _getPendingDebtTokenGain(address _user) internal view returns (uint256) {
 		uint256 debtTokenSnapshot = snapshots[_user].F_DEBT_TOKENS_Snapshot;
-		return stakes[_user] * (F_DEBT_TOKENS - debtTokenSnapshot) / DECIMAL_PRECISION;
+		return (stakes[_user] * (F_DEBT_TOKENS - debtTokenSnapshot)) / DECIMAL_PRECISION;
 	}
 
 	// --- Internal helper functions ---
@@ -247,11 +255,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		emit AssetSent(_asset, msg.sender, _assetGain);
 	}
 
-	function _sendAsset(
-		address _sendTo,
-		address _asset,
-		uint256 _amount
-	) internal {
+	function _sendAsset(address _sendTo, address _asset, uint256 _amount) internal {
 		IERC20Upgradeable(_asset).safeTransfer(_sendTo, _amount);
 	}
 

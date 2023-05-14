@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -20,7 +21,7 @@ import "./Interfaces/IStabilityPool.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
+contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "ActivePool";
@@ -35,6 +36,8 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
+
+	bool public isSetupInitialized;
 
 	// --- Modifiers ---
 
@@ -75,6 +78,14 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		_;
 	}
 
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__ReentrancyGuard_init();
+		__UUPSUpgradeable_init();
+	}
+
 	// --- Contract setters ---
 
 	function setAddresses(
@@ -84,16 +95,15 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		address _stabilityPoolAddress,
 		address _vesselManagerAddress,
 		address _vesselManagerOperationsAddress
-	) external initializer {
-		__Ownable_init();
-		__ReentrancyGuard_init();
-
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
 		defaultPool = IDefaultPool(_defaultPoolAddress);
 		stabilityPoolAddress = _stabilityPoolAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -112,11 +122,10 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		emit ActivePoolDebtUpdated(_collateral, newDebt);
 	}
 
-	function decreaseDebt(address _asset, uint256 _amount)
-		external
-		override
-		callerIsBorrowerOpsOrStabilityPoolOrVesselMgr
-	{
+	function decreaseDebt(
+		address _asset,
+		uint256 _amount
+	) external override callerIsBorrowerOpsOrStabilityPoolOrVesselMgr {
 		uint256 newDebt = debtTokenBalances[_asset] - _amount;
 		debtTokenBalances[_asset] = newDebt;
 		emit ActivePoolDebtUpdated(_asset, newDebt);
@@ -156,4 +165,10 @@ contract ActivePool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IActivePo
 		assetsBalances[_asset] = newBalance;
 		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

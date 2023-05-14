@@ -1,44 +1,62 @@
-// const { erc20.address } = require("@openzeppelin/test-helpers/src/constants")
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN } = th
 const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
 
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const openVessel = async params => th.openVessel(contracts.core, params)
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
+
 contract("CollSurplusPool", async accounts => {
-	const [A, B] = accounts
+	const [A, B, treasury] = accounts
 
-	let borrowerOperations
-	let priceFeed
-	let collSurplusPool
-	let contracts
-
-	const openVessel = async params => th.openVessel(contracts, params)
+	before(async () => {
+		await deploy(treasury, [])
+		for (const acc of accounts.slice(0, 2)) {
+			await erc20.mint(acc, await web3.eth.getBalance(acc))
+		}
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
 
 	beforeEach(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		VesselManagerTester.setAsDeployed(contracts.vesselManager)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
 
-		priceFeed = contracts.priceFeedTestnet
-		collSurplusPool = contracts.collSurplusPool
-		borrowerOperations = contracts.borrowerOperations
-		erc20 = contracts.erc20
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-
-		let index = 0
-			for (const acc of accounts) {
-				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
-			}
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
 	it("getAssetBalance(): Returns the collateral balance of the CollSurplusPool after redemption", async () => {
@@ -66,10 +84,13 @@ contract("CollSurplusPool", async accounts => {
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
 		// At ETH:USD = 100, this redemption should leave 1 ether of coll surplus
-		await th.redeemCollateralAndGetTxObject(A, contracts, B_netDebt, erc20.address)
+		await th.redeemCollateralAndGetTxObject(A, contracts.core, B_netDebt, erc20.address)
 
 		const ETH_2 = await collSurplusPool.getAssetBalance(erc20.address)
-		th.assertIsApproximatelyEqual(ETH_2, B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price).mul(redemption_soften_param).div(toBN(1000))))
+		th.assertIsApproximatelyEqual(
+			ETH_2,
+			B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price).mul(redemption_soften_param).div(toBN(1000)))
+		)
 	})
 
 	it("claimColl(): Reverts if caller is not Borrower Operations", async () => {

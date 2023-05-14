@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+pragma solidity ^0.8.19;
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/IVesselManager.sol";
@@ -14,7 +15,7 @@ import "./Interfaces/IStabilityPool.sol";
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
-contract BorrowerOperations is GravitaBase, IBorrowerOperations {
+contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgradeable, IBorrowerOperations {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "BorrowerOperations";
@@ -29,6 +30,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	IDebtToken public debtToken;
 	ISortedVessels public sortedVessels; // double-linked list, sorted by their collateral ratios
 
+	bool public isSetupInitialized;
+
 	/* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -36,10 +39,10 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 	struct LocalVariables_adjustVessel {
 		address asset;
+		bool isCollIncrease;
 		uint256 price;
 		uint256 collChange;
 		uint256 netDebtChange;
-		bool isCollIncrease;
 		uint256 debt;
 		uint256 coll;
 		uint256 oldICR;
@@ -85,7 +88,14 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		BorrowerOperation operation
 	);
 
-	// --- Dependency setters ---
+	// --- Initializer ---
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+
+	// --- Dependency setter ---
 
 	function setAddresses(
 		address _vesselManagerAddress,
@@ -96,8 +106,8 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		address _debtTokenAddress,
 		address _feeCollectorAddress,
 		address _adminContractAddress
-	) external initializer {
-		__Ownable_init();
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		gasPoolAddress = _gasPoolAddress;
@@ -106,6 +116,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		debtToken = IDebtToken(_debtTokenAddress);
 		feeCollector = IFeeCollector(_feeCollectorAddress);
 		adminContract = IAdminContract(_adminContractAddress);
+		isSetupInitialized = true;
 	}
 
 	// --- Borrower Vessel Operations ---
@@ -147,7 +158,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 		// ICR is based on the composite debt, i.e. the requested debt token amount + borrowing fee + gas comp.
 		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
-		assert(vars.compositeDebt > 0);
+		require(vars.compositeDebt != 0, "compositeDebt cannot be 0");
 
 		vars.ICR = GravitaMath._computeCR(_assetAmount, vars.compositeDebt, vars.price);
 		vars.NICR = GravitaMath._computeNominalCR(_assetAmount, vars.compositeDebt);
@@ -209,7 +220,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _assetSent,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, _assetSent, msg.sender, 0, 0, false, _upperHint, _lowerHint);
 	}
 
@@ -219,7 +230,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _collWithdrawal,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, 0, msg.sender, _collWithdrawal, 0, false, _upperHint, _lowerHint);
 	}
 
@@ -229,7 +240,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _debtTokenAmount,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, true, _upperHint, _lowerHint);
 	}
 
@@ -239,7 +250,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 _debtTokenAmount,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, false, _upperHint, _lowerHint);
 	}
 
@@ -251,7 +262,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		bool _isDebtIncrease,
 		address _upperHint,
 		address _lowerHint
-	) external override {
+	) external override nonReentrant {
 		_adjustVessel(
 			_asset,
 			_assetSent,
@@ -297,7 +308,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 
 		// Confirm the operation is either a borrower adjusting their own vessel, or a pure asset transfer from the Stability Pool to a vessel
 		assert(
-			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent > 0 && _debtTokenChange == 0)
+			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent != 0 && _debtTokenChange == 0)
 		);
 
 		contractsCache.vesselManager.applyPendingRewards(vars.asset, _borrower);
@@ -332,13 +343,13 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 			_isDebtIncrease,
 			vars.price
 		);
-		require(_collWithdrawal <= vars.coll, "BorrowerOps: Trying to remove more than the vessel holds");
+		require(_collWithdrawal <= vars.coll, "BorrowerOps: bad _collWithdrawal");
 
 		// Check the adjustment satisfies all conditions for the current system mode
 		_requireValidAdjustmentInCurrentMode(vars.asset, isRecoveryMode, _collWithdrawal, _isDebtIncrease, vars);
 
 		// When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough debt tokens
-		if (!_isDebtIncrease && _debtTokenChange > 0) {
+		if (!_isDebtIncrease && _debtTokenChange != 0) {
 			_requireAtLeastMinNetDebt(vars.asset, _getNetDebt(vars.asset, vars.debt) - vars.netDebtChange);
 			_requireValidDebtTokenRepayment(vars.asset, vars.debt, vars.netDebtChange);
 			_requireSufficientDebtTokenBalance(contractsCache.debtToken, _borrower, vars.netDebtChange);
@@ -446,14 +457,13 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	function _getUSDValue(uint256 _coll, uint256 _price) internal pure returns (uint256) {
-		return _price * _coll / DECIMAL_PRECISION;
+		return (_price * _coll) / DECIMAL_PRECISION;
 	}
 
-	function _getCollChange(uint256 _collReceived, uint256 _requestedCollWithdrawal)
-		internal
-		pure
-		returns (uint256 collChange, bool isCollIncrease)
-	{
+	function _getCollChange(
+		uint256 _collReceived,
+		uint256 _requestedCollWithdrawal
+	) internal pure returns (uint256 collChange, bool isCollIncrease) {
 		if (_collReceived != 0) {
 			collChange = _collReceived;
 			isCollIncrease = true;
@@ -506,11 +516,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	}
 
 	// Send asset to Active Pool and increase its recorded asset balance
-	function _activePoolAddColl(
-		address _asset,
-		IActivePool _activePool,
-		uint256 _amount
-	) internal {
+	function _activePoolAddColl(address _asset, IActivePool _activePool, uint256 _amount) internal {
 		_activePool.receivedERC20(_asset, _amount);
 		IERC20Upgradeable(_asset).safeTransferFrom(
 			msg.sender,
@@ -531,7 +537,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		uint256 newTotalAssetDebt = _activePool.getDebtTokenBalance(_asset) +
 			adminContract.defaultPool().getDebtTokenBalance(_asset) +
 			_netDebtIncrease;
-		require(newTotalAssetDebt <= adminContract.getMintCap(_asset), "BorrowerOperations: Exceeds mint cap");
+		require(newTotalAssetDebt <= adminContract.getMintCap(_asset), "Exceeds mint cap");
 		_activePool.increaseDebt(_asset, _netDebtIncrease);
 		_debtToken.mint(_asset, _account, _debtTokenAmount);
 	}
@@ -565,26 +571,18 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		);
 	}
 
-	function _requireVesselIsActive(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _borrower
-	) internal view {
+	function _requireVesselIsActive(address _asset, IVesselManager _vesselManager, address _borrower) internal view {
 		uint256 status = _vesselManager.getVesselStatus(_asset, _borrower);
 		require(status == 1, "BorrowerOps: Vessel does not exist or is closed");
 	}
 
-	function _requireVesselIsNotActive(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _borrower
-	) internal view {
+	function _requireVesselIsNotActive(address _asset, IVesselManager _vesselManager, address _borrower) internal view {
 		uint256 status = _vesselManager.getVesselStatus(_asset, _borrower);
 		require(status != 1, "BorrowerOps: Vessel is active");
 	}
 
 	function _requireNonZeroDebtChange(uint256 _debtTokenChange) internal pure {
-		require(_debtTokenChange > 0, "BorrowerOps: Debt increase requires non-zero debtChange");
+		require(_debtTokenChange != 0, "BorrowerOps: Debt increase requires non-zero debtChange");
 	}
 
 	function _requireNotInRecoveryMode(address _asset, uint256 _price) internal view {
@@ -665,11 +663,7 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 		);
 	}
 
-	function _requireValidDebtTokenRepayment(
-		address _asset,
-		uint256 _currentDebt,
-		uint256 _debtRepayment
-	) internal view {
+	function _requireValidDebtTokenRepayment(address _asset, uint256 _currentDebt, uint256 _debtRepayment) internal view {
 		require(
 			_debtRepayment <= _currentDebt - adminContract.getDebtTokenGasCompensation(_asset),
 			"BorrowerOps: Amount repaid must not be larger than the Vessel's debt"
@@ -772,4 +766,10 @@ contract BorrowerOperations is GravitaBase, IBorrowerOperations {
 	function getCompositeDebt(address _asset, uint256 _debt) external view override returns (uint256) {
 		return _getCompositeDebt(_asset, _debt);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

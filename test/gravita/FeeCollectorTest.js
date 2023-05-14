@@ -1,5 +1,4 @@
 const {
-	loadFixture,
 	time,
 	setBalance,
 	impersonateAccount,
@@ -9,33 +8,47 @@ const {
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
 
-const FeeCollectorTester = artifacts.require("FeeCollectorTester.sol")
-const VesselManagerTester = artifacts.require("VesselManagerTester.sol")
-
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
-const { ethers, assert } = require("hardhat")
 
 const ERROR_MARGIN = 1e9
 const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
 
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const openVessel = async params => th.openVessel(contracts.core, params)
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
+
 contract("FeeCollector", async accounts => {
-	const openVessel = async params => th.openVessel(contracts, params)
-	const withdrawVUSD = async params => th.withdrawVUSD(contracts, params)
-	const f = val => ethers.utils.formatUnits(val.toString())
+	const withdrawVUSD = async params => th.withdrawVUSD(contracts.core, params)
 
-	const [owner, alice, bob, whale, treasury] = accounts
+	const [treasury, alice, bob, whale] = accounts
 
-	let contracts
-
-	let asset
-	let debtToken
-	let erc20
-	let feeCollector
-	let priceFeed
-	let sortedVessels
-	let vesselManager
-	let vesselManagerOperations
 	let MIN_FEE_DAYS
 	let MIN_FEE_SECONDS
 	let MIN_FEE_FRACTION
@@ -48,7 +61,7 @@ contract("FeeCollector", async accounts => {
 	}
 
 	const openOrAjustVessel = async (borrower, asset, debtAmount) => {
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		// mimic borrowerOperations._triggerBorrowingFee()
 		const { maxFee } = calcFees(debtAmount)
 		await impersonateAccount(borrowerOperationsAddress)
@@ -59,7 +72,7 @@ contract("FeeCollector", async accounts => {
 	}
 
 	const payVesselDebt = async (borrower, asset, debtPaymentPercent) => {
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		await impersonateAccount(borrowerOperationsAddress)
 		const tx = await feeCollector.decreaseDebt(borrower, asset, debtPaymentPercent, { from: borrowerOperationsAddress })
 		await stopImpersonatingAccount(borrowerOperationsAddress)
@@ -67,7 +80,7 @@ contract("FeeCollector", async accounts => {
 	}
 
 	const closeVessel = async (borrower, asset) => {
-		const borrowerOperationsAddress = contracts.borrowerOperations.address
+		const borrowerOperationsAddress = borrowerOperations.address
 		await impersonateAccount(borrowerOperationsAddress)
 		const tx = await feeCollector.decreaseDebt(borrower, asset, toBN(1e18), { from: borrowerOperationsAddress })
 		await stopImpersonatingAccount(borrowerOperationsAddress)
@@ -75,55 +88,43 @@ contract("FeeCollector", async accounts => {
 	}
 
 	describe("Fee Collector", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-			contracts.feeCollector = await FeeCollectorTester.new()
-			feeCollector = contracts.feeCollector
-			debtToken = contracts.debtToken
-			erc20 = contracts.erc20
-			asset = erc20.address
-			priceFeed = contracts.priceFeedTestnet
-			sortedVessels = contracts.sortedVessels
-			vesselManager = contracts.vesselManager
-			vesselManagerOperations = contracts.vesselManagerOperations
-			FeeCollectorTester.setAsDeployed(feeCollector)
-			VesselManagerTester.setAsDeployed(contracts.vesselManager)
-
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts, treasury)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-
-			let index = 0
-			for (const acc of accounts) {
-				await erc20.mint(acc, await web3.eth.getBalance(acc))
-				if (++index >= 20) break
-			}
+		before(async () => {
+			await deploy(treasury, accounts.slice(0, 20))
 
 			// give some gas to the contracts that will be impersonated
-			setBalance(contracts.borrowerOperations.address, 1e18)
-			setBalance(contracts.vesselManager.address, 1e18)
+			setBalance(borrowerOperations.address, 1e18)
+			setBalance(vesselManager.address, 1e18)
+
 			MIN_FEE_DAYS = toBN(String(await feeCollector.MIN_FEE_DAYS()))
 			MIN_FEE_SECONDS = toBN(MIN_FEE_DAYS * 24 * 60 * 60)
 			MIN_FEE_FRACTION = toBN(String(await feeCollector.MIN_FEE_FRACTION()))
 			FEE_EXPIRATION_SECONDS = toBN(String(await feeCollector.FEE_EXPIRATION_SECONDS()))
-		}
+
+			initialSnapshotId = await network.provider.send("evm_snapshot")
+		})
 
 		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
+			snapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		afterEach(async () => {
+			await network.provider.send("evm_revert", [snapshotId])
+		})
+
+		after(async () => {
+			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
 
 		describe("Fee yielding & refund generation", async () => {
 			it("Simulate refunds", async () => {
 				const borrowAmount = toBN(dec(500_000, 18))
-				await openOrAjustVessel(alice, asset, borrowAmount)
+				await openOrAjustVessel(alice, erc20.address, borrowAmount)
 				const { minFee, maxFee } = calcFees(borrowAmount)
 				// simulate 100% payback refund
-				let avaiableRefund = await feeCollector.simulateRefund(alice, asset, (1e18).toString())
+				let avaiableRefund = await feeCollector.simulateRefund(alice, erc20.address, (1e18).toString())
 				assert.equal(maxFee.sub(minFee).toString(), avaiableRefund.toString())
 				// simulate 50% payback refund
-				avaiableRefund = await feeCollector.simulateRefund(alice, asset, toBN((1e18).toString()).div(toBN(2)))
+				avaiableRefund = await feeCollector.simulateRefund(alice, erc20.address, toBN((1e18).toString()).div(toBN(2)))
 				assert.equal(maxFee.sub(minFee).div(toBN(2)).toString(), avaiableRefund.toString())
 			})
 
@@ -131,14 +132,14 @@ contract("FeeCollector", async accounts => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
 				const { minFee, maxFee } = calcFees(borrowAmount)
 				// upon vessel creation, platform should collect minimum fee
-				const borrowTx = await openOrAjustVessel(alice, asset, borrowAmount)
+				const borrowTx = await openOrAjustVessel(alice, erc20.address, borrowAmount)
 				const { collector: collector1, amount: collectedFee1 } = th.getAllEventsByName(borrowTx, "FeeCollected")[0].args
 				assert.equal(collector1, treasury)
 				assert.equal(collectedFee1.toString(), minFee.toString())
 				// move forward in time until loan is expired (200 days)
 				time.increase(200 * 24 * 60 * 60)
 				// expired paybacks should generate no refunds
-				const paybackTx = await closeVessel(alice, asset)
+				const paybackTx = await closeVessel(alice, erc20.address)
 				const feeRefundedEvents = th.getAllEventsByName(paybackTx, "FeeRefunded")
 				assert.equal(feeRefundedEvents.length, 0)
 				const { collector: collector2, amount: collectedFee2 } = th.getAllEventsByName(paybackTx, "FeeCollected")[0]
@@ -157,7 +158,7 @@ contract("FeeCollector", async accounts => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
 				const { minFee, maxFee } = calcFees(borrowAmount)
 				// upon vessel creation, platform should collect minimum fee
-				const borrowTx = await openOrAjustVessel(alice, asset, borrowAmount)
+				const borrowTx = await openOrAjustVessel(alice, erc20.address, borrowAmount)
 				const { collector: collector1, amount: collectedFee1 } = th.getAllEventsByName(borrowTx, "FeeCollected")[0].args
 				assert.equal(collector1, treasury)
 				assert.equal(collectedFee1.toString(), minFee.toString())
@@ -166,7 +167,7 @@ contract("FeeCollector", async accounts => {
 				await time.increase(timeIncrease)
 				// payback should refund remaining fee to borrower
 				const expectedRefund = maxFee.sub(collectedFee1)
-				const paybackTx = await closeVessel(alice, asset, toBN(1e18)) // 1e18 = 100% payback
+				const paybackTx = await closeVessel(alice, erc20.address, toBN(1e18)) // 1e18 = 100% payback
 				const feeCollectedEvents = th.getAllEventsByName(paybackTx, "FeeCollected")
 				assert.equal(feeCollectedEvents.length, 0)
 				const { borrower, amount: refundedAmount } = th.getAllEventsByName(paybackTx, "FeeRefunded")[0].args
@@ -183,7 +184,7 @@ contract("FeeCollector", async accounts => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
 				const { minFee, maxFee } = calcFees(borrowAmount)
 				// upon vessel creation, platform should collect minimum fee
-				const borrowTx = await openOrAjustVessel(alice, asset, borrowAmount)
+				const borrowTx = await openOrAjustVessel(alice, erc20.address, borrowAmount)
 				const loanTimestamp = await time.latest()
 				const { collector: collector1, amount: collectedFee1 } = th.getAllEventsByName(borrowTx, "FeeCollected")[0].args
 				assert.equal(collector1, treasury)
@@ -195,7 +196,7 @@ contract("FeeCollector", async accounts => {
 				const feeBalance = maxFee.sub(minFee)
 				const from = loanTimestamp + MIN_FEE_DAYS * 24 * 60 * 60
 				const to = Number(from) + Number(FEE_EXPIRATION_SECONDS)
-				const paybackTx = await closeVessel(alice, asset)
+				const paybackTx = await closeVessel(alice, erc20.address)
 				const now = await time.latest()
 				const expectedCollectedFee = calcExpiredAmount(from, to, feeBalance, now)
 				const expectedRefund = feeBalance.sub(expectedCollectedFee)
@@ -215,7 +216,7 @@ contract("FeeCollector", async accounts => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
 				const { minFee, maxFee } = calcFees(borrowAmount)
 				// upon vessel creation, platform should collect minimum fee
-				await openOrAjustVessel(alice, asset, borrowAmount)
+				await openOrAjustVessel(alice, erc20.address, borrowAmount)
 				const t0 = await time.latest()
 				const feeBalance1 = maxFee.sub(minFee)
 				// move forward in time to ~33% of lifetime
@@ -228,7 +229,7 @@ contract("FeeCollector", async accounts => {
 				const expectedRefund1 = feeBalance1.sub(expectedCollectedFee1).div(toBN(2)) // 50% payback, 50% refund expected
 				// validate refund/collect state
 				const paybackFraction1 = toBN(0.5 * 10 ** 18) // 50% of debt
-				const paybackTx1 = await payVesselDebt(alice, asset, paybackFraction1) // 50%
+				const paybackTx1 = await payVesselDebt(alice, erc20.address, paybackFraction1) // 50%
 				const { amount: collectedAmount1 } = th.getAllEventsByName(paybackTx1, "FeeCollected")[0].args
 				const { amount: refundedAmount1 } = th.getAllEventsByName(paybackTx1, "FeeRefunded")[0].args
 				th.assertIsApproximatelyEqual(refundedAmount1, expectedRefund1, ERROR_MARGIN)
@@ -243,7 +244,7 @@ contract("FeeCollector", async accounts => {
 				const expectedCollectedFee2 = decayRate2.mul(toBN(timeIncrease))
 				const expectedRefund2 = feeBalance2.sub(expectedCollectedFee2)
 				const paybackFraction2 = toBN(1 * 10 ** 18) // 100% of debt left
-				const paybackTx2 = await payVesselDebt(alice, asset, paybackFraction2)
+				const paybackTx2 = await payVesselDebt(alice, erc20.address, paybackFraction2)
 				const { amount: collectedAmount2 } = th.getAllEventsByName(paybackTx2, "FeeCollected")[0].args
 				const { amount: refundedAmount2 } = th.getAllEventsByName(paybackTx2, "FeeRefunded")[0].args
 				th.assertIsApproximatelyEqual(refundedAmount2, expectedRefund2, ERROR_MARGIN)
@@ -262,7 +263,7 @@ contract("FeeCollector", async accounts => {
 				// first loan
 				const borrowAmount1 = toBN(dec(1_000_000, 18))
 				const { minFee: minFee1, maxFee: maxFee1 } = calcFees(borrowAmount1)
-				const tx1 = await openOrAjustVessel(alice, asset, borrowAmount1)
+				const tx1 = await openOrAjustVessel(alice, erc20.address, borrowAmount1)
 				const tx1Time = await time.latest()
 				const { amount: collectedAmount1 } = th.getAllEventsByName(tx1, "FeeCollected")[0].args
 				assert.equal(minFee1.toString(), collectedAmount1.toString())
@@ -274,7 +275,7 @@ contract("FeeCollector", async accounts => {
 				const t1 = t0 + Number(MIN_FEE_SECONDS) + Math.floor(Number(FEE_EXPIRATION_SECONDS) / 2)
 				await time.increaseTo(t1)
 				const borrowAmount2 = toBN(dec(500_000, 18))
-				const tx2 = await openOrAjustVessel(alice, asset, borrowAmount2)
+				const tx2 = await openOrAjustVessel(alice, erc20.address, borrowAmount2)
 				const tx2Time = await time.latest()
 				const { amount: collectedAmount2 } = th.getAllEventsByName(tx2, "FeeCollected")[0].args
 				const { from: from2, to: to2, amount: amount2 } = th.getAllEventsByName(tx2, "FeeRecordUpdated")[0].args
@@ -297,7 +298,7 @@ contract("FeeCollector", async accounts => {
 				const t2 = Math.floor(Number(from2) + (newTimeToLive / 4) * 3)
 				await time.increaseTo(t2)
 				// payback in full
-				const tx3 = await closeVessel(alice, asset)
+				const tx3 = await closeVessel(alice, erc20.address)
 				const { amount: collectedAmount3 } = th.getAllEventsByName(tx3, "FeeCollected")[0].args
 				const { amount: refundedAmount } = th.getAllEventsByName(tx3, "FeeRefunded")[0].args
 				const totalFeeGenerated = maxFee1.add(maxFee2)
@@ -313,13 +314,13 @@ contract("FeeCollector", async accounts => {
 
 			it("1 big loan, then one $1 new loan every week = should have little effect on final date", async () => {
 				const t0 = await time.latest()
-				await openOrAjustVessel(alice, asset, toBN(dec(1_000_000, 18)))
+				await openOrAjustVessel(alice, erc20.address, toBN(dec(1_000_000, 18)))
 				const expectedInitialTo = FEE_EXPIRATION_SECONDS.add(toBN(t0))
 				for (let i = 1; i <= 26; i++) {
 					await time.increase(7 * 24 * 60 * 60)
-					await openOrAjustVessel(alice, asset, toBN(dec(1, 18)))
+					await openOrAjustVessel(alice, erc20.address, toBN(dec(1, 18)))
 				}
-				const record = await feeCollector.feeRecords(alice, asset)
+				const record = await feeCollector.feeRecords(alice, erc20.address)
 				th.assertIsApproximatelyEqual(expectedInitialTo, record.to, 10 * 24 * 60 * 60) // ~10 days
 			})
 
@@ -327,31 +328,31 @@ contract("FeeCollector", async accounts => {
 				const t0 = await time.latest()
 				// first loan
 				const borrowAmount1 = toBN(10_000_000)
-				await openOrAjustVessel(alice, asset, borrowAmount1)
+				await openOrAjustVessel(alice, erc20.address, borrowAmount1)
 				// move forward in time to half life of first loan, take a second loan
 				const t1 = Math.floor(t0 + Number(MIN_FEE_SECONDS) + Number(FEE_EXPIRATION_SECONDS) / 2)
 				await time.increaseTo(t1)
 				const borrowAmount2 = toBN(10_000_000)
-				const tx2 = await openOrAjustVessel(alice, asset, borrowAmount2)
+				const tx2 = await openOrAjustVessel(alice, erc20.address, borrowAmount2)
 				const { from: from2, to: to2, amount: amount2 } = th.getAllEventsByName(tx2, "FeeRecordUpdated")[0].args
 				// move forward in time to half life of second loan, take a third one
 				const timeToLive2 = to2 - from2
 				const t2 = Math.floor(Number(from2) + Number(timeToLive2) / 2)
 				await time.increaseTo(t2)
 				const borrowAmount3 = toBN(5_000_000)
-				const tx3 = await openOrAjustVessel(alice, asset, borrowAmount3)
+				const tx3 = await openOrAjustVessel(alice, erc20.address, borrowAmount3)
 				const { from: from3, to: to3, amount: amount3 } = th.getAllEventsByName(tx3, "FeeRecordUpdated")[0].args
 				// move forward in time to half life of third loan, pay back half
 				const timeToLive3 = to3 - from3
 				const t3 = Math.floor(Number(from3) + Number(timeToLive3) / 2)
 				await time.increaseTo(t3)
 				const paybackFraction1 = toBN(0.5 * 10 ** 18) // 50% of debt
-				const paybackTx1 = await payVesselDebt(alice, asset, paybackFraction1)
+				const paybackTx1 = await payVesselDebt(alice, erc20.address, paybackFraction1)
 				const feeRefundedEvents1 = th.getAllEventsByName(paybackTx1, "FeeRefunded")
 				assert.equal(feeRefundedEvents1.length, 1)
 				// move forward in time until refund is expired, pay the rest
 				await time.increase(t3 + 90 * 24 * 60 * 60)
-				const paybackTx2 = await closeVessel(alice, asset, String(1e18))
+				const paybackTx2 = await closeVessel(alice, erc20.address, String(1e18))
 				const feeRefundedEvents2 = th.getAllEventsByName(paybackTx2, "FeeRefunded")
 				// expect no refunds at this point
 				assert.equal(feeRefundedEvents2.length, 0)
@@ -406,7 +407,7 @@ contract("FeeCollector", async accounts => {
 					ICR: toBN(dec(20, 18)),
 					extraParams: { from: whale },
 				})
-				const netDebtWhale = await th.getOpenVesselVUSDAmount(contracts, totalDebtWhale, erc20.address)
+				const netDebtWhale = await th.getOpenVesselVUSDAmount(contracts.core, totalDebtWhale, erc20.address)
 				const { minFee: minFeeWhale } = calcFees(netDebtWhale)
 				const treasuryBalance1 = await debtToken.balanceOf(treasury)
 				assert.equal(minFeeWhale.toString(), treasuryBalance1.toString())
@@ -417,7 +418,7 @@ contract("FeeCollector", async accounts => {
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: alice },
 				})
-				const netDebtAlice = await th.getOpenVesselVUSDAmount(contracts, totalDebtAlice, erc20.address)
+				const netDebtAlice = await th.getOpenVesselVUSDAmount(contracts.core, totalDebtAlice, erc20.address)
 
 				// alice increases debt, lowering her ICR to 1.11
 				const targetICR = toBN("1111111111111111111")
@@ -440,10 +441,10 @@ contract("FeeCollector", async accounts => {
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// confirm system is not in Recovery Mode
-				assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// liquidate vessel
-				await vesselManagerOperations.liquidate(erc20.address, alice, { from: owner })
+				await vesselManagerOperations.liquidate(erc20.address, alice, { from: bob })
 
 				const treasuryBalanceAfterLiquidation = await debtToken.balanceOf(treasury)
 
@@ -467,16 +468,16 @@ contract("FeeCollector", async accounts => {
 			it("2 loans collected partially and then after they expired. Should collect max fees.", async () => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
 				// two users borrow the same amount
-				await openOrAjustVessel(alice, asset, borrowAmount)
-				await openOrAjustVessel(bob, asset, borrowAmount)
+				await openOrAjustVessel(alice, erc20.address, borrowAmount)
+				await openOrAjustVessel(bob, erc20.address, borrowAmount)
 				// move forward in time to half life of loan, collect expired fees
 				time.increase(87.5 * 24 * 60 * 60)
-				const collectTx = await feeCollector.collectFees([alice, bob], [asset, asset])
+				const collectTx = await feeCollector.collectFees([alice, bob], [erc20.address, erc20.address])
 				const feeCollectedEvents = th.getAllEventsByName(collectTx, "FeeCollected")
 				assert.equal(feeCollectedEvents.length, 2)
 				// move forward in time to fully expired refunds and collect the remaining fees
 				time.increase(100 * 24 * 60 * 60)
-				await feeCollector.collectFees([alice, bob], [asset, asset])
+				await feeCollector.collectFees([alice, bob], [erc20.address, erc20.address])
 				const { maxFee: totalFeesExpected } = calcFees(borrowAmount.mul(toBN(2)))
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)

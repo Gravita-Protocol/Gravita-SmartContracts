@@ -35,8 +35,7 @@ async function mainnetDeploy(configParams) {
 	// await toggleContractInitialization(coreContracts.adminContract)
 	// await toggleContractInitialization(coreContracts.debtToken)
 
-	// TODO shortTimelock.setPendingAdmin() via queueTransaction()
-	// TODO longTimelock.setPendingAdmin() via queueTransaction()
+	// TODO timelock.setPendingAdmin() via queueTransaction()
 
 	helper.saveDeployment(deploymentState)
 
@@ -76,10 +75,9 @@ async function addCollateral(name, address, chainlinkPriceFeedAddress, maxDeviat
 		console.log(`[${name}] NOTICE: collateral has already been added before`)
 	} else {
 		const decimals = 18
-		const isWrapped = false
 		const gasCompensation = th.dec(30, 18)
 		await helper.sendAndWaitForTransaction(
-			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals, isWrapped)
+			coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals)
 		)
 		console.log(`[${name}] Collateral added @ ${address}`)
 	}
@@ -104,7 +102,7 @@ async function addCollateral(name, address, chainlinkPriceFeedAddress, maxDeviat
 			console.log(`[${name}] Timelock.setOracle()`)
 			const { txHash, eta } = await setOracleViaTimelock(address, chainlinkPriceFeedAddress, maxDeviationBetweenRounds)
 			console.log(
-				`[${name}] setOracle() queued on ShortTimelock (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
+				`[${name}] setOracle() queued on Timelock (TxHash: ${txHash} ETA: ${eta} Feed: ${chainlinkPriceFeedAddress})`
 			)
 		}
 	}
@@ -126,7 +124,7 @@ async function setOracleViaTimelock(
 		isEthIndexed.toString(),
 	]
 	return await queueTimelockTransaction(
-		coreContracts.shortTimelock,
+		coreContracts.timelock,
 		targetAddress,
 		methodSignature,
 		argTypes,

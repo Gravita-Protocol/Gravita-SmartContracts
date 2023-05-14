@@ -1,37 +1,34 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "./IActivePool.sol";
 import "./IDefaultPool.sol";
 import "./IPriceFeed.sol";
 
 interface IAdminContract {
-
 	// Structs ----------------------------------------------------------------------------------------------------------
 
 	struct CollateralParams {
 		uint256 decimals;
-		uint256 index; //Maps to token address in validCollateral[]
+		uint256 index; // Maps to token address in validCollateral[]
 		bool active;
-		bool isWrapped;
-		uint256 mcr;
+		uint256 borrowingFee;
 		uint256 ccr;
+		uint256 mcr;
 		uint256 debtTokenGasCompensation; // Amount of debtToken to be locked in gas pool on opening vessels
 		uint256 minNetDebt; // Minimum amount of net debtToken a vessel must have
-		uint256 percentDivisor; // dividing by 200 yields 0.5%
-		uint256 borrowingFee;
+		uint256 mintCap;
+		uint256 percentDivisor;
 		uint256 redemptionFeeFloor;
 		uint256 redemptionBlockTimestamp;
-		uint256 mintCap;
 	}
 
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
 	error SafeCheckError(string parameter, uint256 valueEntered, uint256 minValue, uint256 maxValue);
-	error AdminContract__ShortTimelockOnly();
-	error AdminContract__LongTimelockOnly();
 	error AdminContract__OnlyOwner();
+	error AdminContract__OnlyTimelock();
 	error AdminContract__CollateralAlreadyInitialized();
 
 	// Events -----------------------------------------------------------------------------------------------------------
@@ -58,11 +55,17 @@ interface IAdminContract {
 
 	function priceFeed() external view returns (IPriceFeed);
 
-	function addNewCollateral(
+	function addNewCollateral(address _collateral, uint256 _debtTokenGasCompensation, uint256 _decimals) external;
+
+	function setCollateralParameters(
 		address _collateral,
-		uint256 _debtTokenGasCompensation,
-		uint256 _decimals,
-		bool _isWrapped
+		uint256 borrowingFee,
+		uint256 ccr,
+		uint256 mcr,
+		uint256 minNetDebt,
+		uint256 mintCap,
+		uint256 percentDivisor,
+		uint256 redemptionFeeFloor
 	) external;
 
 	function setMCR(address _collateral, uint256 newMCR) external;

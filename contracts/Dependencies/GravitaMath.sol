@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 library GravitaMath {
 	uint256 internal constant DECIMAL_PRECISION = 1 ether;
@@ -91,7 +91,7 @@ library GravitaMath {
 	}
 
 	function _computeNominalCR(uint256 _coll, uint256 _debt) internal pure returns (uint256) {
-		if (_debt > 0) {
+		if (_debt != 0) {
 			return _coll * NICR_PRECISION / _debt;
 		}
 		// Return the maximal value for uint256 if the Vessel has a debt of 0. Represents "infinite" CR.
@@ -106,7 +106,7 @@ library GravitaMath {
 		uint256 _debt,
 		uint256 _price
 	) internal pure returns (uint256) {
-		if (_debt > 0) {
+		if (_debt != 0) {
 			uint256 newCollRatio = _coll * _price / _debt;
 
 			return newCollRatio;

@@ -22,7 +22,7 @@
 
 //SPDX-License-Identifier: GNU
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 abstract contract DSAuthority {
 	function canCall(

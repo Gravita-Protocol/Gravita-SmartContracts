@@ -1,50 +1,73 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-const StabilityPool = artifacts.require("StabilityPool.sol")
+const CommunityIssuance = artifacts.require("CommunityIssuance")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN } = th
+
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("CommunityIssuance", async accounts => {
-	const ZERO_ADDRESS = th.ZERO_ADDRESS
 	const assertRevert = th.assertRevert
-	const DECIMAL_PRECISION = toBN(dec(1, 18))
-	const [owner, user, A, C, B, multisig, treasury] = accounts
+	const [owner, user, oldTreasury, treasury] = accounts
 	const timeValues = testHelpers.TimeValues
 
-	let communityIssuance
-	let stabilityPool
-	let stabilityPoolERC20
-	let grvtToken
-	let erc20
-
 	describe("Community Issuance", async () => {
-		async function deployContractsFixture() {
-			contracts = await deploymentHelper.deployGravitaCore()
-			contracts.vesselManager = await VesselManagerTester.new()
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(treasury)
+		before(async () => {
+			await deploy(oldTreasury, accounts.slice(0, 10))
 
-			grvtToken = GRVTContracts.grvtToken
-			communityIssuance = GRVTContracts.communityIssuance
-			erc20 = contracts.erc20
-
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts, true)
-
-			stabilityPool = contracts.stabilityPool
-
-			await communityIssuance.transferOwnership(treasury)
-			await GRVTContracts.grvtToken.approve(
-				GRVTContracts.communityIssuance.address,
-				ethers.constants.MaxUint256,
-				{ from: treasury }
+			communityIssuance = await CommunityIssuance.new()
+			await communityIssuance.initialize()
+			await communityIssuance.setAddresses(
+				grvtToken.address,
+				stabilityPool.address,
+				adminContract.address
 			)
-		}
+			await communityIssuance.transferOwnership(treasury, { from: owner })
+			const supply = dec(32_000_000, 18)
+			await grvtToken.unprotectedMint(treasury, supply)
+			await contracts.grvt.grvtToken.approve(communityIssuance.address, ethers.constants.MaxUint256, { from: treasury })
+
+			initialSnapshotId = await network.provider.send("evm_snapshot")
+		})
+
 		beforeEach(async () => {
-			await loadFixture(deployContractsFixture)
+			snapshotId = await network.provider.send("evm_snapshot")
+		})
+
+		afterEach(async () => {
+			await network.provider.send("evm_revert", [snapshotId])
+		})
+
+		after(async () => {
+			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
 
 		it("Owner(): Contract has been initialized, owner should be the treasury", async () => {

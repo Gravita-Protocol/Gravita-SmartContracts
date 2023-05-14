@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 import "../DebtToken.sol";
 
 contract DebtTokenTester is DebtToken {
@@ -8,13 +8,13 @@ contract DebtTokenTester is DebtToken {
 		address _vesselManagerAddress,
 		address _stabilityPoolAddress,
 		address _borrowerOperationsAddress,
-		address _shortTimelockAddress
+		address _timelockAddress
 	)
 		DebtToken(
 			_vesselManagerAddress,
 			_stabilityPoolAddress,
 			_borrowerOperationsAddress,
-			_shortTimelockAddress
+			_timelockAddress
 		)
 	{
 		_burn(msg.sender, balanceOf(msg.sender));
@@ -71,7 +71,7 @@ contract DebtTokenTester is DebtToken {
 			keccak256(
 				abi.encodePacked(
 					uint16(0x1901),
-					DOMAIN_SEPARATOR,
+					domainSeparator(),
 					keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce, deadline))
 				)
 			);

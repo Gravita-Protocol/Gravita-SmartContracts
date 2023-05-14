@@ -6,15 +6,37 @@ const { dec, toBN } = th
 
 let latestRandomSeed = 31337
 
-const VesselManagerTester = artifacts.require("VesselManagerTester")
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("VesselManagerOperations-HintHelpers", async accounts => {
 
-	let sortedVessels
-	let vesselManager
-	let borrowerOperations
-	let vesselManagerOperations
-	let contracts
 	let numAccounts
 
 	/* Open a Vessel for each account. VUSD debt is 200 VUSD each, with collateral beginning at
@@ -56,7 +78,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		// console.time('makeVesselsInSequence')
 		for (const account of activeAccounts) {
 			const ICR_BN = toBN(ICR.toString().concat("0".repeat(16)))
-			await th.openVessel(contracts, {
+			await th.openVessel(contracts.core, {
 				asset: erc20.address,
 				extraVUSDAmount: toBN(dec(10000, 18)),
 				ICR: ICR_BN,
@@ -68,30 +90,28 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		// console.timeEnd('makeVesselsInSequence')
 	}
 
+
 	before(async () => {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-
-		sortedVessels = contracts.sortedVessels
-		vesselManager = contracts.vesselManager
-		borrowerOperations = contracts.borrowerOperations
-		vesselManagerOperations = contracts.vesselManagerOperations
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploy(accounts[0], accounts.slice(0, 10))
 
 		numAccounts = 10
-		erc20 = contracts.erc20
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			if (++index >= 20) break
-		}
-
-		await contracts.priceFeedTestnet.setPrice(contracts.erc20.address, dec(100, 18))
+		await priceFeed.setPrice(erc20.address, dec(100, 18))
 		await makeVesselsInSequence(accounts, numAccounts)
 		// await makeVesselsInParallel(accounts, numAccounts)
+
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	beforeEach(async () => {
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
+
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
 	it("setup: makes accounts with nominal ICRs increasing by 1% consecutively", async () => {

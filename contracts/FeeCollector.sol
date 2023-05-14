@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -10,10 +11,10 @@ import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
 
-contract FeeCollector is IFeeCollector, OwnableUpgradeable {
+contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	/** Constants ---------------------------------------------------------------------------------------------------- */
+	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "FeeCollector";
 
@@ -21,7 +22,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	uint256 public constant MIN_FEE_FRACTION = 0.038461538 * 1 ether; // (1/26) fee divided by 26 weeks
 	uint256 public constant FEE_EXPIRATION_SECONDS = 175 * 1 days; // ~ 6 months, minus one week (MIN_FEE_DAYS)
 
-	/** State -------------------------------------------------------------------------------------------------------- */
+	// State ------------------------------------------------------------------------------------------------------------
 
 	mapping(address => mapping(address => FeeRecord)) public feeRecords; // borrower -> asset -> fees
 
@@ -32,8 +33,16 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 
 	IGRVTStaking public grvtStaking;
 	bool public routeToGRVTStaking; // if true, collected fees go to stakers; if false, to the treasury
+	bool public isSetupInitialized;
 
-	/** Constructor/Initializer -------------------------------------------------------------------------------------- */
+	// Initializer ------------------------------------------------------------------------------------------------------
+
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+
+	// Dependency setter ------------------------------------------------------------------------------------------------
 
 	function setAddresses(
 		address _borrowerOperationsAddress,
@@ -42,9 +51,9 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		address _debtTokenAddress,
 		address _treasuryAddress,
 		bool _routeToGRVTStaking
-	) external initializer {
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		require(_treasuryAddress != address(0));
-		__Ownable_init();
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 		grvtStaking = IGRVTStaking(_grvtStakingAddress);
@@ -54,9 +63,10 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		if (_routeToGRVTStaking && address(grvtStaking) == address(0)) {
 			revert FeeCollector__InvalidGRVTStakingAddress();
 		}
+		isSetupInitialized = true;
 	}
 
-	/** Config setters ----------------------------------------------------------------------------------------------- */
+	// Config setters ---------------------------------------------------------------------------------------------------
 
 	function setGRVTStakingAddress(address _grvtStakingAddress) external onlyOwner {
 		grvtStaking = IGRVTStaking(_grvtStakingAddress);
@@ -71,7 +81,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		emit RouteToGRVTStakingChanged(_routeToGRVTStaking);
 	}
 
-	/** Public/external methods -------------------------------------------------------------------------------------- */
+	// Public/external methods ------------------------------------------------------------------------------------------
 
 	/**
 	 * Triggered when a vessel is created and again whenever the borrower acquires additional loans.
@@ -118,18 +128,18 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		uint256 _paybackFraction
 	) external view override returns (uint256) {
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
-		require(_paybackFraction > 0, "Payback fraction cannot be zero");
-		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
-		if (mRecord.amount == 0 || mRecord.to < block.timestamp) {
+		require(_paybackFraction != 0, "Payback fraction cannot be zero");
+		FeeRecord storage record = feeRecords[_borrower][_asset];
+		if (record.amount == 0 || record.to < block.timestamp) {
 			return 0;
 		}
-		uint256 expiredAmount = _calcExpiredAmount(mRecord.from, mRecord.to, mRecord.amount);
+		uint256 expiredAmount = _calcExpiredAmount(record.from, record.to, record.amount);
 		if (_paybackFraction == 1e18) {
 			// full payback
-			return mRecord.amount - expiredAmount;
+			return record.amount - expiredAmount;
 		} else {
 			// calc refund amount proportional to the payment
-			return ((mRecord.amount - expiredAmount) * _paybackFraction) / 1 ether;
+			return ((record.amount - expiredAmount) * _paybackFraction) / 1 ether;
 		}
 	}
 
@@ -139,7 +149,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	 */
 	function liquidateDebt(address _borrower, address _asset) external override onlyVesselManager {
 		FeeRecord memory mRecord = feeRecords[_borrower][_asset];
-		if (mRecord.amount > 0) {
+		if (mRecord.amount != 0) {
 			_closeExpiredOrLiquidatedFeeRecord(_borrower, _asset, mRecord.amount);
 		}
 	}
@@ -175,7 +185,7 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	 * Triggered by VesselManager.finalizeRedemption(); assumes _amount of _asset has been moved here from ActivePool.
 	 */
 	function handleRedemptionFee(address _asset, uint256 _amount) external onlyVesselManager {
-		if (_amount > 0) {
+		if (_amount != 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(_asset).safeTransfer(collector, _amount);
 			if (routeToGRVTStaking) {
@@ -185,12 +195,12 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		}
 	}
 
-	/** Helper & internal methods ------------------------------------------------------------------------------------ */
+	// Helper & internal methods ----------------------------------------------------------------------------------------
 
 	function _decreaseDebt(address _borrower, address _asset, uint256 _paybackFraction) internal {
 		uint256 NOW = block.timestamp;
 		require(_paybackFraction <= 1 ether, "Payback fraction cannot be higher than 1 (@ 10**18)");
-		require(_paybackFraction > 0, "Payback fraction cannot be zero");
+		require(_paybackFraction != 0, "Payback fraction cannot be zero");
 		FeeRecord storage sRecord = feeRecords[_borrower][_asset];
 		if (sRecord.amount == 0) {
 			return;
@@ -310,8 +320,12 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 	/**
 	 * Transfers collected (debt token) fees to either the treasury or the GRVTStaking contract, depending on a flag.
 	 */
-	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
-		if (_feeAmount > 0) {
+	function _collectFee(
+		address _borrower,
+		address _asset,
+		uint256 _feeAmount
+	) internal {
+		if (_feeAmount != 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(debtTokenAddress).safeTransfer(collector, _feeAmount);
 			if (routeToGRVTStaking) {
@@ -321,14 +335,18 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		}
 	}
 
-	function _refundFee(address _borrower, address _asset, uint256 _refundAmount) internal {
-		if (_refundAmount > 0) {
+	function _refundFee(
+		address _borrower,
+		address _asset,
+		uint256 _refundAmount
+	) internal {
+		if (_refundAmount != 0) {
 			IERC20Upgradeable(debtTokenAddress).safeTransfer(_borrower, _refundAmount);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
 		}
 	}
 
-	/** Modifiers ---------------------------------------------------------------------------------------------------- */
+	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	modifier onlyBorrowerOperations() {
 		if (msg.sender != borrowerOperationsAddress) {
@@ -354,4 +372,10 @@ contract FeeCollector is IFeeCollector, OwnableUpgradeable {
 		}
 		_;
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

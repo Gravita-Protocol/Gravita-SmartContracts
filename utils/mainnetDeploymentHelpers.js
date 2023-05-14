@@ -4,22 +4,16 @@ const fs = require("fs")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 
 class MainnetDeploymentHelper {
-	
 	constructor(configParams, deployerWallet) {
-		
 		this.configParams = configParams
 		this.deployerWallet = deployerWallet
 		this.hre = require("hardhat")
 
-		if ("localhost" == this.configParams.targetNetwork) {
-			this.shortDelay = 300 // 5 minutes
-			this.longDelay = 900 // 15 minutes
-		} else if ("goerli" == this.configParams.targetNetwork) {
-			this.shortDelay = 600 // 10 minutes
-			this.longDelay = 1800 // 30 minutes
-		} else { // mainnet
-			this.shortDelay = 3 * 86_400 // 3 days
-			this.longDelay = 7 * 86_400 // 7 days
+		if ("mainnet" == this.configParams.targetNetwork) {
+			this.timelockDelay = 3 * 86_400 // 3 days
+		} else {
+			// mainnet
+			this.timelockDelay = 300 // 5 minutes
 		}
 	}
 
@@ -63,17 +57,9 @@ class MainnetDeploymentHelper {
 		// Non-upgradable contracts
 		const adminContract = await deployNonUpgradable(adminContractFactory, "AdminContract")
 		const gasPool = await deployNonUpgradable(gasPoolFactory, "GasPool")
+		const timelock = await deployNonUpgradable(timelockFactory, "Timelock", [this.timelockDelay])
 
-		// Timelock contracts
-		const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longDelay])
-		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortDelay])
-
-		const debtTokenParams = [
-			vesselManager.address,
-			stabilityPool.address,
-			borrowerOperations.address,
-			shortTimelock.address,
-		]
+		const debtTokenParams = [vesselManager.address, stabilityPool.address, borrowerOperations.address, timelock.address]
 		const debtToken = await deployNonUpgradable(debtTokenFactory, "DebtToken", debtTokenParams)
 
 		await this.verifyCoreContracts(deploymentState, debtTokenParams)
@@ -87,10 +73,9 @@ class MainnetDeploymentHelper {
 			defaultPool,
 			feeCollector,
 			gasPool,
-			longTimelock,
 			priceFeed,
 			sortedVessels,
-			shortTimelock,
+			timelock,
 			stabilityPool,
 			vesselManager,
 			vesselManagerOperations,
@@ -118,8 +103,7 @@ class MainnetDeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeed.address,
-			contracts.shortTimelock.address,
-			contracts.longTimelock.address,
+			contracts.timelock.address,
 		])
 
 		await this.setAddresses("BorrowerOperations", contracts.borrowerOperations, [
@@ -156,7 +140,7 @@ class MainnetDeploymentHelper {
 
 		await this.setAddresses("PriceFeed", contracts.priceFeed, [
 			contracts.adminContract.address,
-			contracts.shortTimelock.address,
+			contracts.timelock.address,
 		])
 
 		await this.setAddresses("SortedVessels", contracts.sortedVessels, [
@@ -298,102 +282,6 @@ class MainnetDeploymentHelper {
 		return erc20Mock.address
 	}
 
-	async setupLocalCollaterals(contracts) {
-		const mockAggregatorFactory = await this.getFactory("MockAggregator")
-		const mockErc20Factory = await this.getFactory("ERC20Mock")
-
-		// Local test contracts
-		if ("localhost" == this.configParams.targetNetwork) {
-			mockAggregator_debt = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_debt")
-			mockAggregator_grvt = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_grvt")
-			mockAggregator_reth = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_reth")
-			mockAggregator_weth = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_weth")
-			mockAggregator_wsteth = await deployNonUpgradable(mockAggregatorFactory, "mockAggregator_wsteth")
-			mockErc20_reth = await deployNonUpgradable(mockErc20Factory, "mock_reth", ["mock_reth", "mock_reth", 18])
-			mockErc20_weth = await deployNonUpgradable(mockErc20Factory, "mock_weth", ["mock_weth", "mock_weth", 18])
-			mockErc20_wsteth = await deployNonUpgradable(mockErc20Factory, "mock_wsteth", ["mock_wsteth", "mock_wsteth", 18])
-
-			const mintAmount = "100000".concat("0".repeat(18))
-			const accounts = await ethers.getSigners()
-			for (let collateral of [mockErc20_reth, mockErc20_weth, mockErc20_wsteth]) {
-				for (const { address } of accounts.slice(0, 10)) {
-					await collateral.mint(address, mintAmount)
-				}
-			}
-		}
-
-		const blockTimestamp = (await ethers.provider.getBlock("latest")).timestamp
-		for (let aggregator of [
-			contracts.mockAggregator_reth,
-			contracts.mockAggregator_wsteth,
-			contracts.mockAggregator_weth,
-			contracts.mockAggregator_debt,
-			contracts.mockAggregator_grvt,
-		]) {
-			await aggregator.setPrevRoundId(1)
-			await aggregator.setLatestRoundId(2)
-			await aggregator.setUpdateTime(blockTimestamp)
-		}
-		const setPrice = async (aggregator, price) => {
-			const price8digits = price.toString().concat("0".repeat(8))
-			await aggregator.setPrevPrice(price8digits)
-			await aggregator.setPrice(price8digits)
-		}
-		await setPrice(contracts.mockAggregator_debt, 1)
-		await setPrice(contracts.mockAggregator_grvt, 2)
-		await setPrice(contracts.mockAggregator_reth, 1952)
-		await setPrice(contracts.mockAggregator_wsteth, 1806)
-		await setPrice(contracts.mockAggregator_weth, 1830)
-
-		await contracts.priceFeed.setAddresses(contracts.adminContract.address, contracts.shortTimelock.address)
-		const maxDeviationBetweenRounds = "500000000000000000" // 0.5 ether
-		const debtTokenGasCompensation = "30000000000000000000" // 30 ether
-		setBalance(contracts.shortTimelock.address, 1e18)
-		await impersonateAccount(contracts.shortTimelock.address)
-		const timelockSigner = await ethers.getSigner(contracts.shortTimelock.address)
-		await contracts.priceFeed
-			.connect(timelockSigner)
-			.setOracle(contracts.debtToken.address, contracts.mockAggregator_debt.address, maxDeviationBetweenRounds, false)
-		await contracts.priceFeed
-			.connect(timelockSigner)
-			.setOracle(
-				contracts.mockErc20_reth.address,
-				contracts.mockAggregator_reth.address,
-				maxDeviationBetweenRounds,
-				false
-			)
-		await contracts.priceFeed
-			.connect(timelockSigner)
-			.setOracle(
-				contracts.mockErc20_weth.address,
-				contracts.mockAggregator_weth.address,
-				maxDeviationBetweenRounds,
-				false
-			)
-		await contracts.priceFeed
-			.connect(timelockSigner)
-			.setOracle(
-				contracts.mockErc20_wsteth.address,
-				contracts.mockAggregator_wsteth.address,
-				maxDeviationBetweenRounds,
-				false
-			)
-		await stopImpersonatingAccount(contracts.shortTimelock.address)
-
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_reth.address, debtTokenGasCompensation, 18, true)
-		await contracts.adminContract.addNewCollateral(contracts.mockErc20_weth.address, debtTokenGasCompensation, 18, true)
-		await contracts.adminContract.addNewCollateral(
-			contracts.mockErc20_wsteth.address,
-			debtTokenGasCompensation,
-			18,
-			true
-		)
-
-		await contracts.adminContract.setAsDefault(contracts.mockErc20_reth.address)
-		await contracts.adminContract.setAsDefault(contracts.mockErc20_weth.address)
-		await contracts.adminContract.setAsDefault(contracts.mockErc20_wsteth.address)
-	}
-
 	// Helper/utils ---------------------------------------------------------------------------------------------------
 
 	loadPreviousDeployment() {
@@ -509,11 +397,10 @@ class MainnetDeploymentHelper {
 			await this.verifyContract("DefaultPool", deploymentState)
 			await this.verifyContract("FeeCollector", deploymentState)
 			await this.verifyContract("GasPool", deploymentState)
-			await this.verifyContract("LongTimelock", deploymentState)
 			await this.verifyContract("PriceFeed", deploymentState)
 			await this.verifyContract("SortedVessels", deploymentState)
-			await this.verifyContract("ShortTimelock", deploymentState)
 			await this.verifyContract("StabilityPool", deploymentState)
+			await this.verifyContract("Timelock", deploymentState)
 			await this.verifyContract("VesselManager", deploymentState)
 			await this.verifyContract("VesselManagerOperations", deploymentState)
 		}

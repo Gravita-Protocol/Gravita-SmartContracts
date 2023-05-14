@@ -1,73 +1,64 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
-const VesselManagerTester = artifacts.require("./VesselManagerTester.sol")
-const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
+const { dec, toBN } = th
 const mv = testHelpers.MoneyValues
 
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const openVessel = async params => th.openVessel(contracts.core, params)
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
+
 contract("Gas compensation tests", async accounts => {
-	const [
-		liquidator,
-		alice,
-		bob,
-		carol,
-		dennis,
-		erin,
-		flyn,
-		harriet,
-		whale,
-	] = accounts
-
-	let contracts
-
-	let borrowerOperations
-	let community
-	let defaultPool
-	let erc20
-	let priceFeed
-	let stabilityPoolERC20
-	let vesselManager
-	let vesselManagerOperations
-
-	const openVessel = async params => th.openVessel(contracts, params)
+	const [liquidator, alice, bob, carol, dennis, erin, flyn, harriet, whale, treasury] = accounts
 
 	const logICRs = ICRList => {
 		for (let i = 0; i < ICRList.length; i++) {
 			console.log(`account: ${i + 1} ICR: ${ICRList[i].toString()}`)
 		}
 	}
-	async function deployContractsFixture() {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts.borrowerOperations = await BorrowerOperationsTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
 
-		borrowerOperations = contracts.borrowerOperations
-		community = GRVTContracts.communityIssuance
-		defaultPool = contracts.defaultPool
-		erc20 = contracts.erc20
-		priceFeed = contracts.priceFeedTestnet
-		stabilityPoolERC20 = contracts.stabilityPool
-		vesselManager = contracts.vesselManager
-		vesselManagerOperations = contracts.vesselManagerOperations
-
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			if (++index >= 100) break
-		}
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-	}
+	before(async () => {
+		await deploy(treasury, accounts.slice(0, 25))
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
 
 	beforeEach(async () => {
-		await loadFixture(deployContractsFixture)
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
+
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
 	// --- Raw gas compensation calculations ---
@@ -439,12 +430,12 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(A_totalDebtERC20, { from: dennis })
-		await stabilityPoolERC20.provideToSP(B_totalDebtERC20.add(C_totalDebtERC20), {
+		await stabilityPool.provideToSP(A_totalDebtERC20, { from: dennis })
+		await stabilityPool.provideToSP(B_totalDebtERC20.add(C_totalDebtERC20), {
 			from: erin,
 		})
 
-		const VUSDinSP_0ERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
 		// --- Price drops to 9.99 ---
 		await priceFeed.setPrice(erc20.address, "9990000000000000000")
@@ -456,7 +447,7 @@ contract("Gas compensation tests", async accounts => {
 		// Check collateral value in USD is < $10
 		const aliceCollERC20 = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_COLL_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
 
@@ -471,12 +462,12 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
 
 		// Check SP VUSD has decreased due to the liquidation
-		const VUSDinSP_AERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+		const VUSDinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 		assert.isTrue(VUSDinSP_AERC20.lte(VUSDinSP_0ERC20))
 
 		// Check ETH in SP has received the liquidation
 		assert.equal(
-			(await stabilityPoolERC20.getCollateral(erc20.address)).toString(),
+			(await stabilityPool.getCollateral(erc20.address)).toString(),
 			aliceCollERC20.sub(_0pt5percent_aliceCollERC20)
 		) // 1 ETH - 0.5%
 
@@ -490,7 +481,7 @@ contract("Gas compensation tests", async accounts => {
 		// Check collateral value in USD is < $10
 		const bobCollERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 		// Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
 
 		const liquidatorBalance_before_BERC20 = web3.utils.toBN(await erc20.balanceOf(liquidator))
@@ -504,13 +495,13 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20) // 0.5% of 2 ETH
 
 		// Check SP VUSD has decreased due to the liquidation of B
-		const VUSDinSP_BERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+		const VUSDinSP_BERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
 		assert.isTrue(VUSDinSP_BERC20.lt(VUSDinSP_AERC20))
 
 		// Check ETH in SP has received the liquidation
 		assert.equal(
-			(await stabilityPoolERC20.getCollateral(erc20.address)).toString(),
+			(await stabilityPool.getCollateral(erc20.address)).toString(),
 			aliceCollERC20.sub(_0pt5percent_aliceCollERC20).add(bobCollERC20).sub(_0pt5percent_bobCollERC20)
 		) // (1 + 2 ETH) * 0.995
 
@@ -525,7 +516,7 @@ contract("Gas compensation tests", async accounts => {
 		// Check collateral value in USD is < $10
 		const carolCollERC20 = (await vesselManager.Vessels(carol, erc20.address))[th.VESSEL_COLL_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 		// Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
 
 		const liquidatorBalance_before_CERC20 = web3.utils.toBN(await erc20.balanceOf(liquidator))
@@ -539,10 +530,10 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_CERC20, _0pt5percent_carolCollERC20)
 
 		// Check SP VUSD has decreased due to the liquidation of C
-		assert.isTrue((await stabilityPoolERC20.getTotalDebtTokenDeposits()).lt(VUSDinSP_BERC20))
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_BERC20))
 
 		// Check ETH in SP has not changed due to the lquidation of C
-		const ETHinSP_CERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const ETHinSP_CERC20 = await stabilityPool.getCollateral(erc20.address)
 		assert.equal(
 			ETHinSP_CERC20.toString(),
 			aliceCollERC20
@@ -595,11 +586,11 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide 10000 VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
 
-		const VUSDinSP_0ERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
-		const ETHinSP_0ERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		const ETHinSP_0ERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		// --- Price drops to 199.999 ---
 		await priceFeed.setPrice(erc20.address, "199999000000000000000")
@@ -616,7 +607,7 @@ contract("Gas compensation tests", async accounts => {
 		// Check collateral value in USD is > $10
 		const aliceCollERC20 = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_COLL_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, alice, price_1)).lt(mv._MCR))
 
@@ -633,13 +624,13 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
 
 		// Check SP VUSD has decreased due to the liquidation of A
-		const VUSDinSP_AERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+		const VUSDinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 		assert.isTrue(VUSDinSP_AERC20.lte(VUSDinSP_0ERC20))
 
 		// Check ETH in SP has increased by the remainder of B's coll
 
 		const collRemainder_AERC20 = aliceCollERC20.sub(_0pt5percent_aliceCollERC20)
-		const ETHinSP_AERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const ETHinSP_AERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		const SPETHIncrease_AERC20 = ETHinSP_AERC20.sub(ETHinSP_0ERC20)
 
@@ -660,7 +651,7 @@ contract("Gas compensation tests", async accounts => {
 		// Check collateral value in USD is > $10
 
 		const bobCollERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		const bobICRERC20 = await vesselManager.getCurrentICR(erc20.address, bob, price_2)
 		assert.isTrue(bobICRERC20.lte(mv._MCR))
@@ -678,12 +669,12 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20)
 
 		// Check SP VUSD has decreased due to the liquidation of B
-		assert.isTrue((await stabilityPoolERC20.getTotalDebtTokenDeposits()).lt(VUSDinSP_AERC20))
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_AERC20))
 
 		// Check ETH in SP has increased by the remainder of B's coll
 
 		const collRemainder_BERC20 = bobCollERC20.sub(_0pt5percent_bobCollERC20)
-		const ETHinSP_BERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const ETHinSP_BERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		const SPETHIncrease_BERC20 = ETHinSP_BERC20.sub(ETHinSP_AERC20)
 
@@ -732,11 +723,11 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide 10000 VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
 
-		const VUSDinSP_0ERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
-		const ETHinSP_0ERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		const ETHinSP_0ERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
 		const price_1 = await priceFeed.getPrice(erc20.address)
@@ -754,7 +745,7 @@ contract("Gas compensation tests", async accounts => {
 		const aliceCollERC20 = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_COLL_INDEX]
 		const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN("200"))
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, alice, price_1)).lt(mv._MCR))
 
@@ -770,13 +761,13 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
 
 		// Check SP VUSD has decreased due to the liquidation of A
-		const VUSDinSP_AERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+		const VUSDinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 		assert.isTrue(VUSDinSP_AERC20.lte(VUSDinSP_0ERC20))
 
 		// Check ETH in SP has increased by the remainder of A's coll
 
 		const collRemainder_AERC20 = aliceCollERC20.sub(_0pt5percent_aliceCollERC20)
-		const ETHinSP_AERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const ETHinSP_AERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		const SPETHIncrease_AERC20 = ETHinSP_AERC20.sub(ETHinSP_0ERC20)
 
@@ -795,7 +786,7 @@ contract("Gas compensation tests", async accounts => {
 		const bobCollERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 		const _0pt5percent_bobCollERC20 = bobCollERC20.div(web3.utils.toBN("200"))
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price_1)).lt(mv._MCR))
 
@@ -811,12 +802,12 @@ contract("Gas compensation tests", async accounts => {
 		assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20)
 
 		// Check SP VUSD has decreased due to the liquidation of B
-		assert.isTrue((await stabilityPoolERC20.getTotalDebtTokenDeposits()).lt(VUSDinSP_AERC20))
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_AERC20))
 
 		// Check ETH in SP has increased by the remainder of B's coll
 
 		const collRemainder_BERC20 = bobCollERC20.sub(_0pt5percent_bobCollERC20)
-		const ETHinSP_BERC20 = await stabilityPoolERC20.getCollateral(erc20.address)
+		const ETHinSP_BERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		const SPETHIncrease_BERC20 = ETHinSP_BERC20.sub(ETHinSP_AERC20)
 
@@ -864,8 +855,8 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(A_totalDebtERC20, { from: dennis })
-		await stabilityPoolERC20.provideToSP(B_totalDebtERC20, { from: erin })
+		await stabilityPool.provideToSP(A_totalDebtERC20, { from: dennis })
+		await stabilityPool.provideToSP(B_totalDebtERC20, { from: erin })
 
 		// --- Price drops to 9.99 ---
 		await priceFeed.setPrice(erc20.address, "9990000000000000000")
@@ -879,7 +870,7 @@ contract("Gas compensation tests", async accounts => {
 		const aliceCollERC20 = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_COLL_INDEX]
 		const aliceDebtERC20 = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_DEBT_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
 
@@ -909,7 +900,7 @@ contract("Gas compensation tests", async accounts => {
 		const bobCollERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 		const bobDebtERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 		// Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
 
 		const liquidationTxBERC20 = await vesselManagerOperations.liquidate(erc20.address, bob, {
@@ -968,8 +959,8 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide 10000 VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
 
 		// --- Price drops to 199.999 ---
 		await priceFeed.setPrice(erc20.address, "199999000000000000000")
@@ -993,7 +984,7 @@ contract("Gas compensation tests", async accounts => {
 		// Check value of 0.5% of collateral in USD is < $10
 		const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN("200"))
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, alice, price_1)).lt(mv._MCR))
 
@@ -1030,7 +1021,7 @@ contract("Gas compensation tests", async accounts => {
 		const bobCollERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 		const bobDebtERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price_2)).lte(mv._MCR))
 
@@ -1094,8 +1085,8 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide 10000 VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
 
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
 		const price_1 = await priceFeed.getPrice(erc20.address)
@@ -1106,7 +1097,7 @@ contract("Gas compensation tests", async accounts => {
 		const aliceDebtERC20 = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_DEBT_INDEX]
 		const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN("200"))
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, alice, price_1)).lt(mv._MCR))
 
@@ -1140,7 +1131,7 @@ contract("Gas compensation tests", async accounts => {
 		const bobDebtERC20 = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 		const _0pt5percent_bobCollERC20 = bobCollERC20.div(web3.utils.toBN("200"))
 
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price_1)).lt(mv._MCR))
 
@@ -1209,17 +1200,17 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide 10000 VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: erin })
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: flyn })
+		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), { from: flyn })
 
-		const VUSDinSP_0ERC20 = await stabilityPoolERC20.getTotalDebtTokenDeposits()
+		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
 		// price drops to 200
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
 		const price = await priceFeed.getPrice(erc20.address)
 
 		// Check not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// Check A, B, C, D have ICR < MCR
 
@@ -1276,7 +1267,7 @@ contract("Gas compensation tests", async accounts => {
 		const liquidatorBalance_afterERC20 = web3.utils.toBN(await erc20.balanceOf(liquidator))
 
 		// Check VUSD in SP has decreased
-		assert.isTrue((await stabilityPoolERC20.getTotalDebtTokenDeposits()).lt(VUSDinSP_0ERC20))
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_0ERC20))
 
 		// Check liquidator's balance has increased by the expected compensation amount
 
@@ -1285,7 +1276,7 @@ contract("Gas compensation tests", async accounts => {
 
 		// Check ETH in stability pool now equals the expected liquidated collateral
 
-		const ETHinSPERC20 = (await stabilityPoolERC20.getCollateral(erc20.address)).toString()
+		const ETHinSPERC20 = (await stabilityPool.getCollateral(erc20.address)).toString()
 		assert.equal(expectedLiquidatedCollERC20, ETHinSPERC20)
 	})
 
@@ -1330,7 +1321,7 @@ contract("Gas compensation tests", async accounts => {
 		const price = await priceFeed.getPrice(erc20.address)
 
 		// Check not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// Check A, B, C, D have ICR < MCR
 
@@ -1442,8 +1433,8 @@ contract("Gas compensation tests", async accounts => {
 
 		// D, E each provide 10000 VUSD to SP
 
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: erin })
-		await stabilityPoolERC20.provideToSP(dec(1, 23), { from: flyn })
+		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), { from: flyn })
 
 		// price drops to 200
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
@@ -1568,7 +1559,7 @@ contract("Gas compensation tests", async accounts => {
 		const price = await priceFeed.getPrice(erc20.address)
 
 		// Check not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// Check A, B, C, D have ICR < MCR
 
@@ -1681,7 +1672,7 @@ contract("Gas compensation tests", async accounts => {
 						assert.isTrue(ICRERC20.gte(prevICRERC20))
 					} catch (error) {
 						console.log(`ETH price at which vessel ordering breaks: ${price}`)
-						logICRs(ICRListERC20)
+						// logICRs(ICRListERC20)
 					}
 				}
 
@@ -1728,7 +1719,7 @@ contract("Gas compensation tests", async accounts => {
 						assert.isTrue(ICRERC20.gte(prevICRERC20))
 					} catch (error) {
 						console.log(`ETH price at which vessel ordering breaks: ${price}`)
-						logICRs(ICRListERC20)
+						// logICRs(ICRListERC20)
 					}
 				}
 
@@ -1780,7 +1771,7 @@ contract("Gas compensation tests", async accounts => {
 					} catch (error) {
 						console.log(error)
 						console.log(`ETH price at which vessel ordering breaks: ${price}`)
-						logICRs(ICRListERC20)
+						// logICRs(ICRListERC20)
 					}
 				}
 

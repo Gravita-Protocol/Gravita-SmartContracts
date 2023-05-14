@@ -1,64 +1,60 @@
 const deploymentHelper = require("../../utils/deploymentHelpers.js")
 const testHelpers = require("../../utils/testHelpers.js")
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
-const getDifference = th.getDifference
+const { dec, toBN, getDifference } = th
 
-const VesselManagerTester = artifacts.require("VesselManagerTester")
+var contracts
+var snapshotId
+var initialSnapshotId
+
+const deploy = async (treasury, mintingAccounts) => {
+	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+
+	activePool = contracts.core.activePool
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
+	collSurplusPool = contracts.core.collSurplusPool
+	debtToken = contracts.core.debtToken
+	defaultPool = contracts.core.defaultPool
+	erc20 = contracts.core.erc20
+	erc20B = contracts.core.erc20B
+	feeCollector = contracts.core.feeCollector
+	gasPool = contracts.core.gasPool
+	priceFeed = contracts.core.priceFeedTestnet
+	sortedVessels = contracts.core.sortedVessels
+	stabilityPool = contracts.core.stabilityPool
+	vesselManager = contracts.core.vesselManager
+	vesselManagerOperations = contracts.core.vesselManagerOperations
+	shortTimelock = contracts.core.shortTimelock
+	longTimelock = contracts.core.longTimelock
+
+	grvtStaking = contracts.grvt.grvtStaking
+	grvtToken = contracts.grvt.grvtToken
+	communityIssuance = contracts.grvt.communityIssuance
+}
 
 contract("VesselManager - Redistribution reward calculations", async accounts => {
-	const [owner, alice, bob, carol, dennis, erin, freddy, A, B, C, D, E] = accounts
+	const [owner, alice, bob, carol, dennis, erin, freddy, A, B, C, D, E, treasury] = accounts
 
-	let priceFeed
-	let debtToken
-	let sortedVessels
-	let vesselManager
-	let vesselManagerOperations
-	let activePool
-	let defaultPool
-	let borrowerOperations
-	let erc20
+	const getNetBorrowingAmount = async (debtWithFee, asset) => th.getNetBorrowingAmount(contracts.core, debtWithFee, asset)
+	const openVessel = async params => th.openVessel(contracts.core, params)
 
-	let contracts
-
-	const getNetBorrowingAmount = async (debtWithFee, asset) => th.getNetBorrowingAmount(contracts, debtWithFee, asset)
-	const openVessel = async params => th.openVessel(contracts, params)
-
-	async function deployContractsFixture() {
-		contracts = await deploymentHelper.deployGravitaCore()
-		contracts.vesselManager = await VesselManagerTester.new()
-		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
-
-		priceFeed = contracts.priceFeedTestnet
-		debtToken = contracts.debtToken
-		sortedVessels = contracts.sortedVessels
-		vesselManager = contracts.vesselManager
-		vesselManagerOperations = contracts.vesselManagerOperations
-		nameRegistry = contracts.nameRegistry
-		activePool = contracts.activePool
-		defaultPool = contracts.defaultPool
-		functionCaller = contracts.functionCaller
-		borrowerOperations = contracts.borrowerOperations
-		erc20 = contracts.erc20
-
-		let index = 0
-		for (const acc of accounts) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-			index++
-
-			if (index >= 20) break
-		}
-
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
-	}
+	before(async () => {
+		await deploy(treasury, accounts.slice(0, 20))
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
 
 	beforeEach(async () => {
-		await loadFixture(deployContractsFixture)
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
+
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
 	it("redistribution: A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
@@ -79,7 +75,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 
 		// Confirm not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// L1: B liquidated
 
@@ -107,7 +103,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 
 		// Confirm not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// L2: D Liquidated
 
@@ -187,7 +183,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 
 		// Confirm not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// L1: C liquidated
 
@@ -220,7 +216,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 
 		// Confirm not in Recovery Mode
-		assert.isFalse(await th.checkRecoveryMode(contracts, erc20.address))
+		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// L2: F Liquidated
 
@@ -497,10 +493,10 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 
 		// Check entireColl for each vessel:
 
-		const B_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, B, erc20.address)).entireColl
-		const C_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, C, erc20.address)).entireColl
-		const D_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, D, erc20.address)).entireColl
-		const E_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, E, erc20.address)).entireColl
+		const B_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, B, erc20.address)).entireColl
+		const C_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, C, erc20.address)).entireColl
+		const D_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, D, erc20.address)).entireColl
+		const E_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, E, erc20.address)).entireColl
 
 		const totalCollAfterL1_Asset = B_coll_Asset.add(C_coll_Asset).add(D_coll_Asset).add(E_coll_Asset)
 		const B_collAfterL1_Asset = B_coll_Asset.add(
@@ -531,9 +527,9 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isTrue(txC_Asset.receipt.status)
 		assert.isFalse(await sortedVessels.contains(erc20.address, C))
 
-		const B_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts, B, erc20.address)).entireColl
-		const D_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts, D, erc20.address)).entireColl
-		const E_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts, E, erc20.address)).entireColl
+		const B_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts.core, B, erc20.address)).entireColl
+		const D_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts.core, D, erc20.address)).entireColl
+		const E_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts.core, E, erc20.address)).entireColl
 
 		const totalCollAfterL2_Asset = B_collAfterL1_Asset.add(addedColl1).add(D_collAfterL1_Asset).add(E_collAfterL1_Asset)
 		const B_collAfterL2_Asset = B_collAfterL1_Asset.add(addedColl1).add(
@@ -571,8 +567,8 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			th.applyLiquidationFee(E_collAfterL2_Asset).mul(D_collAfterL2_Asset).div(totalCollAfterL3_Asset)
 		)
 
-		const B_entireColl_3_Asset = (await th.getEntireCollAndDebt(contracts, B, erc20.address)).entireColl
-		const D_entireColl_3_Asset = (await th.getEntireCollAndDebt(contracts, D, erc20.address)).entireColl
+		const B_entireColl_3_Asset = (await th.getEntireCollAndDebt(contracts.core, B, erc20.address)).entireColl
+		const D_entireColl_3_Asset = (await th.getEntireCollAndDebt(contracts.core, D, erc20.address)).entireColl
 
 		const diff_entireColl_B_Asset = getDifference(B_entireColl_3_Asset, B_collAfterL3_Asset)
 		const diff_entireColl_D_Asset = getDifference(D_entireColl_3_Asset, D_collAfterL3_Asset)
@@ -621,11 +617,11 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 
 		// Check entireColl for each vessel:
 
-		const A_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts, A, erc20.address)).entireColl
-		const B_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts, B, erc20.address)).entireColl
-		const C_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts, C, erc20.address)).entireColl
-		const D_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts, D, erc20.address)).entireColl
-		const E_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts, E, erc20.address)).entireColl
+		const A_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts.core, A, erc20.address)).entireColl
+		const B_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts.core, B, erc20.address)).entireColl
+		const C_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts.core, C, erc20.address)).entireColl
+		const D_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts.core, D, erc20.address)).entireColl
+		const E_entireColl_0_Asset = (await th.getEntireCollAndDebt(contracts.core, E, erc20.address)).entireColl
 
 		// entireSystemColl, excluding A
 		const denominatorColl_1_Asset = (await vesselManager.getEntireSystemColl(erc20.address)).sub(A_entireColl_0_Asset)
@@ -668,10 +664,10 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 
 		// Check entireColl for each vessel
 
-		const B_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, B, erc20.address)).entireColl
-		const C_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, C, erc20.address)).entireColl
-		const D_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, D, erc20.address)).entireColl
-		const E_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts, E, erc20.address)).entireColl
+		const B_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, B, erc20.address)).entireColl
+		const C_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, C, erc20.address)).entireColl
+		const D_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, D, erc20.address)).entireColl
+		const E_entireColl_1_Asset = (await th.getEntireCollAndDebt(contracts.core, E, erc20.address)).entireColl
 
 		// entireSystemColl, excluding C
 		const denominatorColl_2_Asset = (await vesselManager.getEntireSystemColl(erc20.address)).sub(C_entireColl_1_Asset)
@@ -713,9 +709,9 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 
 		// Check entireColl for each vessel
 
-		const B_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts, B, erc20.address)).entireColl
-		const D_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts, D, erc20.address)).entireColl
-		const E_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts, E, erc20.address)).entireColl
+		const B_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts.core, B, erc20.address)).entireColl
+		const D_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts.core, D, erc20.address)).entireColl
+		const E_entireColl_2_Asset = (await th.getEntireCollAndDebt(contracts.core, E, erc20.address)).entireColl
 
 		// entireSystemColl, excluding E
 		const denominatorColl_3_Asset = (await vesselManager.getEntireSystemColl(erc20.address)).sub(E_entireColl_2_Asset)
@@ -784,7 +780,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const addedColl = toBN(dec(1, "ether"))
 		await borrowerOperations.addColl(erc20.address, addedColl, bob, bob, { from: bob })
 
-		// Alice withdraws 
+		// Alice withdraws
 		await borrowerOperations.withdrawDebtTokens(
 			erc20.address,
 			await getNetBorrowingAmount(A_totalDebt_Asset, erc20.address),
@@ -1321,7 +1317,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			from: bob,
 		})
 
-		// Alice withdraws 
+		// Alice withdraws
 		await borrowerOperations.withdrawDebtTokens(
 			erc20.address,
 			await getNetBorrowingAmount(A_totalDebt_Asset, erc20.address),

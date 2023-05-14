@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 import "./Interfaces/ISortedVessels.sol";
 import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IBorrowerOperations.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /*
  * A sorted doubly linked list with nodes sorted in descending order.
@@ -39,13 +40,15 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedVessels is OwnableUpgradeable, ISortedVessels { 
+contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels { 
 
 	string public constant NAME = "SortedVessels";
 
 	address public borrowerOperationsAddress;
 
 	IVesselManager public vesselManager;
+
+	bool public isSetupInitialized;
 
 	// Information for a node in the list
 	struct Node {
@@ -65,13 +68,23 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 
 	// Collateral type address => ordered list
 	mapping(address => Data) public data;
+	// --- Initializer ---
 
+	function initialize() public initializer {
+		__Ownable_init();
+		__UUPSUpgradeable_init();
+	}
+	
 	// --- Dependency setters ---
 
-	function setAddresses(address _vesselManagerAddress, address _borrowerOperationsAddress) external initializer {
-		__Ownable_init();
+	function setAddresses(
+		address _vesselManagerAddress,
+		address _borrowerOperationsAddress
+	) external onlyOwner {
+		require(!isSetupInitialized, "Setup is already initialized");
 		vesselManager = IVesselManager(_vesselManagerAddress);
 		borrowerOperationsAddress = _borrowerOperationsAddress;
+		isSetupInitialized = true;
 	}
 
 	/*
@@ -82,13 +95,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 * @param _nextId Id of next node for the insert position
 	 */
 
-	function insert(
-		address _asset,
-		address _id,
-		uint256 _NICR,
-		address _prevId,
-		address _nextId
-	) external override {
+	function insert(address _asset, address _id, uint256 _NICR, address _prevId, address _nextId) external override {
 		IVesselManager vesselManagerCached = vesselManager;
 		_requireCallerIsBOorVesselM(vesselManagerCached);
 		_insert(_asset, vesselManagerCached, _id, _NICR, _prevId, _nextId);
@@ -109,7 +116,7 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 		// Node id must not be null
 		require(_id != address(0), "SortedVessels: Id cannot be zero");
 		// NICR must be non-zero
-		require(_NICR > 0, "SortedVessels: NICR must be positive");
+		require(_NICR != 0, "SortedVessels: NICR must be positive");
 
 		address prevId = _prevId;
 		address nextId = _nextId;
@@ -160,10 +167,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 */
 	function _remove(address _asset, address _id) internal {
 		Data storage assetData = data[_asset];
-		
+
 		// List must contain the node
 		require(_contains(assetData, _id), "SortedVessels: List does not contain the id");
-		
+
 		Node storage node = assetData.nodes[_id];
 		if (assetData.size > 1) {
 			// List contains more than a single node
@@ -205,20 +212,14 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 	 * @param _prevId Id of previous node for the new insert position
 	 * @param _nextId Id of next node for the new insert position
 	 */
-	function reInsert(
-		address _asset,
-		address _id,
-		uint256 _newNICR,
-		address _prevId,
-		address _nextId
-	) external override {
+	function reInsert(address _asset, address _id, uint256 _newNICR, address _prevId, address _nextId) external override {
 		IVesselManager vesselManagerCached = vesselManager;
 
 		_requireCallerIsBOorVesselM(vesselManagerCached);
 		// List must contain the node
 		require(contains(_asset, _id), "SortedVessels: List does not contain the id");
 		// NICR must be non-zero
-		require(_newNICR > 0, "SortedVessels: NICR must be positive");
+		require(_newNICR != 0, "SortedVessels: NICR must be positive");
 
 		// Remove node from the list
 		_remove(_asset, _id);
@@ -449,4 +450,10 @@ contract SortedVessels is OwnableUpgradeable, ISortedVessels {
 			"SortedVessels: Caller is neither BO nor VesselM"
 		);
 	}
+
+	function authorizeUpgrade(address newImplementation) public {
+    	_authorizeUpgrade(newImplementation);
+	}
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
