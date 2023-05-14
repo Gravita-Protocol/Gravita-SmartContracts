@@ -10,6 +10,8 @@ const CONTRACT_UPGRADES_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 const SYSTEM_PARAMS_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 const TREASURY_WALLET = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 
+// Core Contracts Config ----------------------------------------------------------------------------------------------
+
 const COLLATERAL = [
 	{
 		name: "wETH",
@@ -25,7 +27,8 @@ const COLLATERAL = [
 	},
 ]
 
-const DEPLOY_GRVT_CONTRACTS = false
+// Grvt Contracts Config ----------------------------------------------------------------------------------------------
+
 const GRVT_BENEFICIARIES = {
 	"0x19596e1D6cd97916514B5DBaA4730781eFE49975": 1_000_000,
 }
@@ -33,7 +36,6 @@ const GRVT_BENEFICIARIES = {
 module.exports = {
 	COLLATERAL,
 	CONTRACT_UPGRADES_ADMIN,
-	DEPLOY_GRVT_CONTRACTS,
 	ETHERSCAN_BASE_URL,
 	GAS_PRICE,
 	GRVT_BENEFICIARIES,

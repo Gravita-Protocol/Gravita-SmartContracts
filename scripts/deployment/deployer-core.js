@@ -1,7 +1,6 @@
-const { Manifest, getAdminAddress } = require("@openzeppelin/upgrades-core")
 const { getParsedEthersError } = require("@enzoferey/ethers-error-parser")
 
-const DeploymentHelper = require("../utils/deploymentHelpers.js")
+const CoreDeploymentHelper = require("../utils/coreDeploymentHelpers.js")
 
 /**
  * Enum type for available target networks; each should have a matching file in the config folder.
@@ -22,7 +21,6 @@ class Deployer {
 	deployerWallet
 	deployerBalance
 	coreContracts
-	grvtContracts = []
 	deploymentState
 
 	constructor(hre, targetNetwork) {
@@ -42,7 +40,7 @@ class Deployer {
 
 		this.coreContracts = await this.helper.loadOrDeployCoreContracts(this.deploymentState, this.config)
 
-		await this.helper.connectCoreContracts(this.coreContracts, this.grvtContracts, this.config.TREASURY_WALLET)
+		await this.helper.connectCoreContracts(this.coreContracts, this.config.TREASURY_WALLET)
 
 		await this.addCollaterals()
 
@@ -180,8 +178,7 @@ class Deployer {
 		}
 		this.config = configParams
 		this.deployerWallet = new this.hre.ethers.Wallet(process.env.DEPLOYER_PRIVATEKEY, this.hre.ethers.provider)
-		console.log(this.deployerWallet)
-		this.helper = new DeploymentHelper(configParams, this.deployerWallet)
+		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet)
 		this.deploymentState = this.helper.loadPreviousDeployment()
 	}
 

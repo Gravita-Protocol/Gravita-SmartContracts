@@ -1,11 +1,11 @@
-const fs = require("fs")
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const fs = require("fs")
 
-class DeploymentHelper {
-	constructor(configParams, deployerWallet) {
+class CoreDeploymentHelper {
+	constructor(hre, configParams, deployerWallet) {
+		this.hre = hre
 		this.configParams = configParams
 		this.deployerWallet = deployerWallet
-		this.hre = require("hardhat")
 		this.shortTimelockDelay = this.isMainnet() ? 3 * 86_400 : 120 // 3 days || 2 minutes
 		this.longTimelockDelay = this.isMainnet() ? 7 * 86_400 : 120 // 7 days || 2 minutes
 	}
@@ -89,7 +89,7 @@ class DeploymentHelper {
 		return coreContracts
 	}
 
-	async connectCoreContracts(contracts, grvtContracts, treasuryAddress) {
+	async connectCoreContracts(contracts, treasuryAddress) {
 		console.log("Connecting core contracts...")
 
 		await this.setAddresses("ActivePool", contracts.activePool, [
@@ -102,7 +102,7 @@ class DeploymentHelper {
 		])
 
 		await this.setAddresses("AdminContract", contracts.adminContract, [
-			grvtContracts.communityIssuance?.address || ZERO_ADDRESS,
+			ZERO_ADDRESS,
 			contracts.activePool.address,
 			contracts.defaultPool.address,
 			contracts.stabilityPool.address,
@@ -137,7 +137,7 @@ class DeploymentHelper {
 		await this.setAddresses("FeeCollector", contracts.feeCollector, [
 			contracts.borrowerOperations.address,
 			contracts.vesselManager.address,
-			grvtContracts.GRVTStaking?.address || ZERO_ADDRESS,
+			ZERO_ADDRESS,
 			contracts.debtToken.address,
 			treasuryAddress,
 			false,
@@ -272,19 +272,6 @@ class DeploymentHelper {
 			(await this.sendAndWaitForTransaction(
 				coreContracts.lockedGrvt.setAddresses(GRVTContracts.GRVTToken.address, { gasPrice })
 			))
-	}
-
-	// Localhost deployment -------------------------------------------------------------------------------------------
-
-	async deployMockERC20Contract(deploymentState, name, decimals = 18) {
-		const ERC20MockFactory = await this.getFactory("ERC20Mock")
-		const erc20Mock = await this.loadOrDeploy(ERC20MockFactory, name, deploymentState, false, [name, name, decimals])
-		const mintAmount = "10000".concat("0".repeat(decimals))
-		const accounts = await ethers.getSigners()
-		for (const { address } of accounts.slice(0, 10)) {
-			await erc20Mock.mint(address, mintAmount)
-		}
-		return erc20Mock.address
 	}
 
 	// Helper/utils ---------------------------------------------------------------------------------------------------
@@ -446,4 +433,4 @@ class DeploymentHelper {
 	}
 }
 
-module.exports = DeploymentHelper
+module.exports = CoreDeploymentHelper
