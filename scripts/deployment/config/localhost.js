@@ -6,23 +6,11 @@ const GAS_PRICE = 20_000_000_000 // 20 Gwei
 const TX_CONFIRMATIONS = 1
 const ETHERSCAN_BASE_URL = undefined
 
-const UPGRADES_PROXY_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
+const CONTRACT_UPGRADES_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 const SYSTEM_PARAMS_ADMIN = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 const TREASURY_WALLET = "0xf99C0eDf98Ed17178B19a6B5a0f3B58753300596"
 
 const COLLATERAL = [
-	{
-		name: "rETH",
-		address: "0xE8BAde28E08B469B4EeeC35b9E48B2Ce49FB3FC9",
-		oracleAddress: "0xF1c0DB770e77a961efde9DD11216e3833ad5c588",
-		oraclePriceDeviation: toEther(0.25),
-		oracleIsEthIndexed: false,
-		MCR: toEther(1.25),
-		CCR: toEther(1.5),
-		minNetDebt: toEther(1_800),
-		gasCompensation: toEther(300),
-		mintCap: toEther(1_500_000)
-	},
 	{
 		name: "wETH",
 		address: "0x1A0A7c9008Aa351cf8150a01b21Ff2BB98D70D2D",
@@ -33,7 +21,7 @@ const COLLATERAL = [
 		CCR: toEther(1.5),
 		minNetDebt: toEther(1_800),
 		gasCompensation: toEther(300),
-		mintCap: toEther(1_500_000)
+		mintCap: toEther(1_500_000),
 	},
 ]
 
@@ -44,6 +32,7 @@ const GRVT_BENEFICIARIES = {
 
 module.exports = {
 	COLLATERAL,
+	CONTRACT_UPGRADES_ADMIN,
 	DEPLOY_GRVT_CONTRACTS,
 	ETHERSCAN_BASE_URL,
 	GAS_PRICE,
@@ -52,6 +41,4 @@ module.exports = {
 	SYSTEM_PARAMS_ADMIN,
 	TREASURY_WALLET,
 	TX_CONFIRMATIONS,
-	UPGRADES_PROXY_ADMIN
 }
-
