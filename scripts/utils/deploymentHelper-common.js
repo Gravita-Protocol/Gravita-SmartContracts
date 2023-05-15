@@ -1,4 +1,3 @@
-const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 const { getImplementationAddress } = require("@openzeppelin/upgrades-core")
 const fs = require("fs")
 
@@ -62,12 +61,13 @@ const fs = require("fs")
 					this.configParams.TX_CONFIRMATIONS,
 					timeout
 				)
+				await newContract.deployed()
 				await this.updateState(contractName, newContract, isUpgradeable, state)
 				return [newContract, false]
 			}
 		}
 		if (alreadyDeployed) {
-			// Existing upgradeable contract, check if upgrade is needed
+			// Existing upgradeable contract
 			console.log(`(Upgrading ${contractName}...)`)
 			const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
 			await this.deployerWallet.provider.waitForTransaction(
