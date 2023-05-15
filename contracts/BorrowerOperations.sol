@@ -50,21 +50,6 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 arrayIndex;
 	}
 
-	enum BorrowerOperation {
-		openVessel,
-		closeVessel,
-		adjustVessel
-	}
-
-	event VesselUpdated(
-		address indexed _asset,
-		address indexed _borrower,
-		uint256 _debt,
-		uint256 _coll,
-		uint256 stake,
-		BorrowerOperation operation
-	);
-
 	// --- Initializer ---
 
 	function initialize() public initializer {

@@ -4,7 +4,11 @@ pragma solidity ^0.8.19;
 
 interface IBorrowerOperations {
 	// --- Events ---
-
+	enum BorrowerOperation {
+		openVessel,
+		closeVessel,
+		adjustVessel
+	}
 	event VesselCreated(address indexed _asset, address indexed _borrower, uint256 arrayIndex);
 	event VesselUpdated(
 		address indexed _asset,
@@ -12,7 +16,7 @@ interface IBorrowerOperations {
 		uint256 _debt,
 		uint256 _coll,
 		uint256 stake,
-		uint8 operation
+		BorrowerOperation operation
 	);
 	event BorrowingFeePaid(address indexed _asset, address indexed _borrower, uint256 _feeAmount);
 
@@ -26,19 +30,9 @@ interface IBorrowerOperations {
 		address _lowerHint
 	) external;
 
-	function addColl(
-		address _asset,
-		uint256 _assetSent,
-		address _upperHint,
-		address _lowerHint
-	) external;
+	function addColl(address _asset, uint256 _assetSent, address _upperHint, address _lowerHint) external;
 
-	function withdrawColl(
-		address _asset,
-		uint256 _assetAmount,
-		address _upperHint,
-		address _lowerHint
-	) external;
+	function withdrawColl(address _asset, uint256 _assetAmount, address _upperHint, address _lowerHint) external;
 
 	function withdrawDebtTokens(
 		address _asset,
@@ -47,12 +41,7 @@ interface IBorrowerOperations {
 		address _lowerHint
 	) external;
 
-	function repayDebtTokens(
-		address _asset,
-		uint256 _debtTokenAmount,
-		address _upperHint,
-		address _lowerHint
-	) external;
+	function repayDebtTokens(address _asset, uint256 _debtTokenAmount, address _upperHint, address _lowerHint) external;
 
 	function closeVessel(address _asset) external;
 
