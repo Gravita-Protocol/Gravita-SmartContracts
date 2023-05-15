@@ -13,16 +13,17 @@ require("dotenv").config()
 const accounts = require("./hardhatAccountsList2k.js")
 const accountsList = accounts.accountsList
 
-const { Deployer, DeploymentTarget } = require("./scripts/deployment/deployer-core.js")
+const CoreDeployer = require("./scripts/deployment/deployer-core.js")
+const { DeploymentTarget } = require("./scripts/deployment/deployer-common.js")
 
 task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
-	async (_, hre) => await new Deployer(hre, DeploymentTarget.Localhost).run()
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Localhost).run()
 )
 task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
-	async (_, hre) => await new Deployer(hre, DeploymentTarget.GoerliTestnet).run()
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.GoerliTestnet).run()
 )
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
-	async (_, hre) => await new Deployer(hre, DeploymentTarget.Mainnet).run()
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
 
 module.exports = {

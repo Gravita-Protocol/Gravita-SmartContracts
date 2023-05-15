@@ -1,4 +1,3 @@
-const { Manifest, getAdminAddress } = require("@openzeppelin/upgrades-core")
 const { getParsedEthersError } = require("@enzoferey/ethers-error-parser")
 
 const DeploymentHelper = require("../utils/deploymentHelpers.js")
@@ -36,33 +35,17 @@ class Deployer {
 	}
 
 	async run() {
-		console.log(`Deploying on ${this.targetNetwork}...`)
+		console.log(`Deploying Gravita GRVT on ${this.targetNetwork}...`)
 		this.initConfigArgs()
 		await this.printDeployerBalance()
 
 		this.coreContracts = await this.helper.loadOrDeployCoreContracts(this.deploymentState)
 
-		if (this.config.DEPLOY_GRVT_CONTRACTS) {
 			// grvtContracts = await helper.deployGrvtContracts(TREASURY_WALLET, deploymentState)
 			// await deployOnlyGRVTContracts()
 			// await helper.connectgrvtContractsToCore(grvtContracts, coreContracts, TREASURY_WALLET)
 			// await approveGRVTTokenAllowanceForCommunityIssuance()
 			// await this.transferGrvtContractsOwnerships()
-			return
-		}
-
-		await this.helper.connectCoreContracts(
-			this.coreContracts,
-			this.grvtContracts,
-			this.config.TREASURY_WALLET
-		)
-
-		await this.addCollaterals()
-
-		await this.toggleContractInitialization(this.coreContracts.adminContract)
-		await this.toggleContractInitialization(this.coreContracts.debtToken)
-
-		// TODO timelock.setPendingAdmin() via queueTransaction()
 
 		this.helper.saveDeployment(this.deploymentState)
 
@@ -71,72 +54,6 @@ class Deployer {
 		await this.transferCoreContractsOwnerships()
 
 		await this.printDeployerBalance()
-	}
-
-	// Collateral ---------------------------------------------------------------------------------------------------------
-
-	async addCollaterals() {
-		console.log("Adding Collaterals...")
-		const cfg = this.config.COLLATERAL_ADDRESSES
-		const maxDeviationBetweenRounds = this.hre.ethers.utils.parseUnits("0.5") // TODO personalize for each collateral
-		const isEthIndexed = false // TODO personalize for each collateral
-
-		await this.addCollateral("rETH", cfg.RETH_ERC20, cfg.RETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
-		await this.addCollateral("wETH", cfg.WETH_ERC20, cfg.WETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
-		await this.addCollateral("wstETH", cfg.WSTETH_ERC20, cfg.WSTETH_USD_ORACLE, maxDeviationBetweenRounds, isEthIndexed)
-	}
-
-	async addCollateral(name, address, chainlinkPriceFeedAddress, maxDeviationBetweenRounds, isEthIndexed) {
-		if (!address || address == "") {
-			console.log(`[${name}] WARNING: No address found for collateral`)
-			return
-		}
-
-		if (!chainlinkPriceFeedAddress || chainlinkPriceFeedAddress == "") {
-			console.log(`[${name}] WARNING: No chainlink price feed address found for collateral`)
-			return
-		}
-
-		const collExists = async () => (await this.coreContracts.adminContract.getMcr(address)).gt(0)
-
-		if (await collExists(address)) {
-			console.log(`[${name}] NOTICE: collateral has already been added before`)
-		} else {
-			const decimals = 18
-			const gasCompensation = this.hre.ethers.utils.parseUnits("30")
-			await this.helper.sendAndWaitForTransaction(
-				this.coreContracts.adminContract.addNewCollateral(address, gasCompensation, decimals)
-			)
-			console.log(`[${name}] Collateral added @ ${address}`)
-		}
-
-		const oracleRecord = await this.coreContracts.priceFeed.oracleRecords(address)
-
-		if (!oracleRecord.exists) {
-			console.log(`[${name}] PriceFeed.setOracle()`)
-			await this.helper.sendAndWaitForTransaction(
-				this.coreContracts.priceFeed.setOracle(
-					address,
-					chainlinkPriceFeedAddress,
-					maxDeviationBetweenRounds.toString(),
-					isEthIndexed
-				)
-			)
-			console.log(`[${name}] Chainlink Oracle Price Feed has been set @ ${chainlinkPriceFeedAddress}`)
-		} else {
-			if (oracleRecord.chainLinkOracle == chainlinkPriceFeedAddress) {
-				console.log(`[${name}] Chainlink Oracle Price Feed had already been set @ ${chainlinkPriceFeedAddress}`)
-			} else {
-				console.log(`[${name}] NOTICE: another oracle has already been set, please update via Timelock.setOracle()`)
-			}
-		}
-
-		const isActive = await this.coreContracts.adminContract.getIsActive(address)
-		if (!isActive) {
-			console.log(`[${name}] Activating collateral...`)
-			await this.helper.sendAndWaitForTransaction(this.coreContracts.adminContract.setActive(address, true))
-			console.log(`[${name}] AdminContract.setActive() -> ok`)
-		}
 	}
 
 	// GRVT contracts deployment ------------------------------------------------------------------------------------------

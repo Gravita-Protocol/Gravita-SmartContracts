@@ -1,11 +1,12 @@
 const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+const { getImplementationAddress } = require("@openzeppelin/upgrades-core")
 const fs = require("fs")
 
-class CoreDeploymentHelper {
+const DeploymentHelper = require("./deploymentHelper-common.js")
+
+class CoreDeploymentHelper extends DeploymentHelper {
 	constructor(hre, configParams, deployerWallet) {
-		this.hre = hre
-		this.configParams = configParams
-		this.deployerWallet = deployerWallet
+		super(hre, configParams, deployerWallet)
 		this.shortTimelockDelay = this.isMainnet() ? 3 * 86_400 : 120 // 3 days || 2 minutes
 		this.longTimelockDelay = this.isMainnet() ? 7 * 86_400 : 120 // 7 days || 2 minutes
 	}
@@ -55,7 +56,10 @@ class CoreDeploymentHelper {
 
 		// Non-upgradable contracts
 		const gasPool = await deployNonUpgradable(gasPoolFactory, "GasPool")
-		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [this.shortTimelockDelay, config.SYSTEM_PARAMS_ADMIN])
+		const shortTimelock = await deployNonUpgradable(timelockFactory, "ShortTimelock", [
+			this.shortTimelockDelay,
+			config.SYSTEM_PARAMS_ADMIN,
+		])
 		//const longTimelock = await deployNonUpgradable(timelockFactory, "LongTimelock", [this.longTimelockDelay])
 
 		const debtTokenParams = [
@@ -108,7 +112,7 @@ class CoreDeploymentHelper {
 			contracts.stabilityPool.address,
 			contracts.collSurplusPool.address,
 			contracts.priceFeed.address,
-			contracts.shortTimelock.address
+			contracts.shortTimelock.address,
 		])
 
 		await this.setAddresses("BorrowerOperations", contracts.borrowerOperations, [
@@ -159,7 +163,7 @@ class CoreDeploymentHelper {
 			contracts.activePool.address,
 			contracts.debtToken.address,
 			contracts.sortedVessels.address,
-			grvtContracts.communityIssuance?.address || ZERO_ADDRESS,
+			ZERO_ADDRESS,
 			contracts.adminContract.address,
 		])
 
@@ -183,95 +187,6 @@ class CoreDeploymentHelper {
 			contracts.debtToken.address,
 			contracts.adminContract.address,
 		])
-	}
-
-	// TODO refactor
-	async deployPartially(treasurySigAddress, deploymentState) {
-		const GRVTTokenFactory = await this.getFactory("GRVTToken")
-		const lockedGrvtFactory = await this.getFactory("LockedGRVT")
-		const lockedGrvt = await this.loadOrDeploy(lockedGrvtFactory, "lockedGrvt", deploymentState)
-		const GRVTToken = await this.loadOrDeploy(GRVTTokenFactory, "grvtToken", deploymentState, false, [
-			treasurySigAddress,
-		])
-		if (!this.configParams.ETHERSCAN_BASE_URL) {
-			console.log("(No Etherscan URL defined, skipping contract verification)")
-		} else {
-			await this.verifyContract("lockedGrvt", deploymentState, [treasurySigAddress])
-			await this.verifyContract("GRVTToken", deploymentState, [treasurySigAddress])
-		}
-		;(await this.isInitialized(lockedGrvt)) ||
-			(await this.sendAndWaitForTransaction(
-				lockedGrvt.setAddresses(GRVTToken.address, { gasPrice: this.configParams.GAS_PRICE })
-			))
-		const grvtContracts = {
-			lockedGrvt,
-			GRVTToken,
-		}
-		await this.logContractObjects(grvtContracts)
-		return grvtContracts
-	}
-
-	/**
-	 * GRVT Token related contracts deployment
-	 */
-	async deployGrvtContracts(treasurySigAddress, deploymentState) {
-		console.log("Deploying GRVT contracts...")
-		const GRVTStakingFactory = await this.getFactory("GRVTStaking")
-		const communityIssuanceFactory = await this.getFactory("CommunityIssuance")
-		const GRVTTokenFactory = await this.getFactory("GRVTToken")
-		const GRVTStaking = await this.loadOrDeploy(GRVTStakingFactory, "GRVTStaking", deploymentState, true)
-		const communityIssuance = await this.loadOrDeploy(
-			communityIssuanceFactory,
-			"communityIssuance",
-			deploymentState,
-			true
-		)
-		const GRVTToken = await this.loadOrDeploy(GRVTTokenFactory, "GRVTToken", deploymentState, false, [
-			treasurySigAddress,
-		])
-		if (!this.configParams.ETHERSCAN_BASE_URL) {
-			console.log("(No Etherscan URL defined, skipping contract verification)")
-		} else {
-			await this.verifyContract("GRVTStaking", deploymentState)
-			await this.verifyContract("communityIssuance", deploymentState)
-			await this.verifyContract("GRVTToken", deploymentState, [treasurySigAddress])
-		}
-		const grvtTokenContracts = {
-			GRVTStaking,
-			communityIssuance,
-			GRVTToken,
-		}
-		await this.logContractObjects(grvtTokenContracts)
-		return grvtTokenContracts
-	}
-
-	async connectGRVTTokenContractsToCore(GRVTContracts, coreContracts, treasuryAddress) {
-		console.log("Connecting GRVT Token Contracts to Core...")
-		const gasPrice = this.configParams.GAS_PRICE
-		;(await this.isInitialized(GRVTContracts.GRVTStaking)) ||
-			(await this.sendAndWaitForTransaction(
-				GRVTContracts.GRVTStaking.setAddresses(
-					GRVTContracts.GRVTToken.address,
-					coreContracts.debtToken.address,
-					coreContracts.feeCollector.address,
-					coreContracts.vesselManager.address,
-					treasuryAddress,
-					{ gasPrice }
-				)
-			))
-		;(await this.isInitialized(GRVTContracts.communityIssuance)) ||
-			(await this.sendAndWaitForTransaction(
-				GRVTContracts.communityIssuance.setAddresses(
-					GRVTContracts.GRVTToken.address,
-					coreContracts.stabilityPool.address,
-					coreContracts.adminContract.address,
-					{ gasPrice }
-				)
-			))
-		;(await this.isInitialized(coreContracts.lockedGrvt)) ||
-			(await this.sendAndWaitForTransaction(
-				coreContracts.lockedGrvt.setAddresses(GRVTContracts.GRVTToken.address, { gasPrice })
-			))
 	}
 
 	// Helper/utils ---------------------------------------------------------------------------------------------------
@@ -314,9 +229,11 @@ class CoreDeploymentHelper {
 			timeout = 600_000 // milliseconds
 		while (++retry < maxRetries) {
 			try {
-				let contract
+				let contract, implAddress
 				if (proxy) {
-					let opts = factory.interface.functions.initialize ? { initializer: "initialize()", kind: 'uups' } : {kind: 'uups'}
+					let opts = factory.interface.functions.initialize
+						? { initializer: "initialize()", kind: "uups" }
+						: { kind: "uups" }
 					contract = await upgrades.deployProxy(factory, opts)
 				} else {
 					contract = await factory.deploy(...params)
@@ -329,6 +246,10 @@ class CoreDeploymentHelper {
 				deploymentState[name] = {
 					address: contract.address,
 					txHash: contract.deployTransaction.hash,
+				}
+				if (proxy) {
+					implAddress = await getImplementationAddress(this.deployerWallet.provider, contract.address)
+					deploymentState[name].implAddress = implAddress
 				}
 				this.saveDeployment(deploymentState)
 				return contract
