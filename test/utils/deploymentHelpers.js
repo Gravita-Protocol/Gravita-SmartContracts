@@ -32,7 +32,7 @@ const TIMELOCK_LONG_DELAY = 86400 * 7
  */
 class DeploymentHelper {
 	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = []) {
-		const core = await this._deployCoreContracts()
+		const core = await this._deployCoreContracts(treasuryAddress)
 		const grvt = await this._deployGrvtContracts(treasuryAddress)
 
 		await this._connectCoreContracts(core, grvt, treasuryAddress)
@@ -47,7 +47,7 @@ class DeploymentHelper {
 		return { core, grvt }
 	}
 
-	static async _deployCoreContracts() {
+	static async _deployCoreContracts(treasuryAddress) {
 		const activePool = await ActivePool.new()
 		const adminContract = await AdminContract.new()
 		const borrowerOperations = await BorrowerOperationsTester.new()
@@ -62,8 +62,8 @@ class DeploymentHelper {
 		const stabilityPool = await StabilityPoolTester.new()
 		const vesselManager = await VesselManagerTester.new()
 		const vesselManagerOperations = await VesselManagerOperations.new()
-		const shortTimelock = await Timelock.new(TIMELOCK_SHORT_DELAY)
-		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY)
+		const shortTimelock = await Timelock.new(TIMELOCK_SHORT_DELAY, treasuryAddress)
+		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)
 		const debtToken = await DebtTokenTester.new(
 			vesselManager.address,
 			stabilityPool.address,
