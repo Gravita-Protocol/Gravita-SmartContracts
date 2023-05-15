@@ -8,39 +8,27 @@ import "./Interfaces/IDebtToken.sol";
 
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	string public constant NAME = "GRAI";
-	address public constant vesselManagerAddress = address(0);
-	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
-	address public constant borrowerOperationsAddress = address(0);
+
+	address public immutable borrowerOperationsAddress;
+	address public immutable stabilityPoolAddress;
+	address public immutable vesselManagerAddress;
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	address public constant timelockAddress = address(0);
-
-	bool public isSetupInitialized;
-
-	error DebtToken__TimelockOnly();
-	error DebtToken__OwnerOnly();
-
-	modifier onlyTimelock() {
-		if (isSetupInitialized) {
-			if (msg.sender != timelockAddress) {
-				revert DebtToken__TimelockOnly();
-			}
-		} else {
-			if (msg.sender != owner()) {
-				revert DebtToken__OwnerOnly();
-			}
-		}
-		_;
-	}
-
-	constructor() ERC20("Gravita Debt Token", "GRAI") {}
-
-	function setSetupIsInitialized() external onlyOwner {
-		isSetupInitialized = true;
+	constructor(
+		address _borrowerOperationsAddress,
+		address _stabilityPoolAddress,
+		address _vesselManagerAddress
+	) ERC20("Gravita Debt Token", "GRAI") {
+		require(_borrowerOperationsAddress != address(0), "BorrowerOperations cannot be zero");
+		require(_stabilityPoolAddress != address(0), "StabilityPool cannot be zero");
+		require(_vesselManagerAddress != address(0), "VesselManager cannot be zero");
+		borrowerOperationsAddress = _borrowerOperationsAddress;
+		stabilityPoolAddress = _stabilityPoolAddress;
+		vesselManagerAddress = _vesselManagerAddress;
 	}
 
 	// --- Functions for intra-Gravita calls ---
@@ -119,9 +107,9 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 			"DebtToken: Cannot transfer tokens directly to the token contract or the zero address"
 		);
 		require(
-			address(stabilityPool) != _recipient &&
-				_recipient != vesselManagerAddress &&
-				_recipient != borrowerOperationsAddress,
+			_recipient != borrowerOperationsAddress &&
+				_recipient != stabilityPoolAddress &&
+				_recipient != vesselManagerAddress,
 			"DebtToken: Cannot transfer tokens directly to the StabilityPool, VesselManager or BorrowerOps"
 		);
 	}
@@ -138,18 +126,18 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		require(
 			msg.sender == borrowerOperationsAddress ||
 				msg.sender == vesselManagerAddress ||
-				address(stabilityPool) == msg.sender,
+				msg.sender == stabilityPoolAddress,
 			"DebtToken: Caller is neither BorrowerOperations nor VesselManager nor StabilityPool"
 		);
 	}
 
 	function _requireCallerIsStabilityPool() internal view {
-		require(address(stabilityPool) == msg.sender, "DebtToken: Caller is not the StabilityPool");
+		require(msg.sender == stabilityPoolAddress, "DebtToken: Caller is not the StabilityPool");
 	}
 
 	function _requireCallerIsVesselMorSP() internal view {
 		require(
-			msg.sender == vesselManagerAddress || address(stabilityPool) == msg.sender,
+			msg.sender == vesselManagerAddress || msg.sender == stabilityPoolAddress,
 			"DebtToken: Caller is neither VesselManager nor StabilityPool"
 		);
 	}
