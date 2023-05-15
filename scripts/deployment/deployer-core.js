@@ -1,3 +1,5 @@
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+
 const CoreDeploymentHelper = require("../utils/deploymentHelper-core.js")
 const { Deployer } = require("./deployer-common.js")
 
@@ -5,14 +7,10 @@ const { Deployer } = require("./deployer-common.js")
  * Exported deployment script, invoked from hardhat tasks defined on hardhat.config.js
  */
 class CoreDeployer extends Deployer {
-	helper
-	coreContracts
-	deploymentState
 
 	constructor(hre, targetNetwork) {
 		super(hre, targetNetwork)
 		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet)
-		this.deploymentState = this.helper.loadPreviousDeployment()
 	}
 
 	async run() {
@@ -20,18 +18,15 @@ class CoreDeployer extends Deployer {
 
 		await this.printDeployerBalance()
 
-		this.coreContracts = await this.helper.loadOrDeployCoreContracts(this.deploymentState, this.config)
+		const { contracts, allUpgraded } = await this.helper.loadOrDeployOrUpgradeCoreContracts()
 
-		await this.helper.connectCoreContracts(this.coreContracts, this.config.TREASURY_WALLET)
-
-		await this.addCollaterals()
-
-		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
-		await this.toggleContractSetupInitialization(this.coreContracts.debtToken)
-
-		this.helper.saveDeployment(this.deploymentState)
-
-		await this.transferContractsOwnerships(this.coreContracts)
+		if (allUpgraded) {
+			console.log(`All contracts have been upgraded, setting parameters...`)
+			this.coreContracts = contracts
+			await this.addCollaterals()
+			await this.toggleContractSetupInitialization(contracts.adminContract)
+			await this.transferContractsOwnerships(contracts)
+		}
 
 		await this.printDeployerBalance()
 	}
@@ -50,6 +45,10 @@ class CoreDeployer extends Deployer {
 			await this.addPriceFeedOracle(coll)
 			await this.addCollateral(coll)
 			await this.setCollateralParams(coll)
+			if (coll.name == "wETH") {
+				// use the same oracle for wETH and ETH
+				await this.addPriceFeedOracle({ name: "ETH", address: ZERO_ADDRESS, ...coll })
+			}
 		}
 	}
 

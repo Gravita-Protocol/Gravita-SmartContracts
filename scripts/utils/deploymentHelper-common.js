@@ -1,3 +1,4 @@
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 const { getImplementationAddress } = require("@openzeppelin/upgrades-core")
 const fs = require("fs")
 
@@ -42,72 +43,70 @@ const fs = require("fs")
 		return minedTx
 	}
 
-  async deployUpgradable(factory, contractName, state, params = []) {
-		const isUpgradeable = true
-		return await this.loadOrDeploy(factory, contractName, state, isUpgradeable, params)
-	}
-
-	async deployNonUpgradable(factory, contractName, state, params = []) {
-		const isUpgradeable = false
-		return await this.loadOrDeploy(factory, contractName, state, isUpgradeable, params)
-	}
-
-	async loadOrDeploy(factory, contractName, deploymentState, isUpgradeable, params) {
-		if (deploymentState[contractName] && deploymentState[contractName].address) {
-			console.log(`Using previous deployment: ${deploymentState[contractName].address} -> ${contractName}`)
-			return await factory.attach(deploymentState[contractName].address)
-		}
-		console.log(`(Deploying ${contractName}...)`)
-		let retry = 0
-		const maxRetries = 10,
-			timeout = 600_000 // milliseconds
-		while (++retry < maxRetries) {
-			try {
-				let contract, implAddress
-				if (isUpgradeable) {
-					let opts = factory.interface.functions.initialize
-						? { initializer: "initialize()", kind: "uups" }
-						: { kind: "uups" }
-					contract = await upgrades.deployProxy(factory, opts)
-				} else {
-					contract = await factory.deploy(...params)
-				}
+	async loadOrDeployOrUpgrade(contractName, state, isUpgradeable, params) {
+		const timeout = 600_000 // 10 minutes
+		const factory = await this.getFactory(contractName, this.deployerWallet)
+		const address = state[contractName]?.address
+		const alreadyDeployed = state[contractName] && address
+		if (!isUpgradeable) {
+			if (alreadyDeployed) {
+				// Non-Upgradeable contract, already deployed
+				console.log(`Using previous deployment: ${address} -> ${contractName}`)
+				return [await factory.attach(address), false]
+			} else {
+				// Non-Upgradeable contract, new deployment
+				console.log(`(Deploying new ${contractName}...)`)
+				const newContract = await factory.deploy(...params)
 				await this.deployerWallet.provider.waitForTransaction(
-					contract.deployTransaction.hash,
+					newContract.deployTransaction.hash,
 					this.configParams.TX_CONFIRMATIONS,
 					timeout
 				)
-				deploymentState[contractName] = {
-					address: contract.address,
-					txHash: contract.deployTransaction.hash,
-				}
-				if (isUpgradeable) {
-					implAddress = await getImplementationAddress(this.deployerWallet.provider, contract.address)
-					deploymentState[contractName].implAddress = implAddress
-				}
-				this.saveDeployment(deploymentState)
-				return contract
-			} catch (e) {
-				console.log(`[Error: ${e.message}] Retrying...`)
+				await this.updateState(contractName, newContract, isUpgradeable, state)
+				return [newContract, false]
 			}
 		}
-		throw Error(`ERROR: Unable to deploy contract ${contractName} after ${maxRetries} attempts.`)
+		if (alreadyDeployed) {
+			// Existing upgradeable contract, check if upgrade is needed
+			console.log(`(Upgrading ${contractName}...)`)
+			const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
+			await this.deployerWallet.provider.waitForTransaction(
+				upgradedContract.deployTransaction.hash,
+				this.configParams.TX_CONFIRMATIONS,
+				timeout
+			)
+			await this.updateState(contractName, upgradedContract, isUpgradeable, state)
+			return [upgradedContract, true]
+		} else {
+			// Upgradeable contract, new deployment
+			console.log(`(Deploying new ${contractName}...)`)
+			let opts = { kind: "uups" }
+			if (factory.interface.functions.initialize) {
+				opts.initializer = "initialize()"
+			}
+			const newContract = await upgrades.deployProxy(factory, opts)
+			await this.deployerWallet.provider.waitForTransaction(
+				newContract.deployTransaction.hash,
+				this.configParams.TX_CONFIRMATIONS,
+				timeout
+			)
+			await newContract.deployed()
+			await this.updateState(contractName, newContract, isUpgradeable, state)
+			return [newContract, false]
+		}
 	}
 
-	async setAddresses(contractName, contract, addressList) {
-		const gasPrice = this.configParams.GAS_PRICE
-		try {
-			console.log(` - ${contractName}.setAddresses()`)
-			await this.sendAndWaitForTransaction(contract.setAddresses(...addressList, { gasPrice }))
-			console.log(` - ${contractName}.setAddresses() -> ok`)
-		} catch (e) {
-			const msg = e.message || ""
-			if (msg.toLowerCase().includes("already initialized")) {
-				console.log(` - ${contractName}.setAddresses() -> failed (contract was already initialized)`)
-			} else {
-				console.log(e)
-			}
+	async updateState(contractName, contract, isUpgradeable, state) {
+		state[contractName] = {
+			address: contract.address,
+			txHash: contract.deployTransaction.hash,
 		}
+		let implAddress
+		if (isUpgradeable) {
+			implAddress = await getImplementationAddress(this.deployerWallet.provider, contract.address)
+			state[contractName].implAddress = implAddress
+		}
+		this.saveDeployment(state)
 	}
 
 	async getContractName(contract) {
@@ -115,18 +114,6 @@ const fs = require("fs")
 			return await contract.NAME()
 		} catch (e) {
 			return "?"
-		}
-	}
-
-	async isInitialized(contract) {
-		let name = await this.getContractName()
-		if (contract.functions["isInitialized()"]) {
-			const isInitialized = await contract.isInitialized()
-			console.log(`${contract.address} ${name}.isInitialized() -> ${isInitialized}`)
-			return isInitialized
-		} else {
-			console.log(`${contract.address} ${name} is not initializable`)
-			return true
 		}
 	}
 
@@ -166,7 +153,6 @@ const fs = require("fs")
 			}
 		}
 		deploymentState[name].verification = `${this.configParams.ETHERSCAN_BASE_URL}/${deploymentState[name].address}#code`
-
 		this.saveDeployment(deploymentState)
 	}
 }
