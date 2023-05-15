@@ -46,7 +46,11 @@ module.exports = {
 						enabled: true,
 						runs: 200,
 					},
-					//viaIR: true,
+					outputSelection: {
+						"*": {
+							"*": ["storageLayout"],
+						},
+					},
 				},
 			},
 		],
@@ -84,4 +88,3 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
-
