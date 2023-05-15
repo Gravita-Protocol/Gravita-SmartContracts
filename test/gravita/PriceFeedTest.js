@@ -15,7 +15,7 @@ const MockWstETH = artifacts.require("MockWstETH")
 const PriceFeed = artifacts.require("PriceFeedTester")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
-const WstEth2EthPriceAggregator = artifacts.require("WstEth2EthPriceAggregator")
+const WstEth2UsdPriceAggregator = artifacts.require("WstEth2UsdPriceAggregator")
 
 const { TestHelper } = require("../utils/testHelpers.js")
 const { dec, assertRevert, toBN, getLatestBlockTimestamp, fastForwardTime } = TestHelper
@@ -68,7 +68,7 @@ contract("PriceFeed", async accounts => {
 
 		await priceFeed.initialize()
 
-		timelock = await Timelock.new(86400 * 3)
+		timelock = await Timelock.new(86400 * 3, owner)
 		setBalance(timelock.address, 1e18)
 
 		// Set Chainlink latest and prev roundId's to non-zero
@@ -166,65 +166,54 @@ contract("PriceFeed", async accounts => {
 		})
 
 		it("wstETH price via custom aggregator", async () => {
-			const ETH_TO_USD = "197870000000"
-			const STETH_TO_ETH = "997265198653368300"
-			const WSTETH_TO_STETH = "1122752566282725055"
+			const WSTETH_TO_STETH = "1124168697480543467"
+			const STETH_TO_USD = "182673073369"
 
 			await setAddressesAndOracle()
 
-			const eth_to_usd_mockChainlink = mockChainlink
-			await eth_to_usd_mockChainlink.setDecimals(8)
-			await eth_to_usd_mockChainlink.setPrice(ETH_TO_USD)
-			await eth_to_usd_mockChainlink.setPrevPrice(ETH_TO_USD)
-			await eth_to_usd_mockChainlink.setLatestRoundId(3)
-			await eth_to_usd_mockChainlink.setPrevRoundId(2)
-			await eth_to_usd_mockChainlink.setUpdateTime(await getLatestBlockTimestamp(web3))
-
-			const stEth_to_eth_mockChainlink = await MockChainlink.new()
-			await stEth_to_eth_mockChainlink.setDecimals(18)
-			await stEth_to_eth_mockChainlink.setPrice(STETH_TO_ETH)
-			await stEth_to_eth_mockChainlink.setPrevPrice(STETH_TO_ETH)
-			await stEth_to_eth_mockChainlink.setLatestRoundId(3)
-			await stEth_to_eth_mockChainlink.setPrevRoundId(2)
-			await stEth_to_eth_mockChainlink.setUpdateTime(await getLatestBlockTimestamp(web3))
+			const stEth_to_usd_mockChainlink = await MockChainlink.new()
+			await stEth_to_usd_mockChainlink.setDecimals(8)
+			await stEth_to_usd_mockChainlink.setPrice(STETH_TO_USD)
+			await stEth_to_usd_mockChainlink.setPrevPrice(STETH_TO_USD)
+			await stEth_to_usd_mockChainlink.setLatestRoundId(3)
+			await stEth_to_usd_mockChainlink.setPrevRoundId(2)
+			await stEth_to_usd_mockChainlink.setUpdateTime(await getLatestBlockTimestamp(web3))
 
 			const mock_wstETH = await MockWstETH.new()
 			mock_wstETH.setStETHPerToken(WSTETH_TO_STETH)
 
-			const wstEth_to_eth_oracle = await WstEth2EthPriceAggregator.new(
+			const wstEth_to_usd_oracle = await WstEth2UsdPriceAggregator.new(
 				mock_wstETH.address,
-				stEth_to_eth_mockChainlink.address
+				stEth_to_usd_mockChainlink.address
 			)
-			assert.equal(await wstEth_to_eth_oracle.decimals(), "18")
+			const aggregatorDecimals = Number(await wstEth_to_usd_oracle.decimals())
+			assert.equal(aggregatorDecimals, 8)
 
-			const wstEth_to_eth_priceBN = (await wstEth_to_eth_oracle.latestRoundData()).answer
-			const wstEth_to_eth_price = ethers.utils.formatUnits(wstEth_to_eth_priceBN.toString(), 18)
+			const wstEth_to_usd_priceBN1 = (await wstEth_to_usd_oracle.latestRoundData()).answer
+			const wstEth_to_usd_price1 = ethers.utils.formatUnits(wstEth_to_usd_priceBN1.toString(), aggregatorDecimals)
 
-			const expected_wstEth_to_eth_priceBN = toBN(WSTETH_TO_STETH)
-				.mul(toBN(STETH_TO_ETH))
+			const expected_wstEth_to_usd_priceBN1 = toBN(WSTETH_TO_STETH)
+				.mul(toBN(STETH_TO_USD))
 				.div(toBN(dec(1, "ether")))
-			const expected_wstEth_to_eth_price = ethers.utils.formatUnits(expected_wstEth_to_eth_priceBN.toString(), 18)
+			const expected_wstEth_to_usd_price = ethers.utils.formatUnits(expected_wstEth_to_usd_priceBN1.toString(), aggregatorDecimals)
 
-			assert.equal(wstEth_to_eth_price, expected_wstEth_to_eth_price)
+			assert.equal(wstEth_to_usd_price1, expected_wstEth_to_usd_price)
 
 			await priceFeed.setOracle(
 				mock_wstETH.address,
-				wstEth_to_eth_oracle.address,
+				wstEth_to_usd_oracle.address,
 				MAX_PRICE_DEVIATION_BETWEEN_ROUNDS,
-				(isEthIndexed = true)
+				(isEthIndexed = false)
 			)
 			const feedDigits = Number(await priceFeed.TARGET_DIGITS())
 			assert.equal(feedDigits, 18)
 
 			await priceFeed.fetchPrice(mock_wstETH.address)
 
-			const wstEth_to_usd_priceBN = (await priceFeed.priceRecords(mock_wstETH.address)).scaledPrice
-			const expected_wstEth_to_usd_priceBN = expected_wstEth_to_eth_priceBN.mul(toBN(ETH_TO_USD)).div(toBN(dec(1, 8)))
+			const wstEth_to_usd_priceBN2 = (await priceFeed.priceRecords(mock_wstETH.address)).scaledPrice
+			const wstEth_to_usd_price2 = ethers.utils.formatUnits(wstEth_to_usd_priceBN2.toString(), feedDigits)
 
-			const wstEth_to_usd_price = ethers.utils.formatUnits(wstEth_to_usd_priceBN.toString(), feedDigits)
-			const expected_wstEth_to_usd_price = ethers.utils.formatUnits(expected_wstEth_to_usd_priceBN.toString(), 18)
-
-			assert.equal(wstEth_to_usd_price, expected_wstEth_to_usd_price)
+			assert.equal(wstEth_to_usd_price2, expected_wstEth_to_usd_price)
 		})
 	})
 

@@ -23,6 +23,7 @@
 		"solc": "^0.6.12"
 	},
 	"devDependencies": {
+		"@defi-wonderland/smock": "^2.3.4",
 		"@enzoferey/ethers-error-parser": "^0.2.3",
 		"@ethersproject/abi": "^5.7.0",
 		"@ethersproject/providers": "^5.7.2",

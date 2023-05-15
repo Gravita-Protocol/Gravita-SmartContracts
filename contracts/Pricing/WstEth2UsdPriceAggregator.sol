@@ -11,34 +11,33 @@ interface IWstETH {
 }
 
 /*
- * @notice Returns the ETH price for 1 wstETH; the ETH:USD price then needs to be calculated by the caller.
+ * @notice Returns the USD price for 1 wstETH.
  *
- * @dev Queries the aggregator for the stETH-ETH pair; queries the wstETH token for its stETH value/rate; then
+ * @dev Queries the wstETH token for its stETH value/rate; then queries the stETH:USD oracle for the price, and
  *      multiplies the results. There is a known (minor) issue with the getRoundData() function, where the historical 
  *      value for a previous round (price) can be queried from the feed, but the current st/wstEth rate is used
  *      (instead of the historical pair); we do not see that as a problem as this contract's return values are
  *      supposed to be used in short-time context checks (and not for long-term single-source-of-truth queries)
  */
-contract WstEth2EthPriceAggregator is AggregatorV3Interface {
-	uint8 private constant decimalsVal = 18;
+contract WstEth2UsdPriceAggregator is AggregatorV3Interface {
 	int256 internal constant PRECISION = 1 ether;
 
 	IWstETH public immutable wstETH;
-	AggregatorV3Interface public immutable stETH2ETHAggregator;
+	AggregatorV3Interface public immutable stETH2USDAggregator;
 
-	constructor(address _wstETHAddress, address _stETH2ETHAggregatorAddress) {
+	constructor(address _wstETHAddress, address _stETH2USDAggregatorAddress) {
 		wstETH = IWstETH(_wstETHAddress);
-		stETH2ETHAggregator = AggregatorV3Interface(_stETH2ETHAggregatorAddress);
+		stETH2USDAggregator = AggregatorV3Interface(_stETH2USDAggregatorAddress);
 	}
 
 	// AggregatorV3Interface functions ----------------------------------------------------------------------------------
 
-	function decimals() external pure override returns (uint8) {
-		return decimalsVal;
+	function decimals() external view override returns (uint8) {
+		return stETH2USDAggregator.decimals();
 	}
 
 	function description() external pure override returns (string memory) {
-		return "WstEth2EthPriceAggregator";
+		return "WstEth2UsdPriceAggregator";
 	}
 
 	function getRoundData(uint80 _roundId)
@@ -53,7 +52,7 @@ contract WstEth2EthPriceAggregator is AggregatorV3Interface {
 			uint80 answeredInRound
 		)
 	{
-		(roundId, answer, startedAt, updatedAt, answeredInRound) = stETH2ETHAggregator.getRoundData(_roundId);
+		(roundId, answer, startedAt, updatedAt, answeredInRound) = stETH2USDAggregator.getRoundData(_roundId);
     answer = _stETH2wstETH(answer);
 	}
 
@@ -69,7 +68,7 @@ contract WstEth2EthPriceAggregator is AggregatorV3Interface {
 			uint80 answeredInRound
 		)
 	{
-		(roundId, answer, startedAt, updatedAt, answeredInRound) = stETH2ETHAggregator.latestRoundData();
+		(roundId, answer, startedAt, updatedAt, answeredInRound) = stETH2USDAggregator.latestRoundData();
     answer = _stETH2wstETH(answer);
 	}
 
