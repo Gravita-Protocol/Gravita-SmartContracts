@@ -68,7 +68,7 @@ contract("PriceFeed", async accounts => {
 
 		await priceFeed.initialize()
 
-		timelock = await Timelock.new(86400 * 3)
+		timelock = await Timelock.new(86400 * 3, owner)
 		setBalance(timelock.address, 1e18)
 
 		// Set Chainlink latest and prev roundId's to non-zero
