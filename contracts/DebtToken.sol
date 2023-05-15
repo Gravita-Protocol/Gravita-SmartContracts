@@ -45,7 +45,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		address _stabilityPoolAddress,
 		address _borrowerOperationsAddress,
 		address _timelockAddress
-	) ERC20("GRAI", "GRAI") {
+	) ERC20("Gravita Debt Token", "GRAI") {
 		vesselManagerAddress = _vesselManagerAddress;
 		timelockAddress = _timelockAddress;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -56,9 +56,6 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		isSetupInitialized = true;
 	}
 
-	// --- Functions for intra-Gravita calls ---
-
-	//
 	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {
 		emergencyStopMintingCollateral[_asset] = status;
 		emit EmergencyStopMintingCollateral(_asset, status);
