@@ -37,6 +37,8 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 	// Addresses for easy access
 	address[] public validCollateral; // index maps to token address.
 
+	bool public isSetupInitialized;
+
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	// Require that the collateral exists in the controller. If it is not the 0th index, and the
@@ -48,8 +50,14 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 	}
 
 	modifier onlyTimelock() {
-		if (msg.sender != timelockAddress) {
-			revert AdminContract__OnlyTimelock();
+		if (isSetupInitialized) {
+			if (msg.sender != timelockAddress) {
+				revert AdminContract__OnlyTimelock();
+			}
+		} else {
+			if (msg.sender != owner()) {
+				revert AdminContract__OnlyOwner();
+			}
 		}
 		_;
 	}
@@ -69,11 +77,19 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 		_;
 	}
 
-	// Initializer ------------------------------------------------------------------------------------------------------
+	// Initializers -----------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+	}
+
+	/**
+	 * @dev The deployment script will call this function when all initial collaterals have been configured;
+	 *      after this is set to true, all subsequent config/setters will need to go through the timelocks.
+	 */
+	function setSetupIsInitialized() external onlyTimelock {
+		isSetupInitialized = true;
 	}
 
 	// External Functions -----------------------------------------------------------------------------------------------
