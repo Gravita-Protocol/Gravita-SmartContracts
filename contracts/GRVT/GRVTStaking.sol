@@ -39,12 +39,12 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	mapping(address => uint256) public sentToTreasuryTracker;
 
 	IERC20Upgradeable public override grvtToken;
-	IERC20Upgradeable public debtToken;
+	address public constant debtToken = address(0);
 
 	address public activePoolAddress;
 	address public feeCollectorAddress;
 	address public vesselManagerAddress;
-	address public treasury;
+	address public constant treasury = address(0);
 
 	bool public isSetupInitialized;
 
@@ -60,19 +60,14 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	// --- Functions ---
 	function setAddresses(
 		address _grvtTokenAddress,
-		address _debtTokenAddress,
 		address _feeCollectorAddress,
-		address _vesselManagerAddress,
-		address _treasury
+		address _vesselManagerAddress
 	) external onlyOwner {
 		require(!isSetupInitialized, "Setup is already initialized");
-		require(_treasury != address(0), "Invalid Treasury Address");
-		
+
 		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
-		debtToken = IERC20Upgradeable(_debtTokenAddress);
 		feeCollectorAddress = _feeCollectorAddress;
 		vesselManagerAddress = _vesselManagerAddress;
-		treasury = _treasury;
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
 		ASSET_TYPE.push(ETH_REF_ADDRESS);
@@ -169,11 +164,6 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function unpause() public onlyOwner {
 		_unpause();
-	}
-
-	function changeTreasuryAddress(address _treasury) public onlyOwner {
-		treasury = _treasury;
-		emit TreasuryAddressChanged(_treasury);
 	}
 
 	// --- Reward-per-unit-staked increase functions. Called by Gravita core contracts ---

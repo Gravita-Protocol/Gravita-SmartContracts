@@ -146,11 +146,12 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	string public constant NAME = "StabilityPool";
 
-	IBorrowerOperations public borrowerOperations;
-	IVesselManager public vesselManager;
-	IDebtToken public debtToken;
-	ISortedVessels public sortedVessels;
-	ICommunityIssuance public communityIssuance;
+	IBorrowerOperations public constant borrowerOperations = IBorrowerOperations(address(0));
+	IVesselManager public constant vesselManager = IVesselManager(address(0));
+	IDebtToken public constant debtToken = IDebtToken(address(0));
+	ISortedVessels public constant sortedVessels = ISortedVessels(address(0));
+	ICommunityIssuance public constant communityIssuance = ICommunityIssuance(address(0));
+	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	// Tracker for debtToken held in the pool. Changes when users deposit/withdraw, and when Vessel debt is offset.
 	uint256 internal totalDebtTokenDeposits;
@@ -214,43 +215,13 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	uint256[] public lastAssetError_Offset;
 	uint256 public lastDebtTokenLossError_Offset;
 
-	bool public isSetupInitialized;
-
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__ReentrancyGuard_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _activePoolAddress,
-		address _debtTokenAddress,
-		address _sortedVesselsAddress,
-		address _communityIssuanceAddress,
-		address _adminContractAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
-		vesselManager = IVesselManager(_vesselManagerAddress);
-		activePool = IActivePool(_activePoolAddress);
-		debtToken = IDebtToken(_debtTokenAddress);
-		sortedVessels = ISortedVessels(_sortedVesselsAddress);
-		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
-		adminContract = IAdminContract(_adminContractAddress);
-
 		P = DECIMAL_PRECISION;
-		isSetupInitialized = true;
-	}
-
-	function setCommunityIssuanceAddress(address _communityIssuanceAddress) external override onlyAdminContract {
-		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
-		emit CommunityIssuanceAddressChanged(_communityIssuanceAddress);
 	}
 
 	/**
@@ -312,16 +283,14 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 		uint256 initialDeposit = deposits[msg.sender];
 
-		ICommunityIssuance communityIssuanceCached = communityIssuance;
-
-		_triggerGRVTIssuance(communityIssuanceCached);
+		_triggerGRVTIssuance();
 
 		(address[] memory gainAssets, uint256[] memory gainAmounts) = getDepositorGains(msg.sender);
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
 		// First pay out any GRVT gains
-		_payOutGRVTGains(communityIssuanceCached, msg.sender);
+		_payOutGRVTGains(msg.sender);
 
 		// just pulls debtTokens into the pool, updates totalDeposits variable for the stability pool and throws an event
 		_sendToStabilityPool(msg.sender, _amount);
@@ -354,8 +323,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 initialDeposit = deposits[msg.sender];
 		_requireUserHasDeposit(initialDeposit);
 
-		ICommunityIssuance communityIssuanceCached = communityIssuance;
-		_triggerGRVTIssuance(communityIssuanceCached);
+		_triggerGRVTIssuance();
 
 		(assets, amounts) = getDepositorGains(msg.sender);
 
@@ -365,7 +333,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
 		// First pay out any GRVT gains
-		_payOutGRVTGains(communityIssuanceCached, msg.sender);
+		_payOutGRVTGains(msg.sender);
 		_sendToDepositor(msg.sender, debtTokensToWithdraw);
 
 		// Update deposit
@@ -378,9 +346,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	// --- GRVT issuance functions ---
 
-	function _triggerGRVTIssuance(ICommunityIssuance _communityIssuance) internal {
-		if (address(_communityIssuance) != address(0)) {
-			uint256 GRVTIssuance = _communityIssuance.issueGRVT();
+	function _triggerGRVTIssuance() internal {
+		if (address(communityIssuance) != address(0)) {
+			uint256 GRVTIssuance = communityIssuance.issueGRVT();
 			_updateG(GRVTIssuance);
 		}
 	}
@@ -437,7 +405,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		if (cachedTotalDebtTokenDeposits == 0 || _debtToOffset == 0) {
 			return;
 		}
-		_triggerGRVTIssuance(communityIssuance);
+		_triggerGRVTIssuance();
 		(uint256 collGainPerUnitStaked, uint256 debtLossPerUnitStaked) = _computeRewardsPerUnitStaked(
 			_asset,
 			_amountAdded,
@@ -560,11 +528,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @param _debtToOffset uint256
 	 */
 	function _moveOffsetCollAndDebt(address _asset, uint256 _amount, uint256 _debtToOffset) internal {
-		IActivePool activePoolCached = activePool;
-		activePoolCached.decreaseDebt(_asset, _debtToOffset);
+		activePool.decreaseDebt(_asset, _debtToOffset);
 		_decreaseDebtTokens(_debtToOffset);
 		debtToken.burn(address(this), _debtToOffset);
-		activePoolCached.sendAsset(_asset, address(this), _amount);
+		activePool.sendAsset(_asset, address(this), _amount);
 	}
 
 	function _decreaseDebtTokens(uint256 _amount) internal {
@@ -854,10 +821,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		return depositSnapshots[_depositor].S[_asset];
 	}
 
-	function _payOutGRVTGains(ICommunityIssuance _communityIssuance, address _depositor) internal {
-		if (address(_communityIssuance) != address(0)) {
+	function _payOutGRVTGains(address _depositor) internal {
+		if (address(communityIssuance) != address(0)) {
 			uint256 depositorGRVTGain = getDepositorGRVTGain(_depositor);
-			_communityIssuance.sendGRVT(_depositor, depositorGRVTGain);
+			communityIssuance.sendGRVT(_depositor, depositorGRVTGain);
 			emit GRVTPaidToDepositor(_depositor, depositorGRVTGain);
 		}
 	}
@@ -891,20 +858,16 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @notice check ICR of bottom vessel (per asset) in SortedVessels
 	 */
 	function _requireNoUnderCollateralizedVessels() internal {
-		IVesselManager vesselManagerCached = vesselManager;
-		IAdminContract adminContractCached = adminContract;
-		ISortedVessels sortedVesselsCached = sortedVessels;
-		IPriceFeed priceFeedCached = adminContractCached.priceFeed();
-		address[] memory assets = adminContractCached.getValidCollateral();
+		address[] memory assets = adminContract.getValidCollateral();
 		uint256 assetsLen = assets.length;
 		for (uint256 i = 0; i < assetsLen; ) {
 			address assetAddress = assets[i];
-			address lowestVessel = sortedVesselsCached.getLast(assetAddress);
+			address lowestVessel = sortedVessels.getLast(assetAddress);
 			if (lowestVessel != address(0)) {
-				uint256 price = priceFeedCached.fetchPrice(assetAddress);
-				uint256 ICR = vesselManagerCached.getCurrentICR(assetAddress, lowestVessel, price);
+				uint256 price = priceFeed.fetchPrice(assetAddress);
+				uint256 ICR = vesselManager.getCurrentICR(assetAddress, lowestVessel, price);
 				require(
-					ICR >= adminContractCached.getMcr(assetAddress),
+					ICR >= adminContract.getMcr(assetAddress),
 					"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
 				);
 			}
@@ -932,8 +895,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	}
 
 	modifier onlyActivePool() {
-		if (msg.sender != address(adminContract.activePool())) {
-			revert StabilityPool__ActivePoolOnly(msg.sender, address(adminContract.activePool()));
+		if (msg.sender != address(activePool)) {
+			revert StabilityPool__ActivePoolOnly(msg.sender, address(activePool));
 		}
 		_;
 	}
@@ -955,8 +918,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

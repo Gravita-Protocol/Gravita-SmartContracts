@@ -33,14 +33,14 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	address public timelockAddress;
+	address public constant timelockAddress = address(0);
 
-	ICommunityIssuance public communityIssuance;
-	IActivePool public activePool;
-	IDefaultPool public defaultPool;
-	IStabilityPool public stabilityPool;
-	ICollSurplusPool public collSurplusPool;
-	IPriceFeed public priceFeed;
+	ICommunityIssuance public constant communityIssuance = ICommunityIssuance(address(0));
+	IActivePool public constant activePool = IActivePool(address(0));
+	IDefaultPool public constant defaultPool = IDefaultPool(address(0));
+	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
+	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
+	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	/**
 		@dev Cannot be public as struct has too many variables for the stack. 
@@ -51,8 +51,6 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	// list of all collateral types in collateralParams (active and deprecated)
 	// Addresses for easy access
 	address[] public validCollateral; // index maps to token address.
-
-	bool public isSetupInitialized;
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
@@ -65,14 +63,8 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	modifier onlyTimelock() {
-		if (isSetupInitialized) {
-			if (msg.sender != timelockAddress) {
-				revert AdminContract__OnlyTimelock();
-			}
-		} else {
-			if (msg.sender != owner()) {
-				revert AdminContract__OnlyOwner();
-			}
+		if (msg.sender != timelockAddress) {
+			revert AdminContract__OnlyTimelock();
 		}
 		_;
 	}
@@ -100,33 +92,6 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	// External Functions -----------------------------------------------------------------------------------------------
-
-	function setAddresses(
-		address _communityIssuanceAddress,
-		address _activePoolAddress,
-		address _defaultPoolAddress,
-		address _stabilityPoolAddress,
-		address _collSurplusPoolAddress,
-		address _priceFeedAddress,
-		address _timelockAddress
-	) external onlyTimelock {
-		require(!isSetupInitialized, "Setup is already initialized");
-		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
-		activePool = IActivePool(_activePoolAddress);
-		defaultPool = IDefaultPool(_defaultPoolAddress);
-		stabilityPool = IStabilityPool(_stabilityPoolAddress);
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		priceFeed = IPriceFeed(_priceFeedAddress);
-		timelockAddress = _timelockAddress;
-	}
-
-	/**
-	 * @dev The deployment script will call this function when all initial collaterals have been configured;
-	 *      after this is set to true, all subsequent config/setters will need to go through the timelocks.
-	 */
-	function setSetupIsInitialized() external onlyTimelock {
-		isSetupInitialized = true;
-	}
 
 	function addNewCollateral(
 		address _collateral,

@@ -18,19 +18,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
-	struct LiquidationContractsCache {
-		IActivePool activePool;
-		IDefaultPool defaultPool;
-		ISortedVessels sortedVessels;
-	}
-
-	struct RedemptionContractsCache {
-		IAdminContract adminContract;
-		IPriceFeed priceFeed;
-		ISortedVessels sortedVessels;
-		IVesselManager vesselManager;
-	}
-
 	struct HintHelperLocalVars {
 		address asset;
 		uint256 debtTokenAmount;
@@ -40,12 +27,12 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	IVesselManager public vesselManager;
-	ISortedVessels public sortedVessels;
-	IStabilityPool public stabilityPool;
-	ICollSurplusPool public collSurplusPool;
-	IDebtToken public debtToken;
-	bool public isSetupInitialized;
+	IVesselManager public constant vesselManager = IVesselManager(address(0));
+	ISortedVessels public constant sortedVessels = ISortedVessels(address(0));
+	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
+	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
+	IDebtToken public constant debtToken = IDebtToken(address(0));
+	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
@@ -62,26 +49,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-	}
-	
-	// Dependency setter ------------------------------------------------------------------------------------------------
-
-	function setAddresses(
-		address _vesselManagerAddress,
-		address _sortedVesselsAddress,
-		address _stabilityPoolAddress,
-		address _collSurplusPoolAddress,
-		address _debtTokenAddress,
-		address _adminContractAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		vesselManager = IVesselManager(_vesselManagerAddress);
-		sortedVessels = ISortedVessels(_sortedVesselsAddress);
-		stabilityPool = IStabilityPool(_stabilityPoolAddress);
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		debtToken = IDebtToken(_debtTokenAddress);
-		adminContract = IAdminContract(_adminContractAddress);
-		isSetupInitialized = true;
 	}
 
 	// Liquidation external functions -----------------------------------------------------------------------------------
@@ -103,27 +70,15 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	 * starting from the one with the lowest collateral ratio in the system, and moving upwards.
 	 */
 	function liquidateVessels(address _asset, uint256 _n) external override nonReentrant {
-		LiquidationContractsCache memory contractsCache = LiquidationContractsCache({
-			activePool: adminContract.activePool(),
-			defaultPool: adminContract.defaultPool(),
-			sortedVessels: sortedVessels
-		});
-		IStabilityPool stabilityPoolCached = stabilityPool;
 		LocalVariables_OuterLiquidationFunction memory vars;
 		LiquidationTotals memory totals;
-		vars.price = adminContract.priceFeed().fetchPrice(_asset);
-		vars.debtTokenInStabPool = stabilityPoolCached.getTotalDebtTokenDeposits();
+		vars.price = priceFeed.fetchPrice(_asset);
+		vars.debtTokenInStabPool = stabilityPool.getTotalDebtTokenDeposits();
 		vars.recoveryModeAtStart = _checkRecoveryMode(_asset, vars.price);
 
 		// Perform the appropriate liquidation sequence - tally the values, and obtain their totals
 		if (vars.recoveryModeAtStart) {
-			totals = _getTotalsFromLiquidateVesselsSequence_RecoveryMode(
-				_asset,
-				contractsCache,
-				vars.price,
-				vars.debtTokenInStabPool,
-				_n
-			);
+			totals = _getTotalsFromLiquidateVesselsSequence_RecoveryMode(_asset, vars.price, vars.debtTokenInStabPool, _n);
 		} else {
 			totals = _getTotalsFromLiquidateVesselsSequence_NormalMode(_asset, vars.price, vars.debtTokenInStabPool, _n);
 		}
@@ -140,7 +95,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			totals.totalCollToSendToSP
 		);
 		if (totals.totalCollSurplus != 0) {
-			contractsCache.activePool.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
+			activePool.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
 		vesselManager.updateSystemSnapshots_excludeCollRemainder(_asset, totals.totalCollGasCompensation);
@@ -170,13 +125,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			revert VesselManagerOperations__InvalidArraySize();
 		}
 
-		IActivePool activePoolCached = adminContract.activePool();
-		IStabilityPool stabilityPoolCached = stabilityPool;
 		LocalVariables_OuterLiquidationFunction memory vars;
 		LiquidationTotals memory totals;
 
-		vars.debtTokenInStabPool = stabilityPoolCached.getTotalDebtTokenDeposits();
-		vars.price = adminContract.priceFeed().fetchPrice(_asset);
+		vars.debtTokenInStabPool = stabilityPool.getTotalDebtTokenDeposits();
+		vars.price = priceFeed.fetchPrice(_asset);
 		vars.recoveryModeAtStart = _checkRecoveryMode(_asset, vars.price);
 
 		// Perform the appropriate liquidation sequence - tally values and obtain their totals.
@@ -198,7 +151,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			totals.totalCollToSendToSP
 		);
 		if (totals.totalCollSurplus != 0) {
-			activePoolCached.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
+			activePool.sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
 		}
 
 		// Update system snapshots
@@ -234,28 +187,21 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 _maxFeePercentage
 	) external override {
 		RedemptionTotals memory totals;
-		RedemptionContractsCache memory contractsCache = RedemptionContractsCache({
-			adminContract: adminContract,
-			priceFeed: adminContract.priceFeed(),
-			sortedVessels: sortedVessels,
-			vesselManager: vesselManager
-		});
-		totals.price = contractsCache.priceFeed.fetchPrice(_asset);
-		_validateRedemptionRequirements(contractsCache, _asset, _maxFeePercentage, _debtTokenAmount, totals.price);
+		totals.price = priceFeed.fetchPrice(_asset);
+		_validateRedemptionRequirements(_asset, _maxFeePercentage, _debtTokenAmount, totals.price);
 		totals.totalDebtTokenSupplyAtStart = getEntireSystemDebt(_asset);
 		totals.remainingDebt = _debtTokenAmount;
 		address currentBorrower;
-		if (contractsCache.vesselManager.isValidFirstRedemptionHint(_asset, _firstRedemptionHint, totals.price)) {
+		if (vesselManager.isValidFirstRedemptionHint(_asset, _firstRedemptionHint, totals.price)) {
 			currentBorrower = _firstRedemptionHint;
 		} else {
-			currentBorrower = contractsCache.sortedVessels.getLast(_asset);
+			currentBorrower = sortedVessels.getLast(_asset);
 			// Find the first vessel with ICR >= MCR
 			while (
 				currentBorrower != address(0) &&
-				contractsCache.vesselManager.getCurrentICR(_asset, currentBorrower, totals.price) <
-				contractsCache.adminContract.getMcr(_asset)
+				vesselManager.getCurrentICR(_asset, currentBorrower, totals.price) < adminContract.getMcr(_asset)
 			) {
-				currentBorrower = contractsCache.sortedVessels.getPrev(_asset, currentBorrower);
+				currentBorrower = sortedVessels.getPrev(_asset, currentBorrower);
 			}
 		}
 
@@ -266,9 +212,9 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		while (currentBorrower != address(0) && totals.remainingDebt != 0 && _maxIterations != 0) {
 			_maxIterations--;
 			// Save the address of the vessel preceding the current one, before potentially modifying the list
-			address nextUserToCheck = contractsCache.sortedVessels.getPrev(_asset, currentBorrower);
+			address nextUserToCheck = sortedVessels.getPrev(_asset, currentBorrower);
 
-			contractsCache.vesselManager.applyPendingRewards(_asset, currentBorrower);
+			vesselManager.applyPendingRewards(_asset, currentBorrower);
 
 			SingleRedemptionValues memory singleRedemption = _redeemCollateralFromVessel(
 				_asset,
@@ -294,7 +240,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		// Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
 		// Use the saved total GRAI supply value, from before it was reduced by the redemption.
-		contractsCache.vesselManager.updateBaseRateFromRedemption(
+		vesselManager.updateBaseRateFromRedemption(
 			_asset,
 			totals.totalCollDrawn,
 			totals.price,
@@ -302,11 +248,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		);
 
 		// Calculate the collateral fee
-		totals.collFee = contractsCache.vesselManager.getRedemptionFee(_asset, totals.totalCollDrawn);
+		totals.collFee = vesselManager.getRedemptionFee(_asset, totals.totalCollDrawn);
 
 		_requireUserAcceptsFee(totals.collFee, totals.totalCollDrawn, _maxFeePercentage);
 
-		contractsCache.vesselManager.finalizeRedemption(
+		vesselManager.finalizeRedemption(
 			_asset,
 			msg.sender,
 			totals.totalDebtToRedeem,
@@ -347,8 +293,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		override
 		returns (address firstRedemptionHint, uint256 partialRedemptionHintNewICR, uint256 truncatedDebtTokenAmount)
 	{
-		ISortedVessels sortedVesselsCached = sortedVessels;
-
 		HintHelperLocalVars memory vars = HintHelperLocalVars({
 			asset: _asset,
 			debtTokenAmount: _debtTokenAmount,
@@ -357,13 +301,13 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		});
 
 		uint256 remainingDebt = _debtTokenAmount;
-		address currentVesselBorrower = sortedVesselsCached.getLast(vars.asset);
+		address currentVesselBorrower = sortedVessels.getLast(vars.asset);
 
 		while (
 			currentVesselBorrower != address(0) &&
 			vesselManager.getCurrentICR(vars.asset, currentVesselBorrower, vars.price) < adminContract.getMcr(vars.asset)
 		) {
-			currentVesselBorrower = sortedVesselsCached.getPrev(vars.asset, currentVesselBorrower);
+			currentVesselBorrower = sortedVessels.getPrev(vars.asset, currentVesselBorrower);
 		}
 
 		firstRedemptionHint = currentVesselBorrower;
@@ -406,7 +350,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				break;
 			}
 
-			currentVesselBorrower = sortedVesselsCached.getPrev(vars.asset, currentVesselBorrower);
+			currentVesselBorrower = sortedVessels.getPrev(vars.asset, currentVesselBorrower);
 		}
 
 		truncatedDebtTokenAmount = _debtTokenAmount - remainingDebt;
@@ -596,12 +540,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	) internal returns (LiquidationTotals memory totals) {
 		LocalVariables_LiquidationSequence memory vars;
 		LiquidationValues memory singleLiquidation;
-		ISortedVessels sortedVesselsCached = sortedVessels;
 
 		vars.remainingDebtTokenInStabPool = _debtTokenInStabPool;
 
 		for (uint i = 0; i < _n; ) {
-			vars.user = sortedVesselsCached.getLast(_asset);
+			vars.user = sortedVessels.getLast(_asset);
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
 			if (vars.ICR < adminContract.getMcr(_asset)) {
@@ -623,17 +566,16 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		address _borrower,
 		uint256 _debtTokenInStabPool
 	) internal returns (LiquidationValues memory singleLiquidation) {
-		IVesselManager vesselManagerCached = vesselManager;
 		LocalVariables_InnerSingleLiquidateFunction memory vars;
 		(
 			singleLiquidation.entireVesselDebt,
 			singleLiquidation.entireVesselColl,
 			vars.pendingDebtReward,
 			vars.pendingCollReward
-		) = vesselManagerCached.getEntireDebtAndColl(_asset, _borrower);
+		) = vesselManager.getEntireDebtAndColl(_asset, _borrower);
 
-		vesselManagerCached.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
-		vesselManagerCached.removeStake(_asset, _borrower);
+		vesselManager.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
+		vesselManager.removeStake(_asset, _borrower);
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, singleLiquidation.entireVesselColl);
 		singleLiquidation.debtTokenGasCompensation = adminContract.getDebtTokenGasCompensation(_asset);
@@ -646,7 +588,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			singleLiquidation.collToRedistribute
 		) = _getOffsetAndRedistributionVals(singleLiquidation.entireVesselDebt, collToLiquidate, _debtTokenInStabPool);
 
-		vesselManagerCached.closeVesselLiquidation(_asset, _borrower);
+		vesselManager.closeVesselLiquidation(_asset, _borrower);
 		emit VesselLiquidated(
 			_asset,
 			_borrower,
@@ -666,8 +608,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 _price
 	) internal returns (LiquidationValues memory singleLiquidation) {
 		LocalVariables_InnerSingleLiquidateFunction memory vars;
-		IVesselManager vesselManagerCached = vesselManager;
-		IAdminContract adminContractCached = adminContract;
 		if (vesselManager.getVesselOwnersCount(_asset) <= 1) {
 			return singleLiquidation;
 		} // don't liquidate if last vessel
@@ -676,23 +616,23 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			singleLiquidation.entireVesselColl,
 			vars.pendingDebtReward,
 			vars.pendingCollReward
-		) = vesselManagerCached.getEntireDebtAndColl(_asset, _borrower);
+		) = vesselManager.getEntireDebtAndColl(_asset, _borrower);
 
 		singleLiquidation.collGasCompensation = _getCollGasCompensation(_asset, singleLiquidation.entireVesselColl);
-		singleLiquidation.debtTokenGasCompensation = adminContractCached.getDebtTokenGasCompensation(_asset);
+		singleLiquidation.debtTokenGasCompensation = adminContract.getDebtTokenGasCompensation(_asset);
 		vars.collToLiquidate = singleLiquidation.entireVesselColl - singleLiquidation.collGasCompensation;
 
 		// If ICR <= 100%, purely redistribute the Vessel across all active Vessels
 		if (_ICR <= adminContract._100pct()) {
-			vesselManagerCached.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
-			vesselManagerCached.removeStake(_asset, _borrower);
+			vesselManager.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
+			vesselManager.removeStake(_asset, _borrower);
 
 			singleLiquidation.debtToOffset = 0;
 			singleLiquidation.collToSendToSP = 0;
 			singleLiquidation.debtToRedistribute = singleLiquidation.entireVesselDebt;
 			singleLiquidation.collToRedistribute = vars.collToLiquidate;
 
-			vesselManagerCached.closeVesselLiquidation(_asset, _borrower);
+			vesselManager.closeVesselLiquidation(_asset, _borrower);
 			emit VesselLiquidated(
 				_asset,
 				_borrower,
@@ -702,9 +642,9 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			);
 
 			// If 100% < ICR < MCR, offset as much as possible, and redistribute the remainder
-		} else if ((_ICR > adminContract._100pct()) && (_ICR < adminContractCached.getMcr(_asset))) {
-			vesselManagerCached.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
-			vesselManagerCached.removeStake(_asset, _borrower);
+		} else if ((_ICR > adminContract._100pct()) && (_ICR < adminContract.getMcr(_asset))) {
+			vesselManager.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
+			vesselManager.removeStake(_asset, _borrower);
 
 			(
 				singleLiquidation.debtToOffset,
@@ -717,7 +657,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_debtTokenInStabPool
 			);
 
-			vesselManagerCached.closeVesselLiquidation(_asset, _borrower);
+			vesselManager.closeVesselLiquidation(_asset, _borrower);
 			emit VesselLiquidated(
 				_asset,
 				_borrower,
@@ -733,14 +673,14 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			 * The remainder due to the capped rate will be claimable as collateral surplus.
 			 */
 		} else if (
-			(_ICR >= adminContractCached.getMcr(_asset)) &&
+			(_ICR >= adminContract.getMcr(_asset)) &&
 			(_ICR < _TCR) &&
 			(singleLiquidation.entireVesselDebt <= _debtTokenInStabPool)
 		) {
-			vesselManagerCached.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
+			vesselManager.movePendingVesselRewardsToActivePool(_asset, vars.pendingDebtReward, vars.pendingCollReward);
 			assert(_debtTokenInStabPool != 0);
 
-			vesselManagerCached.removeStake(_asset, _borrower);
+			vesselManager.removeStake(_asset, _borrower);
 			singleLiquidation = _getCappedOffsetVals(
 				_asset,
 				singleLiquidation.entireVesselDebt,
@@ -748,7 +688,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_price
 			);
 
-			vesselManagerCached.closeVesselLiquidation(_asset, _borrower);
+			vesselManager.closeVesselLiquidation(_asset, _borrower);
 			if (singleLiquidation.collSurplus != 0) {
 				collSurplusPool.accountSurplus(_asset, _borrower, singleLiquidation.collSurplus);
 			}
@@ -774,12 +714,10 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	 */
 	function _getTotalsFromLiquidateVesselsSequence_RecoveryMode(
 		address _asset,
-		LiquidationContractsCache memory _contractsCache,
 		uint256 _price,
 		uint256 _debtTokenInStabPool,
 		uint256 _n
 	) internal returns (LiquidationTotals memory totals) {
-
 		LocalVariables_LiquidationSequence memory vars;
 		LiquidationValues memory singleLiquidation;
 
@@ -788,11 +726,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		vars.entireSystemDebt = getEntireSystemDebt(_asset);
 		vars.entireSystemColl = getEntireSystemColl(_asset);
 
-		vars.user = _contractsCache.sortedVessels.getLast(_asset);
-		address firstUser = _contractsCache.sortedVessels.getFirst(_asset);
+		vars.user = sortedVessels.getLast(_asset);
+		address firstUser = sortedVessels.getFirst(_asset);
 		for (uint i = 0; i < _n && vars.user != firstUser; ) {
 			// we need to cache it, because current user is likely going to be deleted
-			address nextUser = _contractsCache.sortedVessels.getPrev(_asset, vars.user);
+			address nextUser = sortedVessels.getPrev(_asset, vars.user);
 
 			vars.ICR = vesselManager.getCurrentICR(_asset, vars.user, _price);
 
@@ -918,17 +856,16 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	// Redemption internal/helper functions -----------------------------------------------------------------------------
 
 	function _validateRedemptionRequirements(
-		RedemptionContractsCache memory contractsCache,
 		address _asset,
 		uint256 _maxFeePercentage,
 		uint256 _debtTokenAmount,
 		uint256 _price
 	) internal view {
-		uint256 redemptionBlockTimestamp = contractsCache.adminContract.getRedemptionBlockTimestamp(_asset);
+		uint256 redemptionBlockTimestamp = adminContract.getRedemptionBlockTimestamp(_asset);
 		if (redemptionBlockTimestamp > block.timestamp) {
 			revert VesselManagerOperations__RedemptionIsBlocked();
 		}
-		uint256 redemptionFeeFloor = contractsCache.adminContract.getRedemptionFeeFloor(_asset);
+		uint256 redemptionFeeFloor = adminContract.getRedemptionFeeFloor(_asset);
 		if (_maxFeePercentage < redemptionFeeFloor || _maxFeePercentage > DECIMAL_PRECISION) {
 			revert VesselManagerOperations__FeePercentOutOfBounds(redemptionFeeFloor, DECIMAL_PRECISION);
 		}
@@ -940,7 +877,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			revert VesselManagerOperations__InsufficientDebtTokenBalance(redeemerBalance);
 		}
 		uint256 tcr = _getTCR(_asset, _price);
-		uint256 mcr = contractsCache.adminContract.getMcr(_asset);
+		uint256 mcr = adminContract.getMcr(_asset);
 		if (tcr < mcr) {
 			revert VesselManagerOperations__TCRMustBeAboveMCR(tcr, mcr);
 		}
@@ -1006,8 +943,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

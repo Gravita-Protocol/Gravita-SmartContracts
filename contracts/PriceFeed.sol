@@ -27,28 +27,17 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath 
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	address public adminContractAddress;
-	address public timelockAddress;
+	address public constant adminContractAddress = address(0);
+	address public constant timelockAddress = address(0);
 
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;
-
-	bool public isSetupInitialized;
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// Dependency setter ------------------------------------------------------------------------------------------------
-
-	function setAddresses(address _adminContractAddress, address _timelockAddress) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		timelockAddress = _timelockAddress;
-		adminContractAddress = _adminContractAddress;
-		isSetupInitialized = true;
 	}
 
 	// Admin routines ---------------------------------------------------------------------------------------------------
@@ -285,8 +274,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath 
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

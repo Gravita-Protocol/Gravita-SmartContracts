@@ -26,18 +26,16 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	string public constant NAME = "ActivePool";
 
-	address public borrowerOperationsAddress;
-	address public stabilityPoolAddress;
-	address public vesselManagerAddress;
-	address public vesselManagerOperationsAddress;
+	address public constant borrowerOperationsAddress = address(0);
+	address public constant stabilityPoolAddress = address(0);
+	address public constant vesselManagerAddress = address(0);
+	address public constant vesselManagerOperationsAddress = address(0);
 
-	ICollSurplusPool public collSurplusPool;
-	IDefaultPool public defaultPool;
+	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
+	IDefaultPool public constant defaultPool = IDefaultPool(address(0));
 
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
-
-	bool public isSetupInitialized;
 
 	// --- Modifiers ---
 
@@ -84,26 +82,6 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		__Ownable_init();
 		__ReentrancyGuard_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _collSurplusPoolAddress,
-		address _defaultPoolAddress,
-		address _stabilityPoolAddress,
-		address _vesselManagerAddress,
-		address _vesselManagerOperationsAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		defaultPool = IDefaultPool(_defaultPoolAddress);
-		stabilityPoolAddress = _stabilityPoolAddress;
-		vesselManagerAddress = _vesselManagerAddress;
-		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -167,8 +145,8 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

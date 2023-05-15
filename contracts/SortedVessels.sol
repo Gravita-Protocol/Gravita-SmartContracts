@@ -40,13 +40,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels { 
-
+contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 	string public constant NAME = "SortedVessels";
 
-	address public borrowerOperationsAddress;
+	address public constant borrowerOperationsAddress = address(0);
 
-	IVesselManager public vesselManager;
+	IVesselManager public constant vesselManager = IVesselManager(address(0));
 
 	bool public isSetupInitialized;
 
@@ -68,23 +67,12 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 
 	// Collateral type address => ordered list
 	mapping(address => Data) public data;
+
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-	
-	// --- Dependency setters ---
-
-	function setAddresses(
-		address _vesselManagerAddress,
-		address _borrowerOperationsAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		vesselManager = IVesselManager(_vesselManagerAddress);
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		isSetupInitialized = true;
 	}
 
 	/*
@@ -96,19 +84,11 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 	 */
 
 	function insert(address _asset, address _id, uint256 _NICR, address _prevId, address _nextId) external override {
-		IVesselManager vesselManagerCached = vesselManager;
-		_requireCallerIsBOorVesselM(vesselManagerCached);
-		_insert(_asset, vesselManagerCached, _id, _NICR, _prevId, _nextId);
+		_requireCallerIsBOorVesselM();
+		_insert(_asset, _id, _NICR, _prevId, _nextId);
 	}
 
-	function _insert(
-		address _asset,
-		IVesselManager _vesselManager,
-		address _id,
-		uint256 _NICR,
-		address _prevId,
-		address _nextId
-	) internal {
+	function _insert(address _asset, address _id, uint256 _NICR, address _prevId, address _nextId) internal {
 		Data storage assetData = data[_asset];
 
 		// List must not already contain node
@@ -121,10 +101,10 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		address prevId = _prevId;
 		address nextId = _nextId;
 
-		if (!_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
+		if (!_validInsertPosition(_asset, _NICR, prevId, nextId)) {
 			// Sender's hint was not a valid insert position
 			// Use sender's hint to find a valid insert position
-			(prevId, nextId) = _findInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId);
+			(prevId, nextId) = _findInsertPosition(_asset, _NICR, prevId, nextId);
 		}
 
 		Node storage node = assetData.nodes[_id];
@@ -213,9 +193,7 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 	 * @param _nextId Id of next node for the new insert position
 	 */
 	function reInsert(address _asset, address _id, uint256 _newNICR, address _prevId, address _nextId) external override {
-		IVesselManager vesselManagerCached = vesselManager;
-
-		_requireCallerIsBOorVesselM(vesselManagerCached);
+		_requireCallerIsBOorVesselM();
 		// List must contain the node
 		require(contains(_asset, _id), "SortedVessels: List does not contain the id");
 		// NICR must be non-zero
@@ -224,7 +202,7 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		// Remove node from the list
 		_remove(_asset, _id);
 
-		_insert(_asset, vesselManagerCached, _id, _newNICR, _prevId, _nextId);
+		_insert(_asset, _id, _newNICR, _prevId, _nextId);
 	}
 
 	/*
@@ -294,12 +272,11 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		address _prevId,
 		address _nextId
 	) external view override returns (bool) {
-		return _validInsertPosition(_asset, vesselManager, _NICR, _prevId, _nextId);
+		return _validInsertPosition(_asset, _NICR, _prevId, _nextId);
 	}
 
 	function _validInsertPosition(
 		address _asset,
-		IVesselManager _vesselManager,
 		uint256 _NICR,
 		address _prevId,
 		address _nextId
@@ -309,16 +286,16 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 			return isEmpty(_asset);
 		} else if (_prevId == address(0)) {
 			// `(null, _nextId)` is a valid insert position if `_nextId` is the head of the list
-			return data[_asset].head == _nextId && _NICR >= _vesselManager.getNominalICR(_asset, _nextId);
+			return data[_asset].head == _nextId && _NICR >= vesselManager.getNominalICR(_asset, _nextId);
 		} else if (_nextId == address(0)) {
 			// `(_prevId, null)` is a valid insert position if `_prevId` is the tail of the list
-			return data[_asset].tail == _prevId && _NICR <= _vesselManager.getNominalICR(_asset, _prevId);
+			return data[_asset].tail == _prevId && _NICR <= vesselManager.getNominalICR(_asset, _prevId);
 		} else {
 			// `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
 			return
 				data[_asset].nodes[_prevId].nextId == _nextId &&
-				_vesselManager.getNominalICR(_asset, _prevId) >= _NICR &&
-				_NICR >= _vesselManager.getNominalICR(_asset, _nextId);
+				vesselManager.getNominalICR(_asset, _prevId) >= _NICR &&
+				_NICR >= vesselManager.getNominalICR(_asset, _nextId);
 		}
 	}
 
@@ -345,7 +322,7 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		address nextId = assetData.nodes[prevId].nextId;
 
 		// Descend the list until we reach the end or until we find a valid insert position
-		while (prevId != address(0) && !_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
+		while (prevId != address(0) && !_validInsertPosition(_asset, _NICR, prevId, nextId)) {
 			prevId = assetData.nodes[prevId].nextId;
 			nextId = assetData.nodes[prevId].nextId;
 		}
@@ -376,7 +353,7 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		address prevId = assetData.nodes[nextId].prevId;
 
 		// Ascend the list until we reach the end or until we find a valid insertion point
-		while (nextId != address(0) && !_validInsertPosition(_asset, _vesselManager, _NICR, prevId, nextId)) {
+		while (nextId != address(0) && !_validInsertPosition(_asset, _NICR, prevId, nextId)) {
 			nextId = assetData.nodes[nextId].prevId;
 			prevId = assetData.nodes[nextId].prevId;
 		}
@@ -396,12 +373,11 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		address _prevId,
 		address _nextId
 	) external view override returns (address, address) {
-		return _findInsertPosition(_asset, vesselManager, _NICR, _prevId, _nextId);
+		return _findInsertPosition(_asset, _NICR, _prevId, _nextId);
 	}
 
 	function _findInsertPosition(
 		address _asset,
-		IVesselManager _vesselManager,
 		uint256 _NICR,
 		address _prevId,
 		address _nextId
@@ -410,14 +386,14 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		address nextId = _nextId;
 
 		if (prevId != address(0)) {
-			if (!contains(_asset, prevId) || _NICR > _vesselManager.getNominalICR(_asset, prevId)) {
+			if (!contains(_asset, prevId) || _NICR > vesselManager.getNominalICR(_asset, prevId)) {
 				// `prevId` does not exist anymore or now has a smaller NICR than the given NICR
 				prevId = address(0);
 			}
 		}
 
 		if (nextId != address(0)) {
-			if (!contains(_asset, nextId) || _NICR < _vesselManager.getNominalICR(_asset, nextId)) {
+			if (!contains(_asset, nextId) || _NICR < vesselManager.getNominalICR(_asset, nextId)) {
 				// `nextId` does not exist anymore or now has a larger NICR than the given NICR
 				nextId = address(0);
 			}
@@ -425,16 +401,16 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 
 		if (prevId == address(0) && nextId == address(0)) {
 			// No hint - descend list starting from head
-			return _descendList(_asset, _vesselManager, _NICR, data[_asset].head);
+			return _descendList(_asset, vesselManager, _NICR, data[_asset].head);
 		} else if (prevId == address(0)) {
 			// No `prevId` for hint - ascend list starting from `nextId`
-			return _ascendList(_asset, _vesselManager, _NICR, nextId);
+			return _ascendList(_asset, vesselManager, _NICR, nextId);
 		} else if (nextId == address(0)) {
 			// No `nextId` for hint - descend list starting from `prevId`
-			return _descendList(_asset, _vesselManager, _NICR, prevId);
+			return _descendList(_asset, vesselManager, _NICR, prevId);
 		} else {
 			// Descend list starting from `prevId`
-			return _descendList(_asset, _vesselManager, _NICR, prevId);
+			return _descendList(_asset, vesselManager, _NICR, prevId);
 		}
 	}
 
@@ -444,16 +420,16 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 		require(msg.sender == address(vesselManager), "SortedVessels: Caller is not the VesselManager");
 	}
 
-	function _requireCallerIsBOorVesselM(IVesselManager _vesselManager) internal view {
+	function _requireCallerIsBOorVesselM() internal view {
 		require(
-			msg.sender == borrowerOperationsAddress || msg.sender == address(_vesselManager),
+			msg.sender == borrowerOperationsAddress || msg.sender == address(vesselManager),
 			"SortedVessels: Caller is neither BO nor VesselM"
 		);
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

@@ -26,59 +26,19 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 
 	mapping(address => mapping(address => FeeRecord)) public feeRecords; // borrower -> asset -> fees
 
-	address public borrowerOperationsAddress;
-	address public vesselManagerAddress;
-	address public treasuryAddress;
-	address public debtTokenAddress;
+	address public constant borrowerOperationsAddress = address(0);
+	address public constant vesselManagerAddress = address(0);
+	address public constant treasuryAddress = address(0);
+	address public constant debtTokenAddress = address(0);
 
-	IGRVTStaking public grvtStaking;
-	bool public routeToGRVTStaking; // if true, collected fees go to stakers; if false, to the treasury
-	bool public isSetupInitialized;
+	IGRVTStaking public constant grvtStaking = IGRVTStaking(address(0));
+	bool public constant routeToGRVTStaking = false; // if true, collected fees go to stakers; if false, to the treasury
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// Dependency setter ------------------------------------------------------------------------------------------------
-
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _grvtStakingAddress,
-		address _debtTokenAddress,
-		address _treasuryAddress,
-		bool _routeToGRVTStaking
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		require(_treasuryAddress != address(0));
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		vesselManagerAddress = _vesselManagerAddress;
-		grvtStaking = IGRVTStaking(_grvtStakingAddress);
-		debtTokenAddress = _debtTokenAddress;
-		treasuryAddress = _treasuryAddress;
-		routeToGRVTStaking = _routeToGRVTStaking;
-		if (_routeToGRVTStaking && address(grvtStaking) == address(0)) {
-			revert FeeCollector__InvalidGRVTStakingAddress();
-		}
-		isSetupInitialized = true;
-	}
-
-	// Config setters ---------------------------------------------------------------------------------------------------
-
-	function setGRVTStakingAddress(address _grvtStakingAddress) external onlyOwner {
-		grvtStaking = IGRVTStaking(_grvtStakingAddress);
-		emit GRVTStakingAddressChanged(_grvtStakingAddress);
-	}
-
-	function setRouteToGRVTStaking(bool _routeToGRVTStaking) external onlyOwner {
-		if (_routeToGRVTStaking && address(grvtStaking) == address(0)) {
-			revert FeeCollector__InvalidGRVTStakingAddress();
-		}
-		routeToGRVTStaking = _routeToGRVTStaking;
-		emit RouteToGRVTStakingChanged(_routeToGRVTStaking);
 	}
 
 	// Public/external methods ------------------------------------------------------------------------------------------
@@ -320,11 +280,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	/**
 	 * Transfers collected (debt token) fees to either the treasury or the GRVTStaking contract, depending on a flag.
 	 */
-	function _collectFee(
-		address _borrower,
-		address _asset,
-		uint256 _feeAmount
-	) internal {
+	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount != 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(debtTokenAddress).safeTransfer(collector, _feeAmount);
@@ -335,11 +291,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 		}
 	}
 
-	function _refundFee(
-		address _borrower,
-		address _asset,
-		uint256 _refundAmount
-	) internal {
+	function _refundFee(address _borrower, address _asset, uint256 _refundAmount) internal {
 		if (_refundAmount != 0) {
 			IERC20Upgradeable(debtTokenAddress).safeTransfer(_borrower, _refundAmount);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
@@ -374,8 +326,8 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

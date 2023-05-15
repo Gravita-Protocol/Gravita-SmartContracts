@@ -7,18 +7,17 @@ import "./Dependencies/ERC20Permit.sol";
 import "./Interfaces/IDebtToken.sol";
 
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
-
 	string public constant NAME = "GRAI";
-	address public immutable vesselManagerAddress;
-	IStabilityPool public immutable stabilityPool;
-	address public immutable borrowerOperationsAddress;
+	address public constant vesselManagerAddress = address(0);
+	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
+	address public constant borrowerOperationsAddress = address(0);
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	address public immutable timelockAddress;
+	address public constant timelockAddress = address(0);
 
 	bool public isSetupInitialized;
 
@@ -38,17 +37,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		_;
 	}
 
-	constructor(
-		address _vesselManagerAddress,
-		address _stabilityPoolAddress,
-		address _borrowerOperationsAddress,
-		address _timelockAddress
-	) ERC20("GRAI", "GRAI") {
-		vesselManagerAddress = _vesselManagerAddress;
-		timelockAddress = _timelockAddress;
-		stabilityPool = IStabilityPool(_stabilityPoolAddress);
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-	}
+	constructor() ERC20("Gravita Debt Token", "GRAI") {}
 
 	function setSetupIsInitialized() external onlyOwner {
 		isSetupInitialized = true;
@@ -72,11 +61,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		_burn(msg.sender, _amount);
 	}
 
-	function mint(
-		address _asset,
-		address _account,
-		uint256 _amount
-	) external override {
+	function mint(address _asset, address _account, uint256 _amount) external override {
 		_requireCallerIsBorrowerOperations();
 		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
@@ -88,7 +73,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		_burn(_account, _amount);
 	}
 
-	function addWhitelist(address _address) external override onlyOwner { 
+	function addWhitelist(address _address) external override onlyOwner {
 		whitelistedContracts[_address] = true;
 
 		emit WhitelistChanged(_address, true);
@@ -100,20 +85,12 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		emit WhitelistChanged(_address, false);
 	}
 
-	function sendToPool(
-		address _sender,
-		address _poolAddress,
-		uint256 _amount
-	) external override {
+	function sendToPool(address _sender, address _poolAddress, uint256 _amount) external override {
 		_requireCallerIsStabilityPool();
 		_transfer(_sender, _poolAddress, _amount);
 	}
 
-	function returnFromPool(
-		address _poolAddress,
-		address _receiver,
-		uint256 _amount
-	) external override {
+	function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external override {
 		_requireCallerIsVesselMorSP();
 		_transfer(_poolAddress, _receiver, _amount);
 	}

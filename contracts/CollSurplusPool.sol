@@ -14,39 +14,21 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 
 	string public constant NAME = "CollSurplusPool";
 
-	address public activePoolAddress;
-	address public borrowerOperationsAddress;
-	address public vesselManagerAddress;
-	address public vesselManagerOperationsAddress;
+	address public constant activePoolAddress = address(0);
+	address public constant borrowerOperationsAddress = address(0);
+	address public constant vesselManagerAddress = address(0);
+	address public constant vesselManagerOperationsAddress = address(0);
 
 	// deposited ether tracker
 	mapping(address => uint256) internal balances;
 	// Collateral surplus claimable by vessel owners
 	mapping(address => mapping(address => uint256)) internal userBalances;
 
-	bool public isSetupInitialized;
-
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _activePoolAddress,
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _vesselManagerOperationsAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		activePoolAddress = _activePoolAddress;
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		vesselManagerAddress = _vesselManagerAddress;
-		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-		isSetupInitialized = true;
 	}
 
 	/* Returns the Asset state variable at ActivePool address.
@@ -110,10 +92,10 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 	function _requireCallerIsActivePool() internal view {
 		require(msg.sender == activePoolAddress, "CollSurplusPool: Caller is not Active Pool");
 	}
-	
+
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

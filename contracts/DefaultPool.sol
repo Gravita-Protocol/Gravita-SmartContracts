@@ -21,28 +21,17 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 
 	string public constant NAME = "DefaultPool";
 
-	address public vesselManagerAddress;
-	address public activePoolAddress;
+	address public constant vesselManagerAddress = address(0);
+	address public constant activePool = address(0);
 
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
-
-	bool public isSetupInitialized;
 
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Dependency setters ---
-
-	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		vesselManagerAddress = _vesselManagerAddress;
-		activePoolAddress = _activePoolAddress;
-		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -70,8 +59,6 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 	// --- Pool functionality ---
 
 	function sendAssetToActivePool(address _asset, uint256 _amount) external override callerIsVesselManager {
-		address activePool = activePoolAddress; // cache to save an SLOAD
-
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) {
 			return;
@@ -90,7 +77,7 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 	// --- 'require' functions ---
 
 	modifier callerIsActivePool() {
-		require(msg.sender == activePoolAddress, "DefaultPool: Caller is not the ActivePool");
+		require(msg.sender == activePool, "DefaultPool: Caller is not the ActivePool");
 		_;
 	}
 
@@ -106,8 +93,8 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
