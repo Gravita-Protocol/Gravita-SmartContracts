@@ -5,15 +5,9 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import "./Interfaces/IActivePool.sol";
-import "./Interfaces/IDefaultPool.sol";
-import "./Interfaces/IPriceFeed.sol";
-import "./Interfaces/IStabilityPool.sol";
-import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/ICommunityIssuance.sol";
-import "./Interfaces/IAdminContract.sol";
+import "./Addresses.sol";
 
-contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
+contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, Addresses {
 	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "AdminContract";
@@ -32,15 +26,6 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	uint256 public constant REDEMPTION_BLOCK_TIMESTAMP_DEFAULT = type(uint256).max; // never
 
 	// State ------------------------------------------------------------------------------------------------------------
-
-	address public constant timelockAddress = address(0);
-
-	ICommunityIssuance public constant communityIssuance = ICommunityIssuance(address(0));
-	IActivePool public constant activePool = IActivePool(address(0));
-	IDefaultPool public constant defaultPool = IDefaultPool(address(0));
-	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
-	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
-	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	/**
 		@dev Cannot be public as struct has too many variables for the stack. 

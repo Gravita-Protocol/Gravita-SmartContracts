@@ -5,15 +5,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import "./Interfaces/IBorrowerOperations.sol";
-import "./Interfaces/IVesselManager.sol";
-import "./Interfaces/IDebtToken.sol";
-import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/ISortedVessels.sol";
-import "./Interfaces/IFeeCollector.sol";
-import "./Interfaces/IStabilityPool.sol";
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
+import "./Addresses.sol";
 
 contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgradeable, IBorrowerOperations {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -21,15 +15,6 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	string public constant NAME = "BorrowerOperations";
 
 	// --- Connected contract declarations ---
-
-	IDebtToken public constant debtToken = IDebtToken(address(0));
-	address public constant gasPoolAddress = address(0);
-	IVesselManager public constant vesselManager = IVesselManager(address(0));
-	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
-	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
-	IFeeCollector public constant feeCollector = IFeeCollector(address(0));
-	ISortedVessels public constant sortedVessels = ISortedVessels(address(0)); // double-linked list, sorted by their collateral ratios
-	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	/* --- Variable container structs  ---
 
@@ -450,7 +435,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 _netDebtIncrease
 	) internal {
 		uint256 newTotalAssetDebt = activePool.getDebtTokenBalance(_asset) +
-			adminContract.defaultPool().getDebtTokenBalance(_asset) +
+			defaultPool.getDebtTokenBalance(_asset) +
 			_netDebtIncrease;
 		require(newTotalAssetDebt <= adminContract.getMintCap(_asset), "Exceeds mint cap");
 		activePool.increaseDebt(_asset, _netDebtIncrease);

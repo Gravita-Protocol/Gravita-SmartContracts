@@ -7,10 +7,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
+import "./Addresses.sol";
 
-import "./Interfaces/IPriceFeed.sol";
-
-contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath {
+contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath, Addresses {
 	/** Constants ---------------------------------------------------------------------------------------------------- */
 
 	string public constant NAME = "PriceFeed";
@@ -26,9 +25,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath 
 	uint256 public constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT = 0.5 ether;
 
 	// State ------------------------------------------------------------------------------------------------------------
-
-	address public constant adminContractAddress = address(0);
-	address public constant timelockAddress = address(0);
 
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;

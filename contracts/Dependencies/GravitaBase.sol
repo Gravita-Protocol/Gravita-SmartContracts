@@ -11,17 +11,13 @@ import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";
 import "../Interfaces/IGravitaBase.sol";
 import "../Interfaces/IAdminContract.sol";
+import "../Addresses.sol";
 
 /*
  * Base contract for VesselManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable {
-
-	IAdminContract public adminContract;
-	IActivePool public activePool;
-	IDefaultPool internal defaultPool;
-
+abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Addresses {
 	/**
 	 * @dev This empty reserved space is put in place to allow future versions to add new
 	 * variables without shifting down storage in the inheritance chain.
@@ -46,14 +42,14 @@ abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable {
 	}
 
 	function getEntireSystemColl(address _asset) public view returns (uint256 entireSystemColl) {
-		uint256 activeColl = adminContract.activePool().getAssetBalance(_asset);
-		uint256 liquidatedColl = adminContract.defaultPool().getAssetBalance(_asset);
+		uint256 activeColl = activePool.getAssetBalance(_asset);
+		uint256 liquidatedColl = defaultPool.getAssetBalance(_asset);
 		return activeColl + liquidatedColl;
 	}
 
 	function getEntireSystemDebt(address _asset) public view returns (uint256 entireSystemDebt) {
-		uint256 activeDebt = adminContract.activePool().getDebtTokenBalance(_asset);
-		uint256 closedDebt = adminContract.defaultPool().getDebtTokenBalance(_asset);
+		uint256 activeDebt = activePool.getDebtTokenBalance(_asset);
+		uint256 closedDebt = defaultPool.getDebtTokenBalance(_asset);
 		return activeDebt + closedDebt;
 	}
 
@@ -68,11 +64,7 @@ abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable {
 		return TCR < adminContract.getCcr(_asset);
 	}
 
-	function _requireUserAcceptsFee(
-		uint256 _fee,
-		uint256 _amount,
-		uint256 _maxFeePercentage
-	) internal view {
+	function _requireUserAcceptsFee(uint256 _fee, uint256 _amount, uint256 _maxFeePercentage) internal view {
 		uint256 feePercentage = (_fee * adminContract.DECIMAL_PRECISION()) / _amount;
 		require(feePercentage <= _maxFeePercentage, "Fee exceeded provided maximum");
 	}

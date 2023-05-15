@@ -8,16 +8,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/ICollSurplusPool.sol";
+import "./Addresses.sol";
 
-contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPool {
+contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CollSurplusPool";
-
-	address public constant activePoolAddress = address(0);
-	address public constant borrowerOperationsAddress = address(0);
-	address public constant vesselManagerAddress = address(0);
-	address public constant vesselManagerOperationsAddress = address(0);
 
 	// deposited ether tracker
 	mapping(address => uint256) internal balances;
@@ -79,18 +75,18 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 	// --- 'require' functions ---
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(msg.sender == borrowerOperationsAddress, "CollSurplusPool: Caller is not Borrower Operations");
+		require(msg.sender == address(borrowerOperations), "CollSurplusPool: Caller is not Borrower Operations");
 	}
 
 	function _requireCallerIsVesselManager() internal view {
 		require(
-			msg.sender == vesselManagerAddress || msg.sender == vesselManagerOperationsAddress,
+			msg.sender == address(vesselManager) || msg.sender == address(vesselManagerOperations),
 			"CollSurplusPool: Caller is not VesselManager"
 		);
 	}
 
 	function _requireCallerIsActivePool() internal view {
-		require(msg.sender == activePoolAddress, "CollSurplusPool: Caller is not Active Pool");
+		require(msg.sender == address(activePool), "CollSurplusPool: Caller is not Active Pool");
 	}
 
 	function authorizeUpgrade(address newImplementation) public {

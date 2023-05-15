@@ -7,12 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
-
-import "./Interfaces/IActivePool.sol";
-import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/IDefaultPool.sol";
-import "./Interfaces/IDeposit.sol";
-import "./Interfaces/IStabilityPool.sol";
+import "./Addresses.sol";
 
 /*
  * The Active Pool holds the collaterals and debt amounts for all active vessels.
@@ -21,18 +16,10 @@ import "./Interfaces/IStabilityPool.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
+contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "ActivePool";
-
-	address public constant borrowerOperationsAddress = address(0);
-	address public constant stabilityPoolAddress = address(0);
-	address public constant vesselManagerAddress = address(0);
-	address public constant vesselManagerOperationsAddress = address(0);
-
-	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
-	IDefaultPool public constant defaultPool = IDefaultPool(address(0));
 
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
@@ -41,7 +28,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrDefaultPool() {
 		require(
-			msg.sender == borrowerOperationsAddress || msg.sender == address(defaultPool),
+			msg.sender == address(borrowerOperations) || msg.sender == address(defaultPool),
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -49,7 +36,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrVesselMgr() {
 		require(
-			msg.sender == borrowerOperationsAddress || msg.sender == vesselManagerAddress,
+			msg.sender == address(borrowerOperations) || msg.sender == address(vesselManager),
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -57,9 +44,9 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgr() {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == stabilityPoolAddress ||
-				msg.sender == vesselManagerAddress,
+			msg.sender == address(borrowerOperations) ||
+				msg.sender == address(stabilityPool) ||
+				msg.sender == address(vesselManager),
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -67,10 +54,10 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps() {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == stabilityPoolAddress ||
-				msg.sender == vesselManagerAddress ||
-				msg.sender == vesselManagerOperationsAddress,
+			msg.sender == address(borrowerOperations) ||
+				msg.sender == address(stabilityPool) ||
+				msg.sender == address(vesselManager) ||
+				msg.sender == address(vesselManagerOperations),
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -132,10 +119,10 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
-	function isERC20DepositContract(address _account) private view returns (bool) {
+	function isERC20DepositContract(address _account) private pure returns (bool) {
 		return (_account == address(defaultPool) ||
 			_account == address(collSurplusPool) ||
-			_account == stabilityPoolAddress);
+			_account == address(stabilityPool));
 	}
 
 	function receivedERC20(address _asset, uint256 _amount) external override callerIsBorrowerOpsOrDefaultPool {

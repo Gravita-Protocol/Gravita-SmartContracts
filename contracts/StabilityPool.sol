@@ -8,14 +8,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 
-import "./Interfaces/IAdminContract.sol";
-import "./Interfaces/IBorrowerOperations.sol";
-import "./Interfaces/ICommunityIssuance.sol";
-import "./Interfaces/IDebtToken.sol";
-import "./Interfaces/ISortedVessels.sol";
-import "./Interfaces/IStabilityPool.sol";
-import "./Interfaces/IVesselManager.sol";
-
 /**
  * @title The Stability Pool holds debt tokens deposited by Stability Pool depositors.
  * @dev When a vessel is liquidated, then depending on system conditions, some of its debt tokens debt gets offset with
@@ -145,13 +137,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "StabilityPool";
-
-	IBorrowerOperations public constant borrowerOperations = IBorrowerOperations(address(0));
-	IVesselManager public constant vesselManager = IVesselManager(address(0));
-	IDebtToken public constant debtToken = IDebtToken(address(0));
-	ISortedVessels public constant sortedVessels = ISortedVessels(address(0));
-	ICommunityIssuance public constant communityIssuance = ICommunityIssuance(address(0));
-	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	// Tracker for debtToken held in the pool. Changes when users deposit/withdraw, and when Vessel debt is offset.
 	uint256 internal totalDebtTokenDeposits;

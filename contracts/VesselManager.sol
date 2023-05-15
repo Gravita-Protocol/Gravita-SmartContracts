@@ -6,9 +6,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./Dependencies/GravitaBase.sol";
 
-import "./Interfaces/IFeeCollector.sol";
-import "./Interfaces/IVesselManager.sol";
-
 contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	// Constants ------------------------------------------------------------------------------------------------------
 
@@ -36,16 +33,6 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	}
 
 	// State ----------------------------------------------------------------------------------------------------------
-
-	address public constant borrowerOperations = address(0);
-	address public constant gasPoolAddress = address(0);
-	address public constant vesselManagerOperations = address(0);
-
-	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
-	IDebtToken public constant debtToken = IDebtToken(address(0));
-	IFeeCollector public constant feeCollector = IFeeCollector(address(0));
-	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
-	ISortedVessels public constant sortedVessels = ISortedVessels(address(0)); // double-linked list of Vessels, sorted by their collateral ratios
 
 	mapping(address => uint256) public baseRate;
 
@@ -89,21 +76,21 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
-		if (msg.sender != vesselManagerOperations) {
+		if (msg.sender != address(vesselManagerOperations)) {
 			revert VesselManager__OnlyVesselManagerOperations();
 		}
 		_;
 	}
 
 	modifier onlyBorrowerOperations() {
-		if (msg.sender != borrowerOperations) {
+		if (msg.sender != address(borrowerOperations)) {
 			revert VesselManager__OnlyBorrowerOperations();
 		}
 		_;
 	}
 
 	modifier onlyVesselManagerOperationsOrBorrowerOperations() {
-		if (msg.sender != borrowerOperations && msg.sender != vesselManagerOperations) {
+		if (msg.sender != address(borrowerOperations) && msg.sender != address(vesselManagerOperations)) {
 			revert VesselManager__OnlyVesselManagerOperationsOrBorrowerOperations();
 		}
 		_;
@@ -428,7 +415,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 			debtToken.returnFromPool(gasPoolAddress, _liquidator, _debtTokenAmount);
 		}
 		if (_assetAmount != 0) {
-			adminContract.activePool().sendAsset(_asset, _liquidator, _assetAmount);
+			activePool.sendAsset(_asset, _liquidator, _assetAmount);
 		}
 	}
 

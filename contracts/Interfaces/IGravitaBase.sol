@@ -10,6 +10,4 @@ interface IGravitaBase {
 		address[] tokens;
 		uint256[] amounts;
 	}
-
-	function adminContract() external view returns (IAdminContract);
 }

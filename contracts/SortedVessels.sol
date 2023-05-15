@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.19;
-import "./Interfaces/ISortedVessels.sol";
-import "./Interfaces/IVesselManager.sol";
-import "./Interfaces/IBorrowerOperations.sol";
+import "./Addresses.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -40,14 +38,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
+contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, Addresses {
 	string public constant NAME = "SortedVessels";
-
-	address public constant borrowerOperationsAddress = address(0);
-
-	IVesselManager public constant vesselManager = IVesselManager(address(0));
-
-	bool public isSetupInitialized;
 
 	// Information for a node in the list
 	struct Node {
@@ -422,7 +414,7 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels {
 
 	function _requireCallerIsBOorVesselM() internal view {
 		require(
-			msg.sender == borrowerOperationsAddress || msg.sender == address(vesselManager),
+			msg.sender == address(borrowerOperations) || msg.sender == address(vesselManager),
 			"SortedVessels: Caller is neither BO nor VesselM"
 		);
 	}

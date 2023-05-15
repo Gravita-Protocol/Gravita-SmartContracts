@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IDefaultPool.sol";
+import "./Addresses.sol";
 
 /*
  * The Default Pool holds the collateral and debt token amounts from liquidations that have been redistributed
@@ -16,13 +17,10 @@ import "./Interfaces/IDefaultPool.sol";
  * When a vessel makes an operation that applies to its pending collateral and debt, they are moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
+contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "DefaultPool";
-
-	address public constant vesselManagerAddress = address(0);
-	address public constant activePool = address(0);
 
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
@@ -67,22 +65,22 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 		uint256 newBalance = assetsBalances[_asset] - _amount;
 		assetsBalances[_asset] = newBalance;
 
-		IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
+		IERC20Upgradeable(_asset).safeTransfer(address(activePool), safetyTransferAmount);
 		IDeposit(activePool).receivedERC20(_asset, _amount);
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
-		emit AssetSent(activePool, _asset, safetyTransferAmount);
+		emit AssetSent(address(activePool), _asset, safetyTransferAmount);
 	}
 
 	// --- 'require' functions ---
 
 	modifier callerIsActivePool() {
-		require(msg.sender == activePool, "DefaultPool: Caller is not the ActivePool");
+		require(msg.sender == address(activePool), "DefaultPool: Caller is not the ActivePool");
 		_;
 	}
 
 	modifier callerIsVesselManager() {
-		require(msg.sender == vesselManagerAddress, "DefaultPool: Caller is not the VesselManager");
+		require(msg.sender == address(vesselManager), "DefaultPool: Caller is not the VesselManager");
 		_;
 	}
 

@@ -7,11 +7,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "./Interfaces/IDebtToken.sol";
-import "./Interfaces/IFeeCollector.sol";
-import "./Interfaces/IGRVTStaking.sol";
+import "./Addresses.sol";
 
-contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
+contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	// Constants --------------------------------------------------------------------------------------------------------
@@ -26,12 +24,6 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 
 	mapping(address => mapping(address => FeeRecord)) public feeRecords; // borrower -> asset -> fees
 
-	address public constant borrowerOperationsAddress = address(0);
-	address public constant vesselManagerAddress = address(0);
-	address public constant treasuryAddress = address(0);
-	address public constant debtTokenAddress = address(0);
-
-	IGRVTStaking public constant grvtStaking = IGRVTStaking(address(0));
 	bool public constant routeToGRVTStaking = false; // if true, collected fees go to stakers; if false, to the treasury
 
 	// Initializer ------------------------------------------------------------------------------------------------------
@@ -283,7 +275,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount != 0) {
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
-			IERC20Upgradeable(debtTokenAddress).safeTransfer(collector, _feeAmount);
+			IERC20Upgradeable(address(debtToken)).safeTransfer(collector, _feeAmount);
 			if (routeToGRVTStaking) {
 				grvtStaking.increaseFee_DebtToken(_feeAmount);
 			}
@@ -293,7 +285,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 
 	function _refundFee(address _borrower, address _asset, uint256 _refundAmount) internal {
 		if (_refundAmount != 0) {
-			IERC20Upgradeable(debtTokenAddress).safeTransfer(_borrower, _refundAmount);
+			IERC20Upgradeable(address(debtToken)).safeTransfer(_borrower, _refundAmount);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
 		}
 	}
@@ -301,25 +293,25 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable {
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	modifier onlyBorrowerOperations() {
-		if (msg.sender != borrowerOperationsAddress) {
-			revert FeeCollector__BorrowerOperationsOnly(msg.sender, borrowerOperationsAddress);
+		if (msg.sender != address(borrowerOperations)) {
+			revert FeeCollector__BorrowerOperationsOnly(msg.sender, address(borrowerOperations));
 		}
 		_;
 	}
 
 	modifier onlyVesselManager() {
-		if (msg.sender != vesselManagerAddress) {
-			revert FeeCollector__VesselManagerOnly(msg.sender, vesselManagerAddress);
+		if (msg.sender != address(vesselManager)) {
+			revert FeeCollector__VesselManagerOnly(msg.sender, address(vesselManager));
 		}
 		_;
 	}
 
 	modifier onlyBorrowerOperationsOrVesselManager() {
-		if (msg.sender != borrowerOperationsAddress && msg.sender != vesselManagerAddress) {
+		if (msg.sender != address(borrowerOperations) && msg.sender != address(vesselManager)) {
 			revert FeeCollector__BorrowerOperationsOrVesselManagerOnly(
 				msg.sender,
-				borrowerOperationsAddress,
-				vesselManagerAddress
+				address(borrowerOperations),
+				address(vesselManager)
 			);
 		}
 		_;

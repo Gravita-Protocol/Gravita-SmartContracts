@@ -49,12 +49,6 @@ interface IAdminContract {
 
 	function _100pct() external view returns (uint256);
 
-	function activePool() external view returns (IActivePool);
-
-	function defaultPool() external view returns (IDefaultPool);
-
-	function priceFeed() external view returns (IPriceFeed);
-
 	function addNewCollateral(address _collateral, uint256 _debtTokenGasCompensation, uint256 _decimals) external;
 
 	function setCollateralParameters(

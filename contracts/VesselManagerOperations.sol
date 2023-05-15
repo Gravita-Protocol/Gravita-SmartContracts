@@ -5,10 +5,6 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
-import "./Interfaces/IActivePool.sol";
-import "./Interfaces/IDefaultPool.sol";
-import "./Interfaces/IVesselManager.sol";
-import "./Interfaces/IVesselManagerOperations.sol";
 
 contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
@@ -24,15 +20,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 price;
 		uint256 maxIterations;
 	}
-
-	// State ------------------------------------------------------------------------------------------------------------
-
-	IVesselManager public constant vesselManager = IVesselManager(address(0));
-	ISortedVessels public constant sortedVessels = ISortedVessels(address(0));
-	IStabilityPool public constant stabilityPool = IStabilityPool(address(0));
-	ICollSurplusPool public constant collSurplusPool = ICollSurplusPool(address(0));
-	IDebtToken public constant debtToken = IDebtToken(address(0));
-	IPriceFeed public constant priceFeed = IPriceFeed(address(0));
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
