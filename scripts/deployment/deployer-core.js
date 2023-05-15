@@ -47,16 +47,20 @@ class CoreDeployer extends Deployer {
 			await this.setCollateralParams(coll)
 			if (coll.name == "wETH") {
 				// use the same oracle for wETH and ETH
-				await this.addPriceFeedOracle({ name: "ETH", address: ZERO_ADDRESS, ...coll })
+				await this.addPriceFeedOracle({ ...coll, name: "ETH", address: ZERO_ADDRESS })
 			}
 		}
 	}
 
 	async addPriceFeedOracle(coll) {
 		const oracleRecord = await this.coreContracts.priceFeed.oracleRecords(coll.address)
-
 		if (!oracleRecord.exists) {
-			console.log(`[${coll.name}] PriceFeed.setOracle()`)
+			const owner = await this.coreContracts.priceFeed.owner()
+			if (owner != this.deployerWallet.address) {
+				console.log(`[${coll.name}] NOTICE: Cannot call PriceFeed.setOracle(): deployer = ${this.deployerWallet.address}, owner = ${owner}`)
+				return
+			}
+				console.log(`[${coll.name}] PriceFeed.setOracle()`)
 			await this.helper.sendAndWaitForTransaction(
 				this.coreContracts.priceFeed.setOracle(
 					coll.address,

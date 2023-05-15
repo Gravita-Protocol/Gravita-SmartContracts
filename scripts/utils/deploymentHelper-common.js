@@ -68,15 +68,22 @@ const fs = require("fs")
 		}
 		if (alreadyDeployed) {
 			// Existing upgradeable contract
-			console.log(`(Upgrading ${contractName}...)`)
-			const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
-			await this.deployerWallet.provider.waitForTransaction(
-				upgradedContract.deployTransaction.hash,
-				this.configParams.TX_CONFIRMATIONS,
-				timeout
-			)
-			await this.updateState(contractName, upgradedContract, isUpgradeable, state)
-			return [upgradedContract, true]
+			const existingContract = await factory.attach(address)
+			const owner = await existingContract.owner()
+			if (owner == this.deployerWallet.address) {
+				console.log(`(Upgrading ${contractName}...)`)
+				const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
+				await this.deployerWallet.provider.waitForTransaction(
+					upgradedContract.deployTransaction.hash,
+					this.configParams.TX_CONFIRMATIONS,
+					timeout
+				)
+				await this.updateState(contractName, upgradedContract, isUpgradeable, state)
+				return [upgradedContract, true]
+			} else {
+				console.log(`[NOTICE] Cannot upgrade ${contractName}: deployer = ${this.deployerWallet.address}, owner = ${owner}`)
+				return [existingContract, true]
+			}
 		} else {
 			// Upgradeable contract, new deployment
 			console.log(`(Deploying new ${contractName}...)`)
