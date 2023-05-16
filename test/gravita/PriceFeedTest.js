@@ -34,7 +34,8 @@ contract("PriceFeed", async accounts => {
 	let erc20
 
 	const setAddressesAndOracle = async () => {
-		await priceFeed.setAddresses(adminContract.address, timelock.address, { from: owner })
+		await priceFeed.setAdminContract(adminContract.address)
+		await priceFeed.setTimelock(timelock.address)
 		await setOracle(ZERO_ADDRESS, mockChainlink.address)
 		await priceFeed.fetchPrice(ZERO_ADDRESS)
 	}
@@ -91,26 +92,6 @@ contract("PriceFeed", async accounts => {
 			await priceFeedTestnet.setPrice(ZERO_ADDRESS, dec(1000, 18))
 			const price = await priceFeedTestnet.getPrice(ZERO_ADDRESS)
 			assert.equal(price, dec(1000, 18))
-		})
-	})
-
-	describe("Mainnet PriceFeed setup", async accounts => {
-		it("setAddresses should fail after addresses have already been set", async () => {
-			// Owner can successfully set any address
-			const txOwner = await priceFeed.setAddresses(adminContract.address, timelock.address, { from: owner })
-			assert.isTrue(txOwner.receipt.status)
-
-			await assertRevert(
-				priceFeed.setAddresses(adminContract.address, timelock.address, {
-					from: owner,
-				})
-			)
-			await assertRevert(
-				priceFeed.setAddresses(adminContract.address, timelock.address, {
-					from: alice,
-				}),
-				"OwnableUpgradeable: caller is not the owner"
-			)
 		})
 	})
 
@@ -195,7 +176,10 @@ contract("PriceFeed", async accounts => {
 			const expected_wstEth_to_usd_priceBN1 = toBN(WSTETH_TO_STETH)
 				.mul(toBN(STETH_TO_USD))
 				.div(toBN(dec(1, "ether")))
-			const expected_wstEth_to_usd_price = ethers.utils.formatUnits(expected_wstEth_to_usd_priceBN1.toString(), aggregatorDecimals)
+			const expected_wstEth_to_usd_price = ethers.utils.formatUnits(
+				expected_wstEth_to_usd_priceBN1.toString(),
+				aggregatorDecimals
+			)
 
 			assert.equal(wstEth_to_usd_price1, expected_wstEth_to_usd_price)
 
@@ -460,3 +444,4 @@ contract("PriceFeed", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+
