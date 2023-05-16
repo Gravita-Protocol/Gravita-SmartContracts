@@ -414,7 +414,8 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
 			await sortedVessels.initialize()
-			await sortedVessels.setAddresses(sortedVesselsTester.address, sortedVesselsTester.address)
+			await sortedVessels.setBorrowerOperations(sortedVesselsTester.address)
+			await sortedVessels.setVesselManager(sortedVesselsTester.address)
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})
 
