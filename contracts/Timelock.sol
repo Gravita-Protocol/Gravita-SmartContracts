@@ -42,6 +42,8 @@ contract Timelock {
 	error Timelock__TxExpired();
 	error Timelock__TxReverted();
 
+	string public constant NAME = "Timelock";
+
 	uint public constant GRACE_PERIOD = 14 days;
 	uint public constant MINIMUM_DELAY = 2 days;
 	uint public constant MAXIMUM_DELAY = 15 days;
@@ -52,7 +54,7 @@ contract Timelock {
 
 	mapping(bytes32 => bool) public queuedTransactions;
 
-	modifier isValidDelay(uint256 _delay) {
+	modifier isValidDelay(uint256 _delay) virtual {
 		if (_delay < MINIMUM_DELAY) {
 			revert Timelock__DelayMustExceedMininumDelay();
 		}
@@ -69,8 +71,9 @@ contract Timelock {
 		_;
 	}
 
-	constructor(uint _delay) isValidDelay(_delay) {
-		admin = msg.sender;
+	constructor(uint _delay, address _adminAddress) isValidDelay(_delay) {
+		require(_adminAddress != address(0));
+		admin = _adminAddress;
 		delay = _delay;
 	}
 

@@ -1,5 +1,5 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 var contracts
 var snapshotId
@@ -37,11 +37,11 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 
 	describe("Core Contracts", async () => {
 		it("ActivePool: check addresses", async () => {
-			assert.equal(borrowerOperations.address, await activePool.borrowerOperationsAddress())
+			assert.equal(borrowerOperations.address, await activePool.borrowerOperations())
 			assert.equal(collSurplusPool.address, await activePool.collSurplusPool())
 			assert.equal(defaultPool.address, await activePool.defaultPool())
-			assert.equal(stabilityPool.address, await activePool.stabilityPoolAddress())
-			assert.equal(vesselManagerOperations.address, await activePool.vesselManagerOperationsAddress())
+			assert.equal(stabilityPool.address, await activePool.stabilityPool())
+			assert.equal(vesselManagerOperations.address, await activePool.vesselManagerOperations())
 		})
 		it("AdminContract: check addresses", async () => {
 			assert.equal(communityIssuance.address, await adminContract.communityIssuance())

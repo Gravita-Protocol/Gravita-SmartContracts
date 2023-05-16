@@ -5,15 +5,13 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "./Interfaces/IAdminContract.sol";
+import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IDefaultPool.sol";
-import "./Interfaces/IPriceFeed.sol";
-import "./Interfaces/IStabilityPool.sol";
-import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/ICommunityIssuance.sol";
-import "./Interfaces/IAdminContract.sol";
+import "./Addresses.sol";
 
-contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
+contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, Addresses {
 	// Constants --------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "AdminContract";
@@ -32,15 +30,6 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	uint256 public constant REDEMPTION_BLOCK_TIMESTAMP_DEFAULT = type(uint256).max; // never
 
 	// State ------------------------------------------------------------------------------------------------------------
-
-	address public timelockAddress;
-
-	ICommunityIssuance public communityIssuance;
-	IActivePool public activePool;
-	IDefaultPool public defaultPool;
-	IStabilityPool public stabilityPool;
-	ICollSurplusPool public collSurplusPool;
-	IPriceFeed public priceFeed;
 
 	/**
 		@dev Cannot be public as struct has too many variables for the stack. 
@@ -92,41 +81,22 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 		_;
 	}
 
-	// Initializer ------------------------------------------------------------------------------------------------------
+	// Initializers -----------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 	}
 
-	// External Functions -----------------------------------------------------------------------------------------------
-
-	function setAddresses(
-		address _communityIssuanceAddress,
-		address _activePoolAddress,
-		address _defaultPoolAddress,
-		address _stabilityPoolAddress,
-		address _collSurplusPoolAddress,
-		address _priceFeedAddress,
-		address _timelockAddress
-	) external onlyTimelock {
-		require(!isSetupInitialized, "Setup is already initialized");
-		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
-		activePool = IActivePool(_activePoolAddress);
-		defaultPool = IDefaultPool(_defaultPoolAddress);
-		stabilityPool = IStabilityPool(_stabilityPoolAddress);
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		priceFeed = IPriceFeed(_priceFeedAddress);
-		timelockAddress = _timelockAddress;
-	}
-
 	/**
-	 * @dev The deployment script will call this function when all initial collaterals have been configured; 
+	 * @dev The deployment script will call this function when all initial collaterals have been configured;
 	 *      after this is set to true, all subsequent config/setters will need to go through the timelocks.
 	 */
 	function setSetupIsInitialized() external onlyTimelock {
 		isSetupInitialized = true;
 	}
+
+	// External Functions -----------------------------------------------------------------------------------------------
 
 	function addNewCollateral(
 		address _collateral,
@@ -151,7 +121,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 			redemptionBlockTimestamp: REDEMPTION_BLOCK_TIMESTAMP_DEFAULT
 		});
 
-		stabilityPool.addCollateralType(_collateral);
+		IStabilityPool(stabilityPool).addCollateralType(_collateral);
 
 		// throw event
 		emit CollateralAdded(_collateral);
@@ -342,7 +312,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	function getTotalAssetDebt(address _asset) external view override returns (uint256) {
-		return activePool.getDebtTokenBalance(_asset) + defaultPool.getDebtTokenBalance(_asset);
+		return IActivePool(activePool).getDebtTokenBalance(_asset) + IDefaultPool(defaultPool).getDebtTokenBalance(_asset);
 	}
 
 	// Internal Functions -----------------------------------------------------------------------------------------------
@@ -352,8 +322,8 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

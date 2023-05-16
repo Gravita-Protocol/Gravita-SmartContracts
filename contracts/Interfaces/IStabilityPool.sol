@@ -43,11 +43,6 @@ interface IStabilityPool is IDeposit {
 
 	// --- Functions ---
 
-	/**
-	 * The CommunityIssuance contract can be deployed on a posterior time and has to be updatable.
-	 */
-	function setCommunityIssuanceAddress(address _communityIssuanceAddress) external;
-
 	function addCollateralType(address _collateral) external;
 
 	/*

@@ -7,23 +7,16 @@ import "../VesselManager.sol";
 for testing the parent's internal functions. */
 
 contract VesselManagerTester is VesselManager {
-	function computeICR(
-		uint256 _coll,
-		uint256 _debt,
-		uint256 _price
-	) external pure returns (uint256) {
+	function computeICR(uint256 _coll, uint256 _debt, uint256 _price) external pure returns (uint256) {
 		return GravitaMath._computeCR(_coll, _debt, _price);
 	}
 
-	function getCollGasCompensation(
-		address _asset,
-		uint256 _coll
-	) external view returns (uint256) {
+	function getCollGasCompensation(address _asset, uint256 _coll) external view returns (uint256) {
 		return _getCollGasCompensation(_asset, _coll);
 	}
 
 	function getDebtTokenGasCompensation(address _asset) external view returns (uint256) {
-		return adminContract.getDebtTokenGasCompensation(_asset);
+		return IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
 	}
 
 	function getCompositeDebt(address _asset, uint256 _debt) external view returns (uint256) {
@@ -50,17 +43,11 @@ contract VesselManagerTester is VesselManager {
 		baseRate[_asset] = _baseRate;
 	}
 
-	function callGetRedemptionFee(
-		address _asset,
-		uint256 _ETHDrawn
-	) external view returns (uint256) {
+	function callGetRedemptionFee(address _asset, uint256 _ETHDrawn) external view returns (uint256) {
 		return getRedemptionFee(_asset, _ETHDrawn);
 	}
 
-	function getActualDebtFromComposite(
-		address _asset,
-		uint256 _debtVal
-	) external view returns (uint256) {
+	function getActualDebtFromComposite(address _asset, uint256 _debtVal) external view returns (uint256) {
 		return _getNetDebt(_asset, _debtVal);
 	}
 
@@ -68,6 +55,4 @@ contract VesselManagerTester is VesselManager {
 		uint256 vesselOwnersArrayLength = VesselOwners[_asset].length;
 		_removeVesselOwner(_asset, _vesselOwner, vesselOwnersArrayLength);
 	}
-
-	
 }

@@ -9,9 +9,7 @@ interface IFeeCollector {
 	event FeeRecordUpdated(address borrower, address asset, uint256 from, uint256 to, uint256 amount);
 	event FeeCollected(address borrower, address asset, address collector, uint256 amount);
 	event FeeRefunded(address borrower, address asset, uint256 amount);
-	event GRVTStakingAddressChanged(address newAddress);
 	event RedemptionFeeCollected(address asset, uint256 amount);
-	event RouteToGRVTStakingChanged(bool routeToGRVTStaking);
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -30,10 +28,6 @@ interface IFeeCollector {
 	error FeeCollector__VesselManagerOnly(address sender, address expected);
 
 	// Functions --------------------------------------------------------------------------------------------------------
-
-	function setGRVTStakingAddress(address _grvtStakingAddress) external;
-	
-	function setRouteToGRVTStaking(bool _routeToGRVTStaking) external;
 
 	function increaseDebt(
 		address _borrower,

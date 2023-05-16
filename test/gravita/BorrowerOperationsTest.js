@@ -1,7 +1,7 @@
 const ERC20Mock = artifacts.require("ERC20Mock")
 
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const { dec, toBN, assertRevert } = th
@@ -66,7 +66,7 @@ contract("BorrowerOperations", async accounts => {
 		before(async () => {
 			await deploy(treasury, [])
 
-			await feeCollector.setRouteToGRVTStaking(true) // sends fees to GRVTStaking instead of treasury
+			// await feeCollector.setRouteToGRVTStaking(true) // sends fees to GRVTStaking instead of treasury
 
 			VUSD_GAS_COMPENSATION_ERC20 = await adminContract.getDebtTokenGasCompensation(erc20.address)
 			MIN_NET_DEBT_ERC20 = await adminContract.getMinNetDebt(erc20.address)

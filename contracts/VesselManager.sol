@@ -5,12 +5,10 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
-
-import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IVesselManager.sol";
+import "./Interfaces/IFeeCollector.sol";
 
 contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
-
 	// Constants ------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "VesselManager";
@@ -36,26 +34,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 debt;
 	}
 
-	struct ContractsCache {
-		IActivePool activePool;
-		IDefaultPool defaultPool;
-		IDebtToken debtToken;
-		ISortedVessels sortedVessels;
-		ICollSurplusPool collSurplusPool;
-		address gasPoolAddress;
-	}
-
 	// State ----------------------------------------------------------------------------------------------------------
-
-	address public borrowerOperations;
-	address public gasPoolAddress;
-	address public vesselManagerOperations;
-
-	IStabilityPool public stabilityPool;
-	IDebtToken public debtToken;
-	IFeeCollector public feeCollector;
-	ICollSurplusPool public collSurplusPool;
-	ISortedVessels public sortedVessels; // double-linked list of Vessels, sorted by their collateral ratios
 
 	mapping(address => uint256) public baseRate;
 
@@ -126,32 +105,6 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
 	}
-	
-	// Dependency setter ------------------------------------------------------------------------------------------------
-
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _stabilityPoolAddress,
-		address _gasPoolAddress,
-		address _collSurplusPoolAddress,
-		address _debtTokenAddress,
-		address _feeCollectorAddress,
-		address _sortedVesselsAddress,
-		address _vesselManagerOperationsAddress,
-		address _adminContractAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		borrowerOperations = _borrowerOperationsAddress;
-		vesselManagerOperations = _vesselManagerOperationsAddress;
-		stabilityPool = IStabilityPool(_stabilityPoolAddress);
-		gasPoolAddress = _gasPoolAddress;
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		debtToken = IDebtToken(_debtTokenAddress);
-		feeCollector = IFeeCollector(_feeCollectorAddress);
-		sortedVessels = ISortedVessels(_sortedVesselsAddress);
-		adminContract = IAdminContract(_adminContractAddress);
-		isSetupInitialized = true;
-	}
 
 	// External/public functions --------------------------------------------------------------------------------------
 
@@ -162,13 +115,15 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	) external view returns (bool) {
 		if (
 			_firstRedemptionHint == address(0) ||
-			!sortedVessels.contains(_asset, _firstRedemptionHint) ||
-			getCurrentICR(_asset, _firstRedemptionHint, _price) < adminContract.getMcr(_asset)
+			!ISortedVessels(sortedVessels).contains(_asset, _firstRedemptionHint) ||
+			getCurrentICR(_asset, _firstRedemptionHint, _price) < IAdminContract(adminContract).getMcr(_asset)
 		) {
 			return false;
 		}
-		address nextVessel = sortedVessels.getNext(_asset, _firstRedemptionHint);
-		return nextVessel == address(0) || getCurrentICR(_asset, nextVessel, _price) < adminContract.getMcr(_asset);
+		address nextVessel = ISortedVessels(sortedVessels).getNext(_asset, _firstRedemptionHint);
+		return
+			nextVessel == address(0) ||
+			getCurrentICR(_asset, nextVessel, _price) < IAdminContract(adminContract).getMcr(_asset);
 	}
 
 	// Return the nominal collateral ratio (ICR) of a given Vessel, without the price. Takes a vessel's pending coll and debt rewards from redistributions into account.
@@ -216,17 +171,10 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		return (rewardSnapshots[_borrower][_asset].asset < L_Colls[_asset]);
 	}
 
-	function getEntireDebtAndColl(address _asset, address _borrower)
-		external
-		view
-		override
-		returns (
-			uint256 debt,
-			uint256 coll,
-			uint256 pendingDebtReward,
-			uint256 pendingCollReward
-		)
-	{
+	function getEntireDebtAndColl(
+		address _asset,
+		address _borrower
+	) external view override returns (uint256 debt, uint256 coll, uint256 pendingDebtReward, uint256 pendingCollReward) {
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		Vessel storage vessel = Vessels[_borrower][_asset];
@@ -247,11 +195,11 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	}
 
 	function getBorrowingRate(address _asset) external view override returns (uint256) {
-		return adminContract.getBorrowingFee(_asset);
+		return IAdminContract(adminContract).getBorrowingFee(_asset);
 	}
 
 	function getBorrowingFee(address _asset, uint256 _debt) external view override returns (uint256) {
-		return (adminContract.getBorrowingFee(_asset) * _debt) / DECIMAL_PRECISION;
+		return (IAdminContract(adminContract).getBorrowingFee(_asset) * _debt) / DECIMAL_PRECISION;
 	}
 
 	function getRedemptionFee(address _asset, uint256 _assetDraw) public view returns (uint256) {
@@ -290,7 +238,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	) external override nonReentrant onlyVesselManagerOperations {
 		_removeStake(_asset, _borrower);
 		_closeVessel(_asset, _borrower, Status.closedByRedemption);
-		_redeemCloseVessel(_asset, _borrower, adminContract.getDebtTokenGasCompensation(_asset), _newColl);
+		_redeemCloseVessel(_asset, _borrower, IAdminContract(adminContract).getDebtTokenGasCompensation(_asset), _newColl);
 		emit VesselUpdated(_asset, _borrower, 0, 0, 0, VesselManagerOperation.redeemCollateral);
 	}
 
@@ -303,7 +251,13 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		address _upperPartialRedemptionHint,
 		address _lowerPartialRedemptionHint
 	) external override onlyVesselManagerOperations {
-		sortedVessels.reInsert(_asset, _borrower, _newNICR, _upperPartialRedemptionHint, _lowerPartialRedemptionHint);
+		ISortedVessels(sortedVessels).reInsert(
+			_asset,
+			_borrower,
+			_newNICR,
+			_upperPartialRedemptionHint,
+			_lowerPartialRedemptionHint
+		);
 
 		Vessels[_borrower][_asset].debt = _newDebt;
 		Vessels[_borrower][_asset].coll = _newColl;
@@ -326,16 +280,15 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _assetFeeAmount,
 		uint256 _assetRedeemedAmount
 	) external override onlyVesselManagerOperations {
-		IActivePool activePool = adminContract.activePool();
 		// Send the asset fee to the fee collector
-		activePool.sendAsset(_asset, address(feeCollector), _assetFeeAmount);
-		feeCollector.handleRedemptionFee(_asset, _assetFeeAmount);
+		IActivePool(activePool).sendAsset(_asset, feeCollector, _assetFeeAmount);
+		IFeeCollector(feeCollector).handleRedemptionFee(_asset, _assetFeeAmount);
 		// Burn the total debt tokens that is cancelled with debt, and send the redeemed asset to msg.sender
-		debtToken.burn(_receiver, _debtToRedeem);
+		IDebtToken(debtToken).burn(_receiver, _debtToRedeem);
 		// Update Active Pool, and send asset to account
 		uint256 collToSendToRedeemer = _assetRedeemedAmount - _assetFeeAmount;
-		activePool.decreaseDebt(_asset, _debtToRedeem);
-		activePool.sendAsset(_asset, _receiver, collToSendToRedeemer);
+		IActivePool(activePool).decreaseDebt(_asset, _debtToRedeem);
+		IActivePool(activePool).sendAsset(_asset, _receiver, collToSendToRedeemer);
 	}
 
 	function updateBaseRateFromRedemption(
@@ -355,11 +308,10 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		return newBaseRate;
 	}
 
-	function applyPendingRewards(address _asset, address _borrower)
-		external
-		override nonReentrant
-		onlyVesselManagerOperationsOrBorrowerOperations
-	{
+	function applyPendingRewards(
+		address _asset,
+		address _borrower
+	) external override nonReentrant onlyVesselManagerOperationsOrBorrowerOperations {
 		return _applyPendingRewards(_asset, _borrower);
 	}
 
@@ -398,7 +350,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _debtToOffset,
 		uint256 _collToSendToStabilityPool
 	) external override nonReentrant onlyVesselManagerOperations {
-		stabilityPool.offset(_debtToOffset, _asset, _collToSendToStabilityPool);
+		IStabilityPool(stabilityPool).offset(_debtToOffset, _asset, _collToSendToStabilityPool);
 
 		if (_debt == 0) {
 			return;
@@ -432,21 +384,19 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		L_Debts[_asset] = liquidatedDebt;
 		emit LTermsUpdated(_asset, liquidatedColl, liquidatedDebt);
 
-		IActivePool activePool = adminContract.activePool();
-		IDefaultPool defaultPool = adminContract.defaultPool();
-		activePool.decreaseDebt(_asset, _debt);
-		defaultPool.increaseDebt(_asset, _debt);
-		activePool.sendAsset(_asset, address(defaultPool), _coll);
+		IActivePool(activePool).decreaseDebt(_asset, _debt);
+		IDefaultPool(defaultPool).increaseDebt(_asset, _debt);
+		IActivePool(activePool).sendAsset(_asset, defaultPool, _coll);
 	}
 
-	function updateSystemSnapshots_excludeCollRemainder(address _asset, uint256 _collRemainder)
-		external
-		onlyVesselManagerOperations
-	{
+	function updateSystemSnapshots_excludeCollRemainder(
+		address _asset,
+		uint256 _collRemainder
+	) external onlyVesselManagerOperations {
 		uint256 totalStakesCached = totalStakes[_asset];
 		totalStakesSnapshot[_asset] = totalStakesCached;
-		uint256 activeColl = adminContract.activePool().getAssetBalance(_asset);
-		uint256 liquidatedColl = adminContract.defaultPool().getAssetBalance(_asset);
+		uint256 activeColl = IActivePool(activePool).getAssetBalance(_asset);
+		uint256 liquidatedColl = IDefaultPool(defaultPool).getAssetBalance(_asset);
 		uint256 _totalCollateralSnapshot = activeColl - _collRemainder + liquidatedColl;
 		totalCollateralSnapshot[_asset] = _totalCollateralSnapshot;
 		emit SystemSnapshotsUpdated(_asset, totalStakesCached, _totalCollateralSnapshot);
@@ -461,7 +411,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 
 	function closeVesselLiquidation(address _asset, address _borrower) external override onlyVesselManagerOperations {
 		_closeVessel(_asset, _borrower, Status.closedByLiquidation);
-		feeCollector.liquidateDebt(_borrower, _asset);
+		IFeeCollector(feeCollector).liquidateDebt(_borrower, _asset);
 		emit VesselUpdated(_asset, _borrower, 0, 0, 0, VesselManagerOperation.liquidateInNormalMode);
 	}
 
@@ -472,10 +422,10 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _assetAmount
 	) external nonReentrant onlyVesselManagerOperations {
 		if (_debtTokenAmount != 0) {
-			debtToken.returnFromPool(gasPoolAddress, _liquidator, _debtTokenAmount);
+			IDebtToken(debtToken).returnFromPool(gasPoolAddress, _liquidator, _debtTokenAmount);
 		}
 		if (_assetAmount != 0) {
-			adminContract.activePool().sendAsset(_asset, _liquidator, _assetAmount);
+			IActivePool(activePool).sendAsset(_asset, _liquidator, _assetAmount);
 		}
 	}
 
@@ -487,13 +437,12 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _debtTokenAmount,
 		uint256 _assetAmount
 	) internal {
-		IActivePool activePool = adminContract.activePool();
-		debtToken.burn(gasPoolAddress, _debtTokenAmount);
+		IDebtToken(debtToken).burn(gasPoolAddress, _debtTokenAmount);
 		// Update Active Pool, and send asset to account
-		activePool.decreaseDebt(_asset, _debtTokenAmount);
+		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount);
 		// send asset from Active Pool to CollSurplus Pool
-		collSurplusPool.accountSurplus(_asset, _borrower, _assetAmount);
-		activePool.sendAsset(_asset, address(collSurplusPool), _assetAmount);
+		ICollSurplusPool(collSurplusPool).accountSurplus(_asset, _borrower, _assetAmount);
+		IActivePool(activePool).sendAsset(_asset, collSurplusPool, _assetAmount);
 	}
 
 	function _movePendingVesselRewardsToActivePool(
@@ -501,12 +450,9 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _debtTokenAmount,
 		uint256 _assetAmount
 	) internal {
-		IAdminContract _adminContract = adminContract;
-		IActivePool activePool = _adminContract.activePool();
-		IDefaultPool defaultPool = _adminContract.defaultPool();
-		defaultPool.decreaseDebt(_asset, _debtTokenAmount);
-		activePool.increaseDebt(_asset, _debtTokenAmount);
-		defaultPool.sendAssetToActivePool(_asset, _assetAmount);
+		IDefaultPool(defaultPool).decreaseDebt(_asset, _debtTokenAmount);
+		IActivePool(activePool).increaseDebt(_asset, _debtTokenAmount);
+		IDefaultPool(defaultPool).sendAssetToActivePool(_asset, _assetAmount);
 	}
 
 	function _getCurrentVesselAmounts(
@@ -599,7 +545,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		assert(closedStatus != Status.nonExistent && closedStatus != Status.active);
 
 		uint256 VesselOwnersArrayLength = VesselOwners[_asset].length;
-		if (VesselOwnersArrayLength <= 1 || sortedVessels.getSize(_asset) <= 1) {
+		if (VesselOwnersArrayLength <= 1 || ISortedVessels(sortedVessels).getSize(_asset) <= 1) {
 			revert VesselManager__OnlyOneVessel();
 		}
 
@@ -613,7 +559,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		rewardSnapshot.debt = 0;
 
 		_removeVesselOwner(_asset, _borrower, VesselOwnersArrayLength);
-		sortedVessels.remove(_asset, _borrower);
+		ISortedVessels(sortedVessels).remove(_asset, _borrower);
 	}
 
 	function _removeVesselOwner(address _asset, address _borrower, uint256 VesselOwnersArrayLength) internal {
@@ -637,7 +583,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	}
 
 	function _calcRedemptionRate(address _asset, uint256 _baseRate) internal view returns (uint256) {
-		return GravitaMath._min(adminContract.getRedemptionFeeFloor(_asset) + _baseRate, DECIMAL_PRECISION);
+		return GravitaMath._min(IAdminContract(adminContract).getRedemptionFeeFloor(_asset) + _baseRate, DECIMAL_PRECISION);
 	}
 
 	function _calcRedemptionFee(uint256 _redemptionRate, uint256 _assetDraw) internal pure returns (uint256) {
@@ -743,14 +689,14 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 newDebt = oldDebt - _debtDecrease;
 		vessel.debt = newDebt;
 		if (paybackFraction != 0) {
-			feeCollector.decreaseDebt(_borrower, _asset, paybackFraction);
+			IFeeCollector(feeCollector).decreaseDebt(_borrower, _asset, paybackFraction);
 		}
 		return newDebt;
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    _authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-  function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

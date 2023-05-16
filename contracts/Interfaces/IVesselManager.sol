@@ -68,10 +68,6 @@ interface IVesselManager is IGravitaBase {
 
 	// Functions --------------------------------------------------------------------------------------------------------
 
-	function stabilityPool() external returns (IStabilityPool);
-
-	function debtToken() external returns (IDebtToken);
-
 	function executeFullRedemption(
 		address _asset,
 		address _borrower,
@@ -181,8 +177,6 @@ interface IVesselManager is IGravitaBase {
 	function getTCR(address _asset, uint256 _price) external view returns (uint256);
 
 	function checkRecoveryMode(address _asset, uint256 _price) external returns (bool);
-
-	function sortedVessels() external returns (ISortedVessels);
 
 	function isValidFirstRedemptionHint(
 		address _asset,

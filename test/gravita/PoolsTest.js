@@ -1,5 +1,6 @@
 const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@nomicfoundation/hardhat-network-helpers")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
 
 var contracts
 var snapshotId

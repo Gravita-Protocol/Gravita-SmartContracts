@@ -8,45 +8,23 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/ICollSurplusPool.sol";
+import "./Addresses.sol";
 
-contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPool {
+contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "CollSurplusPool";
-
-	address public activePoolAddress;
-	address public borrowerOperationsAddress;
-	address public vesselManagerAddress;
-	address public vesselManagerOperationsAddress;
 
 	// deposited ether tracker
 	mapping(address => uint256) internal balances;
 	// Collateral surplus claimable by vessel owners
 	mapping(address => mapping(address => uint256)) internal userBalances;
 
-	bool public isSetupInitialized;
-
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _activePoolAddress,
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _vesselManagerOperationsAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		activePoolAddress = _activePoolAddress;
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		vesselManagerAddress = _vesselManagerAddress;
-		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-		isSetupInitialized = true;
 	}
 
 	/* Returns the Asset state variable at ActivePool address.
@@ -97,23 +75,23 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 	// --- 'require' functions ---
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(msg.sender == borrowerOperationsAddress, "CollSurplusPool: Caller is not Borrower Operations");
+		require(msg.sender == borrowerOperations, "CollSurplusPool: Caller is not Borrower Operations");
 	}
 
 	function _requireCallerIsVesselManager() internal view {
 		require(
-			msg.sender == vesselManagerAddress || msg.sender == vesselManagerOperationsAddress,
+			msg.sender == vesselManager || msg.sender == vesselManagerOperations,
 			"CollSurplusPool: Caller is not VesselManager"
 		);
 	}
 
 	function _requireCallerIsActivePool() internal view {
-		require(msg.sender == activePoolAddress, "CollSurplusPool: Caller is not Active Pool");
-	}
-	
-	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		require(msg.sender == activePool, "CollSurplusPool: Caller is not Active Pool");
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function authorizeUpgrade(address newImplementation) public {
+		_authorizeUpgrade(newImplementation);
+	}
+
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

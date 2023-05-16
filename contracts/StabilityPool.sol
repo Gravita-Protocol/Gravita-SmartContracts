@@ -7,14 +7,10 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
-
-import "./Interfaces/IAdminContract.sol";
-import "./Interfaces/IBorrowerOperations.sol";
-import "./Interfaces/ICommunityIssuance.sol";
-import "./Interfaces/IDebtToken.sol";
-import "./Interfaces/ISortedVessels.sol";
 import "./Interfaces/IStabilityPool.sol";
+import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IVesselManager.sol";
+import "./Interfaces/ICommunityIssuance.sol";
 
 /**
  * @title The Stability Pool holds debt tokens deposited by Stability Pool depositors.
@@ -146,17 +142,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	string public constant NAME = "StabilityPool";
 
-	IBorrowerOperations public borrowerOperations;
-	IVesselManager public vesselManager;
-	IDebtToken public debtToken;
-	ISortedVessels public sortedVessels;
-	ICommunityIssuance public communityIssuance;
-
 	// Tracker for debtToken held in the pool. Changes when users deposit/withdraw, and when Vessel debt is offset.
 	uint256 internal totalDebtTokenDeposits;
 
 	// totalColl.tokens and totalColl.amounts should be the same length and
-	// always be the same length as adminContract.validCollaterals().
+	// always be the same length as IAdminContract(adminContract).validCollaterals().
 	// Anytime a new collateral is added to AdminContract, both lists are lengthened
 	Colls internal totalColl;
 
@@ -214,43 +204,13 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	uint256[] public lastAssetError_Offset;
 	uint256 public lastDebtTokenLossError_Offset;
 
-	bool public isSetupInitialized;
-
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__ReentrancyGuard_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _vesselManagerAddress,
-		address _activePoolAddress,
-		address _debtTokenAddress,
-		address _sortedVesselsAddress,
-		address _communityIssuanceAddress,
-		address _adminContractAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
-		vesselManager = IVesselManager(_vesselManagerAddress);
-		activePool = IActivePool(_activePoolAddress);
-		debtToken = IDebtToken(_debtTokenAddress);
-		sortedVessels = ISortedVessels(_sortedVesselsAddress);
-		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
-		adminContract = IAdminContract(_adminContractAddress);
-
 		P = DECIMAL_PRECISION;
-		isSetupInitialized = true;
-	}
-
-	function setCommunityIssuanceAddress(address _communityIssuanceAddress) external override onlyAdminContract {
-		communityIssuance = ICommunityIssuance(_communityIssuanceAddress);
-		emit CommunityIssuanceAddressChanged(_communityIssuanceAddress);
 	}
 
 	/**
@@ -273,7 +233,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @return amount of this specific collateral
 	 */
 	function getCollateral(address _collateral) external view returns (uint256) {
-		uint256 collateralIndex = adminContract.getIndex(_collateral);
+		uint256 collateralIndex = IAdminContract(adminContract).getIndex(_collateral);
 		return totalColl.amounts[collateralIndex];
 	}
 
@@ -312,16 +272,14 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 		uint256 initialDeposit = deposits[msg.sender];
 
-		ICommunityIssuance communityIssuanceCached = communityIssuance;
-
-		_triggerGRVTIssuance(communityIssuanceCached);
+		_triggerGRVTIssuance();
 
 		(address[] memory gainAssets, uint256[] memory gainAmounts) = getDepositorGains(msg.sender);
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
 		// First pay out any GRVT gains
-		_payOutGRVTGains(communityIssuanceCached, msg.sender);
+		_payOutGRVTGains(msg.sender);
 
 		// just pulls debtTokens into the pool, updates totalDeposits variable for the stability pool and throws an event
 		_sendToStabilityPool(msg.sender, _amount);
@@ -354,8 +312,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 initialDeposit = deposits[msg.sender];
 		_requireUserHasDeposit(initialDeposit);
 
-		ICommunityIssuance communityIssuanceCached = communityIssuance;
-		_triggerGRVTIssuance(communityIssuanceCached);
+		_triggerGRVTIssuance();
 
 		(assets, amounts) = getDepositorGains(msg.sender);
 
@@ -365,7 +322,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
 		// First pay out any GRVT gains
-		_payOutGRVTGains(communityIssuanceCached, msg.sender);
+		_payOutGRVTGains(msg.sender);
 		_sendToDepositor(msg.sender, debtTokensToWithdraw);
 
 		// Update deposit
@@ -378,9 +335,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	// --- GRVT issuance functions ---
 
-	function _triggerGRVTIssuance(ICommunityIssuance _communityIssuance) internal {
-		if (address(_communityIssuance) != address(0)) {
-			uint256 GRVTIssuance = _communityIssuance.issueGRVT();
+	function _triggerGRVTIssuance() internal {
+		if (communityIssuance != address(0)) {
+			uint256 GRVTIssuance = ICommunityIssuance(communityIssuance).issueGRVT();
 			_updateG(GRVTIssuance);
 		}
 	}
@@ -437,7 +394,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		if (cachedTotalDebtTokenDeposits == 0 || _debtToOffset == 0) {
 			return;
 		}
-		_triggerGRVTIssuance(communityIssuance);
+		_triggerGRVTIssuance();
 		(uint256 collGainPerUnitStaked, uint256 debtLossPerUnitStaked) = _computeRewardsPerUnitStaked(
 			_asset,
 			_amountAdded,
@@ -472,7 +429,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 _debtToOffset,
 		uint256 _totalDeposits
 	) internal returns (uint256 collGainPerUnitStaked, uint256 debtLossPerUnitStaked) {
-		uint256 assetIndex = adminContract.getIndex(_asset);
+		uint256 assetIndex = IAdminContract(adminContract).getIndex(_asset);
 		uint256 collateralNumerator = (_amountAdded * DECIMAL_PRECISION) + lastAssetError_Offset[assetIndex];
 		require(_debtToOffset <= _totalDeposits, "StabilityPool: Debt is larger than totalDeposits");
 		if (_debtToOffset == _totalDeposits) {
@@ -560,11 +517,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @param _debtToOffset uint256
 	 */
 	function _moveOffsetCollAndDebt(address _asset, uint256 _amount, uint256 _debtToOffset) internal {
-		IActivePool activePoolCached = activePool;
-		activePoolCached.decreaseDebt(_asset, _debtToOffset);
+		IActivePool(activePool).decreaseDebt(_asset, _debtToOffset);
 		_decreaseDebtTokens(_debtToOffset);
-		debtToken.burn(address(this), _debtToOffset);
-		activePoolCached.sendAsset(_asset, address(this), _amount);
+		IDebtToken(debtToken).burn(address(this), _debtToOffset);
+		IActivePool(activePool).sendAsset(_asset, address(this), _amount);
 	}
 
 	function _decreaseDebtTokens(uint256 _amount) internal {
@@ -611,7 +567,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 initialDeposit,
 		Snapshots storage snapshots
 	) internal view returns (address[] memory assets, uint256[] memory amounts) {
-		assets = adminContract.getValidCollateral();
+		assets = IAdminContract(adminContract).getValidCollateral();
 		uint256 assetsLen = assets.length;
 		amounts = new uint256[](assetsLen);
 		for (uint256 i = 0; i < assetsLen; ) {
@@ -754,7 +710,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	// Transfer the tokens from the user to the Stability Pool's address, and update its recorded deposits
 	function _sendToStabilityPool(address _address, uint256 _amount) internal {
-		debtToken.sendToPool(_address, address(this), _amount);
+		IDebtToken(debtToken).sendToPool(_address, address(this), _amount);
 		uint256 newTotalDeposits = totalDebtTokenDeposits + _amount;
 		totalDebtTokenDeposits = newTotalDeposits;
 		emit StabilityPoolDebtTokenBalanceUpdated(newTotalDeposits);
@@ -794,7 +750,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		if (debtTokenWithdrawal == 0) {
 			return;
 		}
-		debtToken.returnFromPool(address(this), _depositor, debtTokenWithdrawal);
+		IDebtToken(debtToken).returnFromPool(address(this), _depositor, debtTokenWithdrawal);
 		_decreaseDebtTokens(debtTokenWithdrawal);
 	}
 
@@ -810,7 +766,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 */
 	function _updateDepositAndSnapshots(address _depositor, uint256 _newValue) internal {
 		deposits[_depositor] = _newValue;
-		address[] memory colls = adminContract.getValidCollateral();
+		address[] memory colls = IAdminContract(adminContract).getValidCollateral();
 		uint256 collsLen = colls.length;
 
 		Snapshots storage depositorSnapshots = depositSnapshots[_depositor];
@@ -854,10 +810,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		return depositSnapshots[_depositor].S[_asset];
 	}
 
-	function _payOutGRVTGains(ICommunityIssuance _communityIssuance, address _depositor) internal {
-		if (address(_communityIssuance) != address(0)) {
+	function _payOutGRVTGains(address _depositor) internal {
+		if (address(communityIssuance) != address(0)) {
 			uint256 depositorGRVTGain = getDepositorGRVTGain(_depositor);
-			_communityIssuance.sendGRVT(_depositor, depositorGRVTGain);
+			ICommunityIssuance(communityIssuance).sendGRVT(_depositor, depositorGRVTGain);
 			emit GRVTPaidToDepositor(_depositor, depositorGRVTGain);
 		}
 	}
@@ -891,20 +847,16 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @notice check ICR of bottom vessel (per asset) in SortedVessels
 	 */
 	function _requireNoUnderCollateralizedVessels() internal {
-		IVesselManager vesselManagerCached = vesselManager;
-		IAdminContract adminContractCached = adminContract;
-		ISortedVessels sortedVesselsCached = sortedVessels;
-		IPriceFeed priceFeedCached = adminContractCached.priceFeed();
-		address[] memory assets = adminContractCached.getValidCollateral();
+		address[] memory assets = IAdminContract(adminContract).getValidCollateral();
 		uint256 assetsLen = assets.length;
 		for (uint256 i = 0; i < assetsLen; ) {
 			address assetAddress = assets[i];
-			address lowestVessel = sortedVesselsCached.getLast(assetAddress);
+			address lowestVessel = ISortedVessels(sortedVessels).getLast(assetAddress);
 			if (lowestVessel != address(0)) {
-				uint256 price = priceFeedCached.fetchPrice(assetAddress);
-				uint256 ICR = vesselManagerCached.getCurrentICR(assetAddress, lowestVessel, price);
+				uint256 price = IPriceFeed(priceFeed).fetchPrice(assetAddress);
+				uint256 ICR = IVesselManager(vesselManager).getCurrentICR(assetAddress, lowestVessel, price);
 				require(
-					ICR >= adminContractCached.getMcr(assetAddress),
+					ICR >= IAdminContract(adminContract).getMcr(assetAddress),
 					"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
 				);
 			}
@@ -925,22 +877,22 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	// --- Modifiers ---
 
 	modifier onlyAdminContract() {
-		if (msg.sender != address(adminContract)) {
-			revert StabilityPool__AdminContractOnly(msg.sender, address(adminContract));
+		if (msg.sender != adminContract) {
+			revert StabilityPool__AdminContractOnly(msg.sender, adminContract);
 		}
 		_;
 	}
 
 	modifier onlyActivePool() {
-		if (msg.sender != address(adminContract.activePool())) {
-			revert StabilityPool__ActivePoolOnly(msg.sender, address(adminContract.activePool()));
+		if (msg.sender != activePool) {
+			revert StabilityPool__ActivePoolOnly(msg.sender, activePool);
 		}
 		_;
 	}
 
 	modifier onlyVesselManager() {
-		if (msg.sender != address(vesselManager)) {
-			revert StabilityPool__VesselManagerOnly(msg.sender, address(vesselManager));
+		if (msg.sender != vesselManager) {
+			revert StabilityPool__VesselManagerOnly(msg.sender, vesselManager);
 		}
 		_;
 	}
@@ -948,15 +900,15 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	// --- Fallback function ---
 
 	function receivedERC20(address _asset, uint256 _amount) external override onlyActivePool {
-		uint256 collateralIndex = adminContract.getIndex(_asset);
+		uint256 collateralIndex = IAdminContract(adminContract).getIndex(_asset);
 		uint256 newAssetBalance = totalColl.amounts[collateralIndex] + _amount;
 		totalColl.amounts[collateralIndex] = newAssetBalance;
 		emit StabilityPoolAssetBalanceUpdated(_asset, newAssetBalance);
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

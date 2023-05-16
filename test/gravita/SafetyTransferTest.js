@@ -1,6 +1,8 @@
 const SafetyTransferTester = artifacts.require("SafetyTransferTester")
 const ERC20DecimalsMock = artifacts.require("ERC20DecimalsMock")
-const testHelpers = require("../../utils/testHelpers.js")
+
+const testHelpers = require("../utils/testHelpers.js")
+
 const { dec, toBN } = testHelpers.TestHelper
 
 contract("SafetyTransfer", async () => {

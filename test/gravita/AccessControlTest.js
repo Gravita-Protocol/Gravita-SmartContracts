@@ -1,10 +1,8 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
-const dec = th.dec
-const toBN = th.toBN
-const assertRevert = th.assertRevert
+const { dec, toBN, assertRevert } = th
 
 var contracts
 var snapshotId

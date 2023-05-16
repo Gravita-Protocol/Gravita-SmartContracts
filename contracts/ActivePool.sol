@@ -7,12 +7,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
-
+import "./Addresses.sol";
 import "./Interfaces/IActivePool.sol";
-import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/IDefaultPool.sol";
-import "./Interfaces/IDeposit.sol";
-import "./Interfaces/IStabilityPool.sol";
 
 /*
  * The Active Pool holds the collaterals and debt amounts for all active vessels.
@@ -21,29 +17,19 @@ import "./Interfaces/IStabilityPool.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool {
+contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "ActivePool";
 
-	address public borrowerOperationsAddress;
-	address public stabilityPoolAddress;
-	address public vesselManagerAddress;
-	address public vesselManagerOperationsAddress;
-
-	ICollSurplusPool public collSurplusPool;
-	IDefaultPool public defaultPool;
-
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
-
-	bool public isSetupInitialized;
 
 	// --- Modifiers ---
 
 	modifier callerIsBorrowerOpsOrDefaultPool() {
 		require(
-			msg.sender == borrowerOperationsAddress || msg.sender == address(defaultPool),
+			msg.sender == borrowerOperations || msg.sender == defaultPool,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -51,7 +37,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrVesselMgr() {
 		require(
-			msg.sender == borrowerOperationsAddress || msg.sender == vesselManagerAddress,
+			msg.sender == borrowerOperations || msg.sender == vesselManager,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -59,9 +45,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgr() {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == stabilityPoolAddress ||
-				msg.sender == vesselManagerAddress,
+			msg.sender == borrowerOperations || msg.sender == stabilityPool || msg.sender == vesselManager,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -69,10 +53,10 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps() {
 		require(
-			msg.sender == borrowerOperationsAddress ||
-				msg.sender == stabilityPoolAddress ||
-				msg.sender == vesselManagerAddress ||
-				msg.sender == vesselManagerOperationsAddress,
+			msg.sender == borrowerOperations ||
+				msg.sender == stabilityPool ||
+				msg.sender == vesselManager ||
+				msg.sender == vesselManagerOperations,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -84,26 +68,6 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		__Ownable_init();
 		__ReentrancyGuard_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Contract setters ---
-
-	function setAddresses(
-		address _borrowerOperationsAddress,
-		address _collSurplusPoolAddress,
-		address _defaultPoolAddress,
-		address _stabilityPoolAddress,
-		address _vesselManagerAddress,
-		address _vesselManagerOperationsAddress
-	) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-		defaultPool = IDefaultPool(_defaultPoolAddress);
-		stabilityPoolAddress = _stabilityPoolAddress;
-		vesselManagerAddress = _vesselManagerAddress;
-		vesselManagerOperationsAddress = _vesselManagerOperationsAddress;
-		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -154,10 +118,8 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
-	function isERC20DepositContract(address _account) private view returns (bool) {
-		return (_account == address(defaultPool) ||
-			_account == address(collSurplusPool) ||
-			_account == stabilityPoolAddress);
+	function isERC20DepositContract(address _account) private pure returns (bool) {
+		return (_account == defaultPool || _account == collSurplusPool || _account == stabilityPool);
 	}
 
 	function receivedERC20(address _asset, uint256 _amount) external override callerIsBorrowerOpsOrDefaultPool {
@@ -167,8 +129,8 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

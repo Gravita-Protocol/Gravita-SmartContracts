@@ -4,19 +4,7 @@ pragma solidity ^0.8.19;
 import "../DebtToken.sol";
 
 contract DebtTokenTester is DebtToken {
-	constructor(
-		address _vesselManagerAddress,
-		address _stabilityPoolAddress,
-		address _borrowerOperationsAddress,
-		address _timelockAddress
-	)
-		DebtToken(
-			_vesselManagerAddress,
-			_stabilityPoolAddress,
-			_borrowerOperationsAddress,
-			_timelockAddress
-		)
-	{
+	constructor() DebtToken() {
 		_burn(msg.sender, balanceOf(msg.sender));
 	}
 
@@ -32,21 +20,13 @@ contract DebtTokenTester is DebtToken {
 		_burn(_account, _amount);
 	}
 
-	function unprotectedSendToPool(
-		address _sender,
-		address _poolAddress,
-		uint256 _amount
-	) external {
+	function unprotectedSendToPool(address _sender, address _poolAddress, uint256 _amount) external {
 		// No check on caller here
 
 		_transfer(_sender, _poolAddress, _amount);
 	}
 
-	function unprotectedReturnFromPool(
-		address _poolAddress,
-		address _receiver,
-		uint256 _amount
-	) external {
+	function unprotectedReturnFromPool(address _poolAddress, address _receiver, uint256 _amount) external {
 		// No check on caller here
 
 		_transfer(_poolAddress, _receiver, _amount);
@@ -77,12 +57,7 @@ contract DebtTokenTester is DebtToken {
 			);
 	}
 
-	function recoverAddress(
-		bytes32 digest,
-		uint8 v,
-		bytes32 r,
-		bytes32 s
-	) external pure returns (address) {
+	function recoverAddress(bytes32 digest, uint8 v, bytes32 r, bytes32 s) external pure returns (address) {
 		return ecrecover(digest, v, r, s);
 	}
 }

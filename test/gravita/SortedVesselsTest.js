@@ -1,8 +1,8 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
-
 const SortedVessels = artifacts.require("SortedVessels")
 const SortedVesselsTester = artifacts.require("SortedVesselsTester")
+
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const { dec, toBN, ZERO_ADDRESS } = th
@@ -414,7 +414,8 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
 			await sortedVessels.initialize()
-			await sortedVessels.setAddresses(sortedVesselsTester.address, sortedVesselsTester.address)
+			await sortedVessels.setBorrowerOperations(sortedVesselsTester.address)
+			await sortedVessels.setVesselManager(sortedVesselsTester.address)
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})
 

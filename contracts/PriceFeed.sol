@@ -7,10 +7,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
-
+import "./Addresses.sol";
 import "./Interfaces/IPriceFeed.sol";
 
-contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath {
+contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath, Addresses {
 	/** Constants ---------------------------------------------------------------------------------------------------- */
 
 	string public constant NAME = "PriceFeed";
@@ -27,28 +27,14 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath 
 
 	// State ------------------------------------------------------------------------------------------------------------
 
-	address public adminContractAddress;
-	address public timelockAddress;
-
 	mapping(address => OracleRecord) public oracleRecords;
 	mapping(address => PriceRecord) public priceRecords;
-
-	bool public isSetupInitialized;
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// Dependency setter ------------------------------------------------------------------------------------------------
-
-	function setAddresses(address _adminContractAddress, address _timelockAddress) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		timelockAddress = _timelockAddress;
-		adminContractAddress = _adminContractAddress;
-		isSetupInitialized = true;
 	}
 
 	// Admin routines ---------------------------------------------------------------------------------------------------
@@ -285,8 +271,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath 
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

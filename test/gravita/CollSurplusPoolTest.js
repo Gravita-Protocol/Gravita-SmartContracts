@@ -1,5 +1,5 @@
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
@@ -40,10 +40,7 @@ contract("CollSurplusPool", async accounts => {
 	const [A, B, treasury] = accounts
 
 	before(async () => {
-		await deploy(treasury, [])
-		for (const acc of accounts.slice(0, 2)) {
-			await erc20.mint(acc, await web3.eth.getBalance(acc))
-		}
+		await deploy(treasury, accounts.slice(0, 2))
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
 

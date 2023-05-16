@@ -10,39 +10,23 @@ contract SortedVesselsTester {
 		sortedVessels = ISortedVessels(_sortedVesselsAddress);
 	}
 
-	function insert(
-		address _asset,
-		address _id,
-		uint256 _NICR,
-		address _prevId,
-		address _nextId
-	) external {
-		sortedVessels.insert(_asset, _id, _NICR, _prevId, _nextId);
+	function insert(address _asset, address _id, uint256 _NICR, address _prevId, address _nextId) external {
+		ISortedVessels(sortedVessels).insert(_asset, _id, _NICR, _prevId, _nextId);
 	}
 
 	function remove(address _asset, address _id) external {
-		sortedVessels.remove(_asset, _id);
+		ISortedVessels(sortedVessels).remove(_asset, _id);
 	}
 
-	function reInsert(
-		address _asset,
-		address _id,
-		uint256 _newNICR,
-		address _prevId,
-		address _nextId
-	) external {
-		sortedVessels.reInsert(_asset, _id, _newNICR, _prevId, _nextId);
+	function reInsert(address _asset, address _id, uint256 _newNICR, address _prevId, address _nextId) external {
+		ISortedVessels(sortedVessels).reInsert(_asset, _id, _newNICR, _prevId, _nextId);
 	}
 
 	function getNominalICR(address, address) external pure returns (uint256) {
 		return 1;
 	}
 
-	function getCurrentICR(
-		address,
-		address,
-		uint256
-	) external pure returns (uint256) {
+	function getCurrentICR(address, address, uint256) external pure returns (uint256) {
 		return 1;
 	}
 }

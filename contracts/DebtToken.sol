@@ -7,54 +7,18 @@ import "./Dependencies/ERC20Permit.sol";
 import "./Interfaces/IDebtToken.sol";
 
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
-
 	string public constant NAME = "GRAI";
-	address public immutable vesselManagerAddress;
-	IStabilityPool public immutable stabilityPool;
-	address public immutable borrowerOperationsAddress;
+
+	address public constant borrowerOperationsAddress = address(0);
+	address public constant stabilityPoolAddress = address(0);
+	address public constant vesselManagerAddress = address(0);
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	address public immutable timelockAddress;
-
-	bool public isSetupInitialized;
-
-	error DebtToken__TimelockOnly();
-	error DebtToken__OwnerOnly();
-	error DebtToken__InvalidRecipient();
-	error DebtToken__InvalidCaller();
-
-	modifier onlyTimelock() {
-		if (isSetupInitialized) {
-			if (msg.sender != timelockAddress) {
-				revert DebtToken__TimelockOnly();
-			}
-		} else {
-			if (msg.sender != owner()) {
-				revert DebtToken__OwnerOnly();
-			}
-		}
-		_;
-	}
-
-	constructor(
-		address _vesselManagerAddress,
-		address _stabilityPoolAddress,
-		address _borrowerOperationsAddress,
-		address _timelockAddress
-	) ERC20("Gravita Debt Token", "GRAI") {
-		vesselManagerAddress = _vesselManagerAddress;
-		timelockAddress = _timelockAddress;
-		stabilityPool = IStabilityPool(_stabilityPoolAddress);
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-	}
-
-	function setSetupIsInitialized() external onlyOwner {
-		isSetupInitialized = true;
-	}
+	constructor() ERC20("Gravita Debt Token", "GRAI") {}
 
 	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {
 		emergencyStopMintingCollateral[_asset] = status;
@@ -71,11 +35,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		_burn(msg.sender, _amount);
 	}
 
-	function mint(
-		address _asset,
-		address _account,
-		uint256 _amount
-	) external override {
+	function mint(address _asset, address _account, uint256 _amount) external override {
 		_requireCallerIsBorrowerOperations();
 		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
@@ -87,7 +47,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		_burn(_account, _amount);
 	}
 
-	function addWhitelist(address _address) external override onlyOwner { 
+	function addWhitelist(address _address) external override onlyOwner {
 		whitelistedContracts[_address] = true;
 
 		emit WhitelistChanged(_address, true);
@@ -99,20 +59,12 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		emit WhitelistChanged(_address, false);
 	}
 
-	function sendToPool(
-		address _sender,
-		address _poolAddress,
-		uint256 _amount
-	) external override {
+	function sendToPool(address _sender, address _poolAddress, uint256 _amount) external override {
 		_requireCallerIsStabilityPool();
 		_transfer(_sender, _poolAddress, _amount);
 	}
 
-	function returnFromPool(
-		address _poolAddress,
-		address _receiver,
-		uint256 _amount
-	) external override {
+	function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external override {
 		_requireCallerIsVesselMorSP();
 		_transfer(_poolAddress, _receiver, _amount);
 	}
@@ -136,25 +88,10 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	// --- 'require' functions ---
 
 	function _requireValidRecipient(address _recipient) internal view {
-		if (_recipient == address(0)) {
-			revert DebtToken__InvalidRecipient();
-		}
-		
-		if (_recipient == address(this)) {
-			revert DebtToken__InvalidRecipient();
-		}
-
-		if (_recipient == address(stabilityPool)) {
-			revert DebtToken__InvalidRecipient();
-		}
-
-		if (_recipient == vesselManagerAddress) {
-			revert DebtToken__InvalidRecipient();
-		}
-
-		if (_recipient == borrowerOperationsAddress) {
-			revert DebtToken__InvalidRecipient();
-		}
+		require(
+			_recipient != address(0) && _recipient != address(this),
+			"DebtToken: Cannot transfer tokens directly to the token contract or the zero address"
+		);
 	}
 
 	function _requireCallerIsWhitelistedContract() internal view {
@@ -162,28 +99,26 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	}
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		if (msg.sender != borrowerOperationsAddress) {
-			revert DebtToken__InvalidCaller();
-		}
+		require(msg.sender == borrowerOperationsAddress, "DebtToken: Caller is not BorrowerOperations");
 	}
 
 	function _requireCallerIsBOorVesselMorSP() internal view {
-		if (msg.sender != borrowerOperationsAddress &&
-				msg.sender != vesselManagerAddress &&
-				address(stabilityPool) != msg.sender) {
-					revert DebtToken__InvalidCaller();
-				}
+		require(
+			msg.sender == borrowerOperationsAddress ||
+				msg.sender == vesselManagerAddress ||
+				msg.sender == stabilityPoolAddress,
+			"DebtToken: Caller is neither BorrowerOperations nor VesselManager nor StabilityPool"
+		);
 	}
 
 	function _requireCallerIsStabilityPool() internal view {
-		if (address(stabilityPool) != msg.sender) {
-			revert DebtToken__InvalidCaller();
-		}
+		require(msg.sender == stabilityPoolAddress, "DebtToken: Caller is not the StabilityPool");
 	}
 
 	function _requireCallerIsVesselMorSP() internal view {
-		if (msg.sender != vesselManagerAddress && address(stabilityPool) != msg.sender) {
-			revert DebtToken__InvalidCaller();
-		}
+		require(
+			msg.sender == vesselManagerAddress || msg.sender == stabilityPoolAddress,
+			"DebtToken: Caller is neither VesselManager nor StabilityPool"
+		);
 	}
 }

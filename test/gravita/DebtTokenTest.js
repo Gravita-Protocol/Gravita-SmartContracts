@@ -4,11 +4,10 @@ const { toUtf8Bytes } = require("@ethersproject/strings")
 const { pack } = require("@ethersproject/solidity")
 const { hexlify } = require("@ethersproject/bytes")
 const { ecsign } = require("ethereumjs-util")
-
 const { expectRevert } = require("@openzeppelin/test-helpers")
 
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 
 const { toBN, assertRevert, assertAssert, dec, ZERO_ADDRESS } = testHelpers.TestHelper
 

@@ -1,6 +1,6 @@
 const { web3 } = require("@openzeppelin/test-helpers/src/setup")
-const deploymentHelper = require("../../utils/deploymentHelpers.js")
-const testHelpers = require("../../utils/testHelpers.js")
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
 const timeValues = testHelpers.TimeValues
 const th = testHelpers.TestHelper
 const { dec, toBN, assertRevert, ZERO_ADDRESS } = th
@@ -58,7 +58,7 @@ contract("LockedGRVTTest", async accounts => {
 
 	describe("Locked GRVT", async () => {
 		before(async () => {
-			await deploy(treasury, accounts.slice(0, 5))
+			await deploy(treasury)
 
 			await grvtToken.approve(lockedGRVT.address, ethers.constants.MaxUint256, { from: treasury })
 

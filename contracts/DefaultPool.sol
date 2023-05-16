@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IDefaultPool.sol";
+import "./Addresses.sol";
 
 /*
  * The Default Pool holds the collateral and debt token amounts from liquidations that have been redistributed
@@ -16,33 +17,19 @@ import "./Interfaces/IDefaultPool.sol";
  * When a vessel makes an operation that applies to its pending collateral and debt, they are moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
+contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	string public constant NAME = "DefaultPool";
 
-	address public vesselManagerAddress;
-	address public activePoolAddress;
-
 	mapping(address => uint256) internal assetsBalances;
 	mapping(address => uint256) internal debtTokenBalances;
-
-	bool public isSetupInitialized;
 
 	// --- Initializer ---
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
-
-	// --- Dependency setters ---
-
-	function setAddresses(address _vesselManagerAddress, address _activePoolAddress) external onlyOwner {
-		require(!isSetupInitialized, "Setup is already initialized");
-		vesselManagerAddress = _vesselManagerAddress;
-		activePoolAddress = _activePoolAddress;
-		isSetupInitialized = true;
 	}
 
 	// --- Getters for public variables. Required by IPool interface ---
@@ -70,8 +57,6 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 	// --- Pool functionality ---
 
 	function sendAssetToActivePool(address _asset, uint256 _amount) external override callerIsVesselManager {
-		address activePool = activePoolAddress; // cache to save an SLOAD
-
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) {
 			return;
@@ -90,12 +75,12 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 	// --- 'require' functions ---
 
 	modifier callerIsActivePool() {
-		require(msg.sender == activePoolAddress, "DefaultPool: Caller is not the ActivePool");
+		require(msg.sender == activePool, "DefaultPool: Caller is not the ActivePool");
 		_;
 	}
 
 	modifier callerIsVesselManager() {
-		require(msg.sender == vesselManagerAddress, "DefaultPool: Caller is not the VesselManager");
+		require(msg.sender == vesselManager, "DefaultPool: Caller is not the VesselManager");
 		_;
 	}
 
@@ -106,8 +91,8 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool {
 	}
 
 	function authorizeUpgrade(address newImplementation) public {
-    	_authorizeUpgrade(newImplementation);
+		_authorizeUpgrade(newImplementation);
 	}
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
