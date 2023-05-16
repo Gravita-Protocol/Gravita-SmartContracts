@@ -126,27 +126,36 @@ class DeploymentHelper {
 	 * Connects contracts to their dependencies.
 	 */
 	static async _connectCoreContracts(core, grvt, treasuryAddress) {
+		const setAddresses = async (contract) => {
+			await contract.setAdminContract(core.adminContract.address)
+			await contract.setBorrowerOperations(core.borrowerOperations.address)
+			await contract.setVesselManager(core.vesselManager.address)
+			await contract.setVesselManagerOperations(core.vesselManagerOperations.address)
+			await contract.setTimelock(core.shortTimelock.address)
+			await contract.setActivePool(core.activePool.address)
+			await contract.setDefaultPool(core.defaultPool.address)
+			await contract.setStabilityPool(core.stabilityPool.address)
+			await contract.setCollSurplusPool(core.collSurplusPool.address)
+			await contract.setPriceFeed(core.priceFeedTestnet.address)
+			await contract.setDebtToken(core.debtToken.address)
+			await contract.setVesselManager(core.vesselManager.address)
+			await contract.setFeeCollector(core.feeCollector.address)
+			await contract.setSortedVessels(core.sortedVessels.address)
+			await contract.setTreasury(treasuryAddress)
+			await contract.setGasPool(core.gasPool.address)
+			await contract.setGRVTStaking(grvt.grvtStaking.address)
+			await contract.setCommunityIssuance(grvt.communityIssuance.address)
+		}
 		for (const key in core) {
 			const contract = core[key]
-			if (contract.setAdminContract) {
-				await contract.setAdminContract(core.adminContract.address)
-				await contract.setBorrowerOperations(core.borrowerOperations.address)
-				await contract.setVesselManager(core.vesselManager.address)
-				await contract.setVesselManagerOperations(core.vesselManagerOperations.address)
-				await contract.setTimelock(core.shortTimelock.address)
-				await contract.setActivePool(core.activePool.address)
-				await contract.setDefaultPool(core.defaultPool.address)
-				await contract.setStabilityPool(core.stabilityPool.address)
-				await contract.setCollSurplusPool(core.collSurplusPool.address)
-				await contract.setPriceFeed(core.priceFeedTestnet.address)
-				await contract.setDebtToken(core.debtToken.address)
-				await contract.setVesselManager(core.vesselManager.address)
-				await contract.setFeeCollector(core.feeCollector.address)
-				await contract.setSortedVessels(core.sortedVessels.address)
-				await contract.setTreasury(treasuryAddress)
-				await contract.setGasPool(core.gasPool.address)
-				await contract.setGRVTStaking(grvt.grvtStaking.address)
-				await contract.setCommunityIssuance(grvt.communityIssuance.address)
+			if (contract.setGasPool) {
+				await setAddresses(contract)
+			}
+		}
+		for (const key in grvt) {
+			const contract = grvt[key]
+			if (contract.setGasPool) {
+				await setAddresses(contract)
 			}
 		}
 
