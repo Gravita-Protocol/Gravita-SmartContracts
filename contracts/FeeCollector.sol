@@ -140,7 +140,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	 */
 	function handleRedemptionFee(address _asset, uint256 _amount) external onlyVesselManager {
 		if (_amount != 0) {
-			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
+			address collector = routeToGRVTStaking ? grvtStaking : treasuryAddress;
 			IERC20Upgradeable(_asset).safeTransfer(collector, _amount);
 			if (routeToGRVTStaking) {
 				IGRVTStaking(grvtStaking).increaseFee_Asset(_asset, _amount);
@@ -302,7 +302,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	}
 
 	modifier onlyVesselManager() {
-		if (msg.sender != address(vesselManager)) {
+		if (msg.sender != vesselManager) {
 			revert FeeCollector__VesselManagerOnly(msg.sender, vesselManager);
 		}
 		_;
