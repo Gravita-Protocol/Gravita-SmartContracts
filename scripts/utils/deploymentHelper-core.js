@@ -1,31 +1,49 @@
 const DeploymentHelper = require("./deploymentHelper-common.js")
 
+const readline = require("readline-sync")
+
+function checkContinue() {
+	var userinput = readline.question(`\nContinue? [y/N]\n`);
+  if (userinput.toLowerCase() !== 'y') {
+		process.exit()
+  }
+}
+
 class CoreDeploymentHelper extends DeploymentHelper {
 	constructor(hre, configParams, deployerWallet) {
 		super(hre, configParams, deployerWallet)
-		this.shortTimelockDelay = this.isMainnet() ? 2 * 86_400 : 120 // 2 days || 2 minutes
-		this.longTimelockDelay = this.isMainnet() ? 7 * 86_400 : 120 // 7 days || 2 minutes
+		this.shortTimelockDelay = 2 * 86_400 // 2 days
+		this.longTimelockDelay = 7 * 86_400 // 7 days
 		this.state = this.loadPreviousDeployment()
 	}
 
 	async loadOrDeployOrUpgradeCoreContracts() {
 		console.log(`Deploying core contracts...`)
 
+		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
+		const timelock = await this.deployNonUpgradeable("Timelock", timelockParams)
+		const debtToken = await this.deployNonUpgradeable("DebtToken")
+
+		process.exit()
+
 		// 11 Upgradeable contracts
 		const [activePool, upgraded1] = await this.deployUpgradeable("ActivePool")
 		const [adminContract, upgraded2] = await this.deployUpgradeable("AdminContract")
 		const [borrowerOperations, upgraded3] = await this.deployUpgradeable("BorrowerOperations")
+		checkContinue()
 		const [collSurplusPool, upgraded4] = await this.deployUpgradeable("CollSurplusPool")
 		const [defaultPool, upgraded5] = await this.deployUpgradeable("DefaultPool")
 		const [feeCollector, upgraded6] = await this.deployUpgradeable("FeeCollector")
+		checkContinue()
 		const [priceFeed, upgraded7] = await this.deployUpgradeable("PriceFeed")
 		const [sortedVessels, upgraded8] = await this.deployUpgradeable("SortedVessels")
 		const [stabilityPool, upgraded9] = await this.deployUpgradeable("StabilityPool")
+		checkContinue()
 		const [vesselManager, upgraded10] = await this.deployUpgradeable("VesselManager")
 		const [vesselManagerOperations, upgraded11] = await this.deployUpgradeable("VesselManagerOperations")
 
 		const allUpgraded =
-			upgraded1 &&	
+			upgraded1 &&
 			upgraded2 &&
 			upgraded3 &&
 			upgraded4 &&
@@ -39,10 +57,6 @@ class CoreDeploymentHelper extends DeploymentHelper {
 
 		// 3 Non-upgradable contracts
 		const gasPool = await this.deployNonUpgradeable("GasPool")
-		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
-		const timelock = await this.deployNonUpgradeable(this.isMainnet() ? "Timelock" : "TimelockTester", timelockParams)
-		
-		// let debtToken = await this.deployNonUpgradeable("DebtToken")
 
 		const contracts = {
 			activePool,

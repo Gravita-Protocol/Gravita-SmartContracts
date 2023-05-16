@@ -13,10 +13,6 @@ const fs = require("fs")
 		this.deployerWallet = deployerWallet
 	}
 
-	isMainnet() {
-		return "mainnet" == this.configParams.targetNetwork
-	}
-
 	loadPreviousDeployment() {
 		let previousDeployment = {}
 		if (fs.existsSync(this.configParams.OUTPUT_FILE)) {
@@ -115,7 +111,7 @@ const fs = require("fs")
 			// Upgradeable contract, new deployment
 			console.log(`(Deploying ${contractName}...)`)
 			let opts = { kind: "uups" }
-			if (factory.interface.functions.initialize) {
+			if (factory.interface.functions["initialize()"]) {
 				opts.initializer = "initialize()"
 			}
 			while (++retry < maxRetries) {
