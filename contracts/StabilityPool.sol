@@ -336,7 +336,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	// --- GRVT issuance functions ---
 
 	function _triggerGRVTIssuance() internal {
-		if (address(communityIssuance) != address(0)) {
+		if (communityIssuance != address(0)) {
 			uint256 GRVTIssuance = ICommunityIssuance(communityIssuance).issueGRVT();
 			_updateG(GRVTIssuance);
 		}
@@ -877,22 +877,22 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	// --- Modifiers ---
 
 	modifier onlyAdminContract() {
-		if (msg.sender != address(adminContract)) {
-			revert StabilityPool__AdminContractOnly(msg.sender, address(adminContract));
+		if (msg.sender != adminContract) {
+			revert StabilityPool__AdminContractOnly(msg.sender, adminContract);
 		}
 		_;
 	}
 
 	modifier onlyActivePool() {
-		if (msg.sender != address(activePool)) {
-			revert StabilityPool__ActivePoolOnly(msg.sender, address(activePool));
+		if (msg.sender != activePool) {
+			revert StabilityPool__ActivePoolOnly(msg.sender, activePool);
 		}
 		_;
 	}
 
 	modifier onlyVesselManager() {
-		if (msg.sender != address(vesselManager)) {
-			revert StabilityPool__VesselManagerOnly(msg.sender, address(vesselManager));
+		if (msg.sender != vesselManager) {
+			revert StabilityPool__VesselManagerOnly(msg.sender, vesselManager);
 		}
 		_;
 	}

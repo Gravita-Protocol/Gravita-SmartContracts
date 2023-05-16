@@ -25,7 +25,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManager() {
-		if (msg.sender != address(vesselManager)) {
+		if (msg.sender != vesselManager) {
 			revert VesselManagerOperations__OnlyVesselManager();
 		}
 		_;
@@ -83,7 +83,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			totals.totalCollToSendToSP
 		);
 		if (totals.totalCollSurplus != 0) {
-			IActivePool(activePool).sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
+			IActivePool(activePool).sendAsset(_asset, collSurplusPool, totals.totalCollSurplus);
 		}
 
 		IVesselManager(vesselManager).updateSystemSnapshots_excludeCollRemainder(_asset, totals.totalCollGasCompensation);
@@ -139,7 +139,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			totals.totalCollToSendToSP
 		);
 		if (totals.totalCollSurplus != 0) {
-			IActivePool(activePool).sendAsset(_asset, address(collSurplusPool), totals.totalCollSurplus);
+			IActivePool(activePool).sendAsset(_asset, collSurplusPool, totals.totalCollSurplus);
 		}
 
 		// Update system snapshots

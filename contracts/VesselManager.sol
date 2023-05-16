@@ -78,21 +78,21 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
-		if (msg.sender != address(vesselManagerOperations)) {
+		if (msg.sender != vesselManagerOperations) {
 			revert VesselManager__OnlyVesselManagerOperations();
 		}
 		_;
 	}
 
 	modifier onlyBorrowerOperations() {
-		if (msg.sender != address(borrowerOperations)) {
+		if (msg.sender != borrowerOperations) {
 			revert VesselManager__OnlyBorrowerOperations();
 		}
 		_;
 	}
 
 	modifier onlyVesselManagerOperationsOrBorrowerOperations() {
-		if (msg.sender != address(borrowerOperations) && msg.sender != address(vesselManagerOperations)) {
+		if (msg.sender != borrowerOperations && msg.sender != vesselManagerOperations) {
 			revert VesselManager__OnlyVesselManagerOperationsOrBorrowerOperations();
 		}
 		_;
@@ -281,7 +281,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _assetRedeemedAmount
 	) external override onlyVesselManagerOperations {
 		// Send the asset fee to the fee collector
-		IActivePool(activePool).sendAsset(_asset, address(feeCollector), _assetFeeAmount);
+		IActivePool(activePool).sendAsset(_asset, feeCollector, _assetFeeAmount);
 		IFeeCollector(feeCollector).handleRedemptionFee(_asset, _assetFeeAmount);
 		// Burn the total debt tokens that is cancelled with debt, and send the redeemed asset to msg.sender
 		IDebtToken(debtToken).burn(_receiver, _debtToRedeem);
@@ -386,7 +386,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 
 		IActivePool(activePool).decreaseDebt(_asset, _debt);
 		IDefaultPool(defaultPool).increaseDebt(_asset, _debt);
-		IActivePool(activePool).sendAsset(_asset, address(defaultPool), _coll);
+		IActivePool(activePool).sendAsset(_asset, defaultPool, _coll);
 	}
 
 	function updateSystemSnapshots_excludeCollRemainder(
@@ -442,7 +442,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount);
 		// send asset from Active Pool to CollSurplus Pool
 		ICollSurplusPool(collSurplusPool).accountSurplus(_asset, _borrower, _assetAmount);
-		IActivePool(activePool).sendAsset(_asset, address(collSurplusPool), _assetAmount);
+		IActivePool(activePool).sendAsset(_asset, collSurplusPool, _assetAmount);
 	}
 
 	function _movePendingVesselRewardsToActivePool(
