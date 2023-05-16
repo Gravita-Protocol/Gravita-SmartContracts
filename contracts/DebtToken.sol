@@ -28,9 +28,6 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		vesselManagerAddress = _vesselManagerAddress;
 	}
 
-	// --- Functions for intra-Gravita calls ---
-
-	//
 	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {
 		emergencyStopMintingCollateral[_asset] = status;
 		emit EmergencyStopMintingCollateral(_asset, status);
