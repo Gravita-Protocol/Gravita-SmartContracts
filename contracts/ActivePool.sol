@@ -53,7 +53,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps() {
 		require(
-			msg.sender == (borrowerOperations) ||
+			msg.sender == borrowerOperations ||
 				msg.sender == stabilityPool ||
 				msg.sender == vesselManager ||
 				msg.sender == vesselManagerOperations,
