@@ -9,9 +9,9 @@ import "./Interfaces/IDebtToken.sol";
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	string public constant NAME = "GRAI";
 
-	address public constant borrowerOperationsAddress = address(0);
-	address public constant stabilityPoolAddress = address(0);
-	address public constant vesselManagerAddress = address(0);
+	address public constant borrowerOperationsAddress = 0x2bCA0300c2aa65de6F19c2d241B54a445C9990E2;
+	address public constant stabilityPoolAddress = 0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6;
+	address public constant vesselManagerAddress = 0xdB5DAcB1DFbe16326C3656a88017f0cB4ece0977;
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
