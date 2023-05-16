@@ -56,7 +56,8 @@
   },
   "GasPool": {
     "address": "0x16A64C92295Fa16C77C7E3eE5728f9e933ed665e",
-    "txHash": "0x400db1e801780c58983bb22086dc58cfcc269dec9619dc815654078635ac7334"
+    "txHash": "0x400db1e801780c58983bb22086dc58cfcc269dec9619dc815654078635ac7334",
+    "verification": "https://goerli.etherscan.io/address/0x16A64C92295Fa16C77C7E3eE5728f9e933ed665e#code"
   },
   "TimelockTester": {
     "address": "0xFB04d429e1826cf0B0068F4fbA7992b42a7Acf93",
@@ -64,6 +65,7 @@
   },
   "DebtToken": {
     "address": "0x78076562e30Fd49c70C4E91f65644d15C32C1839",
-    "txHash": "0x0cb01ab33338cdb1bf7886d8f167bb6639f6bec3164cd83be344e769ba0069e9"
+    "txHash": "0x0cb01ab33338cdb1bf7886d8f167bb6639f6bec3164cd83be344e769ba0069e9",
+    "verification": "https://goerli.etherscan.io/address/0x78076562e30Fd49c70C4E91f65644d15C32C1839#code"
   }
 }
