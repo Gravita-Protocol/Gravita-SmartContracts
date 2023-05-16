@@ -7,7 +7,6 @@ const { Deployer } = require("./deployer-common.js")
  * Exported deployment script, invoked from hardhat tasks defined on hardhat.config.js
  */
 class CoreDeployer extends Deployer {
-
 	constructor(hre, targetNetwork) {
 		super(hre, targetNetwork)
 		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet)
@@ -57,10 +56,12 @@ class CoreDeployer extends Deployer {
 		if (!oracleRecord.exists) {
 			const owner = await this.coreContracts.priceFeed.owner()
 			if (owner != this.deployerWallet.address) {
-				console.log(`[${coll.name}] NOTICE: Cannot call PriceFeed.setOracle(): deployer = ${this.deployerWallet.address}, owner = ${owner}`)
+				console.log(
+					`[${coll.name}] NOTICE: Cannot call PriceFeed.setOracle(): deployer = ${this.deployerWallet.address}, owner = ${owner}`
+				)
 				return
 			}
-				console.log(`[${coll.name}] PriceFeed.setOracle()`)
+			console.log(`[${coll.name}] PriceFeed.setOracle()`)
 			await this.helper.sendAndWaitForTransaction(
 				this.coreContracts.priceFeed.setOracle(
 					coll.address,
@@ -88,6 +89,7 @@ class CoreDeployer extends Deployer {
 			console.log(`[${coll.name}] NOTICE: collateral has already been added before`)
 		} else {
 			const decimals = 18
+			console.log(`[${coll.name}] AdminContract.addNewCollateral() ...`)
 			await this.helper.sendAndWaitForTransaction(
 				this.coreContracts.adminContract.addNewCollateral(coll.address, coll.gasCompensation, decimals)
 			)

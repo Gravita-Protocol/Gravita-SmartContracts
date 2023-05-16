@@ -4,11 +4,7 @@ pragma solidity ^0.8.19;
 import "../DebtToken.sol";
 
 contract DebtTokenTester is DebtToken {
-	constructor(
-		address _borrowerOperationsAddress,
-		address _stabilityPoolAddress,
-		address _vesselManagerAddress
-	) DebtToken(_borrowerOperationsAddress, _stabilityPoolAddress, _vesselManagerAddress) {
+	constructor() DebtToken() {
 		_burn(msg.sender, balanceOf(msg.sender));
 	}
 

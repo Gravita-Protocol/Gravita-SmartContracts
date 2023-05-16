@@ -41,10 +41,9 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		const gasPool = await this.deployNonUpgradeable("GasPool")
 		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
 		const timelock = await this.deployNonUpgradeable(this.isMainnet() ? "Timelock" : "TimelockTester", timelockParams)
-		const debtTokenParams = [borrowerOperations.address, stabilityPool.address, vesselManager.address]
-		const debtToken = await this.deployNonUpgradeable("DebtToken", debtTokenParams)
+		let debtToken = await this.deployNonUpgradeable("DebtToken")
 
-		await this.verifyCoreContracts(debtTokenParams)
+		// await this.verifyCoreContracts(debtTokenParams)
 
 		const contracts = {
 			activePool,
@@ -62,7 +61,7 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			vesselManager,
 			vesselManagerOperations,
 		}
-		await this.logContractObjects(contracts)
+		// await this.logContractObjects(contracts)
 		return { contracts, allUpgraded }
 	}
 
@@ -85,7 +84,7 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			await this.verifyContract("AdminContract", this.state)
 			await this.verifyContract("BorrowerOperations", this.state)
 			await this.verifyContract("CollSurplusPool", this.state)
-			await this.verifyContract("DebtToken", this.state, debtTokenParams)
+			await this.verifyContract("DebtToken", this.state)
 			await this.verifyContract("DefaultPool", this.state)
 			await this.verifyContract("FeeCollector", this.state)
 			await this.verifyContract("GasPool", this.state)
