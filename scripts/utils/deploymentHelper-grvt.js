@@ -261,10 +261,9 @@ class CoreDeploymentHelper extends DeploymentHelper {
 	}
 
 	async setAddresses(contractName, contract, addressList) {
-		const gasPrice = this.configParams.GAS_PRICE
 		try {
 			console.log(` - ${contractName}.setAddresses()`)
-			await this.sendAndWaitForTransaction(contract.setAddresses(...addressList, { gasPrice }))
+			await this.sendAndWaitForTransaction(contract.setAddresses(...addressList))
 			console.log(` - ${contractName}.setAddresses() -> ok`)
 		} catch (e) {
 			const msg = e.message || ""

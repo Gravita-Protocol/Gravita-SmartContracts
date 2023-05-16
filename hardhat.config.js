@@ -70,7 +70,6 @@ module.exports = {
 		},
 		// mainnet: {
 		// 	url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-		// 	gasPrice: process.env.GAS_PRICE ? parseInt(process.env.GAS_PRICE) : 20000000000,
 		// 	accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		// },
 	},

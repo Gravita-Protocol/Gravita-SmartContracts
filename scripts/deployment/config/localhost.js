@@ -2,7 +2,6 @@ const { utils } = require("ethers")
 const toEther = val => utils.parseEther(String(val))
 
 const OUTPUT_FILE = "./scripts/deployment/output/localhost.json"
-const GAS_PRICE = 20_000_000_000 // 20 Gwei
 const TX_CONFIRMATIONS = 1
 const ETHERSCAN_BASE_URL = undefined
 
@@ -37,7 +36,6 @@ module.exports = {
 	COLLATERAL,
 	CONTRACT_UPGRADES_ADMIN,
 	ETHERSCAN_BASE_URL,
-	GAS_PRICE,
 	GRVT_BENEFICIARIES,
 	OUTPUT_FILE,
 	SYSTEM_PARAMS_ADMIN,
