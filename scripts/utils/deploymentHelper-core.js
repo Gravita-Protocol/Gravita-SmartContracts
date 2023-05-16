@@ -3,7 +3,7 @@ const DeploymentHelper = require("./deploymentHelper-common.js")
 class CoreDeploymentHelper extends DeploymentHelper {
 	constructor(hre, configParams, deployerWallet) {
 		super(hre, configParams, deployerWallet)
-		this.shortTimelockDelay = this.isMainnet() ? 3 * 86_400 : 120 // 3 days || 2 minutes
+		this.shortTimelockDelay = this.isMainnet() ? 2 * 86_400 : 120 // 2 days || 2 minutes
 		this.longTimelockDelay = this.isMainnet() ? 7 * 86_400 : 120 // 7 days || 2 minutes
 		this.state = this.loadPreviousDeployment()
 	}

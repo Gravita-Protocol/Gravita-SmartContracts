@@ -6,7 +6,7 @@ const TX_CONFIRMATIONS = 2
 const ETHERSCAN_BASE_URL = "https://etherscan.io/address"
 
 const CONTRACT_UPGRADES_ADMIN = ""
-const SYSTEM_PARAMS_ADMIN = ""
+const SYSTEM_PARAMS_ADMIN = "0x48c66D21f7204ACe7dE43965Fe28da6a8FB96B80"
 const TREASURY_WALLET = "0x6F8Fe995422c5efE6487A7B07f67E84aaD9D4eC8"
 
 // Core Contracts Config ----------------------------------------------------------------------------------------------
