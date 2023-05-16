@@ -1,37 +1,82 @@
+const { utils } = require("ethers")
+const toEther = val => utils.parseEther(String(val))
+
 const OUTPUT_FILE = "./scripts/deployment/output/mainnet.json"
-const GAS_PRICE = 25_000_000_000 // 25 Gwei
-const TX_CONFIRMATIONS = 3 // for mainnet
-const ETHERSCAN_BASE_URL = "https://arbiscan.io/address"
+const GAS_PRICE = 25_000_000_000 // 20 Gwei
+const TX_CONFIRMATIONS = 2
+const ETHERSCAN_BASE_URL = "https://etherscan.io/address"
 
-const COLLATERAL_ADDRESSES = {
-	// --- Collateral ---
-	RETH_ERC20: "",
-	WETH_ERC20: "",
-	WSTETH_ERC20: "",
-	// --- Price Feed Aggregators ---
-	RETH_USD_ORACLE: "",
-	WETH_USD_ORACLE: "",
-	WSTETH_USD_ORACLE: "",
-}
+const CONTRACT_UPGRADES_ADMIN = ""
+const SYSTEM_PARAMS_ADMIN = ""
+const TREASURY_WALLET = "0x6F8Fe995422c5efE6487A7B07f67E84aaD9D4eC8"
 
-const GRAVITA_ADDRESSES = {
-	UPGRADES_PROXY_ADMIN: "",
-	SYSTEM_PARAMS_ADMIN: "",
-	TREASURY_WALLET: "",
-}
+// Core Contracts Config ----------------------------------------------------------------------------------------------
 
-const DEPLOY_GRVT_CONTRACTS = false
+const COLLATERAL = [
+	{
+		name: "wETH",
+		address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		oracleAddress: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+		oraclePriceDeviation: toEther(0.25),
+		oracleIsEthIndexed: false,
+		MCR: toEther(1.111),
+		CCR: toEther(1.4),
+		minNetDebt: toEther(2_000),
+		gasCompensation: toEther(200),
+		mintCap: toEther(1_500_000),
+	},
+	{
+		name: "rETH",
+		address: "0xae78736Cd615f374D3085123A210448E74Fc6393",
+		oracleAddress: "0x536218f9E9Eb48863970252233c8F271f554C2d0",
+		oraclePriceDeviation: toEther(0.25),
+		oracleIsEthIndexed: true,
+		MCR: toEther(1.176),
+		CCR: toEther(1.4),
+		minNetDebt: toEther(2_000),
+		gasCompensation: toEther(200),
+		mintCap: toEther(1_500_000),
+	},
+	{
+		name: "wstETH",
+		address: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+		oracleAddress: "",
+		oraclePriceDeviation: toEther(0.25),
+		oracleIsEthIndexed: false,
+		MCR: toEther(1.176),
+		CCR: toEther(1.4),
+		minNetDebt: toEther(2_000),
+		gasCompensation: toEther(200),
+		mintCap: toEther(1_500_000),
+	},
+	{
+		name: "bLUSD",
+		address: "0xB9D7DdDca9a4AC480991865EfEf82E01273F79C3",
+		oracleAddress: "",
+		oraclePriceDeviation: toEther(0.25),
+		oracleIsEthIndexed: false,
+		MCR: toEther(1.01),
+		CCR: toEther(1),
+		minNetDebt: toEther(2_000),
+		gasCompensation: toEther(0),
+		mintCap: toEther(1_500_000),
+	},
+]
+
+// Grvt Contracts Config ----------------------------------------------------------------------------------------------
+
 const GRVT_BENEFICIARIES = {
-	"0x0000000000000000000000000000000000000000": 1_000_000,
+	// "0x19596e1D6cd97916514B5DBaA4730781eFE49975": 1_000_000,
 }
 
 module.exports = {
-	COLLATERAL_ADDRESSES,
-	DEPLOY_GRVT_CONTRACTS,
+	COLLATERAL,
+	CONTRACT_UPGRADES_ADMIN,
 	ETHERSCAN_BASE_URL,
 	GAS_PRICE,
-	GRAVITA_ADDRESSES,
 	GRVT_BENEFICIARIES,
 	OUTPUT_FILE,
+	SYSTEM_PARAMS_ADMIN,
+	TREASURY_WALLET,
 	TX_CONFIRMATIONS,
 }
