@@ -5,6 +5,10 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "./Interfaces/IAdminContract.sol";
+import "./Interfaces/IStabilityPool.sol";
+import "./Interfaces/IActivePool.sol";
+import "./Interfaces/IDefaultPool.sol";
 import "./Addresses.sol";
 
 contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, Addresses {
@@ -117,7 +121,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 			redemptionBlockTimestamp: REDEMPTION_BLOCK_TIMESTAMP_DEFAULT
 		});
 
-		stabilityPool.addCollateralType(_collateral);
+		IStabilityPool(stabilityPool).addCollateralType(_collateral);
 
 		// throw event
 		emit CollateralAdded(_collateral);
@@ -308,7 +312,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 	}
 
 	function getTotalAssetDebt(address _asset) external view override returns (uint256) {
-		return activePool.getDebtTokenBalance(_asset) + defaultPool.getDebtTokenBalance(_asset);
+		return IActivePool(activePool).getDebtTokenBalance(_asset) + IDefaultPool(defaultPool).getDebtTokenBalance(_asset);
 	}
 
 	// Internal Functions -----------------------------------------------------------------------------------------------

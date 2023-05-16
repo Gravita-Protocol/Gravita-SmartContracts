@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
 import "./Addresses.sol";
+import "./Interfaces/IPriceFeed.sol";
 
 contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath, Addresses {
 	/** Constants ---------------------------------------------------------------------------------------------------- */

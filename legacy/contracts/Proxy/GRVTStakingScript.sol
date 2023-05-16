@@ -11,6 +11,6 @@ contract GRVTStakingScript {
 	}
 
 	function stake(uint256 _GRVTamount) external {
-		grvtStaking.stake(_GRVTamount);
+		IGRVTStaking(grvtStaking).stake(_GRVTamount);
 	}
 }

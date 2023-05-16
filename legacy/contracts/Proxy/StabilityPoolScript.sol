@@ -13,10 +13,10 @@ contract StabilityPoolScript {
 	}
 
 	function provideToSP(uint256 _amount) external {
-		stabilityPool.provideToSP(_amount);
+		IStabilityPool(stabilityPool).provideToSP(_amount);
 	}
 
 	function withdrawFromSP(uint256 _amount) external {
-		stabilityPool.withdrawFromSP(_amount);
+		IStabilityPool(stabilityPool).withdrawFromSP(_amount);
 	}
 }

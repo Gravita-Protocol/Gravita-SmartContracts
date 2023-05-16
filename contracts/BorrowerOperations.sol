@@ -5,8 +5,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+import "./Interfaces/IVesselManager.sol";
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
+import "./Interfaces/IBorrowerOperations.sol";
+import "./Interfaces/IDebtToken.sol";
+import "./Interfaces/IFeeCollector.sol";
+import "./Interfaces/ICollSurplusPool.sol";
 import "./Addresses.sol";
 
 contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgradeable, IBorrowerOperations {
@@ -66,11 +71,11 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		address _upperHint,
 		address _lowerHint
 	) external override {
-		require(adminContract.getIsActive(_asset), "BorrowerOps: Asset is not active");
+		require(IAdminContract(adminContract).getIsActive(_asset), "BorrowerOps: Asset is not active");
 		LocalVariables_openVessel memory vars;
 		vars.asset = _asset;
 
-		vars.price = priceFeed.fetchPrice(vars.asset);
+		vars.price = IPriceFeed(priceFeed).fetchPrice(vars.asset);
 		bool isRecoveryMode = _checkRecoveryMode(vars.asset, vars.price);
 
 		_requireVesselIsNotActive(vars.asset, msg.sender);
@@ -99,15 +104,15 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		}
 
 		// Set the vessel struct's properties
-		vesselManager.setVesselStatus(vars.asset, msg.sender, 1); // Vessel Status 1 = Active
-		vesselManager.increaseVesselColl(vars.asset, msg.sender, _assetAmount);
-		vesselManager.increaseVesselDebt(vars.asset, msg.sender, vars.compositeDebt);
+		IVesselManager(vesselManager).setVesselStatus(vars.asset, msg.sender, 1); // Vessel Status 1 = Active
+		IVesselManager(vesselManager).increaseVesselColl(vars.asset, msg.sender, _assetAmount);
+		IVesselManager(vesselManager).increaseVesselDebt(vars.asset, msg.sender, vars.compositeDebt);
 
-		vesselManager.updateVesselRewardSnapshots(vars.asset, msg.sender);
-		vars.stake = vesselManager.updateStakeAndTotalStakes(vars.asset, msg.sender);
+		IVesselManager(vesselManager).updateVesselRewardSnapshots(vars.asset, msg.sender);
+		vars.stake = IVesselManager(vesselManager).updateStakeAndTotalStakes(vars.asset, msg.sender);
 
-		sortedVessels.insert(vars.asset, msg.sender, vars.NICR, _upperHint, _lowerHint);
-		vars.arrayIndex = vesselManager.addVesselOwnerToArray(vars.asset, msg.sender);
+		ISortedVessels(sortedVessels).insert(vars.asset, msg.sender, vars.NICR, _upperHint, _lowerHint);
+		vars.arrayIndex = IVesselManager(vesselManager).addVesselOwnerToArray(vars.asset, msg.sender);
 		emit VesselCreated(vars.asset, msg.sender, vars.arrayIndex);
 
 		// Move the asset to the Active Pool, and mint the debtToken amount to the borrower
@@ -117,8 +122,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_withdrawDebtTokens(
 			vars.asset,
 			gasPoolAddress,
-			adminContract.getDebtTokenGasCompensation(vars.asset),
-			adminContract.getDebtTokenGasCompensation(vars.asset)
+			IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset),
+			IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset)
 		);
 
 		emit VesselUpdated(
@@ -208,7 +213,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	) internal {
 		LocalVariables_adjustVessel memory vars;
 		vars.asset = _asset;
-		vars.price = priceFeed.fetchPrice(vars.asset);
+		vars.price = IPriceFeed(priceFeed).fetchPrice(vars.asset);
 		bool isRecoveryMode = _checkRecoveryMode(vars.asset, vars.price);
 
 		if (_isDebtIncrease) {
@@ -223,7 +228,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent != 0 && _debtTokenChange == 0)
 		);
 
-		vesselManager.applyPendingRewards(vars.asset, _borrower);
+		IVesselManager(vesselManager).applyPendingRewards(vars.asset, _borrower);
 
 		// Get the collChange based on whether or not asset was sent in the transaction
 		(vars.collChange, vars.isCollIncrease) = _getCollChange(_assetSent, _collWithdrawal);
@@ -236,8 +241,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 			vars.netDebtChange = vars.netDebtChange + vars.debtTokenFee; // The raw debt change includes the fee
 		}
 
-		vars.debt = vesselManager.getVesselDebt(vars.asset, _borrower);
-		vars.coll = vesselManager.getVesselColl(vars.asset, _borrower);
+		vars.debt = IVesselManager(vesselManager).getVesselDebt(vars.asset, _borrower);
+		vars.coll = IVesselManager(vesselManager).getVesselColl(vars.asset, _borrower);
 
 		// Get the vessel's old ICR before the adjustment, and what its new ICR will be after the adjustment
 		vars.oldICR = GravitaMath._computeCR(vars.coll, vars.debt, vars.price);
@@ -259,7 +264,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		if (!_isDebtIncrease && _debtTokenChange != 0) {
 			_requireAtLeastMinNetDebt(vars.asset, _getNetDebt(vars.asset, vars.debt) - vars.netDebtChange);
 			_requireValidDebtTokenRepayment(vars.asset, vars.debt, vars.netDebtChange);
-			_requireSufficientDebtTokenBalance(debtToken, _borrower, vars.netDebtChange);
+			_requireSufficientDebtTokenBalance(_borrower, vars.netDebtChange);
 		}
 
 		(vars.newColl, vars.newDebt) = _updateVesselFromAdjustment(
@@ -270,7 +275,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 			vars.netDebtChange,
 			_isDebtIncrease
 		);
-		vars.stake = vesselManager.updateStakeAndTotalStakes(vars.asset, _borrower);
+		vars.stake = IVesselManager(vesselManager).updateStakeAndTotalStakes(vars.asset, _borrower);
 
 		// Re-insert vessel in to the sorted list
 		uint256 newNICR = _getNewNominalICRFromVesselChange(
@@ -281,7 +286,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 			vars.netDebtChange,
 			_isDebtIncrease
 		);
-		sortedVessels.reInsert(vars.asset, _borrower, newNICR, _upperHint, _lowerHint);
+		ISortedVessels(sortedVessels).reInsert(vars.asset, _borrower, newNICR, _upperHint, _lowerHint);
 
 		emit VesselUpdated(vars.asset, _borrower, vars.newDebt, vars.newColl, vars.stake, BorrowerOperation.adjustVessel);
 		emit BorrowingFeePaid(vars.asset, msg.sender, vars.debtTokenFee);
@@ -300,33 +305,36 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 
 	function closeVessel(address _asset) external override {
 		_requireVesselIsActive(_asset, msg.sender);
-		uint256 price = priceFeed.fetchPrice(_asset);
+		uint256 price = IPriceFeed(priceFeed).fetchPrice(_asset);
 		_requireNotInRecoveryMode(_asset, price);
 
-		vesselManager.applyPendingRewards(_asset, msg.sender);
+		IVesselManager(vesselManager).applyPendingRewards(_asset, msg.sender);
 
-		uint256 coll = vesselManager.getVesselColl(_asset, msg.sender);
-		uint256 debt = vesselManager.getVesselDebt(_asset, msg.sender);
+		uint256 coll = IVesselManager(vesselManager).getVesselColl(_asset, msg.sender);
+		uint256 debt = IVesselManager(vesselManager).getVesselDebt(_asset, msg.sender);
 
-		_requireSufficientDebtTokenBalance(debtToken, msg.sender, debt - adminContract.getDebtTokenGasCompensation(_asset));
+		_requireSufficientDebtTokenBalance(
+			msg.sender,
+			debt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)
+		);
 
 		uint256 newTCR = _getNewTCRFromVesselChange(_asset, coll, false, debt, false, price);
 		_requireNewTCRisAboveCCR(_asset, newTCR);
 
-		vesselManager.removeStake(_asset, msg.sender);
-		vesselManager.closeVessel(_asset, msg.sender);
+		IVesselManager(vesselManager).removeStake(_asset, msg.sender);
+		IVesselManager(vesselManager).closeVessel(_asset, msg.sender);
 
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
-		uint256 gasCompensation = adminContract.getDebtTokenGasCompensation(_asset);
+		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
 		_repayDebtTokens(_asset, msg.sender, debt - gasCompensation);
 		_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
 
 		// Signal to the fee collector that debt has been paid in full
-		feeCollector.closeDebt(msg.sender, _asset);
+		IFeeCollector(feeCollector).closeDebt(msg.sender, _asset);
 
 		// Send the collateral back to the user
-		activePool.sendAsset(_asset, msg.sender, coll);
+		IActivePool(activePool).sendAsset(_asset, msg.sender, coll);
 	}
 
 	/**
@@ -334,15 +342,15 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	 */
 	function claimCollateral(address _asset) external override {
 		// send asset from CollSurplusPool to owner
-		collSurplusPool.claimColl(_asset, msg.sender);
+		ICollSurplusPool(collSurplusPool).claimColl(_asset, msg.sender);
 	}
 
 	// --- Helper functions ---
 
 	function _triggerBorrowingFee(address _asset, uint256 _debtTokenAmount) internal returns (uint256) {
-		uint256 debtTokenFee = vesselManager.getBorrowingFee(_asset, _debtTokenAmount);
-		debtToken.mint(_asset, address(feeCollector), debtTokenFee);
-		feeCollector.increaseDebt(msg.sender, _asset, debtTokenFee);
+		uint256 debtTokenFee = IVesselManager(vesselManager).getBorrowingFee(_asset, _debtTokenAmount);
+		IDebtToken(debtToken).mint(_asset, address(feeCollector), debtTokenFee);
+		IFeeCollector(feeCollector).increaseDebt(msg.sender, _asset, debtTokenFee);
 		return debtTokenFee;
 	}
 
@@ -372,11 +380,11 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		bool _isDebtIncrease
 	) internal returns (uint256, uint256) {
 		uint256 newColl = (_isCollIncrease)
-			? vesselManager.increaseVesselColl(_asset, _borrower, _collChange)
-			: vesselManager.decreaseVesselColl(_asset, _borrower, _collChange);
+			? IVesselManager(vesselManager).increaseVesselColl(_asset, _borrower, _collChange)
+			: IVesselManager(vesselManager).decreaseVesselColl(_asset, _borrower, _collChange);
 		uint256 newDebt = (_isDebtIncrease)
-			? vesselManager.increaseVesselDebt(_asset, _borrower, _debtChange)
-			: vesselManager.decreaseVesselDebt(_asset, _borrower, _debtChange);
+			? IVesselManager(vesselManager).increaseVesselDebt(_asset, _borrower, _debtChange)
+			: IVesselManager(vesselManager).decreaseVesselDebt(_asset, _borrower, _debtChange);
 
 		return (newColl, newDebt);
 	}
@@ -398,13 +406,13 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		if (_isCollIncrease) {
 			_activePoolAddColl(_asset, _collChange);
 		} else {
-			activePool.sendAsset(_asset, _borrower, _collChange);
+			IActivePool(activePool).sendAsset(_asset, _borrower, _collChange);
 		}
 	}
 
 	// Send asset to Active Pool and increase its recorded asset balance
 	function _activePoolAddColl(address _asset, uint256 _amount) internal {
-		activePool.receivedERC20(_asset, _amount);
+		IActivePool(activePool).receivedERC20(_asset, _amount);
 		IERC20Upgradeable(_asset).safeTransferFrom(
 			msg.sender,
 			address(activePool),
@@ -419,18 +427,18 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 _debtTokenAmount,
 		uint256 _netDebtIncrease
 	) internal {
-		uint256 newTotalAssetDebt = activePool.getDebtTokenBalance(_asset) +
-			defaultPool.getDebtTokenBalance(_asset) +
+		uint256 newTotalAssetDebt = IActivePool(activePool).getDebtTokenBalance(_asset) +
+			IDefaultPool(defaultPool).getDebtTokenBalance(_asset) +
 			_netDebtIncrease;
-		require(newTotalAssetDebt <= adminContract.getMintCap(_asset), "Exceeds mint cap");
-		activePool.increaseDebt(_asset, _netDebtIncrease);
-		debtToken.mint(_asset, _account, _debtTokenAmount);
+		require(newTotalAssetDebt <= IAdminContract(adminContract).getMintCap(_asset), "Exceeds mint cap");
+		IActivePool(activePool).increaseDebt(_asset, _netDebtIncrease);
+		IDebtToken(debtToken).mint(_asset, _account, _debtTokenAmount);
 	}
 
 	// Burn the specified amount of debt tokens from _account and decreases the total active debt
 	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount) internal {
-		activePool.decreaseDebt(_asset, _debtTokenAmount);
-		debtToken.burn(_account, _debtTokenAmount);
+		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount);
+		IDebtToken(debtToken).burn(_account, _debtTokenAmount);
 	}
 
 	// --- 'Require' wrapper functions ---
@@ -451,12 +459,12 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	function _requireVesselIsActive(address _asset, address _borrower) internal view {
-		uint256 status = vesselManager.getVesselStatus(_asset, _borrower);
+		uint256 status = IVesselManager(vesselManager).getVesselStatus(_asset, _borrower);
 		require(status == 1, "BorrowerOps: Vessel does not exist or is closed");
 	}
 
 	function _requireVesselIsNotActive(address _asset, address _borrower) internal view {
-		uint256 status = vesselManager.getVesselStatus(_asset, _borrower);
+		uint256 status = IVesselManager(vesselManager).getVesselStatus(_asset, _borrower);
 		require(status != 1, "BorrowerOps: Vessel is active");
 	}
 
@@ -515,13 +523,16 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 
 	function _requireICRisAboveMCR(address _asset, uint256 _newICR) internal view {
 		require(
-			_newICR >= adminContract.getMcr(_asset),
+			_newICR >= IAdminContract(adminContract).getMcr(_asset),
 			"BorrowerOps: An operation that would result in ICR < MCR is not permitted"
 		);
 	}
 
 	function _requireICRisAboveCCR(address _asset, uint256 _newICR) internal view {
-		require(_newICR >= adminContract.getCcr(_asset), "BorrowerOps: Operation must leave vessel with ICR >= CCR");
+		require(
+			_newICR >= IAdminContract(adminContract).getCcr(_asset),
+			"BorrowerOps: Operation must leave vessel with ICR >= CCR"
+		);
 	}
 
 	function _requireNewICRisAboveOldICR(uint256 _newICR, uint256 _oldICR) internal pure {
@@ -530,32 +541,28 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 
 	function _requireNewTCRisAboveCCR(address _asset, uint256 _newTCR) internal view {
 		require(
-			_newTCR >= adminContract.getCcr(_asset),
+			_newTCR >= IAdminContract(adminContract).getCcr(_asset),
 			"BorrowerOps: An operation that would result in TCR < CCR is not permitted"
 		);
 	}
 
 	function _requireAtLeastMinNetDebt(address _asset, uint256 _netDebt) internal view {
 		require(
-			_netDebt >= adminContract.getMinNetDebt(_asset),
+			_netDebt >= IAdminContract(adminContract).getMinNetDebt(_asset),
 			"BorrowerOps: Vessel's net debt must be greater than minimum"
 		);
 	}
 
 	function _requireValidDebtTokenRepayment(address _asset, uint256 _currentDebt, uint256 _debtRepayment) internal view {
 		require(
-			_debtRepayment <= _currentDebt - adminContract.getDebtTokenGasCompensation(_asset),
+			_debtRepayment <= _currentDebt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset),
 			"BorrowerOps: Amount repaid must not be larger than the Vessel's debt"
 		);
 	}
 
-	function _requireSufficientDebtTokenBalance(
-		IDebtToken _debtToken,
-		address _borrower,
-		uint256 _debtRepayment
-	) internal view {
+	function _requireSufficientDebtTokenBalance(address _borrower, uint256 _debtRepayment) internal view {
 		require(
-			_debtToken.balanceOf(_borrower) >= _debtRepayment,
+			IDebtToken(debtToken).balanceOf(_borrower) >= _debtRepayment,
 			"BorrowerOps: Caller doesnt have enough debt tokens to make repayment"
 		);
 	}

@@ -78,18 +78,13 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 		borrowerOperations.openVessel(_asset, totalCollateral, _VUSDAmount, _upperHint, _lowerHint);
 	}
 
-	function claimSPRewardsAndRecycle(
-		address _asset,
-		uint256 _maxFee,
-		address _upperHint,
-		address _lowerHint
-	) external {
+	function claimSPRewardsAndRecycle(address _asset, uint256 _maxFee, address _upperHint, address _lowerHint) external {
 		Local_var memory vars = Local_var(_asset, _maxFee, _upperHint, _lowerHint, 0);
 		uint256 collBalanceBefore = address(this).balance;
 		uint256 GRVTBalanceBefore = grvtToken.balanceOf(address(this));
 
 		// Claim rewards
-		stabilityPool.withdrawFromSP(0);
+		IStabilityPool(stabilityPool).withdrawFromSP(0);
 
 		uint256 collBalanceAfter = address(this).balance;
 		uint256 GRVTBalanceAfter = grvtToken.balanceOf(address(this));
@@ -110,14 +105,14 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 			);
 			// Provide withdrawn VUSD to Stability Pool
 			if (vars.netVUSDAmount > 0) {
-				stabilityPool.provideToSP(vars.netVUSDAmount);
+				IStabilityPool(stabilityPool).provideToSP(vars.netVUSDAmount);
 			}
 		}
 
 		// Stake claimed GRVT
 		uint256 claimedGRVT = GRVTBalanceAfter - GRVTBalanceBefore;
 		if (claimedGRVT > 0) {
-			grvtStaking.stake(claimedGRVT);
+			IGRVTStaking(grvtStaking).stake(claimedGRVT);
 		}
 	}
 
@@ -130,14 +125,14 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 		Local_var memory vars = Local_var(_asset, _maxFee, _upperHint, _lowerHint, 0);
 
 		uint256 collBalanceBefore = address(this).balance;
-		uint256 VUSDBalanceBefore = debtToken.balanceOf(address(this));
+		uint256 VUSDBalanceBefore = IDebtToken(debtToken).balanceOf(address(this));
 		uint256 GRVTBalanceBefore = grvtToken.balanceOf(address(this));
 
 		// Claim gains
-		grvtStaking.unstake(0);
+		IGRVTStaking(grvtStaking).unstake(0);
 
 		uint256 gainedCollateral = address(this).balance - collBalanceBefore; // stack too deep issues :'(
-		uint256 gainedVUSD = debtToken.balanceOf(address(this)) - VUSDBalanceBefore;
+		uint256 gainedVUSD = IDebtToken(debtToken).balanceOf(address(this)) - VUSDBalanceBefore;
 
 		// Top up vessel and get more VUSD, keeping ICR constant
 		if (gainedCollateral > 0) {
@@ -156,23 +151,23 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
 		uint256 totalVUSD = gainedVUSD + vars.netVUSDAmount;
 		if (totalVUSD > 0) {
-			stabilityPool.provideToSP(totalVUSD);
+			IStabilityPool(stabilityPool).provideToSP(totalVUSD);
 
 			// Providing to Stability Pool also triggers GRVT claim, so stake it if any
 			uint256 GRVTBalanceAfter = grvtToken.balanceOf(address(this));
 			uint256 claimedGRVT = GRVTBalanceAfter - GRVTBalanceBefore;
 			if (claimedGRVT > 0) {
-				grvtStaking.stake(claimedGRVT);
+				IGRVTStaking(grvtStaking).stake(claimedGRVT);
 			}
 		}
 	}
 
 	function _getNetVUSDAmount(address _asset, uint256 _collateral) internal returns (uint256) {
-		uint256 price = priceFeed.fetchPrice(_asset);
-		uint256 ICR = vesselManager.getCurrentICR(_asset, address(this), price);
+		uint256 price = IPriceFeed(priceFeed).fetchPrice(_asset);
+		uint256 ICR = IVesselManager(vesselManager).getCurrentICR(_asset, address(this), price);
 
 		uint256 VUSDAmount = (_collateral * price) / ICR;
-		uint256 borrowingRate = vesselManager.adminContract().getBorrowingFee(_asset);
+		uint256 borrowingRate = IVesselManager(vesselManager).adminContract().getBorrowingFee(_asset);
 		uint256 netDebt = (VUSDAmount * GravitaMath.DECIMAL_PRECISION) / (GravitaMath.DECIMAL_PRECISION + borrowingRate);
 
 		return netDebt;
@@ -180,7 +175,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
 	function _requireUserHasVessel(address _asset, address _depositor) internal view {
 		require(
-			vesselManager.getVesselStatus(_asset, _depositor) == 1,
+			IVesselManager(vesselManager).getVesselStatus(_asset, _depositor) == 1,
 			"BorrowerWrappersScript: caller must have an active vessel"
 		);
 	}

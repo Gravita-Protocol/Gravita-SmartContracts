@@ -4,6 +4,8 @@ pragma solidity ^0.8.19;
 import "./Addresses.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "./Interfaces/ISortedVessels.sol";
+import "./Interfaces/IVesselManager.sol";
 
 /*
  * A sorted doubly linked list with nodes sorted in descending order.
@@ -278,16 +280,16 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, A
 			return isEmpty(_asset);
 		} else if (_prevId == address(0)) {
 			// `(null, _nextId)` is a valid insert position if `_nextId` is the head of the list
-			return data[_asset].head == _nextId && _NICR >= vesselManager.getNominalICR(_asset, _nextId);
+			return data[_asset].head == _nextId && _NICR >= IVesselManager(vesselManager).getNominalICR(_asset, _nextId);
 		} else if (_nextId == address(0)) {
 			// `(_prevId, null)` is a valid insert position if `_prevId` is the tail of the list
-			return data[_asset].tail == _prevId && _NICR <= vesselManager.getNominalICR(_asset, _prevId);
+			return data[_asset].tail == _prevId && _NICR <= IVesselManager(vesselManager).getNominalICR(_asset, _prevId);
 		} else {
 			// `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
 			return
 				data[_asset].nodes[_prevId].nextId == _nextId &&
-				vesselManager.getNominalICR(_asset, _prevId) >= _NICR &&
-				_NICR >= vesselManager.getNominalICR(_asset, _nextId);
+				IVesselManager(vesselManager).getNominalICR(_asset, _prevId) >= _NICR &&
+				_NICR >= IVesselManager(vesselManager).getNominalICR(_asset, _nextId);
 		}
 	}
 
@@ -297,16 +299,11 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, A
 	 * @param _NICR Node's NICR
 	 * @param _startId Id of node to start descending the list from
 	 */
-	function _descendList(
-		address _asset,
-		IVesselManager _vesselManager,
-		uint256 _NICR,
-		address _startId
-	) internal view returns (address, address) {
+	function _descendList(address _asset, uint256 _NICR, address _startId) internal view returns (address, address) {
 		Data storage assetData = data[_asset];
 
 		// If `_startId` is the head, check if the insert position is before the head
-		if (assetData.head == _startId && _NICR >= _vesselManager.getNominalICR(_asset, _startId)) {
+		if (assetData.head == _startId && _NICR >= IVesselManager(vesselManager).getNominalICR(_asset, _startId)) {
 			return (address(0), _startId);
 		}
 
@@ -328,16 +325,11 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, A
 	 * @param _NICR Node's NICR
 	 * @param _startId Id of node to start ascending the list from
 	 */
-	function _ascendList(
-		address _asset,
-		IVesselManager _vesselManager,
-		uint256 _NICR,
-		address _startId
-	) internal view returns (address, address) {
+	function _ascendList(address _asset, uint256 _NICR, address _startId) internal view returns (address, address) {
 		Data storage assetData = data[_asset];
 
 		// If `_startId` is the tail, check if the insert position is after the tail
-		if (assetData.tail == _startId && _NICR <= _vesselManager.getNominalICR(_asset, _startId)) {
+		if (assetData.tail == _startId && _NICR <= IVesselManager(vesselManager).getNominalICR(_asset, _startId)) {
 			return (_startId, address(0));
 		}
 
@@ -378,14 +370,14 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, A
 		address nextId = _nextId;
 
 		if (prevId != address(0)) {
-			if (!contains(_asset, prevId) || _NICR > vesselManager.getNominalICR(_asset, prevId)) {
+			if (!contains(_asset, prevId) || _NICR > IVesselManager(vesselManager).getNominalICR(_asset, prevId)) {
 				// `prevId` does not exist anymore or now has a smaller NICR than the given NICR
 				prevId = address(0);
 			}
 		}
 
 		if (nextId != address(0)) {
-			if (!contains(_asset, nextId) || _NICR < vesselManager.getNominalICR(_asset, nextId)) {
+			if (!contains(_asset, nextId) || _NICR < IVesselManager(vesselManager).getNominalICR(_asset, nextId)) {
 				// `nextId` does not exist anymore or now has a larger NICR than the given NICR
 				nextId = address(0);
 			}
@@ -393,16 +385,16 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, A
 
 		if (prevId == address(0) && nextId == address(0)) {
 			// No hint - descend list starting from head
-			return _descendList(_asset, vesselManager, _NICR, data[_asset].head);
+			return _descendList(_asset, _NICR, data[_asset].head);
 		} else if (prevId == address(0)) {
 			// No `prevId` for hint - ascend list starting from `nextId`
-			return _ascendList(_asset, vesselManager, _NICR, nextId);
+			return _ascendList(_asset, _NICR, nextId);
 		} else if (nextId == address(0)) {
 			// No `nextId` for hint - descend list starting from `prevId`
-			return _descendList(_asset, vesselManager, _NICR, prevId);
+			return _descendList(_asset, _NICR, prevId);
 		} else {
 			// Descend list starting from `prevId`
-			return _descendList(_asset, vesselManager, _NICR, prevId);
+			return _descendList(_asset, _NICR, prevId);
 		}
 	}
 

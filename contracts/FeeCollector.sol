@@ -6,6 +6,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./Interfaces/IFeeCollector.sol";
+import "./Interfaces/IGRVTStaking.sol";
 
 import "./Addresses.sol";
 
@@ -141,7 +143,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(_asset).safeTransfer(collector, _amount);
 			if (routeToGRVTStaking) {
-				grvtStaking.increaseFee_Asset(_asset, _amount);
+				IGRVTStaking(grvtStaking).increaseFee_Asset(_asset, _amount);
 			}
 			emit RedemptionFeeCollected(_asset, _amount);
 		}
@@ -277,7 +279,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
 			IERC20Upgradeable(address(debtToken)).safeTransfer(collector, _feeAmount);
 			if (routeToGRVTStaking) {
-				grvtStaking.increaseFee_DebtToken(_feeAmount);
+				IGRVTStaking(grvtStaking).increaseFee_DebtToken(_feeAmount);
 			}
 			emit FeeCollected(_borrower, _asset, collector, _feeAmount);
 		}

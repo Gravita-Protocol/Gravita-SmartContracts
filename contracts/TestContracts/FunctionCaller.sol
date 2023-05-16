@@ -42,7 +42,7 @@ contract FunctionCaller {
 		address _address,
 		uint256 _price
 	) external view returns (uint256) {
-		return vesselManager.getCurrentICR(_asset, _address, _price);
+		return IVesselManager(vesselManager).getCurrentICR(_asset, _address, _price);
 	}
 
 	function sortedVessels_findInsertPosition(
@@ -51,6 +51,6 @@ contract FunctionCaller {
 		address _prevId,
 		address _nextId
 	) external view returns (address, address) {
-		return sortedVessels.findInsertPosition(_asset, _NICR, _prevId, _nextId);
+		return ISortedVessels(sortedVessels).findInsertPosition(_asset, _NICR, _prevId, _nextId);
 	}
 }
