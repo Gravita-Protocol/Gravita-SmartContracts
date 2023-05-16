@@ -119,7 +119,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
-	function isERC20DepositContract(address _account) private pure returns (bool) {
+	function isERC20DepositContract(address _account) private view returns (bool) {
 		return (_account == address(defaultPool) ||
 			_account == address(collSurplusPool) ||
 			_account == address(stabilityPool));

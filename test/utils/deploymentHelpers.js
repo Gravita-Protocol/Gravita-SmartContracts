@@ -145,7 +145,8 @@ class DeploymentHelper {
 				await contract.setSortedVessels(core.sortedVessels.address)
 				await contract.setTreasury(treasuryAddress)
 				await contract.setGasPool(core.gasPool.address)
-				
+				await contract.setGRVTStaking(grvt.grvtStaking.address)
+				await contract.setCommunityIssuance(grvt.communityIssuance.address)
 			}
 		}
 

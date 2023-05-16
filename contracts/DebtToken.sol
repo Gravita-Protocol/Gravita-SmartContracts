@@ -9,16 +9,23 @@ import "./Interfaces/IDebtToken.sol";
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	string public constant NAME = "GRAI";
 
-	address public constant borrowerOperationsAddress = address(0);
-	address public constant stabilityPoolAddress = address(0);
-	address public constant vesselManagerAddress = address(0);
+	address public borrowerOperationsAddress;
+	address public stabilityPoolAddress;
+	address public vesselManagerAddress;
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	constructor() ERC20("Gravita Debt Token", "GRAI") {
+	constructor(
+		address _borrowerOperationsAddress,
+		address _stabilityPoolAddress,
+		address _vesselManagerAddress
+	) ERC20("Gravita Debt Token", "GRAI") {
+		borrowerOperationsAddress = _borrowerOperationsAddress;
+		stabilityPoolAddress = _stabilityPoolAddress;
+		vesselManagerAddress = _vesselManagerAddress;
 	}
 
 	// --- Functions for intra-Gravita calls ---
@@ -95,12 +102,6 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		require(
 			_recipient != address(0) && _recipient != address(this),
 			"DebtToken: Cannot transfer tokens directly to the token contract or the zero address"
-		);
-		require(
-			_recipient != borrowerOperationsAddress &&
-				_recipient != stabilityPoolAddress &&
-				_recipient != vesselManagerAddress,
-			"DebtToken: Cannot transfer tokens directly to the StabilityPool, VesselManager or BorrowerOps"
 		);
 	}
 
