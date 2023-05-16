@@ -18,13 +18,6 @@ import "../Addresses.sol";
  * common functions.
  */
 abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Addresses {
-	/**
-	 * @dev This empty reserved space is put in place to allow future versions to add new
-	 * variables without shifting down storage in the inheritance chain.
-	 * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-	 */
-	uint256[47] private __gap;
-
 	// --- Gas compensation functions ---
 
 	// Returns the composite debt (drawn debt + gas compensation) of a vessel, for the purpose of ICR calculation

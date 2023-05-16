@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Addresses.sol";
+import "./Interfaces/IActivePool.sol";
 
 /*
  * The Active Pool holds the collaterals and debt amounts for all active vessels.
@@ -28,7 +29,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrDefaultPool() {
 		require(
-			msg.sender == address(borrowerOperations) || msg.sender == address(defaultPool),
+			msg.sender == borrowerOperations || msg.sender == defaultPool,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -36,7 +37,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrVesselMgr() {
 		require(
-			msg.sender == address(borrowerOperations) || msg.sender == address(vesselManager),
+			msg.sender == borrowerOperations || msg.sender == vesselManager,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -44,9 +45,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgr() {
 		require(
-			msg.sender == address(borrowerOperations) ||
-				msg.sender == address(stabilityPool) ||
-				msg.sender == address(vesselManager),
+			msg.sender == borrowerOperations || msg.sender == stabilityPool || msg.sender == vesselManager,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -54,10 +53,10 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	modifier callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps() {
 		require(
-			msg.sender == address(borrowerOperations) ||
-				msg.sender == address(stabilityPool) ||
-				msg.sender == address(vesselManager) ||
-				msg.sender == address(vesselManagerOperations),
+			msg.sender == (borrowerOperations) ||
+				msg.sender == stabilityPool ||
+				msg.sender == vesselManager ||
+				msg.sender == vesselManagerOperations,
 			"ActivePool: Caller is not an authorized Gravita contract"
 		);
 		_;
@@ -119,7 +118,7 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
-	function isERC20DepositContract(address _account) private view returns (bool) {
+	function isERC20DepositContract(address _account) private pure returns (bool) {
 		return (_account == address(defaultPool) ||
 			_account == address(collSurplusPool) ||
 			_account == address(stabilityPool));
