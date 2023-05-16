@@ -25,7 +25,7 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 	uint256 public constant MCR_DEFAULT = 1.1 ether; // 110%
 	uint256 public constant MIN_NET_DEBT_DEFAULT = 2_000 ether;
 	uint256 public constant MINT_CAP_DEFAULT = 1_000_000 ether; // 1 million GRAI
-	uint256 public constant PERCENT_DIVISOR_DEFAULT = 100; // dividing by 100 yields 1%
+	uint256 public constant PERCENT_DIVISOR_DEFAULT = 200; // dividing by 200 yields 0.5%
 	uint256 public constant REDEMPTION_FEE_FLOOR_DEFAULT = 0.005 ether; // 0.5%
 	uint256 public constant REDEMPTION_BLOCK_TIMESTAMP_DEFAULT = type(uint256).max; // never
 
