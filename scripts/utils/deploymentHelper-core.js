@@ -25,7 +25,7 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		const [vesselManagerOperations, upgraded11] = await this.deployUpgradeable("VesselManagerOperations")
 
 		const allUpgraded =
-			upgraded1 &&
+			upgraded1 &&	
 			upgraded2 &&
 			upgraded3 &&
 			upgraded4 &&

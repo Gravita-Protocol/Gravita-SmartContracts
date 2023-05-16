@@ -75,18 +75,18 @@ contract CollSurplusPool is UUPSUpgradeable, OwnableUpgradeable, ICollSurplusPoo
 	// --- 'require' functions ---
 
 	function _requireCallerIsBorrowerOperations() internal view {
-		require(msg.sender == address(borrowerOperations), "CollSurplusPool: Caller is not Borrower Operations");
+		require(msg.sender == borrowerOperations, "CollSurplusPool: Caller is not Borrower Operations");
 	}
 
 	function _requireCallerIsVesselManager() internal view {
 		require(
-			msg.sender == address(vesselManager) || msg.sender == address(vesselManagerOperations),
+			msg.sender == vesselManager || msg.sender == vesselManagerOperations,
 			"CollSurplusPool: Caller is not VesselManager"
 		);
 	}
 
 	function _requireCallerIsActivePool() internal view {
-		require(msg.sender == address(activePool), "CollSurplusPool: Caller is not Active Pool");
+		require(msg.sender == activePool, "CollSurplusPool: Caller is not Active Pool");
 	}
 
 	function authorizeUpgrade(address newImplementation) public {

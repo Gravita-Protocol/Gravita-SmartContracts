@@ -276,8 +276,8 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	 */
 	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount != 0) {
-			address collector = routeToGRVTStaking ? address(grvtStaking) : treasuryAddress;
-			IERC20Upgradeable(address(debtToken)).safeTransfer(collector, _feeAmount);
+			address collector = routeToGRVTStaking ? grvtStaking : treasuryAddress;
+			IERC20Upgradeable(debtToken).safeTransfer(collector, _feeAmount);
 			if (routeToGRVTStaking) {
 				IGRVTStaking(grvtStaking).increaseFee_DebtToken(_feeAmount);
 			}
@@ -287,7 +287,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 
 	function _refundFee(address _borrower, address _asset, uint256 _refundAmount) internal {
 		if (_refundAmount != 0) {
-			IERC20Upgradeable(address(debtToken)).safeTransfer(_borrower, _refundAmount);
+			IERC20Upgradeable(debtToken).safeTransfer(_borrower, _refundAmount);
 			emit FeeRefunded(_borrower, _asset, _refundAmount);
 		}
 	}
@@ -295,26 +295,22 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	modifier onlyBorrowerOperations() {
-		if (msg.sender != address(borrowerOperations)) {
-			revert FeeCollector__BorrowerOperationsOnly(msg.sender, address(borrowerOperations));
+		if (msg.sender != borrowerOperations) {
+			revert FeeCollector__BorrowerOperationsOnly(msg.sender, borrowerOperations);
 		}
 		_;
 	}
 
 	modifier onlyVesselManager() {
 		if (msg.sender != address(vesselManager)) {
-			revert FeeCollector__VesselManagerOnly(msg.sender, address(vesselManager));
+			revert FeeCollector__VesselManagerOnly(msg.sender, vesselManager);
 		}
 		_;
 	}
 
 	modifier onlyBorrowerOperationsOrVesselManager() {
-		if (msg.sender != address(borrowerOperations) && msg.sender != address(vesselManager)) {
-			revert FeeCollector__BorrowerOperationsOrVesselManagerOnly(
-				msg.sender,
-				address(borrowerOperations),
-				address(vesselManager)
-			);
+		if (msg.sender != borrowerOperations && msg.sender != vesselManager) {
+			revert FeeCollector__BorrowerOperationsOrVesselManagerOnly(msg.sender, borrowerOperations, vesselManager);
 		}
 		_;
 	}

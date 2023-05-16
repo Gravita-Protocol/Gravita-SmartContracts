@@ -68,10 +68,10 @@ module.exports = {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-		// mainnet: {
-		// 	url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-		// 	accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		// },
+		mainnet: {
+		 	url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+		 	accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,

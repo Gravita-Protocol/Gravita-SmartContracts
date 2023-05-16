@@ -224,9 +224,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_requireVesselIsActive(vars.asset, _borrower);
 
 		// Confirm the operation is either a borrower adjusting their own vessel, or a pure asset transfer from the Stability Pool to a vessel
-		assert(
-			msg.sender == _borrower || (address(stabilityPool) == msg.sender && _assetSent != 0 && _debtTokenChange == 0)
-		);
+		assert(msg.sender == _borrower || (stabilityPool == msg.sender && _assetSent != 0 && _debtTokenChange == 0));
 
 		IVesselManager(vesselManager).applyPendingRewards(vars.asset, _borrower);
 
@@ -349,7 +347,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 
 	function _triggerBorrowingFee(address _asset, uint256 _debtTokenAmount) internal returns (uint256) {
 		uint256 debtTokenFee = IVesselManager(vesselManager).getBorrowingFee(_asset, _debtTokenAmount);
-		IDebtToken(debtToken).mint(_asset, address(feeCollector), debtTokenFee);
+		IDebtToken(debtToken).mint(_asset, feeCollector, debtTokenFee);
 		IFeeCollector(feeCollector).increaseDebt(msg.sender, _asset, debtTokenFee);
 		return debtTokenFee;
 	}
@@ -415,7 +413,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		IActivePool(activePool).receivedERC20(_asset, _amount);
 		IERC20Upgradeable(_asset).safeTransferFrom(
 			msg.sender,
-			address(activePool),
+			activePool,
 			SafetyTransfer.decimalsCorrection(_asset, _amount)
 		);
 	}

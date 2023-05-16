@@ -65,22 +65,22 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addre
 		uint256 newBalance = assetsBalances[_asset] - _amount;
 		assetsBalances[_asset] = newBalance;
 
-		IERC20Upgradeable(_asset).safeTransfer(address(activePool), safetyTransferAmount);
+		IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
 		IDeposit(activePool).receivedERC20(_asset, _amount);
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
-		emit AssetSent(address(activePool), _asset, safetyTransferAmount);
+		emit AssetSent(activePool, _asset, safetyTransferAmount);
 	}
 
 	// --- 'require' functions ---
 
 	modifier callerIsActivePool() {
-		require(msg.sender == address(activePool), "DefaultPool: Caller is not the ActivePool");
+		require(msg.sender == activePool, "DefaultPool: Caller is not the ActivePool");
 		_;
 	}
 
 	modifier callerIsVesselManager() {
-		require(msg.sender == address(vesselManager), "DefaultPool: Caller is not the VesselManager");
+		require(msg.sender == vesselManager, "DefaultPool: Caller is not the VesselManager");
 		_;
 	}
 
