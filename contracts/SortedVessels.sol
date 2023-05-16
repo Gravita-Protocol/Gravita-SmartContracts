@@ -401,12 +401,12 @@ contract SortedVessels is OwnableUpgradeable, UUPSUpgradeable, ISortedVessels, A
 	// --- 'require' functions ---
 
 	function _requireCallerIsVesselManager() internal view {
-		require(msg.sender == address(vesselManager), "SortedVessels: Caller is not the VesselManager");
+		require(msg.sender == vesselManager, "SortedVessels: Caller is not the VesselManager");
 	}
 
 	function _requireCallerIsBOorVesselM() internal view {
 		require(
-			msg.sender == address(borrowerOperations) || msg.sender == address(vesselManager),
+			msg.sender == borrowerOperations || msg.sender == vesselManager,
 			"SortedVessels: Caller is neither BO nor VesselM"
 		);
 	}
