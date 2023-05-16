@@ -20,12 +20,6 @@ class CoreDeploymentHelper extends DeploymentHelper {
 	async loadOrDeployOrUpgradeCoreContracts() {
 		console.log(`Deploying core contracts...`)
 
-		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
-		const timelock = await this.deployNonUpgradeable("Timelock", timelockParams)
-		const debtToken = await this.deployNonUpgradeable("DebtToken")
-
-		process.exit()
-
 		// 11 Upgradeable contracts
 		const [activePool, upgraded1] = await this.deployUpgradeable("ActivePool")
 		const [adminContract, upgraded2] = await this.deployUpgradeable("AdminContract")
@@ -57,13 +51,16 @@ class CoreDeploymentHelper extends DeploymentHelper {
 
 		// 3 Non-upgradable contracts
 		const gasPool = await this.deployNonUpgradeable("GasPool")
+		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
+		const timelock = await this.deployNonUpgradeable("Timelock", timelockParams)
+		const debtToken = await this.deployNonUpgradeable("DebtToken")
 
 		const contracts = {
 			activePool,
 			adminContract,
 			borrowerOperations,
 			collSurplusPool,
-			// debtToken,
+			debtToken,
 			defaultPool,
 			feeCollector,
 			gasPool,
