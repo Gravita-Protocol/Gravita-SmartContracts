@@ -1,4 +1,6 @@
 const { getImplementationAddress } = require("@openzeppelin/upgrades-core")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
+
 const fs = require("fs")
 
 /* abstract */ class DeploymentHelper {
@@ -43,6 +45,8 @@ const fs = require("fs")
 	}
 
 	async loadOrDeployOrUpgrade(contractName, state, isUpgradeable, params) {
+		let retry = 0
+		const maxRetries = 10
 		const timeout = 600_000 // 10 minutes
 		const factory = await this.getFactory(contractName, this.deployerWallet)
 		const address = state[contractName]?.address
@@ -54,16 +58,23 @@ const fs = require("fs")
 				return [await factory.attach(address), false]
 			} else {
 				// Non-Upgradeable contract, new deployment
-				console.log(`(Deploying new ${contractName}...)`)
-				const newContract = await factory.deploy(...params)
-				await this.deployerWallet.provider.waitForTransaction(
-					newContract.deployTransaction.hash,
-					this.configParams.TX_CONFIRMATIONS,
-					timeout
-				)
-				await newContract.deployed()
-				await this.updateState(contractName, newContract, isUpgradeable, state)
-				return [newContract, false]
+				console.log(`(Deploying ${contractName}...)`)
+				while (++retry < maxRetries) {
+					try {
+						const contract = await factory.deploy(...params)
+						await this.deployerWallet.provider.waitForTransaction(
+							contract.deployTransaction.hash,
+							this.configParams.TX_CONFIRMATIONS,
+							timeout
+						)
+						await contract.deployed()
+						await this.updateState(contractName, contract, isUpgradeable, state)
+						return [contract, false]
+					} catch (e) {
+						console.log(`[Error: ${e.message}] Retrying...`)
+					}
+				}
+				throw Error(`ERROR: Unable to deploy contract ${contractName} after ${maxRetries} attempts.`)
 			}
 		}
 		if (alreadyDeployed) {
@@ -71,35 +82,58 @@ const fs = require("fs")
 			const existingContract = await factory.attach(address)
 			const owner = await existingContract.owner()
 			if (owner == this.deployerWallet.address) {
-				console.log(`(Upgrading ${contractName}...)`)
-				const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
-				await this.deployerWallet.provider.waitForTransaction(
-					upgradedContract.deployTransaction.hash,
-					this.configParams.TX_CONFIRMATIONS,
-					timeout
-				)
-				await this.updateState(contractName, upgradedContract, isUpgradeable, state)
-				return [upgradedContract, true]
+				const existingConfigAddress = await existingContract.adminContract()
+				const isUpgraded = existingConfigAddress != ZERO_ADDRESS
+				if (isUpgraded) {
+					console.log(`Using previous deployment: ${address} -> ${contractName}`)
+					return [existingContract, true]
+				} else {
+					console.log(`(Upgrading ${contractName}...)`)
+					while (++retry < maxRetries) {
+						try {
+							const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
+							await this.deployerWallet.provider.waitForTransaction(
+								upgradedContract.deployTransaction.hash,
+								this.configParams.TX_CONFIRMATIONS,
+								timeout
+							)
+							await this.updateState(contractName, upgradedContract, isUpgradeable, state)
+							return [upgradedContract, true]
+						} catch (e) {
+							console.log(`[Error: ${e.message}] Retrying...`)
+						}
+					}
+					throw Error(`ERROR: Unable to deploy contract ${contractName} after ${maxRetries} attempts.`)
+				}
 			} else {
-				console.log(`[NOTICE] Cannot upgrade ${contractName}: deployer = ${this.deployerWallet.address}, owner = ${owner}`)
+				console.log(
+					`[NOTICE] Cannot upgrade ${contractName}: deployer = ${this.deployerWallet.address}, owner = ${owner}`
+				)
 				return [existingContract, true]
 			}
 		} else {
 			// Upgradeable contract, new deployment
-			console.log(`(Deploying new ${contractName}...)`)
+			console.log(`(Deploying ${contractName}...)`)
 			let opts = { kind: "uups" }
 			if (factory.interface.functions.initialize) {
 				opts.initializer = "initialize()"
 			}
-			const newContract = await upgrades.deployProxy(factory, opts)
-			await this.deployerWallet.provider.waitForTransaction(
-				newContract.deployTransaction.hash,
-				this.configParams.TX_CONFIRMATIONS,
-				timeout
-			)
-			await newContract.deployed()
-			await this.updateState(contractName, newContract, isUpgradeable, state)
-			return [newContract, false]
+			while (++retry < maxRetries) {
+				try {
+					const newContract = await upgrades.deployProxy(factory, opts)
+					await this.deployerWallet.provider.waitForTransaction(
+						newContract.deployTransaction.hash,
+						this.configParams.TX_CONFIRMATIONS,
+						timeout
+					)
+					await newContract.deployed()
+					await this.updateState(contractName, newContract, isUpgradeable, state)
+					return [newContract, false]
+				} catch (e) {
+					console.log(`[Error: ${e.message}] Retrying...`)
+				}
+			}
+			throw Error(`ERROR: Unable to deploy contract ${contractName} after ${maxRetries} attempts.`)
 		}
 	}
 

@@ -9,26 +9,16 @@ import "./Interfaces/IDebtToken.sol";
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	string public constant NAME = "GRAI";
 
-	address public immutable borrowerOperationsAddress;
-	address public immutable stabilityPoolAddress;
-	address public immutable vesselManagerAddress;
+	address public constant borrowerOperationsAddress = address(0);
+	address public constant stabilityPoolAddress = address(0);
+	address public constant vesselManagerAddress = address(0);
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	constructor(
-		address _borrowerOperationsAddress,
-		address _stabilityPoolAddress,
-		address _vesselManagerAddress
-	) ERC20("Gravita Debt Token", "GRAI") {
-		require(_borrowerOperationsAddress != address(0), "BorrowerOperations cannot be zero");
-		require(_stabilityPoolAddress != address(0), "StabilityPool cannot be zero");
-		require(_vesselManagerAddress != address(0), "VesselManager cannot be zero");
-		borrowerOperationsAddress = _borrowerOperationsAddress;
-		stabilityPoolAddress = _stabilityPoolAddress;
-		vesselManagerAddress = _vesselManagerAddress;
+	constructor() ERC20("Gravita Debt Token", "GRAI") {
 	}
 
 	// --- Functions for intra-Gravita calls ---
