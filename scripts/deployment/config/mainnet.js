@@ -39,7 +39,7 @@ const COLLATERAL = [
 	{
 		name: "wstETH",
 		address: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
-		oracleAddress: "",
+		oracleAddress: "0xCA68ad4EE5c96871EC6C6dac2F714a8437A3Fe66",
 		oraclePriceDeviation: toEther(0.25),
 		oracleIsEthIndexed: false,
 		MCR: toEther(1.176),
@@ -51,7 +51,7 @@ const COLLATERAL = [
 	{
 		name: "bLUSD",
 		address: "0xB9D7DdDca9a4AC480991865EfEf82E01273F79C3",
-		oracleAddress: "",
+		oracleAddress: "0x894134a25a5faC1c2C26F1d8fBf05111a3CB9487",
 		oraclePriceDeviation: toEther(0.25),
 		oracleIsEthIndexed: false,
 		MCR: toEther(1.01),
