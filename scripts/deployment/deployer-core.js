@@ -24,6 +24,7 @@ class CoreDeployer extends Deployer {
 			this.coreContracts = contracts
 			await this.addCollaterals()
 			await this.toggleContractSetupInitialization(contracts.adminContract)
+			await this.helper.verifyCoreContracts()
 			// await this.transferContractsOwnerships(contracts)
 		}
 

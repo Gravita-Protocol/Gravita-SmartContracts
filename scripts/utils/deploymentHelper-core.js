@@ -41,16 +41,15 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		const gasPool = await this.deployNonUpgradeable("GasPool")
 		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
 		const timelock = await this.deployNonUpgradeable(this.isMainnet() ? "Timelock" : "TimelockTester", timelockParams)
-		let debtToken = await this.deployNonUpgradeable("DebtToken")
-
-		// await this.verifyCoreContracts(debtTokenParams)
+		
+		// let debtToken = await this.deployNonUpgradeable("DebtToken")
 
 		const contracts = {
 			activePool,
 			adminContract,
 			borrowerOperations,
 			collSurplusPool,
-			debtToken,
+			// debtToken,
 			defaultPool,
 			feeCollector,
 			gasPool,
@@ -61,7 +60,6 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			vesselManager,
 			vesselManagerOperations,
 		}
-		// await this.logContractObjects(contracts)
 		return { contracts, allUpgraded }
 	}
 
@@ -76,7 +74,7 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		return result[0] // second result item refers to upgrade status, not applicable
 	}
 
-	async verifyCoreContracts(debtTokenParams) {
+	async verifyCoreContracts() {
 		if (!this.configParams.ETHERSCAN_BASE_URL) {
 			console.log("(No Etherscan URL defined, skipping contract verification)")
 		} else {
