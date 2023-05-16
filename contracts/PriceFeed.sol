@@ -19,7 +19,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, BaseMath,
 	uint256 public constant TARGET_DIGITS = 18;
 
 	// After this timeout, responses will be considered stale and revert
-	uint256 public constant RESPONSE_TIMEOUT = 24 hours;
+	uint256 public constant RESPONSE_TIMEOUT = 25 hours;
 
 	// Lower/Upper limits for setting the max price deviation per round, per asset
 	uint256 public constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT = 0.2 ether;
