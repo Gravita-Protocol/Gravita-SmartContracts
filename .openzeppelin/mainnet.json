@@ -2976,7 +2976,7 @@
             "label": "oracleRecords",
             "offset": 0,
             "slot": "241",
-            "type": "t_mapping(t_address,t_struct(OracleRecord)9379_storage)",
+            "type": "t_mapping(t_address,t_struct(OracleRecord)1602_storage)",
             "contract": "PriceFeed",
             "src": "contracts/PriceFeed.sol:30"
           },
@@ -2984,7 +2984,7 @@
             "label": "priceRecords",
             "offset": 0,
             "slot": "242",
-            "type": "t_mapping(t_address,t_struct(PriceRecord)9384_storage)",
+            "type": "t_mapping(t_address,t_struct(PriceRecord)1607_storage)",
             "contract": "PriceFeed",
             "src": "contracts/PriceFeed.sol:31"
           }
@@ -3014,15 +3014,15 @@
             "label": "contract AggregatorV3Interface",
             "numberOfBytes": "20"
           },
-          "t_mapping(t_address,t_struct(OracleRecord)9379_storage)": {
+          "t_mapping(t_address,t_struct(OracleRecord)1602_storage)": {
             "label": "mapping(address => struct IPriceFeed.OracleRecord)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(PriceRecord)9384_storage)": {
+          "t_mapping(t_address,t_struct(PriceRecord)1607_storage)": {
             "label": "mapping(address => struct IPriceFeed.PriceRecord)",
             "numberOfBytes": "32"
           },
-          "t_struct(OracleRecord)9379_storage": {
+          "t_struct(OracleRecord)1602_storage": {
             "label": "struct IPriceFeed.OracleRecord",
             "members": [
               {
@@ -3058,7 +3058,7 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(PriceRecord)9384_storage": {
+          "t_struct(PriceRecord)1607_storage": {
             "label": "struct IPriceFeed.PriceRecord",
             "members": [
               {
@@ -3992,6 +3992,192 @@
           "t_bool": {
             "label": "bool",
             "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "33f4ba6308845b4e45b27c06dad3406846bd4ac58e7b20572a8de6e4b659b18c": {
+      "address": "0xb7015ED39D0efD955998FA7d28cBC8a71668c809",
+      "txHash": "0x6ec4b6ddc5c9d0f9ce14f1c601979e9f34c884f5454f840b9ed1176aa838886e",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:197"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_array(t_uint256)40_storage",
+            "contract": "Addresses",
+            "src": "contracts/Addresses.sol:29"
+          },
+          {
+            "label": "oracleRecords",
+            "offset": 0,
+            "slot": "241",
+            "type": "t_mapping(t_address,t_struct(OracleRecord)1602_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts/PriceFeed.sol:30"
+          },
+          {
+            "label": "priceRecords",
+            "offset": 0,
+            "slot": "242",
+            "type": "t_mapping(t_address,t_struct(PriceRecord)1607_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts/PriceFeed.sol:31"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)40_storage": {
+            "label": "uint256[40]",
+            "numberOfBytes": "1280"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(AggregatorV3Interface)45": {
+            "label": "contract AggregatorV3Interface",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_struct(OracleRecord)1602_storage)": {
+            "label": "mapping(address => struct IPriceFeed.OracleRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(PriceRecord)1607_storage)": {
+            "label": "mapping(address => struct IPriceFeed.PriceRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(OracleRecord)1602_storage": {
+            "label": "struct IPriceFeed.OracleRecord",
+            "members": [
+              {
+                "label": "chainLinkOracle",
+                "type": "t_contract(AggregatorV3Interface)45",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxDeviationBetweenRounds",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isFeedWorking",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "2"
+              },
+              {
+                "label": "isEthIndexed",
+                "type": "t_bool",
+                "offset": 2,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(PriceRecord)1607_storage": {
+            "label": "struct IPriceFeed.PriceRecord",
+            "members": [
+              {
+                "label": "scaledPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
           },
           "t_uint256": {
             "label": "uint256",

@@ -69,8 +69,8 @@ module.exports = {
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
-		 	url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-		 	accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 	},
 	etherscan: {
@@ -87,3 +87,4 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
+
