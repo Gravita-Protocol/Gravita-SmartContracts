@@ -67,5 +67,9 @@
     "address": "0x78076562e30Fd49c70C4E91f65644d15C32C1839",
     "txHash": "0x0cb01ab33338cdb1bf7886d8f167bb6639f6bec3164cd83be344e769ba0069e9",
     "verification": "https://goerli.etherscan.io/address/0x78076562e30Fd49c70C4E91f65644d15C32C1839#code"
+  },
+  "Timelock": {
+    "address": "0x2BFBEf5CA0185401b2979AfF1Efb6aF6BEeCCBdf",
+    "txHash": "0x38236042912c3cecc5a0e3d2924b4697aba6195c6383d5955e89a203dc10e79e"
   }
 }

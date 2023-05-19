@@ -1,5 +1,7 @@
 const { getParsedEthersError } = require("@enzoferey/ethers-error-parser")
 
+const readline = require("readline-sync")
+
 /**
  * Enum type for available target networks; each should have a matching file in the config folder.
  */
@@ -8,6 +10,13 @@ const DeploymentTarget = Object.freeze({
 	GoerliTestnet: "goerli",
 	Mainnet: "mainnet",
 })
+
+function checkContinue() {
+	var userinput = readline.question(`\nContinue? [y/N]\n`);
+  if (userinput.toLowerCase() !== 'y') {
+		process.exit()
+  }
+}
 
 /**
  * Exported deployment script, invoked from hardhat tasks defined on hardhat.config.js
@@ -48,7 +57,9 @@ const DeploymentTarget = Object.freeze({
 		if (!upgradesAdmin || upgradesAdmin == this.hre.ethers.constants.AddressZero) {
 			throw Error("Provide an address for CONTRACT_UPGRADES_ADMIN in the config file before transferring the ownerships.")
 		}
-		console.log(`Transferring contract ownerships...`)
+		console.log(`\r\nAll Ownable contracts are about to be transferred to the address ${upgradesAdmin}`)
+		checkContinue()
+		console.log(`\r\nTransferring contract ownerships...`)
 		for (const contract of Object.values(contracts)) {
 			let name = await this.getContractName(contract)
 			if (!contract.transferOwnership) {
