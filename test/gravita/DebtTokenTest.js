@@ -11,23 +11,32 @@ const testHelpers = require("../utils/testHelpers.js")
 
 const { toBN, assertRevert, assertAssert, dec, ZERO_ADDRESS } = testHelpers.TestHelper
 
-const sign = (digest, privateKey) => {
-	return ecsign(Buffer.from(digest.slice(2), "hex"), Buffer.from(privateKey.slice(2), "hex"))
-}
-
 const PERMIT_TYPEHASH = keccak256(
 	toUtf8Bytes("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 )
 
+const sign = (digest, privateKey) => {
+	return ecsign(Buffer.from(digest.slice(2), "hex"), Buffer.from(privateKey.slice(2), "hex"))
+}
+
 // Returns the EIP712 hash which should be signed by the user
 // in order to make a call to `permit`
 const getPermitDigest = (domain, owner, spender, value, nonce, deadline) => {
-	return keccak256(
+	// Counters.Counter storage nonce = _nonces[owner];
+	// bytes32 hashStruct = keccak256(
+	// 	abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
+	// );
+	// bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), domainSeparator(), hashStruct));
+	// address signer = ECDSA.recover(_hash, v, r, s);
+
+	console.log(`js.owner: ${owner}`)
+	console.log(`js.spender: ${spender}`)
+
+	const hashStruct = keccak256(
 		pack(
-			["bytes1", "bytes1", "bytes32", "bytes32"],
+			["uint16", "bytes32", "bytes32"],
 			[
-				"0x19",
-				"0x01",
+				"0x1901",
 				domain,
 				keccak256(
 					defaultAbiCoder.encode(
@@ -38,6 +47,7 @@ const getPermitDigest = (domain, owner, spender, value, nonce, deadline) => {
 			]
 		)
 	)
+	return hashStruct
 }
 
 var contracts
@@ -75,6 +85,33 @@ contract("DebtToken", async accounts => {
 	// the second account our hardhatenv creates (for Alice)
 	// from https://github.com/liquity/dev/blob/main/packages/contracts/hardhatAccountsList2k.js#L3
 	const alicePrivateKey = "0xeaa445c85f7b438dEd6e831d06a4eD0CEBDc2f8527f84Fcda6EBB5fCfAd4C0e9"
+
+	// Create the approval tx data
+	const approve = {
+		owner: alice,
+		spender: bob,
+		value: 1,
+	}
+
+	const buildPermitTx = async deadline => {
+		const nonce = (await debtToken.nonces(approve.owner)).toString()
+
+		// Get the EIP712 digest
+		const digest = getPermitDigest(
+			await debtToken.domainSeparator(),
+			approve.owner,
+			approve.spender,
+			approve.value,
+			nonce,
+			deadline
+		)
+
+		const { v, r, s } = sign(digest, alicePrivateKey)
+
+		const tx = debtToken.permit(approve.owner, approve.spender, approve.value, deadline, v, hexlify(r), hexlify(s))
+
+		return { v, r, s, tx }
+	}
 
 	before(async () => {
 		await deploy(treasury, [])
@@ -290,34 +327,7 @@ contract("DebtToken", async accounts => {
 		assert.equal(toBN(await debtToken.nonces(alice)).toString(), "0")
 	})
 
-	// Create the approval tx data
-	const approve = {
-		owner: alice,
-		spender: bob,
-		value: 1,
-	}
-
-	const buildPermitTx = async deadline => {
-		const nonce = (await debtToken.nonces(approve.owner)).toString()
-
-		// Get the EIP712 digest
-		const digest = getPermitDigest(
-			await debtToken.domainSeparator(),
-			approve.owner,
-			approve.spender,
-			approve.value,
-			nonce,
-			deadline
-		)
-
-		const { v, r, s } = sign(digest, alicePrivateKey)
-
-		const tx = debtToken.permit(approve.owner, approve.spender, approve.value, deadline, v, hexlify(r), hexlify(s))
-
-		return { v, r, s, tx }
-	}
-
-	it("permits and emits an Approval event (replay protected)", async () => {
+	it.only("permits and emits an Approval event (replay protected)", async () => {
 		const deadline = 100_000_000_000_000
 
 		// Approve it
