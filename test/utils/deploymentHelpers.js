@@ -64,11 +64,7 @@ class DeploymentHelper {
 		const vesselManagerOperations = await VesselManagerOperations.new()
 		const shortTimelock = await Timelock.new(TIMELOCK_SHORT_DELAY, treasuryAddress)
 		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)
-		const debtToken = await DebtTokenTester.new(
-			borrowerOperations.address,
-			stabilityPool.address,
-			vesselManager.address
-		)
+		const debtToken = await DebtTokenTester.new()
 		const debtTokenWhitelistedTester = await DebtTokenWhitelistedTester.new(debtToken.address)
 
 		await erc20.setDecimals(18)
@@ -126,25 +122,24 @@ class DeploymentHelper {
 	 * Connects contracts to their dependencies.
 	 */
 	static async _connectCoreContracts(core, grvt, treasuryAddress) {
-		const setAddresses = async (contract) => {
+		const setAddresses = async contract => {
+			await contract.setActivePool(core.activePool.address)
 			await contract.setAdminContract(core.adminContract.address)
 			await contract.setBorrowerOperations(core.borrowerOperations.address)
-			await contract.setVesselManager(core.vesselManager.address)
-			await contract.setVesselManagerOperations(core.vesselManagerOperations.address)
-			await contract.setTimelock(core.shortTimelock.address)
-			await contract.setActivePool(core.activePool.address)
-			await contract.setDefaultPool(core.defaultPool.address)
-			await contract.setStabilityPool(core.stabilityPool.address)
 			await contract.setCollSurplusPool(core.collSurplusPool.address)
-			await contract.setPriceFeed(core.priceFeedTestnet.address)
+			await contract.setCommunityIssuance(grvt.communityIssuance.address)
 			await contract.setDebtToken(core.debtToken.address)
-			await contract.setVesselManager(core.vesselManager.address)
+			await contract.setDefaultPool(core.defaultPool.address)
 			await contract.setFeeCollector(core.feeCollector.address)
-			await contract.setSortedVessels(core.sortedVessels.address)
-			await contract.setTreasury(treasuryAddress)
 			await contract.setGasPool(core.gasPool.address)
 			await contract.setGRVTStaking(grvt.grvtStaking.address)
-			await contract.setCommunityIssuance(grvt.communityIssuance.address)
+			await contract.setPriceFeed(core.priceFeedTestnet.address)
+			await contract.setSortedVessels(core.sortedVessels.address)
+			await contract.setStabilityPool(core.stabilityPool.address)
+			await contract.setTimelock(core.shortTimelock.address)
+			await contract.setTreasury(treasuryAddress)
+			await contract.setVesselManager(core.vesselManager.address)
+			await contract.setVesselManagerOperations(core.vesselManagerOperations.address)
 		}
 		for (const key in core) {
 			const contract = core[key]
@@ -152,6 +147,11 @@ class DeploymentHelper {
 				await setAddresses(contract)
 			}
 		}
+		await core.debtToken.setAddresses(
+			core.borrowerOperations.address,
+			core.stabilityPool.address,
+			core.vesselManager.address
+		)
 		for (const key in grvt) {
 			const contract = grvt[key]
 			if (contract.setGasPool) {
@@ -263,13 +263,13 @@ class DeploymentHelper {
 	static async _connectGrvtContracts(grvt, core) {
 		const treasuryAddress = await grvt.grvtToken.treasury()
 
-		// await grvt.grvtStaking.setAddresses(
-		// 	grvt.grvtToken.address,
-		// 	core.debtToken.address,
-		// 	core.feeCollector.address,
-		// 	core.vesselManager.address,
-		// 	treasuryAddress
-		// )
+		await grvt.grvtStaking.setAddresses(
+			core.debtToken.address,
+			core.feeCollector.address,
+			grvt.grvtToken.address,
+			treasuryAddress,
+			core.vesselManager.address
+		)
 
 		await grvt.grvtStaking.unpause()
 
@@ -330,4 +330,3 @@ class DeploymentHelper {
 }
 
 module.exports = DeploymentHelper
-

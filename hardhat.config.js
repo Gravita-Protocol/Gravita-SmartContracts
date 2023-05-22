@@ -82,7 +82,7 @@ module.exports = {
 		port: 8545,
 	},
 	gasReporter: {
-		enabled: `${process.env.REPORT_GAS}`,
+		enabled: false, // `${process.env.REPORT_GAS}`,
 		currency: "USD",
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},

@@ -1,4 +1,4 @@
-const { web3 } = require("@openzeppelin/test-helpers/src/setup")
+const { time } = require("@nomicfoundation/hardhat-network-helpers")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const timeValues = testHelpers.TimeValues
@@ -44,7 +44,7 @@ contract("LockedGRVTTest", async accounts => {
 	let TOTAL_GRVT
 
 	async function applyVestingFormula(vestingRule, ignoreClaimed) {
-		const currentTime = toBN(await th.getLatestBlockTimestamp(web3))
+		const currentTime = Number(await time.latest())
 
 		if (currentTime < vestingRule.startVestingDate.toString()) return toBN(0)
 
@@ -52,7 +52,7 @@ contract("LockedGRVTTest", async accounts => {
 
 		return vestingRule.totalSupply
 			.div(TWO_YEARS)
-			.mul(currentTime.sub(vestingRule.createdDate))
+			.mul(toBN(currentTime - vestingRule.createdDate))
 			.sub(ignoreClaimed ? vestingRule.claimed : toBN(0))
 	}
 
@@ -111,7 +111,7 @@ contract("LockedGRVTTest", async accounts => {
 				assert.equal(entityVestingData.endVestingDate.toString(), entityVestingData.createdDate.add(TWO_YEARS))
 				assert.equal(entityVestingData.claimed.toString(), 0)
 
-				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_DAY, web3.currentProvider)
+				await time.increase(timeValues.SECONDS_IN_ONE_DAY)
 			})
 		})
 
@@ -128,7 +128,7 @@ contract("LockedGRVTTest", async accounts => {
 		it("lowerEntityVesting: called by owner, new total supply goes <= total claimed, revert transaction", async () => {
 			await lockedGRVT.addEntityVesting(A, dec(100, 18), { from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 			const claimable = await lockedGRVT.getClaimableGRVT(A)
 
 			await assertRevert(lockedGRVT.lowerEntityVesting(A, claimable, { from: treasury }))
@@ -138,7 +138,7 @@ contract("LockedGRVTTest", async accounts => {
 		it("lowerEntityVesting: called by owner, valid input, entity receives tokens and total is changed", async () => {
 			await lockedGRVT.addEntityVesting(A, dec(100, 18), { from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 			const claimable = await lockedGRVT.getClaimableGRVT(A)
 			const newTotal = claimable.add(toBN(dec(1, 18)))
 			const entityVestingDataBefore = await lockedGRVT.entitiesVesting(A)
@@ -187,7 +187,7 @@ contract("LockedGRVTTest", async accounts => {
 			assert.equal(entityVestingData.claimed.toString(), 0)
 
 			await lockedGRVT.getClaimableGRVT(B)
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 
 			const claimable = await lockedGRVT.getClaimableGRVT(B)
 			assert.isTrue(claimable.gt(toBN(0)))
@@ -227,7 +227,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
@@ -248,7 +248,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS.sub(toBN(60)), web3.currentProvider)
+			await time.increase(SIX_MONTHS - 60)
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
 			assert.equal((await lockedGRVT.getClaimableGRVT(A)).toString(), await applyVestingFormula(entityVestingData))
@@ -262,7 +262,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
 			const claimable = (await lockedGRVT.getClaimableGRVT(A)).toString()
@@ -284,7 +284,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(TWO_YEARS.div(toBN(2)), web3.currentProvider)
+			await time.increase(TWO_YEARS / 2)
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
 			const claimable = (await lockedGRVT.getClaimableGRVT(A)).toString()
@@ -307,7 +307,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(TWO_YEARS.div(toBN(2)).add(SIX_MONTHS), web3.currentProvider)
+			await time.increase(TWO_YEARS.div(toBN(2)).add(SIX_MONTHS))
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
 			const claimable = (await lockedGRVT.getClaimableGRVT(A)).toString()
@@ -328,7 +328,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(TWO_YEARS, web3.currentProvider)
+			await time.increase(TWO_YEARS)
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
 			const claimable = (await lockedGRVT.getClaimableGRVT(A)).toString()
@@ -350,7 +350,7 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(A, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(B, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(TWO_YEARS.mul(toBN(2)), web3.currentProvider)
+			await time.increase(TWO_YEARS.mul(toBN(2)))
 			const entityVestingData = await lockedGRVT.entitiesVesting(A)
 
 			const claimable = (await lockedGRVT.getClaimableGRVT(A)).toString()
@@ -375,14 +375,14 @@ contract("LockedGRVTTest", async accounts => {
 			await lockedGRVT.addEntityVesting(D, dec(1, 24), { from: treasury })
 			await lockedGRVT.addEntityVesting(E, dec(1, 24), { from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 			await lockedGRVT.claimGRVTToken({ from: A })
 			await lockedGRVT.claimGRVTToken({ from: D })
 
 			await lockedGRVT.removeEntityVesting(C, { from: treasury })
 			await lockedGRVT.transferUnassignedGRVT({ from: treasury })
 
-			await th.fastForwardTime(SIX_MONTHS, web3.currentProvider)
+			await time.increase(SIX_MONTHS)
 			await lockedGRVT.claimGRVTToken({ from: A })
 			await lockedGRVT.claimGRVTToken({ from: B })
 
@@ -398,7 +398,7 @@ contract("LockedGRVTTest", async accounts => {
 			assert.equal((await grvtToken.balanceOf(A)).toString(), (await grvtToken.balanceOf(B)).toString())
 			assert.equal(entityVestingData.claimed.toString(), entityVestingData_B.claimed.toString())
 
-			await th.fastForwardTime(TWO_YEARS.sub(SIX_MONTHS.mul(toBN(2))), web3.currentProvider)
+			await time.increase(TWO_YEARS.sub(SIX_MONTHS.mul(toBN(2))))
 
 			await lockedGRVT.claimGRVTToken({ from: A })
 			await lockedGRVT.claimGRVTToken({ from: B })

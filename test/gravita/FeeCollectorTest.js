@@ -137,7 +137,7 @@ contract("FeeCollector", async accounts => {
 				assert.equal(collector1, treasury)
 				assert.equal(collectedFee1.toString(), minFee.toString())
 				// move forward in time until loan is expired (200 days)
-				time.increase(200 * 24 * 60 * 60)
+				await time.increase(200 * 24 * 60 * 60)
 				// expired paybacks should generate no refunds
 				const paybackTx = await closeVessel(alice, erc20.address)
 				const feeRefundedEvents = th.getAllEventsByName(paybackTx, "FeeRefunded")
@@ -471,12 +471,12 @@ contract("FeeCollector", async accounts => {
 				await openOrAjustVessel(alice, erc20.address, borrowAmount)
 				await openOrAjustVessel(bob, erc20.address, borrowAmount)
 				// move forward in time to half life of loan, collect expired fees
-				time.increase(87.5 * 24 * 60 * 60)
+				await time.increase(87.5 * 24 * 60 * 60)
 				const collectTx = await feeCollector.collectFees([alice, bob], [erc20.address, erc20.address])
 				const feeCollectedEvents = th.getAllEventsByName(collectTx, "FeeCollected")
 				assert.equal(feeCollectedEvents.length, 2)
 				// move forward in time to fully expired refunds and collect the remaining fees
-				time.increase(100 * 24 * 60 * 60)
+				await time.increase(100 * 24 * 60 * 60)
 				await feeCollector.collectFees([alice, bob], [erc20.address, erc20.address])
 				const { maxFee: totalFeesExpected } = calcFees(borrowAmount.mul(toBN(2)))
 				// check final balances

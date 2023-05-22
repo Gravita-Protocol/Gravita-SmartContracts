@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../Interfaces/IERC2612Permit.sol";
 
+import "hardhat/console.sol";
+
 abstract contract ERC20Permit is ERC20, IERC2612Permit {
 	using Counters for Counters.Counter;
 	bytes32 private immutable _CACHED_DOMAIN_SEPARATOR;
@@ -71,6 +73,9 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 		bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), domainSeparator(), hashStruct));
 
 		address signer = ECDSA.recover(_hash, v, r, s);
+		console.log("ownerParam: %s", owner);
+		console.log("ownerRecov: %s", signer);
+
 		require(signer != address(0) && signer == owner, "ERC20Permit: Invalid signature");
 
 		nonce.increment();
