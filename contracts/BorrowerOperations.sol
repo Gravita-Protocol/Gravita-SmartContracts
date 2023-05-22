@@ -89,7 +89,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_requireAtLeastMinNetDebt(vars.asset, vars.netDebt);
 
 		// ICR is based on the composite debt, i.e. the requested debt token amount + borrowing fee + gas comp.
-		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
+		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset);
+		vars.compositeDebt = vars.netDebt + gasCompensation;
 		require(vars.compositeDebt != 0, "compositeDebt cannot be 0");
 
 		vars.ICR = GravitaMath._computeCR(_assetAmount, vars.compositeDebt, vars.price);
@@ -119,12 +120,9 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_activePoolAddColl(vars.asset, _assetAmount);
 		_withdrawDebtTokens(vars.asset, msg.sender, _debtTokenAmount, vars.netDebt);
 		// Move the debtToken gas compensation to the Gas Pool
-		_withdrawDebtTokens(
-			vars.asset,
-			gasPoolAddress,
-			IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset),
-			IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset)
-		);
+		if (gasCompensation != 0) {
+			_withdrawDebtTokens(vars.asset, gasPoolAddress, gasCompensation, gasCompensation);
+		}
 
 		emit VesselUpdated(
 			vars.asset,
@@ -311,10 +309,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 coll = IVesselManager(vesselManager).getVesselColl(_asset, msg.sender);
 		uint256 debt = IVesselManager(vesselManager).getVesselDebt(_asset, msg.sender);
 
-		_requireSufficientDebtTokenBalance(
-			msg.sender,
-			debt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)
-		);
+		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
+		_requireSufficientDebtTokenBalance(msg.sender, debt - gasCompensation);
 
 		uint256 newTCR = _getNewTCRFromVesselChange(_asset, coll, false, debt, false, price);
 		_requireNewTCRisAboveCCR(_asset, newTCR);
@@ -323,10 +319,12 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		IVesselManager(vesselManager).closeVessel(_asset, msg.sender);
 
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
-		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
+
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
 		_repayDebtTokens(_asset, msg.sender, debt - gasCompensation);
-		_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
+		if (gasCompensation != 0) {
+			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
+		}
 
 		// Signal to the fee collector that debt has been paid in full
 		IFeeCollector(feeCollector).closeDebt(msg.sender, _asset);
