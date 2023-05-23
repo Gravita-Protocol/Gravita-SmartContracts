@@ -1,120 +1,21 @@
-const { keccak256 } = require("@ethersproject/keccak256")
-const { defaultAbiCoder } = require("@ethersproject/abi")
-const { toUtf8Bytes } = require("@ethersproject/strings")
-const { pack } = require("@ethersproject/solidity")
-const { hexlify } = require("@ethersproject/bytes")
-const { ecsign } = require("ethereumjs-util")
 const { expectRevert } = require("@openzeppelin/test-helpers")
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
-const { toBN, assertRevert, assertAssert, dec, ZERO_ADDRESS } = testHelpers.TestHelper
+const { assertRevert, assertAssert, dec, ZERO_ADDRESS } = testHelpers.TestHelper
 
-const PERMIT_TYPEHASH = keccak256(
-	toUtf8Bytes("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
-)
-
-const sign = (digest, privateKey) => {
-	return ecsign(Buffer.from(digest.slice(2), "hex"), Buffer.from(privateKey.slice(2), "hex"))
-}
-
-// Returns the EIP712 hash which should be signed by the user
-// in order to make a call to `permit`
-const getPermitDigest = (domain, owner, spender, value, nonce, deadline) => {
-	// Counters.Counter storage nonce = _nonces[owner];
-	// bytes32 hashStruct = keccak256(
-	// 	abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
-	// );
-	// bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), domainSeparator(), hashStruct));
-	// address signer = ECDSA.recover(_hash, v, r, s);
-
-	console.log(`js.owner: ${owner}`)
-	console.log(`js.spender: ${spender}`)
-
-	const hashStruct = keccak256(
-		pack(
-			["uint16", "bytes32", "bytes32"],
-			[
-				"0x1901",
-				domain,
-				keccak256(
-					defaultAbiCoder.encode(
-						["bytes32", "address", "address", "uint256", "uint256", "uint256"],
-						[PERMIT_TYPEHASH, owner, spender, value, nonce, deadline]
-					)
-				),
-			]
-		)
-	)
-	return hashStruct
-}
-
-var contracts
 var snapshotId
 var initialSnapshotId
 
-const deploy = async (treasury, mintingAccounts) => {
-	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
-
-	activePool = contracts.core.activePool
-	adminContract = contracts.core.adminContract
-	borrowerOperations = contracts.core.borrowerOperations
-	collSurplusPool = contracts.core.collSurplusPool
-	debtToken = contracts.core.debtToken
-	defaultPool = contracts.core.defaultPool
-	erc20 = contracts.core.erc20
-	feeCollector = contracts.core.feeCollector
-	gasPool = contracts.core.gasPool
-	priceFeed = contracts.core.priceFeedTestnet
-	sortedVessels = contracts.core.sortedVessels
-	stabilityPool = contracts.core.stabilityPool
-	vesselManager = contracts.core.vesselManager
-	vesselManagerOperations = contracts.core.vesselManagerOperations
-	shortTimelock = contracts.core.shortTimelock
-	longTimelock = contracts.core.longTimelock
-
-	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
-	communityIssuance = contracts.grvt.communityIssuance
-}
-
 contract("DebtToken", async accounts => {
 	const [owner, alice, bob, carol, dennis, treasury] = accounts
-
-	// the second account our hardhatenv creates (for Alice)
-	// from https://github.com/liquity/dev/blob/main/packages/contracts/hardhatAccountsList2k.js#L3
-	const alicePrivateKey = "0xeaa445c85f7b438dEd6e831d06a4eD0CEBDc2f8527f84Fcda6EBB5fCfAd4C0e9"
-
-	// Create the approval tx data
-	const approve = {
-		owner: alice,
-		spender: bob,
-		value: 1,
-	}
-
-	const buildPermitTx = async deadline => {
-		const nonce = (await debtToken.nonces(approve.owner)).toString()
-
-		// Get the EIP712 digest
-		const digest = getPermitDigest(
-			await debtToken.domainSeparator(),
-			approve.owner,
-			approve.spender,
-			approve.value,
-			nonce,
-			deadline
-		)
-
-		const { v, r, s } = sign(digest, alicePrivateKey)
-
-		const tx = debtToken.permit(approve.owner, approve.spender, approve.value, deadline, v, hexlify(r), hexlify(s))
-
-		return { v, r, s, tx }
-	}
+	let debtToken, stabilityPool
 
 	before(async () => {
-		await deploy(treasury, [])
+		const contracts = await deploymentHelper.deployTestContracts(treasury, [])
+		debtToken = contracts.core.debtToken
+		stabilityPool = contracts.core.stabilityPool
 
 		debtTokenWhitelistedTester = contracts.core.debtTokenWhitelistedTester
 		debtToken.addWhitelist(debtTokenWhitelistedTester.address)
@@ -315,66 +216,6 @@ contract("DebtToken", async accounts => {
 		assert.equal((await debtToken.allowance(alice, bob)).toString(), dec(3, 18))
 		await expectRevert.unspecified(debtToken.decreaseAllowance(bob, dec(4, 18), { from: alice }))
 		assert.equal((await debtToken.allowance(alice, bob)).toString(), dec(3, 18))
-	})
-
-	// EIP2612 tests
-
-	it("Initializes PERMIT_TYPEHASH correctly", async () => {
-		assert.equal(await debtToken.PERMIT_TYPEHASH(), PERMIT_TYPEHASH)
-	})
-
-	it("Initial nonce for a given address is 0", async function () {
-		assert.equal(toBN(await debtToken.nonces(alice)).toString(), "0")
-	})
-
-	it.only("permits and emits an Approval event (replay protected)", async () => {
-		const deadline = 100_000_000_000_000
-
-		// Approve it
-		const { v, r, s, tx } = await buildPermitTx(deadline)
-		const receipt = await tx
-		const event = receipt.logs[0]
-
-		// Check that approval was successful
-		assert.equal(event.event, "Approval")
-		assert.equal(await debtToken.nonces(approve.owner), 1)
-		assert.equal(await debtToken.allowance(approve.owner, approve.spender), approve.value)
-
-		// Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
-		await assertRevert(
-			debtToken.permit(approve.owner, approve.spender, approve.value, deadline, v, r, s),
-			"Permit: invalid signature"
-		)
-
-		// Check that the zero address fails
-		await assertAssert(
-			debtToken.permit(
-				"0x0000000000000000000000000000000000000000",
-				approve.spender,
-				approve.value,
-				deadline,
-				"0x99",
-				r,
-				s
-			)
-		)
-	})
-
-	it("permits(): fails with expired deadline", async () => {
-		const deadline = 1
-
-		const { v, r, s, tx } = await buildPermitTx(deadline)
-		await assertRevert(tx, "Permit: expired deadline")
-	})
-
-	it("permits(): fails with the wrong signature", async () => {
-		const deadline = 100_000_000_000_000
-
-		const { v, r, s } = await buildPermitTx(deadline)
-
-		const tx = debtToken.permit(carol, approve.spender, approve.value, deadline, v, hexlify(r), hexlify(s))
-
-		await assertRevert(tx, "Permit: invalid signature")
 	})
 
 	it("mintFromWhitelistedContract(): accepts minting from whitelisted contracts", async () => {

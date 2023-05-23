@@ -45,6 +45,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
         bytes32 nameHash,
         bytes32 versionHash
     ) private view returns (bytes32) {
+		console.log("sol.chainId: %s", block.chainid);
         return keccak256(abi.encode(PERMIT_TYPEHASH, nameHash, versionHash, block.chainid, address(this)));
     }
 	
@@ -63,6 +64,7 @@ abstract contract ERC20Permit is ERC20, IERC2612Permit {
 		bytes32 s
 	) external virtual override {
 		require(block.timestamp <= deadline, "Permit: expired deadline");
+		console.log("sol.chainId: %s", block.chainid);
 
 		Counters.Counter storage nonce = _nonces[owner];
 

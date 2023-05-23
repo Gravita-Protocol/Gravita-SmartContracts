@@ -45,6 +45,7 @@
 		"eth-gas-reporter": "^0.2.25",
 		"ethereumjs-util": "^7.1.5",
 		"ethers": "5.7.2",
+		"ethers-eip712": "^0.2.0",
 		"hardhat": "^2.14.0",
 		"hardhat-contract-sizer": "^2.8.0",
 		"hardhat-gas-reporter": "^1.0.9",

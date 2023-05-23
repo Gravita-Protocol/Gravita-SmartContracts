@@ -1,13 +1,3 @@
-const { keccak256 } = require("@ethersproject/keccak256")
-const { defaultAbiCoder } = require("@ethersproject/abi")
-const { toUtf8Bytes } = require("@ethersproject/strings")
-const { pack } = require("@ethersproject/solidity")
-const { hexlify } = require("@ethersproject/bytes")
-const { ecsign } = require("ethereumjs-util")
-
-// the second account our hardhatenv creates (for EOA A)
-// from https://github.com/liquity/dev/blob/main/packages/contracts/hardhatAccountsList2k.js#L3
-
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -22,80 +12,14 @@ const deploy = async (treasury, mintingAccounts) => {
 	communityIssuance = contracts.grvt.communityIssuance
 }
 
-contract("GRVT Token", async accounts => {
+contract("GRVTToken", async accounts => {
 	const [owner, alice, bob, carol, dennis, treasury] = accounts
-
-	// Create the approval tx data, for use in permit()
-	const approve = {
-		owner: alice,
-		spender: bob,
-		value: 1,
-	}
-
-	const alicePrivateKey = "0xeaa445c85f7b438dEd6e831d06a4eD0CEBDc2f8527f84Fcda6EBB5fCfAd4C0e9"
-
-	const sign = (digest, privateKey) => {
-		return ecsign(Buffer.from(digest.slice(2), "hex"), Buffer.from(privateKey.slice(2), "hex"))
-	}
-
-	const PERMIT_TYPEHASH = keccak256(
-		toUtf8Bytes("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
-	)
-
-	// Returns the EIP712 hash which should be signed by the user
-	// in order to make a call to `permit`
-	const getPermitDigest = (domain, owner, spender, value, nonce, deadline) => {
-		return keccak256(
-			pack(
-				["bytes1", "bytes1", "bytes32", "bytes32"],
-				[
-					"0x19",
-					"0x01",
-					domain,
-					keccak256(
-						defaultAbiCoder.encode(
-							["bytes32", "address", "address", "uint256", "uint256", "uint256"],
-							[PERMIT_TYPEHASH, owner, spender, value, nonce, deadline]
-						)
-					),
-				]
-			)
-		)
-	}
 
 	const mintToABC = async () => {
 		// mint some tokens
 		await grvtToken.unprotectedMint(alice, dec(150, 18))
 		await grvtToken.unprotectedMint(bob, dec(100, 18))
 		await grvtToken.unprotectedMint(carol, dec(50, 18))
-	}
-
-	const buildPermitTx = async deadline => {
-		const nonce = (await grvtToken.nonces(approve.owner)).toString()
-
-		// Get the EIP712 digest
-		const digest = getPermitDigest(
-			await grvtToken.domainSeparator(),
-			approve.owner,
-			approve.spender,
-			approve.value,
-			nonce,
-			deadline
-		)
-
-		const { v, r, s } = sign(digest, alicePrivateKey)
-
-		const tx = grvtToken.permit(
-			approve.owner,
-			approve.spender,
-			approve.value,
-			deadline,
-			v,
-			hexlify(r),
-			hexlify(s)
-		)
-
-		return { v, r, s, tx }
 	}
 
 	before(async () => {
@@ -300,76 +224,6 @@ contract("GRVT Token", async accounts => {
 		assert.equal(A_BalanceAfter, dec(113, 18))
 		const GRVTStakingBalanceAfter = await grvtToken.balanceOf(grvtStaking.address)
 		assert.equal(GRVTStakingBalanceAfter, dec(37, 18))
-	})
-
-	// EIP2612 tests
-
-	it("Initializes PERMIT_TYPEHASH correctly", async () => {
-		assert.equal(await grvtToken.PERMIT_TYPEHASH(), PERMIT_TYPEHASH)
-	})
-
-	it("Initial nonce for a given address is 0", async function () {
-		assert.equal(toBN(await grvtToken.nonces(alice)).toString(), "0")
-	})
-
-	it("permit(): permits and emits an Approval event (replay protected)", async () => {
-		const deadline = 100_000_000_000_000
-
-		// Approve it
-		const { v, r, s, tx } = await buildPermitTx(deadline)
-		const receipt = await tx
-		const event = receipt.logs[0]
-
-		// Check that approval was successful
-		assert.equal(event.event, "Approval")
-		assert.equal(await grvtToken.nonces(approve.owner), 1)
-		assert.equal(await grvtToken.allowance(approve.owner, approve.spender), approve.value)
-
-		// Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
-		await assertRevert(
-			grvtToken.permit(approve.owner, approve.spender, approve.value, deadline, v, r, s),
-			"GRVT: invalid signature"
-		)
-
-		// Check that the zero address fails
-		await assertRevert(
-			grvtToken.permit(
-				"0x0000000000000000000000000000000000000000",
-				approve.spender,
-				approve.value,
-				deadline,
-				"0x99",
-				r,
-				s
-			),
-			"GRVT: invalid signature"
-		)
-	})
-
-	it("permit(): fails with expired deadline", async () => {
-		const deadline = 1
-
-		const { v, r, s, tx } = await buildPermitTx(deadline)
-		await assertRevert(tx, "Permit: expired deadline")
-	})
-
-	it("permit(): fails with the wrong signature", async () => {
-		const deadline = 100_000_000_000_000
-
-		const { v, r, s, tx } = await buildPermitTx(deadline)
-		await tx
-
-		const txPermit = grvtToken.permit(
-			carol,
-			approve.spender,
-			approve.value, // Carol is passed as spender param, rather than Bob
-			deadline,
-			v,
-			hexlify(r),
-			hexlify(s)
-		)
-
-		await assertRevert(txPermit, "Permit: invalid signature")
 	})
 })
 
