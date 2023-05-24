@@ -29,39 +29,39 @@ contract Addresses {
 	uint256[40] private __gap;
 
 	// TEST SECTION - UNCOMMENT THIS TO RUN LOCAL TESTS SO WE CAN CHANGE THE DEPLOYED ADDRESSES
-	// IActivePool public activePool;
-	// IAdminContract public adminContract;
-	// IBorrowerOperations public borrowerOperations;
-	// ICollSurplusPool public collSurplusPool;
-	// ICommunityIssuance public communityIssuance;
-	// IDebtToken public debtToken;
-	// IDefaultPool public defaultPool;
-	// IFeeCollector public feeCollector;
+	// address public activePool;
+	// address public adminContract;
+	// address public borrowerOperations;
+	// address public collSurplusPool;
+	// address public communityIssuance;
+	// address public debtToken;
+	// address public defaultPool;
+	// address public feeCollector;
 	// address public gasPoolAddress;
-	// IGRVTStaking public grvtStaking;
-	// IPriceFeed public priceFeed;
-	// ISortedVessels public sortedVessels;
-	// IStabilityPool public stabilityPool;
+	// address public grvtStaking;
+	// address public priceFeed;
+	// address public sortedVessels;
+	// address public stabilityPool;
 	// address public timelockAddress;
 	// address public treasuryAddress;
-	// IVesselManager public vesselManager;
-	// IVesselManagerOperations public vesselManagerOperations;
+	// address public vesselManager;
+	// address public vesselManagerOperations;
 
 	// // Setter functions enabled only when running tests - requires contants to be regular variables
 	// function setAdminContract(address _adminContract) public {
-	// 	adminContract = IAdminContract(_adminContract);
+	// 	adminContract = _adminContract;
 	// }
 
 	// function setBorrowerOperations(address _borrowerOperations) public {
-	// 	borrowerOperations = IBorrowerOperations(_borrowerOperations);
+	// 	borrowerOperations = _borrowerOperations;
 	// }
 
 	// function setVesselManager(address _vesselManager) public {
-	// 	vesselManager = IVesselManager(_vesselManager);
+	// 	vesselManager = _vesselManager;
 	// }
 
 	// function setVesselManagerOperations(address _vesselManagerOperations) public {
-	// 	vesselManagerOperations = IVesselManagerOperations(_vesselManagerOperations);
+	// 	vesselManagerOperations = _vesselManagerOperations;
 	// }
 
 	// function setTimelock(address _timelock) public {
@@ -69,31 +69,31 @@ contract Addresses {
 	// }
 
 	// function setCommunityIssuance(address _communityIssuance) public {
-	// 	communityIssuance = ICommunityIssuance(_communityIssuance);
+	// 	communityIssuance = _communityIssuance;
 	// }
 
 	// function setActivePool(address _activePool) public {
-	// 	activePool = IActivePool(_activePool);
+	// 	activePool = _activePool;
 	// }
 
 	// function setDefaultPool(address _defaultPool) public {
-	// 	defaultPool = IDefaultPool(_defaultPool);
+	// 	defaultPool = _defaultPool;
 	// }
 
 	// function setStabilityPool(address _stabilityPool) public {
-	// 	stabilityPool = IStabilityPool(_stabilityPool);
+	// 	stabilityPool = _stabilityPool;
 	// }
 
 	// function setCollSurplusPool(address _collSurplusPool) public {
-	// 	collSurplusPool = ICollSurplusPool(_collSurplusPool);
+	// 	collSurplusPool = _collSurplusPool;
 	// }
 
 	// function setPriceFeed(address _priceFeed) public {
-	// 	priceFeed = IPriceFeed(_priceFeed);
+	// 	priceFeed = _priceFeed;
 	// }
 
 	// function setDebtToken(address _debtToken) public {
-	// 	debtToken = IDebtToken(_debtToken);
+	// 	debtToken = _debtToken;
 	// }
 
 	// function setGasPool(address _gasPool) public {
@@ -101,11 +101,11 @@ contract Addresses {
 	// }
 
 	// function setFeeCollector(address _feeCollector) public {
-	// 	feeCollector = IFeeCollector(_feeCollector);
+	// 	feeCollector = _feeCollector;
 	// }
 
 	// function setSortedVessels(address _sortedVessels) public {
-	// 	sortedVessels = ISortedVessels(_sortedVessels);
+	// 	sortedVessels = _sortedVessels;
 	// }
 
 	// function setTreasury(address _treasuryAddress) public {
@@ -113,6 +113,6 @@ contract Addresses {
 	// }
 
 	// function setGRVTStaking(address _grvtStaking) public {
-	// 	grvtStaking = IGRVTStaking(_grvtStaking);
+	// 	grvtStaking = _grvtStaking;
 	// }
 }
