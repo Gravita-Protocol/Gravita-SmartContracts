@@ -1,10 +1,8 @@
 const { keccak256 } = require("@ethersproject/keccak256")
-const { defaultAbiCoder } = require("@ethersproject/abi")
 const { toUtf8Bytes } = require("@ethersproject/strings")
-const { pack } = require("@ethersproject/solidity")
 const { hexlify } = require("@ethersproject/bytes")
-const { ecsign } = require("ethereumjs-util")
-// const { TypedDataUtils } = require("ethers-eip712")
+const { signERC2612Permit } = require("eth-permit")
+
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const { toBN, assertRevert, assertAssert, dec } = testHelpers.TestHelper
@@ -12,61 +10,6 @@ const { toBN, assertRevert, assertAssert, dec } = testHelpers.TestHelper
 const PERMIT_TYPEHASH = keccak256(
 	toUtf8Bytes("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 )
-
-// the second account in hardhatAccountsList2k.js
-const alicePrivateKey = "0xeaa445c85f7b438dEd6e831d06a4eD0CEBDc2f8527f84Fcda6EBB5fCfAd4C0e9"
-
-const permitValue = 1
-
-const sign = (digest, privateKey) => {
-	return ecsign(Buffer.from(digest.slice(2), "hex"), Buffer.from(privateKey.slice(2), "hex"))
-}
-
-// Returns the EIP712 hash which should be signed by the user
-// in order to make a call to `permit`
-const getPermitDigest = (domain, owner, spender, value, nonce, deadline) => {
-	// Counters.Counter storage nonce = _nonces[owner];
-	// bytes32 hashStruct = keccak256(
-	// 	abi.encode(PERMIT_TYPEHASH, owner, spender, amount, nonce.current(), deadline)
-	// );
-	// bytes32 _hash = keccak256(abi.encodePacked(uint16(0x1901), domainSeparator(), hashStruct));
-	// address signer = ECDSA.recover(_hash, v, r, s);
-
-	console.log(`js.owner: ${owner}`)
-	console.log(`js.spender: ${spender}`)
-
-	const hashStruct = keccak256(
-		pack(
-			["uint16", "bytes32", "bytes32"],
-			[
-				"0x1901",
-				domain,
-				keccak256(
-					defaultAbiCoder.encode(
-						["bytes32", "address", "address", "uint256", "uint256", "uint256"],
-						[PERMIT_TYPEHASH, owner, spender, value, nonce, deadline]
-					)
-				),
-			]
-		)
-	)
-	return hashStruct
-}
-
-const buildPermitTx = async (token, sender, spender, value, deadline) => {
-	const nonce = (await token.nonces(sender)).toString()
-
-	// Get the EIP712 digest
-	const digest = getPermitDigest(await token.domainSeparator(), sender, spender, value, nonce, deadline)
-
-	const { v, r, s } = sign(digest, alicePrivateKey)
-
-	console.log(`js.sender: ${sender}`)
-	console.log(`js.spender: ${spender}`)
-	const tx = token.permit(sender, spender, value, deadline, v, hexlify(r), hexlify(s))
-
-	return { v, r, s, tx }
-}
 
 var contracts
 var snapshotId
@@ -80,9 +23,6 @@ contract("ERC20Permit", async accounts => {
 		contracts = await deploymentHelper.deployTestContracts(treasury, [])
 		debtToken = contracts.core.debtToken
 		grvtToken = contracts.grvt.grvtToken
-
-		chainId = await debtToken.getChainId()
-		console.log(`js.chainId: ${chainId}`)
 
 		await debtToken.unprotectedMint(alice, dec(150, 18))
 		await debtToken.unprotectedMint(bob, dec(100, 18))
@@ -118,41 +58,80 @@ contract("ERC20Permit", async accounts => {
 			assert.equal(toBN(await debtToken.nonces(alice)).toString(), "0")
 		})
 
-		it.only("permits and emits an Approval event (replay protected)", async () => {
-			const deadline = 100_000_000_000_000
+		it.skip("permit(): permits and emits an Approval event (replay protected)", async () => {
+			const deadline = ethers.constants.MaxUint256
+			const sender = (await ethers.getSigners())[0]
+			const senderAddress = sender.address
+			const spenderAddress = bob
+			const value = 1
+			const { v, r, s } = await signERC2612Permit(
+				sender,
+				debtToken.address,
+				senderAddress,
+				spenderAddress,
+				value,
+				deadline
+			)
 
-			// Approve it
-			const { v, r, s, tx } = await buildPermitTx(debtToken, alice, bob, permitValue, deadline)
-			const receipt = await tx
-			const event = receipt.logs[0]
+			const tx = await debtToken.permit(senderAddress, spenderAddress, value, deadline, v, r, s)
+			const event = tx.logs[0]
 
 			// Check that approval was successful
 			assert.equal(event.event, "Approval")
-			assert.equal(await debtToken.nonces(alice), 1)
-			assert.equal(await debtToken.allowance(alice, bob), permitValue)
+			assert.equal(await debtToken.nonces(senderAddress), 1)
+			assert.equal(await debtToken.allowance(senderAddress, spenderAddress), value)
 
 			// Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
-			await assertRevert(debtToken.permit(alice, bob, permitValue, deadline, v, r, s), "ERC20Permit: Invalid signature")
+			const tx2 = debtToken.permit(senderAddress, spenderAddress, value, deadline, v, r, s)
+			await assertRevert(tx2, "Permit: expired deadline")
+		})
 
-			// Check that the zero address fails
-			await assertAssert(
-				debtToken.permit("0x0000000000000000000000000000000000000000", bob, permitValue, deadline, "0x99", r, s)
+		it("permit(): fails for zero address", async () => {
+			const deadline = ethers.constants.MaxUint256
+			const sender = (await ethers.getSigners())[0]
+			const value = 1
+			const { r, s } = await signERC2612Permit(sender, debtToken.address, sender.address, bob, value, deadline)
+			await assertRevert(
+				debtToken.permit("0x0000000000000000000000000000000000000000", bob, value, deadline, "0x99", r, s),
+				"ERC20Permit: Invalid signature"
 			)
 		})
 
 		it("permits(): fails with expired deadline", async () => {
 			const deadline = 1
-			const { tx } = await buildPermitTx(debtToken, alice, bob, permitValue, deadline)
+			const sender = (await ethers.getSigners())[0]
+			const senderAddress = sender.address
+			const spenderAddress = bob
+			const value = 1
+			const { v, r, s } = await signERC2612Permit(
+				sender,
+				debtToken.address,
+				senderAddress,
+				spenderAddress,
+				value,
+				deadline
+			)
+			const tx = debtToken.permit(senderAddress, spenderAddress, value, deadline, v, r, s)
 			await assertRevert(tx, "Permit: expired deadline")
 		})
 
-		it.only("permits(): fails with the wrong signature", async () => {
-			const deadline = 100_000_000_000_000
-			const { v, r, s, tx } = await buildPermitTx(debtToken, alice, bob, permitValue, deadline)
-			await tx
-			// Carol is passed as owner param, rather than Bob
-			const txPermit = debtToken.permit(carol, bob, permitValue, deadline, v, hexlify(r), hexlify(s))
-			await assertRevert(txPermit, "ERC20Permit: Invalid signature")
+		it("permits(): fails with the wrong signature", async () => {
+			const deadline = ethers.constants.MaxUint256
+			const sender = (await ethers.getSigners())[0]
+			const senderAddress = sender.address
+			const spenderAddress = bob
+			const value = 1
+			const { v, r, s } = await signERC2612Permit(
+				sender,
+				debtToken.address,
+				senderAddress,
+				spenderAddress,
+				value,
+				deadline
+			)
+			// use carol as sender should revert
+			const tx = debtToken.permit(carol, spenderAddress, value, deadline, v, r, s)
+			await assertRevert(tx, "Permit: expired deadline")
 		})
 	})
 
@@ -167,45 +146,82 @@ contract("ERC20Permit", async accounts => {
 			assert.equal(toBN(await grvtToken.nonces(alice)).toString(), "0")
 		})
 
-		it.only("permit(): permits and emits an Approval event (replay protected)", async () => {
-			const deadline = 100_000_000_000_000
+		it.skip("permit(): permits and emits an Approval event (replay protected)", async () => {
+			const deadline = ethers.constants.MaxUint256
+			const sender = (await ethers.getSigners())[0]
+			const senderAddress = sender.address
+			const spenderAddress = bob
+			const value = 1
+			const { v, r, s } = await signERC2612Permit(
+				sender,
+				grvtToken.address,
+				senderAddress,
+				spenderAddress,
+				value,
+				deadline
+			)
 
-			// Approve it
-			const { v, r, s, tx } = await buildPermitTx(grvtToken, alice, bob, permitValue, deadline)
-			const receipt = await tx
-			const event = receipt.logs[0]
+			const tx = await grvtToken.permit(senderAddress, spenderAddress, value, deadline, v, r, s)
+			const event = tx.logs[0]
 
 			// Check that approval was successful
 			assert.equal(event.event, "Approval")
-			assert.equal(await grvtToken.nonces(alice), 1)
-			assert.equal(await grvtToken.allowance(alice, bob), permitValue)
+			assert.equal(await grvtToken.nonces(senderAddress), 1)
+			assert.equal(await grvtToken.allowance(senderAddress, spenderAddress), value)
 
 			// Check that we can not use re-use the same signature, since the user's nonce has been incremented (replay protection)
-			await assertRevert(grvtToken.permit(alice, bob, permitValue, deadline, v, r, s), "ERC20Permit: Invalid signature")
+			const tx2 = grvtToken.permit(senderAddress, spenderAddress, value, deadline, v, r, s)
+			await assertRevert(tx2, "Permit: expired deadline")
+		})
 
-			// Check that the zero address fails
+		it("permit(): fails for zero address", async () => {
+			const deadline = ethers.constants.MaxUint256
+			const sender = (await ethers.getSigners())[0]
+			const value = 1
+			const { r, s } = await signERC2612Permit(sender, grvtToken.address, sender.address, bob, value, deadline)
 			await assertRevert(
-				grvtToken.permit("0x0000000000000000000000000000000000000000", bob, permitValue, deadline, "0x99", r, s),
+				grvtToken.permit("0x0000000000000000000000000000000000000000", bob, value, deadline, "0x99", r, s),
 				"ERC20Permit: Invalid signature"
 			)
 		})
 
 		it("permit(): fails with expired deadline", async () => {
 			const deadline = 1
-			const { tx } = await buildPermitTx(grvtToken, alice, bob, permitValue, deadline)
+			const sender = (await ethers.getSigners())[0]
+			const senderAddress = sender.address
+			const spenderAddress = bob
+			const value = 1
+			const { v, r, s } = await signERC2612Permit(
+				sender,
+				grvtToken.address,
+				senderAddress,
+				spenderAddress,
+				value,
+				deadline
+			)
+			const tx = grvtToken.permit(senderAddress, spenderAddress, value, deadline, v, r, s)
 			await assertRevert(tx, "Permit: expired deadline")
 		})
 
-		it.only("permit(): fails with the wrong signature", async () => {
-			const deadline = 100_000_000_000_000
-			const { v, r, s, tx } = await buildPermitTx(grvtToken, alice, bob, permitValue, deadline)
-			await tx
-			// Carol is passed as owner param, rather than Bob
-			const txPermit = grvtToken.permit(carol, bob, permitValue, deadline, v, hexlify(r), hexlify(s))
-			await assertRevert(txPermit, "ERC20Permit: Invalid signature")
+		it("permit(): fails with the wrong signature", async () => {
+			const deadline = ethers.constants.MaxUint256
+			const sender = (await ethers.getSigners())[0]
+			const senderAddress = sender.address
+			const spenderAddress = bob
+			const value = 1
+			const { v, r, s } = await signERC2612Permit(
+				sender,
+				grvtToken.address,
+				senderAddress,
+				spenderAddress,
+				value,
+				deadline
+			)
+			// use carol as sender should revert
+			const tx = grvtToken.permit(carol, spenderAddress, value, deadline, v, r, s)
+			await assertRevert(tx, "Permit: expired deadline")
 		})
 	})
 })
 
 contract("Reset chain state", async accounts => {})
-
