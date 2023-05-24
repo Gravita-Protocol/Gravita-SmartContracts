@@ -2,13 +2,6 @@ const DeploymentHelper = require("./deploymentHelper-common.js")
 
 const readline = require("readline-sync")
 
-function checkContinue() {
-	var userinput = readline.question(`\nContinue? [y/N]\n`);
-  if (userinput.toLowerCase() !== 'y') {
-		process.exit()
-  }
-}
-
 class CoreDeploymentHelper extends DeploymentHelper {
 	constructor(hre, configParams, deployerWallet) {
 		super(hre, configParams, deployerWallet)
@@ -24,15 +17,12 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		const [activePool, upgraded1] = await this.deployUpgradeable("ActivePool")
 		const [adminContract, upgraded2] = await this.deployUpgradeable("AdminContract")
 		const [borrowerOperations, upgraded3] = await this.deployUpgradeable("BorrowerOperations")
-		checkContinue()
 		const [collSurplusPool, upgraded4] = await this.deployUpgradeable("CollSurplusPool")
 		const [defaultPool, upgraded5] = await this.deployUpgradeable("DefaultPool")
 		const [feeCollector, upgraded6] = await this.deployUpgradeable("FeeCollector")
-		checkContinue()
 		const [priceFeed, upgraded7] = await this.deployUpgradeable("PriceFeed")
 		const [sortedVessels, upgraded8] = await this.deployUpgradeable("SortedVessels")
 		const [stabilityPool, upgraded9] = await this.deployUpgradeable("StabilityPool")
-		checkContinue()
 		const [vesselManager, upgraded10] = await this.deployUpgradeable("VesselManager")
 		const [vesselManagerOperations, upgraded11] = await this.deployUpgradeable("VesselManagerOperations")
 

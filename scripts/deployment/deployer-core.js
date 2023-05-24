@@ -19,14 +19,15 @@ class CoreDeployer extends Deployer {
 
 		const { contracts, allUpgraded } = await this.helper.loadOrDeployOrUpgradeCoreContracts()
 
-		if (allUpgraded) {
-			console.log(`All contracts have been upgraded, setting parameters...`)
-			this.coreContracts = contracts
-			await this.addCollaterals()
-			await this.toggleContractSetupInitialization(contracts.adminContract)
-			await this.helper.verifyCoreContracts()
-			// await this.transferContractsOwnerships(contracts)
-		}
+		// if (allUpgraded) {
+		// 	console.log(`All contracts have been upgraded, setting parameters...`)
+		// 	this.coreContracts = contracts
+		// 	await this.addCollaterals()
+		// 	await this.toggleContractSetupInitialization(contracts.adminContract)
+		// 	await this.helper.verifyCoreContracts()
+		// }
+		
+		await this.transferContractsOwnerships(contracts)
 
 		await this.printDeployerBalance()
 	}
