@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 pragma solidity ^0.8.19;
 
@@ -25,6 +24,7 @@ interface IPriceFeedV2 {
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
 	error PriceFeed__InvalidOracleResponseError(address token);
+	error PriceFeed__InvalidDecimalsError();
 	error PriceFeed__ExistingOracleRequired();
 	error PriceFeed__TimelockOnlyError();
 	error PriceFeed__UnknownAssetError();

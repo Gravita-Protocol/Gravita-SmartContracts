@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
@@ -41,12 +42,14 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 		bool _isFallback
 	) external override {
 		_requireOwnerOrTimelock(_token, _isFallback);
-		// fallback setup requires an existing primary oracle for the asset
 		if (_isFallback && oracles[_token].oracleAddress == address(0)) {
+			// fallback setup requires an existing primary oracle for the asset
 			revert PriceFeed__ExistingOracleRequired();
 		}
 		uint256 decimals = _fetchDecimals(_oracle, _type);
-		assert(decimals != 0);
+		if (decimals == 0) {
+			revert PriceFeed__InvalidDecimalsError();
+		}
 		OracleRecord memory newOracle = OracleRecord({
 			oracleAddress: _oracle,
 			providerType: _type,
