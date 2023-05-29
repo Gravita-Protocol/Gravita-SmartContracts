@@ -43,6 +43,7 @@
 		"chai": "^4.3.7",
 		"decimal.js": "^10.4.3",
 		"eth-gas-reporter": "^0.2.25",
+		"eth-permit": "^0.2.3",
 		"ethereumjs-util": "^7.1.5",
 		"ethers": "5.7.2",
 		"hardhat": "^2.14.0",

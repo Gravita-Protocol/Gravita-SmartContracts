@@ -35,7 +35,8 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		await deploy(accounts[0], [])
 	})
 
-	describe("Core Contracts", async () => {
+	// Skipping as the setAddresses() functions were replaced by constants
+	describe.skip("Core Contracts", async () => {
 		it("ActivePool: check addresses", async () => {
 			assert.equal(borrowerOperations.address, await activePool.borrowerOperations())
 			assert.equal(collSurplusPool.address, await activePool.collSurplusPool())
@@ -124,9 +125,9 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 			assert.equal(adminContract.address, await communityIssuance.adminContract())
 		})
 		it("GRVTStaking: check addresses", async () => {
-			assert.equal(grvtToken.address, await grvtStaking.grvtToken())
-			assert.equal(debtToken.address, await grvtStaking.debtToken())
+			assert.equal(debtToken.address, await grvtStaking.debtTokenAddress())
 			assert.equal(feeCollector.address, await grvtStaking.feeCollectorAddress())
+			assert.equal(grvtToken.address, await grvtStaking.grvtToken())
 			assert.equal(vesselManager.address, await grvtStaking.vesselManagerAddress())
 		})
 	})
