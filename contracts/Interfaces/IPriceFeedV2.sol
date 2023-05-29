@@ -17,27 +17,21 @@ interface IPriceFeedV2 {
 	struct OracleRecord {
 		address oracleAddress;
 		ProviderType providerType;
-		uint256 timeout;
+		uint256 timeoutMinutes;
 		uint256 decimals;
 		bool isEthIndexed;
-	}
-
-	struct OracleResponse {
-		uint256 price;
-		uint256 timestamp;
-		uint256 decimals;
 	}
 
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
 	error PriceFeed__InvalidOracleResponseError(address token);
-	error PriceFeed__OracleFrozenError(address token);
-	error PriceFeed__UnknownAssetError(address token);
+	error PriceFeed__ExistingOracleRequired();
 	error PriceFeed__TimelockOnlyError();
+	error PriceFeed__UnknownAssetError();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
-	event NewOracleRegistered(address token, address chainlinkAggregator, bool isEthIndexed, bool isFallback);
+	event NewOracleRegistered(address token, address oracleAddress, bool isEthIndexed, bool isFallback);
 
 	// Functions ------------------------------------------------------------------------------------------------------
 
@@ -45,7 +39,7 @@ interface IPriceFeedV2 {
 		address _token,
 		address _oracle,
 		ProviderType _type,
-		uint256 _timeout,
+		uint256 _timeoutMinutes,
 		bool _isEthIndexed,
 		bool _isFallback
 	) external;

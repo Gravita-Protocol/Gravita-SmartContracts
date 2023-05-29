@@ -32,52 +32,39 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 
 	// Admin routines -------------------------------------------------------------------------------------------------
 
-    function _checkTimelockRequired(_token, _isFallback) {
-		OracleRecord memory record = _isFallback ? fallbacks[_token] : oracles[_token];
-		if (record.oracleAddress == address(0)) {
-			_checkOwner(); // Owner can set an oracle for the first time
-		} else {
-			_checkTimelock(); // Subsequent updates need to go through the timelock contract
-		}
-    }
-
 	function setOracle(
 		address _token,
 		address _oracle,
 		ProviderType _type,
-		uint256 _timeout,
+		uint256 _timeoutMinutes,
 		bool _isEthIndexed,
 		bool _isFallback
 	) external override {
-        _checkTimelockRequired(_token, _isFallback);
+		_requireOwnerOrTimelock(_token, _isFallback);
+		// fallback setup requires an existing primary oracle for the asset
+		if (_isFallback && oracles[_token].oracleAddress == address(0)) {
+			revert PriceFeed__ExistingOracleRequired();
+		}
 		uint256 decimals = _fetchDecimals(_oracle, _type);
-		OracleRecord newRecord = OracleRecord({
-			oracleAddress: _orace,
+		assert(decimals != 0);
+		OracleRecord memory newOracle = OracleRecord({
+			oracleAddress: _oracle,
 			providerType: _type,
-			timeout: _timeout,
+			timeoutMinutes: _timeoutMinutes,
 			decimals: decimals,
 			isEthIndexed: _isEthIndexed
 		});
-		OracleResponse response = _fetchOracleResponse(newRecord);
-        if (!_validateResponse(response)) {
-            // revert
-        }
-        if (_isFallback) {
-            fallbacks[_token] = newRecord;
-        } else {
-            oracles[_token] = newRecord;
-        }
+		uint256 price = _fetchOracleScaledPrice(newOracle);
+		if (price == 0) {
+			revert PriceFeed__InvalidOracleResponseError(_token);
+		}
+		if (_isFallback) {
+			fallbacks[_token] = newOracle;
+		} else {
+			oracles[_token] = newOracle;
+		}
 		emit NewOracleRegistered(_token, _oracle, _isEthIndexed, _isFallback);
 	}
-
-    function _fetchDecimals(address _oracle, ProviderType _type) returns (uint256) {
-        if (_type == ProviderType.Chainlink) {
-            return AggregatorV3Interface(_oracle).decimals();
-        }
-        if (_type == ProviderType.Redstone) {
-            return 8;
-        }
-    }
 
 	// Public functions -----------------------------------------------------------------------------------------------
 
@@ -91,133 +78,100 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 	 *   - VesselManagerOperations.redeemCollateral()
 	 */
 	function fetchPrice(address _token) public override returns (uint256) {
-		uint256 price = _fetchOraclePrice(oracles[_token]);
+		OracleRecord memory oracle = oracles[_token];
+		uint256 price = _fetchOracleScaledPrice(oracle);
 		if (price != 0) {
-			return price;
+			return oracle.isEthIndexed ? _calcEthIndexedPrice(price) : price;
 		}
-		price = _fetchOraclePrice(fallbacks[_token]);
+		oracle = fallbacks[_token];
+		price = _fetchOracleScaledPrice(oracle);
 		if (price != 0) {
-			return price;
+			return oracle.isEthIndexed ? _calcEthIndexedPrice(price) : price;
 		}
-		revert PriceFeed__InvalidFeedResponseError(_token);
-	}
-
-	function _fetchOraclePrice(OracleRecord memory record) {
-		if (oracle.address == address(0)) {
-			return 0;
-		}
+		revert PriceFeed__InvalidOracleResponseError(_token);
 	}
 
 	// Internal functions -----------------------------------------------------------------------------------------------
 
-	function _processFeedResponses(
-		address _token,
-		OracleRecord storage oracle,
-		FeedResponse memory _currResponse,
-		FeedResponse memory _prevResponse
-	) internal returns (uint256) {
-		bool isValidResponse = _isFeedWorking(_currResponse, _prevResponse) &&
-			!_isPriceStale(_currResponse.timestamp) &&
-			!_isPriceChangeAboveMaxDeviation(oracle.maxDeviationBetweenRounds, _currResponse, _prevResponse);
-
-		if (isValidResponse) {
-			uint256 scaledPrice = _scalePriceByDigits(uint256(_currResponse.answer), _currResponse.decimals);
-			if (oracle.isEthIndexed) {
-				// Oracle returns ETH price, need to convert to USD
-				scaledPrice = _calcEthPrice(scaledPrice);
-			}
-			if (!oracle.isFeedWorking) {
-				_updateFeedStatus(_token, oracle, true);
-			}
-			_storePrice(_token, scaledPrice, _currResponse.timestamp);
-			return scaledPrice;
-		} else {
-			if (oracle.isFeedWorking) {
-				_updateFeedStatus(_token, oracle, false);
-			}
-			PriceRecord memory priceRecord = priceRecords[_token];
-			if (_isPriceStale(priceRecord.timestamp)) {
-				revert PriceFeed__FeedFrozenError(_token);
-			}
-			return priceRecord.scaledPrice;
+	function _fetchDecimals(address _oracle, ProviderType _type) internal view returns (uint8) {
+		if (_type == ProviderType.Chainlink) {
+			return AggregatorV3Interface(_oracle).decimals();
 		}
+		return 8;
 	}
 
-	function _calcEthPrice(uint256 ethAmount) internal returns (uint256) {
-		uint256 ethPrice = fetchPrice(address(0));
-		return (ethPrice * ethAmount) / 1 ether;
-	}
-
-	function _isValidResponse(FeedResponse memory _response) internal view returns (bool) {
-		return
-			(_response.success) &&
-			(_response.roundId != 0) &&
-			(_response.timestamp != 0) &&
-			(_response.timestamp <= block.timestamp) &&
-			(_response.answer != 0);
-	}
-
-	function _isPriceChangeAboveMaxDeviation(
-		uint256 _maxDeviationBetweenRounds,
-		FeedResponse memory _currResponse,
-		FeedResponse memory _prevResponse
-	) internal pure returns (bool) {
-		uint256 currentScaledPrice = _scalePriceByDigits(uint256(_currResponse.answer), _currResponse.decimals);
-		uint256 prevScaledPrice = _scalePriceByDigits(uint256(_prevResponse.answer), _prevResponse.decimals);
-
-		uint256 minPrice = GravitaMath._min(currentScaledPrice, prevScaledPrice);
-		uint256 maxPrice = GravitaMath._max(currentScaledPrice, prevScaledPrice);
-
-		/*
-		 * Use the larger price as the denominator:
-		 * - If price decreased, the percentage deviation is in relation to the previous price.
-		 * - If price increased, the percentage deviation is in relation to the current price.
-		 */
-		uint256 percentDeviation = ((maxPrice - minPrice) * DECIMAL_PRECISION) / maxPrice;
-
-		return percentDeviation > _maxDeviationBetweenRounds;
-	}
-
-	function _scalePriceByDigits(uint256 _price, uint256 _answerDigits) internal pure returns (uint256 price) {
-		if (_answerDigits >= TARGET_DIGITS) {
-			// Scale the returned price value down to Gravita's target precision
-			price = _price / (10 ** (_answerDigits - TARGET_DIGITS));
-		} else if (_answerDigits < TARGET_DIGITS) {
-			// Scale the returned price value up to Gravita's target precision
-			price = _price * (10 ** (TARGET_DIGITS - _answerDigits));
+	function _fetchOracleScaledPrice(OracleRecord memory oracle) internal view returns (uint256) {
+		uint256 oraclePrice;
+		uint256 priceTimestamp;
+		if (oracle.oracleAddress == address(0)) {
+			revert PriceFeed__UnknownAssetError();
 		}
+		if (ProviderType.Chainlink == oracle.providerType) {
+			(oraclePrice, priceTimestamp) = _fetchChainlinkOracleResponse(oracle.oracleAddress);
+		} else if (ProviderType.Tellor == oracle.providerType) {
+			// (oraclePrice, priceTimestamp) = _fetchChainlinkOracleResponse(oracle.oracleAddress);
+		}
+		if (oraclePrice != 0 && !_isStalePrice(priceTimestamp, oracle.timeoutMinutes)) {
+			return _scalePriceByDigits(oraclePrice, oracle.decimals);
+		}
+		return 0;
 	}
 
-	function _fetchCurrentFeedResponse(
-		AggregatorV3Interface _priceAggregator
-	) internal view returns (FeedResponse memory response) {
-		try _priceAggregator.decimals() returns (uint8 decimals) {
-			// If call to Chainlink succeeds, record the current decimal precision
-			response.decimals = decimals;
-		} catch {
-			// If call to Chainlink aggregator reverts, return a zero response with success = false
-			return response;
-		}
-		try _priceAggregator.latestRoundData() returns (
+	function _isStalePrice(uint256 _priceTimestamp, uint256 _oracleTimeoutMinutes) internal view returns (bool) {
+		return block.timestamp - _priceTimestamp > _oracleTimeoutMinutes / 60;
+	}
+
+	function _fetchChainlinkOracleResponse(
+		address _chainlinkOracleAddress
+	) internal view returns (uint256 price, uint256 timestamp) {
+		try AggregatorV3Interface(_chainlinkOracleAddress).latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
 			uint256 /* startedAt */,
-			uint256 timestamp,
+			uint256 updatedAt,
 			uint80 /* answeredInRound */
 		) {
-			// If call to Chainlink succeeds, return the response and success = true
-			response.roundId = roundId;
-			response.answer = answer;
-			response.timestamp = timestamp;
-			response.success = true;
+			if (roundId != 0 && updatedAt != 0 && answer != 0 && updatedAt <= block.timestamp) {
+				price = uint256(answer);
+				timestamp = updatedAt;
+			}
 		} catch {
-			// If call to Chainlink aggregator reverts, return a zero response with success = false
-			return response;
+			// If call to Chainlink aggregator reverts, return a zero response
 		}
 	}
 
-	function _checkTimelock() internal view {
-		if (msg.sender != timelockAddress) {
+	/**
+	 * Fetches the ETH:USD price using the zero address as being the ETH asset, then multiplies it by the indexed price.
+	 * Assumes an oracle has been set for that purpose.
+	 */
+	function _calcEthIndexedPrice(uint256 _ethAmount) internal returns (uint256) {
+		uint256 ethPrice = fetchPrice(address(0));
+		return (ethPrice * _ethAmount) / 1 ether;
+	}
+
+	/**
+	 * Scales oracle's response up/down to Gravita's target precision; returns unaltered price if already on target digits.
+	 */
+	function _scalePriceByDigits(uint256 _price, uint256 _priceDigits) internal pure returns (uint256) {
+		if (_priceDigits > TARGET_DIGITS) {
+			return _price / (10 ** (_priceDigits - TARGET_DIGITS));
+		} else if (_priceDigits < TARGET_DIGITS) {
+			return _price * (10 ** (TARGET_DIGITS - _priceDigits));
+		}
+		return _price;
+	}
+
+	// Access control functions -----------------------------------------------------------------------------------------
+
+	/**
+	 * Requires msg.sender to be the contract owner when the oracle is first set.
+	 * Subsequent updates need to come through the timelock contract.
+	 */
+	function _requireOwnerOrTimelock(address _token, bool _isFallback) internal view {
+		OracleRecord memory record = _isFallback ? fallbacks[_token] : oracles[_token];
+		if (record.oracleAddress == address(0)) {
+			_checkOwner();
+		} else if (msg.sender != timelockAddress) {
 			revert PriceFeed__TimelockOnlyError();
 		}
 	}
@@ -228,4 +182,3 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
-
