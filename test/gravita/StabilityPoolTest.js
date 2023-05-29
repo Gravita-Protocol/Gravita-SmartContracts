@@ -56,7 +56,8 @@ contract("StabilityPool", async accounts => {
 		treasury,
 	] = accounts
 
-	const getOpenVesselVUSDAmount = async (totalDebt, asset) => th.getOpenVesselVUSDAmount(contracts.core, totalDebt, asset)
+	const getOpenVesselVUSDAmount = async (totalDebt, asset) =>
+		th.getOpenVesselVUSDAmount(contracts.core, totalDebt, asset)
 
 	async function _openVessel(erc20Contract, extraDebtTokenAmt, sender) {
 		await _openVesselWithICR(erc20Contract, extraDebtTokenAmt, 2, sender)
@@ -948,22 +949,6 @@ contract("StabilityPool", async accounts => {
 				} catch (err) {
 					assert.include(err.message, "revert")
 				}
-			})
-
-			it("withdrawFromSP(): reverts when amount > 0 and system has an undercollateralized vessel", async () => {
-				await _openVessel(erc20, 100, alice)
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-
-				const alice_initialDeposit = (await stabilityPool.deposits(alice)).toString()
-				assert.equal(alice_initialDeposit, dec(100, 18))
-
-				// defaulter opens vessel
-				await _openVessel(erc20, 0, defaulter_1)
-
-				// price drops, defaulter is in liquidation range (but not liquidated yet)
-				await priceFeed.setPrice(erc20.address, dec(100, 18))
-
-				await th.assertRevert(stabilityPool.withdrawFromSP(dec(100, 18), { from: alice }))
 			})
 
 			it("withdrawFromSP(): partial retrieval - retrieves correct debt token amount and the entire collateral gain, and updates deposit", async () => {
@@ -2290,3 +2275,4 @@ contract("StabilityPool", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+

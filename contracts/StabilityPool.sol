@@ -301,14 +301,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	/**
 	 * @notice withdraw from the stability pool
-	 * @dev see withdrawFromSPAndSwap
 	 * @param _amount debtToken amount to withdraw
 	 * @return assets , amounts address of assets withdrawn, amount of asset withdrawn
 	 */
 	function _withdrawFromSP(uint256 _amount) internal returns (address[] memory assets, uint256[] memory amounts) {
-		if (_amount != 0) {
-			_requireNoUnderCollateralizedVessels();
-		}
 		uint256 initialDeposit = deposits[msg.sender];
 		_requireUserHasDeposit(initialDeposit);
 
@@ -841,29 +837,6 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		}
 
 		return _coll1.amounts;
-	}
-
-	/**
-	 * @notice check ICR of bottom vessel (per asset) in SortedVessels
-	 */
-	function _requireNoUnderCollateralizedVessels() internal {
-		address[] memory assets = IAdminContract(adminContract).getValidCollateral();
-		uint256 assetsLen = assets.length;
-		for (uint256 i = 0; i < assetsLen; ) {
-			address assetAddress = assets[i];
-			address lowestVessel = ISortedVessels(sortedVessels).getLast(assetAddress);
-			if (lowestVessel != address(0)) {
-				uint256 price = IPriceFeed(priceFeed).fetchPrice(assetAddress);
-				uint256 ICR = IVesselManager(vesselManager).getCurrentICR(assetAddress, lowestVessel, price);
-				require(
-					ICR >= IAdminContract(adminContract).getMcr(assetAddress),
-					"StabilityPool: Cannot withdraw while there are vessels with ICR < MCR"
-				);
-			}
-			unchecked {
-				i++;
-			}
-		}
 	}
 
 	function _requireUserHasDeposit(uint256 _initialDeposit) internal pure {
