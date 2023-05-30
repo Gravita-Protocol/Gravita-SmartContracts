@@ -286,13 +286,13 @@ contract("AdminContract", async accounts => {
 
 		await openVessel({
 			asset: erc20.address,
-			extraVUSDAmount: toBN(dec(5000, 18)),
+			extraGRAIAmount: toBN(dec(5000, 18)),
 			ICR: toBN(dec(2, 18)),
 			extraParams: { from: A },
 		})
 		await openVessel({
 			asset: erc20.address,
-			extraVUSDAmount: toBN(dec(5000, 18)),
+			extraGRAIAmount: toBN(dec(5000, 18)),
 			ICR: toBN(dec(2, 18)),
 			extraParams: { from: B },
 		})

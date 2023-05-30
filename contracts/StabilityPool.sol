@@ -267,14 +267,14 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * - Increases deposit stake, and takes new snapshots for each.
 	 * @param _amount amount of asset provided
 	 */
-	function provideToSP(uint256 _amount) external override nonReentrant {
+	function provideToSP(uint256 _amount, address[] calldata _assets) external override nonReentrant {
 		_requireNonZeroAmount(_amount);
 
 		uint256 initialDeposit = deposits[msg.sender];
 
 		_triggerGRVTIssuance();
 
-		(address[] memory gainAssets, uint256[] memory gainAmounts) = getDepositorGains(msg.sender);
+		(address[] memory gainAssets, uint256[] memory gainAmounts) = getDepositorGains(msg.sender, _assets);
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
@@ -294,23 +294,26 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		_sendGainsToDepositor(msg.sender, gainAssets, gainAmounts);
 	}
 
-	function withdrawFromSP(uint256 _amount) external {
-		(address[] memory assets, uint256[] memory amounts) = _withdrawFromSP(_amount);
+	function withdrawFromSP(uint256 _amount, address[] calldata _assets) external {
+		(address[] memory assets, uint256[] memory amounts) = _withdrawFromSP(_amount, _assets);
 		_sendGainsToDepositor(msg.sender, assets, amounts);
 	}
 
 	/**
 	 * @notice withdraw from the stability pool
 	 * @param _amount debtToken amount to withdraw
-	 * @return assets , amounts address of assets withdrawn, amount of asset withdrawn
+	 * @return assets address of assets withdrawn, amount of asset withdrawn
 	 */
-	function _withdrawFromSP(uint256 _amount) internal returns (address[] memory assets, uint256[] memory amounts) {
+	function _withdrawFromSP(
+		uint256 _amount,
+		address[] calldata _assets
+	) internal returns (address[] memory assets, uint256[] memory amounts) {
 		uint256 initialDeposit = deposits[msg.sender];
 		_requireUserHasDeposit(initialDeposit);
 
 		_triggerGRVTIssuance();
 
-		(assets, amounts) = getDepositorGains(msg.sender);
+		(assets, amounts) = getDepositorGains(msg.sender, _assets);
 
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
 
@@ -535,7 +538,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @param _depositor address of depositor in question
 	 * @return assets, amounts
 	 */
-	function getDepositorGains(address _depositor) public view returns (address[] memory, uint256[] memory) {
+	function getDepositorGains(
+		address _depositor,
+		address[] calldata _assets
+	) public view returns (address[] memory, uint256[] memory) {
 		uint256 initialDeposit = deposits[_depositor];
 
 		if (initialDeposit == 0) {
@@ -546,11 +552,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 		Snapshots storage snapshots = depositSnapshots[_depositor];
 
-		(address[] memory collateralsFromNewGains, uint256[] memory amountsFromNewGains) = _calculateNewGains(
-			initialDeposit,
-			snapshots
-		);
-		return (collateralsFromNewGains, amountsFromNewGains);
+		uint256[] memory amountsFromNewGains = _calculateNewGains(initialDeposit, snapshots, _assets);
+		return (_assets, amountsFromNewGains);
 	}
 
 	/**
@@ -561,13 +564,13 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 */
 	function _calculateNewGains(
 		uint256 initialDeposit,
-		Snapshots storage snapshots
-	) internal view returns (address[] memory assets, uint256[] memory amounts) {
-		assets = IAdminContract(adminContract).getValidCollateral();
-		uint256 assetsLen = assets.length;
+		Snapshots storage snapshots,
+		address[] calldata _assets
+	) internal view returns (uint256[] memory amounts) {
+		uint256 assetsLen = _assets.length;
 		amounts = new uint256[](assetsLen);
 		for (uint256 i = 0; i < assetsLen; ) {
-			amounts[i] = _getGainFromSnapshots(initialDeposit, snapshots, assets[i]);
+			amounts[i] = _getGainFromSnapshots(initialDeposit, snapshots, _assets[i]);
 			unchecked {
 				i++;
 			}
