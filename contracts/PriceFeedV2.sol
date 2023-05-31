@@ -4,12 +4,39 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/GravitaMath.sol";
-import "./Addresses.sol";
 import "./Interfaces/IPriceFeedV2.sol";
+import "./Addresses.sol";
+
+/*
+ * @dev from https://github.com/smartcontractkit/chainlink/blob/develop/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol
+ */
+interface ChainlinkAggregatorV3Interface {
+	function decimals() external view returns (uint8);
+
+	function latestRoundData()
+		external
+		view
+		returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
+}
+
+/*
+ * @dev If we decide to onboard Band oracles, notice that their price request expects two strings, a base and a quote.
+ *
+ * @dev from https://docs.bandchain.org/band-standard-dataset/using-band-dataset/using-band-dataset-evm.html
+ */
+interface BandIStdReference {
+	struct ReferenceData {
+		uint256 rate; // base/quote exchange rate, multiplied by 1e18.
+		uint256 lastUpdatedBase; // UNIX epoch of the last time when base price gets updated.
+		uint256 lastUpdatedQuote; // UNIX epoch of the last time when quote price gets updated.
+	}
+
+	/// Returns the price data for the given base/quote pair. Revert if not available.
+	function getReferenceData(string memory _base, string memory _quote) external view returns (ReferenceData memory);
+}
 
 contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseMath, Addresses {
 	// Constants ------------------------------------------------------------------------------------------------------
@@ -98,7 +125,7 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 
 	function _fetchDecimals(address _oracle, ProviderType _type) internal view returns (uint8) {
 		if (_type == ProviderType.Chainlink) {
-			return AggregatorV3Interface(_oracle).decimals();
+			return ChainlinkAggregatorV3Interface(_oracle).decimals();
 		}
 		return 8;
 	}
@@ -111,8 +138,6 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 		}
 		if (ProviderType.Chainlink == oracle.providerType) {
 			(oraclePrice, priceTimestamp) = _fetchChainlinkOracleResponse(oracle.oracleAddress);
-		} else if (ProviderType.Tellor == oracle.providerType) {
-			// (oraclePrice, priceTimestamp) = _fetchChainlinkOracleResponse(oracle.oracleAddress);
 		}
 		if (oraclePrice != 0 && !_isStalePrice(priceTimestamp, oracle.timeoutMinutes)) {
 			return _scalePriceByDigits(oraclePrice, oracle.decimals);
@@ -127,7 +152,7 @@ contract PriceFeedV2 is IPriceFeedV2, OwnableUpgradeable, UUPSUpgradeable, BaseM
 	function _fetchChainlinkOracleResponse(
 		address _chainlinkOracleAddress
 	) internal view returns (uint256 price, uint256 timestamp) {
-		try AggregatorV3Interface(_chainlinkOracleAddress).latestRoundData() returns (
+		try ChainlinkAggregatorV3Interface(_chainlinkOracleAddress).latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
 			uint256 /* startedAt */,
