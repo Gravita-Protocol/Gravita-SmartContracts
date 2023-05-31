@@ -924,6 +924,14 @@ contract("StabilityPool", async accounts => {
 				await assertRevert(txPromise, "StabilityPool__DuplicateElementOnArray")
 			})
 
+			it("provideToSP(): passing wrong address to asset list has no impact", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// first call won't revert as there is no initial deposit
+				await stabilityPool.provideToSP(dec(199_000, 18), [alice], { from: whale })
+				await stabilityPool.provideToSP(dec(1_000, 18), [alice], { from: whale })
+				await stabilityPool.withdrawFromSP(dec(1_000, 18), [alice], { from: whale })
+			})
+
 			it("provideToSP(): reverts when amount is zero", async () => {
 				await openWhaleVessel(erc20, (icr = 10))
 
