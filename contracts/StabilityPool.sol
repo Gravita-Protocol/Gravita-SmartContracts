@@ -568,6 +568,16 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		address[] calldata _assets
 	) internal view returns (uint256[] memory amounts) {
 		uint256 assetsLen = _assets.length;
+		// revert if there is a duplicate on the array
+		unchecked {
+			for (uint256 i = 0; i < assetsLen; i++) {
+				for (uint256 j = i + 1; j < assetsLen; j++) {
+					if (_assets[i] == _assets[j]) {
+						revert StabilityPool__DuplicateElementOnArray();
+					}
+				}
+			}
+		}
 		amounts = new uint256[](assetsLen);
 		for (uint256 i = 0; i < assetsLen; ) {
 			amounts[i] = _getGainFromSnapshots(initialDeposit, snapshots, _assets[i]);

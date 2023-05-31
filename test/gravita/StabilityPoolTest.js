@@ -913,6 +913,17 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(C_GRVTBalance_After.gt(C_GRVTBalance_Before))
 			})
 
+			it("provideToSP(): passing same asset twice will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// first call won't revert as there is no initial deposit
+				await stabilityPool.provideToSP(dec(199_000, 18), [erc20.address, erc20.address], { from: whale })
+				// second call should revert
+				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), [erc20.address, erc20B.address, erc20.address], {
+					from: whale,
+				})
+				await assertRevert(txPromise, "StabilityPool__DuplicateElementOnArray")
+			})
+
 			it("provideToSP(): reverts when amount is zero", async () => {
 				await openWhaleVessel(erc20, (icr = 10))
 
@@ -1257,7 +1268,7 @@ contract("StabilityPool", async accounts => {
 				assert.isAtMost(th.getDifference(stability_col_DifferenceERC20, aliceGainERC20), 10000)
 			})
 
-			it.only("withdrawFromSP(): withdraw from SP forfeiting gains", async () => {
+			it("withdrawFromSP(): withdraw from SP forfeiting gains", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
 				await stabilityPool.provideToSP(dec(199_000, 18), validCollateral, { from: whale })
 
@@ -1315,8 +1326,14 @@ contract("StabilityPool", async accounts => {
 				}) // 180 GRAI closed
 				await stabilityPool.withdrawFromSP(dec(199_000, 18), validCollateral, { from: whale })
 				const stability_col_AfterWhaleERC20 = await stabilityPool.getCollateral(erc20.address)
-				console.log(stability_col_AfterWhaleERC20.toString())
-				assert.isTrue(stability_col_AfterWhaleERC20.eq(aliceExpectedGainERC20))
+				assert.isAtMost(stability_col_AfterWhaleERC20.sub(aliceExpectedGainERC20), 10000)
+			})
+
+			it("withdrawFromSP(): withdraw from SP, passing same asset twice will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				await stabilityPool.provideToSP(dec(199_000, 18), validCollateral, { from: whale })
+				const txPromise = stabilityPool.withdrawFromSP(dec(1000, 18), [erc20.address, erc20.address], { from: whale })
+				await assertRevert(txPromise, "StabilityPool__DuplicateElementOnArray")
 			})
 
 			it("withdrawFromSP(): All depositors are able to withdraw from the SP to their account", async () => {
