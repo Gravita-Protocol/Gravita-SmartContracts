@@ -1,0 +1,77 @@
+{
+  "ActivePool": {
+    "address": "0x443978eb25e2379587246AdD4a6a23f19738B131",
+    "txHash": "0x7098008d27ac01fe864d814a2509869497eb0a5c2a7b7e59aa5a89321e21ad05",
+    "implAddress": "0xdDf7ADB56b1Be18A077E7377c88D4E1811aFE0AE",
+    "verification": "https://goerli.arbiscan.io/address/0x443978eb25e2379587246AdD4a6a23f19738B131#code"
+  },
+  "AdminContract": {
+    "address": "0xCE775A7d9db4b767e01B8B43886790a94d55c1Ac",
+    "txHash": "0x861e546023aff48fa214a22455712d43b0f498d70917bf1acc2be795c3649887",
+    "implAddress": "0xFae48a0a7035DeC5ABD09fCbDc0cD76429a83c08",
+    "verification": "https://goerli.arbiscan.io/address/0xCE775A7d9db4b767e01B8B43886790a94d55c1Ac#code"
+  },
+  "BorrowerOperations": {
+    "address": "0xCA2b164fA917645DE35DD3E09E9A2Ef18677b98e",
+    "txHash": "0xfb885ffc67cad9b3d00e17cc183027c5c6d0df015e9798ea6d19b21b80972493",
+    "implAddress": "0xAF23Cc3dDea242cc317B47a609F9F6DeA89Ad7c3",
+    "verification": "https://goerli.arbiscan.io/address/0xCA2b164fA917645DE35DD3E09E9A2Ef18677b98e#code"
+  },
+  "CollSurplusPool": {
+    "address": "0xB9E0C05Fe38b2F05d8E72fDeeE1c22f4E4294e69",
+    "txHash": "0xb7fe7315e1c85f4fe7fa6ff9c9ff5cdab41140e043976a090291789ea12cbfa1",
+    "implAddress": "0x75044d1440c01609b0D933582E2c5742954b5014",
+    "verification": "https://goerli.arbiscan.io/address/0xB9E0C05Fe38b2F05d8E72fDeeE1c22f4E4294e69#code"
+  },
+  "DefaultPool": {
+    "address": "0x7Cd95313095C7d8F4A73F4C458D5cc9CEA6b3b18",
+    "txHash": "0x474c876dfb764faa43d099f91c400316c34e29e74ee00829d86f52165e5b1c44",
+    "implAddress": "0xeC78Ee631445C77629a5255E7901151B66170d4F",
+    "verification": "https://goerli.arbiscan.io/address/0x7Cd95313095C7d8F4A73F4C458D5cc9CEA6b3b18#code"
+  },
+  "FeeCollector": {
+    "address": "0x2ec9036BA625801866f313Cf5C007B4189B547f2",
+    "txHash": "0xec9bfc2d3248375f13d44e5be6e54a3bc40f5f01b2b29f18fa629c770f0c6c53",
+    "implAddress": "0x70Bd20Fd83e55720e31a15d7e00005335145Aa91",
+    "verification": "https://goerli.arbiscan.io/address/0x2ec9036BA625801866f313Cf5C007B4189B547f2#code"
+  },
+  "PriceFeed": {
+    "address": "0x4D18ae2ecba2804fFa7C6759D8c7d8B78343db03",
+    "txHash": "0x388f6e69fed846e0498ec6d8188ad2d973ef09cd9f0142791c3b78b6c37256e8",
+    "implAddress": "0x1e5A613A720b7aE5bc68BE825a999Cb6f2dD0016",
+    "verification": "https://goerli.arbiscan.io/address/0x4D18ae2ecba2804fFa7C6759D8c7d8B78343db03#code"
+  },
+  "SortedVessels": {
+    "address": "0x8b9FEB88433634D0973b9AcAbA34a14EE1BFFF09",
+    "txHash": "0x9141cdadd949ce5b01297610907fcec0ad54e0482f0d20cd54c2ce6c84f899ba",
+    "implAddress": "0xb6a98600a66C35985958C4DDA1599A4C15Ff9D70",
+    "verification": "https://goerli.arbiscan.io/address/0x8b9FEB88433634D0973b9AcAbA34a14EE1BFFF09#code"
+  },
+  "StabilityPool": {
+    "address": "0x0dc482270BFbF18322a4497F4E13406822C394be",
+    "txHash": "0xff00b3ff097f7891f4ac341887c2cdab0fb0de8842877dbaaad8c8bc0ad50082",
+    "implAddress": "0xeEBE682F19f63bb21C8A660d1412EE400F76e800",
+    "verification": "https://goerli.arbiscan.io/address/0x0dc482270BFbF18322a4497F4E13406822C394be#code"
+  },
+  "VesselManager": {
+    "address": "0xe9Ab34C1bba285988df0251fA3D3c14F20Df004e",
+    "txHash": "0xc05a67a569c079c233937b56494a2ddbffdf7d9a910a024adbdfc2ae00092041",
+    "implAddress": "0x3302F3261e7A6375B499cf687Ac79AB62A4C74C6",
+    "verification": "https://goerli.arbiscan.io/address/0xe9Ab34C1bba285988df0251fA3D3c14F20Df004e#code"
+  },
+  "VesselManagerOperations": {
+    "address": "0xB77581012975C857890e35BdEB97b834f4c26782",
+    "txHash": "0xf3d4afe2a85d463db8f0be991f0a35f821cc2005d3ea99f22387462553fc4762",
+    "implAddress": "0x703cAaE453D10E1C9c173323c3227112a618D2e6",
+    "verification": "https://goerli.arbiscan.io/address/0xB77581012975C857890e35BdEB97b834f4c26782#code"
+  },
+  "GasPool": {
+    "address": "0xBD9BEBcbAE2851381E1d248b973D8598f0408658",
+    "txHash": "0x9643de49478664e756604b9ab61ff38dbb00a029e7e120a653273caa388d4620",
+    "verification": "https://goerli.arbiscan.io/address/0xBD9BEBcbAE2851381E1d248b973D8598f0408658#code"
+  },
+  "TimelockTester": {
+    "address": "0x50f14DC6eEECa4995b946f4251Bf79d19026D0b8",
+    "txHash": "0xc3799f2b4b899e18a6a2715074277fa28ebac03f3c98e4403b639706bed80d8c"
+  }
+}

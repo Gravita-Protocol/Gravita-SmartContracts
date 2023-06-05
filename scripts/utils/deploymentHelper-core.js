@@ -1,56 +1,54 @@
+const { DeploymentTestnets } = require("../deployment/deployer-common.js")
 const DeploymentHelper = require("./deploymentHelper-common.js")
 
 const readline = require("readline-sync")
 
 class CoreDeploymentHelper extends DeploymentHelper {
-	constructor(hre, configParams, deployerWallet) {
+	constructor(hre, configParams, deployerWallet, targetNetwork) {
 		super(hre, configParams, deployerWallet)
-		this.shortTimelockDelay = 2 * 86_400 // 2 days
-		this.longTimelockDelay = 7 * 86_400 // 7 days
+		this.isTestnet = DeploymentTestnets.includes(targetNetwork)
 		this.state = this.loadPreviousDeployment()
 	}
 
 	async loadOrDeployOrUpgradeCoreContracts() {
 		console.log(`Deploying core contracts...`)
 
-		// 11 Upgradeable contracts
-		const [activePool, upgraded1] = await this.deployUpgradeable("ActivePool")
-		const [adminContract, upgraded2] = await this.deployUpgradeable("AdminContract")
-		const [borrowerOperations, upgraded3] = await this.deployUpgradeable("BorrowerOperations")
-		const [collSurplusPool, upgraded4] = await this.deployUpgradeable("CollSurplusPool")
-		const [defaultPool, upgraded5] = await this.deployUpgradeable("DefaultPool")
-		const [feeCollector, upgraded6] = await this.deployUpgradeable("FeeCollector")
-		const [priceFeed, upgraded7] = await this.deployUpgradeable("PriceFeed")
-		const [sortedVessels, upgraded8] = await this.deployUpgradeable("SortedVessels")
-		const [stabilityPool, upgraded9] = await this.deployUpgradeable("StabilityPool")
-		const [vesselManager, upgraded10] = await this.deployUpgradeable("VesselManager")
-		const [vesselManagerOperations, upgraded11] = await this.deployUpgradeable("VesselManagerOperations")
+		// Upgradeable contracts
+		const activePool = await this.deployUpgradeable("ActivePool")
+		const adminContract = await this.deployUpgradeable("AdminContract")
+		const borrowerOperations = await this.deployUpgradeable("BorrowerOperations")
+		const collSurplusPool = await this.deployUpgradeable("CollSurplusPool")
+		const defaultPool = await this.deployUpgradeable("DefaultPool")
+		const feeCollector = await this.deployUpgradeable("FeeCollector")
+		const priceFeed = await this.deployUpgradeable("PriceFeed")
+		const sortedVessels = await this.deployUpgradeable("SortedVessels")
+		const stabilityPool = await this.deployUpgradeable("StabilityPool")
+		const vesselManager = await this.deployUpgradeable("VesselManager")
+		const vesselManagerOperations = await this.deployUpgradeable("VesselManagerOperations")
 
-		const allUpgraded =
-			upgraded1 &&
-			upgraded2 &&
-			upgraded3 &&
-			upgraded4 &&
-			upgraded5 &&
-			upgraded6 &&
-			upgraded7 &&
-			upgraded8 &&
-			upgraded9 &&
-			upgraded10 &&
-			upgraded11
-
-		// 3 Non-upgradable contracts
+		// Non-upgradable contracts
 		const gasPool = await this.deployNonUpgradeable("GasPool")
-		const timelockParams = [this.shortTimelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
-		const timelock = await this.deployNonUpgradeable("Timelock", timelockParams)
-		const debtToken = await this.deployNonUpgradeable("DebtToken")
+
+		let timelock, timelockDelay, timelockFactory
+		if (this.isTestnet) {
+			timelockDelay = 5 * 60 // 5 minutes
+			timelockFactory = "TimelockTester"
+		} else {
+			timelockDelay = 2 * 86_400 // 2 days
+			timelockFactory = "Timelock"
+		}
+		const timelockParams = [timelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
+		timelock = await this.deployNonUpgradeable(timelockFactory, timelockParams)
+
+		// Debt Token is already deployed on L2
+		// const debtToken = await this.deployNonUpgradeable("DebtToken")
 
 		const contracts = {
 			activePool,
 			adminContract,
 			borrowerOperations,
 			collSurplusPool,
-			debtToken,
+			// debtToken,
 			defaultPool,
 			feeCollector,
 			gasPool,
@@ -61,7 +59,40 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			vesselManager,
 			vesselManagerOperations,
 		}
-		return { contracts, allUpgraded }
+		return contracts
+	}
+
+	async connectCoreContracts(contracts, debtTokenAddress, treasuryAddress) {
+		console.log(`debtToken: ${debtTokenAddress} treasury: ${treasuryAddress}`)
+		const setAddresses = async contract => {
+			await contract.setAddresses([
+				contracts.activePool.address,
+				contracts.adminContract.address,
+				contracts.borrowerOperations.address,
+				contracts.collSurplusPool.address,
+				debtTokenAddress,
+				contracts.defaultPool.address,
+				contracts.feeCollector.address,
+				contracts.gasPool.address,
+				contracts.priceFeed.address,
+				contracts.sortedVessels.address,
+				contracts.stabilityPool.address,
+				contracts.timelock.address,
+				treasuryAddress,
+				contracts.vesselManager.address,
+				contracts.vesselManagerOperations.address,
+			])
+		}
+		for (const key in contracts) {
+			const contract = contracts[key]
+			if (contract.setAddresses) {
+				const isAddressSetupInitialized = await contract.isAddressSetupInitialized()
+				if (!isAddressSetupInitialized) {
+					console.log(`${key}.setAddresses()...`)
+					await setAddresses(contract)
+				}
+			}
+		}
 	}
 
 	async deployUpgradeable(contractName, params = []) {
@@ -71,8 +102,7 @@ class CoreDeploymentHelper extends DeploymentHelper {
 
 	async deployNonUpgradeable(contractName, params = []) {
 		const isUpgradeable = false
-		const result = await this.loadOrDeployOrUpgrade(contractName, this.state, isUpgradeable, params)
-		return result[0] // second result item refers to upgrade status, not applicable
+		return await this.loadOrDeployOrUpgrade(contractName, this.state, isUpgradeable, params)
 	}
 
 	async verifyCoreContracts() {
@@ -83,7 +113,7 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			await this.verifyContract("AdminContract", this.state)
 			await this.verifyContract("BorrowerOperations", this.state)
 			await this.verifyContract("CollSurplusPool", this.state)
-			await this.verifyContract("DebtToken", this.state)
+			// await this.verifyContract("DebtToken", this.state)
 			await this.verifyContract("DefaultPool", this.state)
 			await this.verifyContract("FeeCollector", this.state)
 			await this.verifyContract("GasPool", this.state)

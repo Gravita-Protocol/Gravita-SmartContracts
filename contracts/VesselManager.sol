@@ -73,8 +73,6 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	mapping(address => uint256) public lastCollError_Redistribution;
 	mapping(address => uint256) public lastDebtError_Redistribution;
 
-	bool public isSetupInitialized;
-
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
