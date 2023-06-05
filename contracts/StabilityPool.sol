@@ -531,16 +531,17 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	// --- Reward calculator functions for depositor ---
 
 	/**
-	 * @notice Calculates the gains earned by the deposit since its last snapshots were taken.
+	 * @notice Calculates the gains earned by the deposit since its last snapshots were taken for selected assets.
 	 * @dev Given by the formula:  E = d0 * (S - S(0))/P(0)
 	 * where S(0) and P(0) are the depositor's snapshots of the sum S and product P, respectively.
 	 * d0 is the last recorded deposit value.
 	 * @param _depositor address of depositor in question
+	 * @param _assets array of assets to check gains for
 	 * @return assets, amounts
 	 */
 	function getDepositorGains(
 		address _depositor,
-		address[] calldata _assets
+		address[] memory _assets
 	) public view returns (address[] memory, uint256[] memory) {
 		uint256 initialDeposit = deposits[_depositor];
 
@@ -557,6 +558,15 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	}
 
 	/**
+	 * @notice Calculates all the gains earned by the deposit since its last snapshots were taken.
+	 * @param _depositor address of depositor in question
+	 * @return assets, amounts
+	 */
+	function getDepositorGains(address _depositor) internal view returns (address[] memory, uint256[] memory) {
+		return getDepositorGains(_depositor, IAdminContract(adminContract).getValidCollateral());
+	}
+
+	/**
 	 * @notice get gains on each possible asset by looping through
 	 * @dev assets with _getGainFromSnapshots function
 	 * @param initialDeposit Amount of initial deposit
@@ -565,7 +575,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	function _calculateNewGains(
 		uint256 initialDeposit,
 		Snapshots storage snapshots,
-		address[] calldata _assets
+		address[] memory _assets
 	) internal view returns (uint256[] memory amounts) {
 		uint256 assetsLen = _assets.length;
 		// revert if there is a duplicate on the array
