@@ -47,7 +47,7 @@ interface IPriceFeed {
 		bool isEthIndexed;
 	}
 
-	// @deprecated
+	/// @dev Deprecated, but retained for upgradeability
 	struct OracleRecord {
 		address chainLinkOracle;
 		uint256 maxDeviationBetweenRounds;
@@ -56,13 +56,13 @@ interface IPriceFeed {
 		bool isEthIndexed;
 	}
 
-	// @deprecated
+	/// @dev Deprecated, but retained for upgradeability
 	struct PriceRecord {
 		uint256 scaledPrice;
 		uint256 timestamp;
 	}
 
-	// @deprecated
+	/// @dev Deprecated, but retained for upgradeability
 	struct FeedResponse {
 		uint80 roundId;
 		int256 answer;
@@ -80,26 +80,13 @@ interface IPriceFeed {
 	error PriceFeed__UnknownAssetError();
 	error PriceFeed__DeprecatedFunctionError();
 
-	// @deprecated
-	// error PriceFeed__InvalidFeedResponseError(address token);
-	// error PriceFeed__InvalidPriceDeviationParamError();
-	// error PriceFeed__FeedFrozenError(address token);
-	// error PriceFeed__PriceDeviationError(address token);
-	// error PriceFeed__UnknownFeedError(address token);
-	// error PriceFeed__TimelockOnly();
-
 	// Events ---------------------------------------------------------------------------------------------------------
 
 	event NewOracleRegistered(address token, address oracleAddress, bool isEthIndexed, bool isFallback);
 
-	// @deprecated
-	// event NewOracleRegistered(address token, address chainlinkAggregator, bool isEthIndexed);
-	// event PriceFeedStatusUpdated(address token, address oracle, bool isWorking);
-	// event PriceRecordUpdated(address indexed token, uint256 _price);
-
 	// Functions ------------------------------------------------------------------------------------------------------
 
-	function fetchPrice(address _token) external returns (uint256);
+	function fetchPrice(address _token) external view returns (uint256);
 
 	function setOracle(
 		address _token,
@@ -109,13 +96,5 @@ interface IPriceFeed {
 		bool _isEthIndexed,
 		bool _isFallback
 	) external;
-
-	// @deprecated
-	// function setOracle(
-	// 	address _token,
-	// 	address _chainlinkOracle,
-	// 	uint256 _maxPriceDeviationFromPreviousRound,
-	// 	bool _isEthIndexed
-	// ) external;
 }
 
