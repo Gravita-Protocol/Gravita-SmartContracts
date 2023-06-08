@@ -14,22 +14,6 @@ interface ChainlinkAggregatorV3Interface {
 		returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 }
 
-/*
- * @dev If we decide to onboard Band oracles, notice that their price request expects two strings, a base and a quote.
- *
- * @dev from https://docs.bandchain.org/band-standard-dataset/using-band-dataset/using-band-dataset-evm.html
- */
-interface BandIStdReference {
-	struct ReferenceData {
-		uint256 rate; // base/quote exchange rate, multiplied by 1e18.
-		uint256 lastUpdatedBase; // UNIX epoch of the last time when base price gets updated.
-		uint256 lastUpdatedQuote; // UNIX epoch of the last time when quote price gets updated.
-	}
-
-	/// Returns the price data for the given base/quote pair. Revert if not available.
-	function getReferenceData(string memory _base, string memory _quote) external view returns (ReferenceData memory);
-}
-
 interface IPriceFeed {
 	// Enums ----------------------------------------------------------------------------------------------------------
 
