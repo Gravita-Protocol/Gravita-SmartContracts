@@ -12,6 +12,7 @@ const mv = testHelpers.MoneyValues
 var contracts
 var snapshotId
 var initialSnapshotId
+var validCollateral
 
 const deploy = async (treasury, mintingAccounts) => {
 	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
@@ -37,6 +38,7 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtStaking = contracts.grvt.grvtStaking
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
+	validCollateral = await adminContract.getValidCollateral()
 }
 
 contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async accounts => {
@@ -84,10 +86,10 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(340, 16)),
-				extraVUSDAmount: totalLiquidatedDebt_Asset,
+				extraGRAIAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
-			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })
 
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -163,7 +165,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			} = await setup()
 
 			const spEthBefore_Asset = await stabilityPool.getCollateral(erc20.address)
-			const spVUSDBefore_Asset = await stabilityPool.getTotalDebtTokenDeposits()
+			const spGRAIBefore_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 
 			const txAsset = await vesselManagerOperations.batchLiquidateVessels(erc20.address, [alice, carol])
 
@@ -186,15 +188,15 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			const expectedCollateralLiquidatedC_Asset = th.applyLiquidationFee(C_coll_Asset)
 			// Stability Pool gains
 
-			const expectedGainInVUSD_Asset = expectedCollateralLiquidatedA_Asset
+			const expectedGainInGRAI_Asset = expectedCollateralLiquidatedA_Asset
 				.mul(price)
 				.div(mv._1e18BN)
 				.sub(A_totalDebt_Asset)
-			const realGainInVUSD_Asset = spEthAfter_Asset
+			const realGainInGRAI_Asset = spEthAfter_Asset
 				.sub(spEthBefore_Asset)
 				.mul(price)
 				.div(mv._1e18BN)
-				.sub(spVUSDBefore_Asset.sub(spGRVTfter_Asset))
+				.sub(spGRAIBefore_Asset.sub(spGRVTfter_Asset))
 
 			assert.equal(
 				spEthAfter_Asset.sub(spEthBefore_Asset).toString(),
@@ -202,13 +204,13 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				"Stability Pool ETH doesn’t match"
 			)
 			assert.equal(
-				spVUSDBefore_Asset.sub(spGRVTfter_Asset).toString(),
+				spGRAIBefore_Asset.sub(spGRVTfter_Asset).toString(),
 				A_totalDebt_Asset.toString(),
-				"Stability Pool VUSD doesn’t match"
+				"Stability Pool GRAI doesn’t match"
 			)
 			assert.equal(
-				realGainInVUSD_Asset.toString(),
-				expectedGainInVUSD_Asset.toString(),
+				realGainInGRAI_Asset.toString(),
+				expectedGainInGRAI_Asset.toString(),
 				"Stability Pool gains don’t match"
 			)
 		})
@@ -235,10 +237,10 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(310, 16)),
-				extraVUSDAmount: totalLiquidatedDebt_Asset,
+				extraGRAIAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
-			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })
 
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -295,10 +297,10 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(300, 16)),
-				extraVUSDAmount: totalLiquidatedDebt_Asset,
+				extraGRAIAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
-			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })
 
 			// Price drops
 			await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -354,3 +356,4 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 })
 
 contract("Reset chain state", async accounts => {})
+

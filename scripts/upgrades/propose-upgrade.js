@@ -1,12 +1,13 @@
 const { defender } = require("hardhat")
 
-const multisig = "0x4828528085FA6a14408fe5b81934481f5397a3F3"
+const targetUpgrade = "StabilityPool"
+const targetAddress = "0x49387C88Fb723499a9A40DFbb266FAB8028c7e57"
+const multisig = "0x30638E3318F2DF6f83A6ffb237ad66F11Ae9FC53"
 
 async function main() {
-	const proxyAddress = "0x655D09c912248fa6fE55657633BA4B92a1F9be1F"
-	const NewContract = await ethers.getContractFactory("PriceFeed")
+	const newContractVersion = await ethers.getContractFactory(targetUpgrade)
 	console.log("Preparing proposal...")
-	const proposal = await defender.proposeUpgrade(proxyAddress, NewContract, { multisig })
+	const proposal = await defender.proposeUpgrade(targetAddress, newContractVersion, { multisig })
 	console.log("Upgrade proposal created at:", proposal.url)
 }
 
