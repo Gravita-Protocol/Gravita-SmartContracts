@@ -73,7 +73,7 @@ contract("CollSurplusPool", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			assetSent: dec(3000, "ether"),
-			extraVUSDAmount: B_netDebt,
+			extraGRAIAmount: B_netDebt,
 			extraParams: { from: A },
 		})
 
@@ -111,17 +111,17 @@ contract("CollSurplusPool", async accounts => {
 		await priceFeed.setPrice(price)
 		// open vessel from NonPayable proxy contract
 		const B_coll = toBN(dec(60, 18))
-		const B_VUSDAmount = toBN(dec(3000, 18))
-		const B_netDebt = await th.getAmountWithBorrowingFee(contracts, B_VUSDAmount)
+		const B_GRAIAmount = toBN(dec(3000, 18))
+		const B_netDebt = await th.getAmountWithBorrowingFee(contracts, B_GRAIAmount)
 		const openVesselData = th.getTransactionData(
 			"openVessel(address,uint256,uint256,uint256,address,address)",
-			[erc20.address, 0, "0xde0b6b3a7640000", web3.utils.toHex(B_VUSDAmount), B, B]
+			[erc20.address, 0, "0xde0b6b3a7640000", web3.utils.toHex(B_GRAIAmount), B, B]
 		)
 		await nonPayable.forward(borrowerOperations.address, openVesselData, { value: B_coll })
 		await openVessel({
 			asset: erc20.address,
 			assetSent: dec(3000, "ether"),
-			extraVUSDAmount: B_netDebt,
+			extraGRAIAmount: B_netDebt,
 			extraParams: { from: A },
 		})
 		// skip bootstrapping phase
