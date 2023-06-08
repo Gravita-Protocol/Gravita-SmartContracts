@@ -38,6 +38,7 @@
 		"@openzeppelin/hardhat-defender": "^1.8.2",
 		"@openzeppelin/hardhat-upgrades": "^1.25.0",
 		"@openzeppelin/test-helpers": "^0.5.16",
+		"@pythnetwork/pyth-sdk-solidity": "^2.2.1",
 		"@typechain/ethers-v5": "^10.2.1",
 		"@typechain/hardhat": "^6.1.6",
 		"chai": "^4.3.7",
