@@ -93,11 +93,13 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	 *     - VesselManagerOperations.redeemCollateral()
 	 */
 	function fetchPrice(address _token) public view override returns (uint256) {
+		// Tries fetching the price from the oracle
 		OracleRecordV2 memory oracle = oracles[_token];
 		uint256 price = _fetchOracleScaledPrice(oracle);
 		if (price != 0) {
 			return oracle.isEthIndexed ? _calcEthIndexedPrice(price) : price;
 		}
+		// If the oracle fails (and returns 0), try again with the fallback
 		oracle = fallbacks[_token];
 		price = _fetchOracleScaledPrice(oracle);
 		if (price != 0) {
