@@ -1,3 +1,4 @@
+const { setBalance, impersonateAccount, stopImpersonatingAccount } = require("@nomicfoundation/hardhat-network-helpers")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -61,7 +62,11 @@ contract("CollSurplusPool", async accounts => {
 		assert.equal(balance, "0")
 
 		const price = toBN(dec(100, 18))
-		const redemption_soften_param = toBN(970)
+		const redemption_soften_param = toBN(9700)
+		setBalance(shortTimelock.address, 1e18)
+		await impersonateAccount(shortTimelock.address)
+		await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+		await stopImpersonatingAccount(shortTimelock.address)
 
 		await priceFeed.setPrice(erc20.address, price)
 
@@ -86,7 +91,7 @@ contract("CollSurplusPool", async accounts => {
 		const ETH_2 = await collSurplusPool.getAssetBalance(erc20.address)
 		th.assertIsApproximatelyEqual(
 			ETH_2,
-			B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price).mul(redemption_soften_param).div(toBN(1000)))
+			B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price).mul(redemption_soften_param).div(toBN(10000)))
 		)
 	})
 
@@ -155,3 +160,4 @@ contract("CollSurplusPool", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+
