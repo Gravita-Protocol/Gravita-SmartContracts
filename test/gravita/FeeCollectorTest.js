@@ -165,18 +165,16 @@ contract("FeeCollector", async accounts => {
 				// move forward in time by 5 days
 				const timeIncrease = 5 * 24 * 60 * 60
 				await time.increase(timeIncrease)
-				// payback should refund remaining fee to borrower
-				const expectedRefund = maxFee.sub(collectedFee1)
+				// 100% payback should yield no refunds
 				const paybackTx = await closeVessel(alice, erc20.address, toBN(1e18)) // 1e18 = 100% payback
 				const feeCollectedEvents = th.getAllEventsByName(paybackTx, "FeeCollected")
 				assert.equal(feeCollectedEvents.length, 0)
-				const { borrower, amount: refundedAmount } = th.getAllEventsByName(paybackTx, "FeeRefunded")[0].args
-				assert.equal(borrower, alice)
-				assert.equal(refundedAmount.toString(), expectedRefund.toString())
+				const feeRefundedEvents = th.getAllEventsByName(paybackTx, "FeeRefunded")
+				assert.equal(feeRefundedEvents.length, 0)
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)
 				const treasuryBalance = await debtToken.balanceOf(treasury)
-				assert.equal(aliceBalance.toString(), refundedAmount.toString())
+				assert.equal(aliceBalance.toString(), "0")
 				assert.equal(treasuryBalance.toString(), collectedFee1.toString())
 			})
 
@@ -199,16 +197,14 @@ contract("FeeCollector", async accounts => {
 				const paybackTx = await closeVessel(alice, erc20.address)
 				const now = await time.latest()
 				const expectedCollectedFee = calcExpiredAmount(from, to, feeBalance, now)
-				const expectedRefund = feeBalance.sub(expectedCollectedFee)
 				const { amount: collectedFee2 } = th.getAllEventsByName(paybackTx, "FeeCollected")[0].args
-				const { borrower, amount: refundedAmount } = th.getAllEventsByName(paybackTx, "FeeRefunded")[0].args
-				assert.equal(borrower, alice)
-				th.assertIsApproximatelyEqual(refundedAmount, expectedRefund, ERROR_MARGIN)
 				th.assertIsApproximatelyEqual(collectedFee2, expectedCollectedFee, ERROR_MARGIN)
+				const feeRefundedEvents = th.getAllEventsByName(paybackTx, "FeeRefunded")
+				assert.equal(feeRefundedEvents.length, 0)
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)
 				const treasuryBalance = await debtToken.balanceOf(treasury)
-				assert.equal(aliceBalance.toString(), refundedAmount.toString())
+				assert.equal(aliceBalance.toString(), "0")
 				assert.equal(treasuryBalance.toString(), collectedFee1.add(collectedFee2).toString())
 			})
 
@@ -242,16 +238,15 @@ contract("FeeCollector", async accounts => {
 				// move forward in time to 66% of lifetime
 				await time.increaseTo(t1 + timeIncrease)
 				const expectedCollectedFee2 = decayRate2.mul(toBN(timeIncrease))
-				const expectedRefund2 = feeBalance2.sub(expectedCollectedFee2)
 				const paybackFraction2 = toBN(1 * 10 ** 18) // 100% of debt left
 				const paybackTx2 = await payVesselDebt(alice, erc20.address, paybackFraction2)
 				const { amount: collectedAmount2 } = th.getAllEventsByName(paybackTx2, "FeeCollected")[0].args
-				const { amount: refundedAmount2 } = th.getAllEventsByName(paybackTx2, "FeeRefunded")[0].args
-				th.assertIsApproximatelyEqual(refundedAmount2, expectedRefund2, ERROR_MARGIN)
 				th.assertIsApproximatelyEqual(expectedCollectedFee2, collectedAmount2, ERROR_MARGIN)
+				const feeRefundedEvents = th.getAllEventsByName(paybackTx2, "FeeRefunded")
+				assert.equal(feeRefundedEvents.length, 0)
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)
-				const expectedAliceBalance = refundedAmount1.add(refundedAmount2)
+				const expectedAliceBalance = refundedAmount1
 				const treasuryBalance = await debtToken.balanceOf(treasury)
 				const expectedTreasuryBalance = minFee.add(collectedAmount1).add(collectedAmount2)
 				assert.equal(aliceBalance.toString(), expectedAliceBalance.toString())

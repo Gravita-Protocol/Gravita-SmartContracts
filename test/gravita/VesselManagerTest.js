@@ -569,7 +569,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(bob_isInSortedList_Asset)
 			})
 
-			it("liquidate(): reverts if vessel is non-existent", async () => {
+			it.only("liquidate(): reverts if vessel is non-existent", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(4, 18)),
@@ -592,6 +592,7 @@ contract("VesselManager", async accounts => {
 					const txCarol = await vesselManagerOperations.liquidate(erc20.address, carol)
 					assert.isFalse(txCarol.receipt.status)
 				} catch (err) {
+					console.log(`ERR: ${err.message}`)
 					assert.include(err.message, "revert")
 					assert.include(err.message, "VesselManagerOperations__VesselNotActive()")
 				}

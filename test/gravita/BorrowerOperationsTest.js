@@ -4920,13 +4920,13 @@ contract("BorrowerOperations", async accounts => {
 		it("closeVessel(): reduces ActivePool debt by correct amount", async () => {
 			await openVessel({
 				asset: erc20.address,
-				extraGRAIAmount: toBN(dec(10000, 18)),
+				extraGRAIAmount: toBN(dec(10_000, 18)),
 				ICR: toBN(dec(2, 18)),
 				extraParams: { from: dennis },
 			})
 			await openVessel({
 				asset: erc20.address,
-				extraGRAIAmount: toBN(dec(10000, 18)),
+				extraGRAIAmount: toBN(dec(10_000, 18)),
 				ICR: toBN(dec(2, 18)),
 				extraParams: { from: alice },
 			})
@@ -4950,7 +4950,6 @@ contract("BorrowerOperations", async accounts => {
 			await borrowerOperations.closeVessel(erc20.address, { from: alice })
 
 			// Check after
-
 			const activePool_Debt_After_Asset = (await activePool.getDebtTokenBalance(erc20.address)).toString()
 			th.assertIsApproximatelyEqual(activePool_Debt_After_Asset, dennisDebt_Asset)
 		})

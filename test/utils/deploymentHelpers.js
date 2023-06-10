@@ -152,6 +152,7 @@ class DeploymentHelper {
 			core.stabilityPool.address,
 			core.vesselManager.address
 		)
+		await core.debtToken.addWhitelist(core.feeCollector.address)
 		for (const key in grvt) {
 			const contract = grvt[key]
 			if (contract.setGasPool) {
