@@ -592,7 +592,6 @@ contract("VesselManager", async accounts => {
 					const txCarol = await vesselManagerOperations.liquidate(erc20.address, carol)
 					assert.isFalse(txCarol.receipt.status)
 				} catch (err) {
-					console.log(`ERR: ${err.message}`)
 					assert.include(err.message, "revert")
 					assert.include(err.message, "VesselManagerOperations__VesselNotActive()")
 				}
