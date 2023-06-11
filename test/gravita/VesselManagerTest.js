@@ -569,7 +569,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(bob_isInSortedList_Asset)
 			})
 
-			it.only("liquidate(): reverts if vessel is non-existent", async () => {
+			it("liquidate(): reverts if vessel is non-existent", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(4, 18)),

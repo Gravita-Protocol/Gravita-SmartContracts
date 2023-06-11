@@ -13,7 +13,6 @@ interface IBorrowerOperations {
 	// --- Events ---
 
 	event BorrowingFeePaid(address indexed _asset, address indexed _borrower, uint256 _feeAmount);
-	event VesselCloseDebtSwap(address _borrower, address _asset, uint256 _amount);
 	event VesselCreated(address indexed _asset, address indexed _borrower, uint256 arrayIndex);
 	event VesselUpdated(
 		address indexed _asset,

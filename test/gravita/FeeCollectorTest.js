@@ -7,9 +7,10 @@ const {
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants.js")
 
 const th = testHelpers.TestHelper
-const { dec, toBN } = th
+const { dec, toBN, assertRevert } = th
 
 const ERROR_MARGIN = 1e9
 const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
@@ -351,6 +352,37 @@ contract("FeeCollector", async accounts => {
 				const feeRefundedEvents2 = th.getAllEventsByName(paybackTx2, "FeeRefunded")
 				// expect no refunds at this point
 				assert.equal(feeRefundedEvents2.length, 0)
+			})
+
+			it("full payback should allow using refund as rebate", async () => {
+				// whale opens vessel
+				await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(20, 18)),
+					extraParams: { from: whale },
+				})
+				// alice opens vessel
+				const borrowAmount = dec(1_000_000, 18)
+				await borrowerOperations.openVessel(erc20.address, dec(10_000, 18), borrowAmount, ZERO_ADDRESS, ZERO_ADDRESS, {
+					from: alice,
+				})
+				// alice owes 1,000,000 + 200 (gasCompensation) + 5,000 (full borrowing fee) = 1,005,200
+				const gasCompensation = await adminContract.getDebtTokenGasCompensation(erc20.address)
+				assert.equal(gasCompensation.toString(), dec(200, 18))
+				const borrowingFee = await vesselManager.getBorrowingFee(erc20.address, borrowAmount)
+				assert.equal(borrowingFee.toString(), dec(5_000, 18))
+				const aliceTotalDebt = await vesselManager.getVesselDebt(erc20.address, alice)
+				assert.equal(aliceTotalDebt.toString(), dec(1_005_200, 18))
+				// trying to close the vessel will fail, alice does not have enough debt tokens
+				assertRevert(borrowerOperations.closeVessel(erc20.address, { from: alice }))
+				// refund available at this point should be maxFee - minFee
+				const { minFee, maxFee } = calcFees(toBN(borrowAmount))
+				const refund = await feeCollector.simulateRefund(alice, erc20.address, 1e18.toString())
+				assert.equal(refund.toString(), maxFee.sub(minFee))
+				// alice grabs enough debt tokens to pay for minFee
+				await debtToken.transfer(alice, minFee, { from: whale })
+				// this time, closing the vessel works
+				await borrowerOperations.closeVessel(erc20.address, { from: alice })
 			})
 		})
 

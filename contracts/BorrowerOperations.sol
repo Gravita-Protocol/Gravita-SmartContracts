@@ -324,7 +324,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
 
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, msg.sender, netDebt + refund);
+		_repayDebtTokens(_asset, msg.sender, netDebt);
 		if (gasCompensation != 0) {
 			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
 		}

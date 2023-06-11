@@ -4947,11 +4947,12 @@ contract("BorrowerOperations", async accounts => {
 			await debtToken.transfer(alice, await debtToken.balanceOf(dennis), { from: dennis })
 
 			// Close the vessel
+			const alicesRefund = await feeCollector.simulateRefund(alice, erc20.address, 1e18.toString())
 			await borrowerOperations.closeVessel(erc20.address, { from: alice })
 
-			// Check after
-			const activePool_Debt_After_Asset = (await activePool.getDebtTokenBalance(erc20.address)).toString()
-			th.assertIsApproximatelyEqual(activePool_Debt_After_Asset, dennisDebt_Asset)
+			// Check after, subtracting alice's refund which was burnt by the FeeCollector
+			const activePool_Debt_After_Asset = (await activePool.getDebtTokenBalance(erc20.address)).sub(alicesRefund)
+			th.assertIsApproximatelyEqual(activePool_Debt_After_Asset.toString(), dennisDebt_Asset)
 		})
 
 		it("closeVessel(): updates the the total stakes", async () => {

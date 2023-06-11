@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
+import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
 
@@ -168,7 +169,8 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 			_collectFee(_borrower, _asset, expiredAmount);
 			if (_paybackFraction == 1e18) {
 				// on a full payback, there's no refund; refund amount is discounted from final payment
-				// the refund discount/burn happens at BorrowerOps->closeVessel->_repayDebtTokens
+				uint256 refundAmount = sRecord.amount - expiredAmount;
+				IDebtToken(debtToken).burnFromWhitelistedContract(refundAmount);
 				sRecord.amount = 0;
 				emit FeeRecordUpdated(_borrower, _asset, NOW, 0, 0);
 			} else {
