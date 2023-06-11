@@ -300,36 +300,6 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	function closeVessel(address _asset) external override {
-		_closeVessel(_asset, false);
-	}
-
-	function closeVesselWithDebtSwap(address _asset) external override {
-		_closeVessel(_asset, true);
-	}
-
-	function _swapDebtForCollateral(
-		address _asset,
-		uint256 _assetPrice,
-		uint256 _assetBalance,
-		uint256 _netDebt
-	) internal returns (uint256 swapCollAmount, uint256 swapDebtAmount) {
-		uint256 debtTokenBalance = IDebtToken(debtToken).balanceOf(msg.sender);
-		if (debtTokenBalance < _netDebt) {
-			swapDebtAmount = _netDebt - debtTokenBalance;
-			swapCollAmount = swapDebtAmount / _assetPrice;
-			require(swapCollAmount > _assetBalance, "BorrowerOperations: Not enough collateral to cover debt");
-			IActivePool(activePool).decreaseDebt(_asset, swapDebtAmount);
-			_collectToPlatform(_asset, swapCollAmount);
-		}
-	}
-
-	function _collectToPlatform(address _asset, uint256 _amount) internal {
-		address destination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
-		IActivePool(activePool).sendAsset(_asset, destination, _amount);
-		emit VesselCloseDebtSwap(msg.sender, _asset, _amount);
-	}
-
-	function _closeVessel(address _asset, bool _swapDebt) internal {
 		_requireVesselIsActive(_asset, msg.sender);
 		uint256 price = IPriceFeed(priceFeed).fetchPrice(_asset);
 		_requireNotInRecoveryMode(_asset, price);
@@ -343,13 +313,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 refund = IFeeCollector(feeCollector).simulateRefund(msg.sender, _asset, 1 ether);
 		uint256 netDebt = debt - gasCompensation - refund;
 
-		uint256 swappedColl;
-		uint256 swappedDebt;
-		if (_swapDebt) {
-			(swappedColl, swappedDebt) = _swapDebtForCollateral(_asset, price, coll, netDebt);
-		} else {
-			_requireSufficientDebtTokenBalance(msg.sender, netDebt);
-		}
+		_requireSufficientDebtTokenBalance(msg.sender, netDebt);
 
 		uint256 newTCR = _getNewTCRFromVesselChange(_asset, coll, false, debt, false, price);
 		_requireNewTCRisAboveCCR(_asset, newTCR);
@@ -360,7 +324,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
 
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, msg.sender, netDebt + refund - swappedDebt);
+		_repayDebtTokens(_asset, msg.sender, netDebt + refund);
 		if (gasCompensation != 0) {
 			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
 		}
@@ -368,8 +332,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		// Signal to the fee collector that debt has been paid in full
 		IFeeCollector(feeCollector).closeDebt(msg.sender, _asset);
 
-		// Send the collateral back to the user (minus whatever was swapped, if any)
-		IActivePool(activePool).sendAsset(_asset, msg.sender, coll - swappedColl);
+		// Send the collateral back to the user
+		IActivePool(activePool).sendAsset(_asset, msg.sender, coll);
 	}
 
 	/**

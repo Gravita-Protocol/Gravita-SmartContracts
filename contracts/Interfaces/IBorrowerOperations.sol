@@ -49,8 +49,6 @@ interface IBorrowerOperations {
 
 	function closeVessel(address _asset) external;
 
-	function closeVesselWithDebtSwap(address _asset) external;
-
 	function adjustVessel(
 		address _asset,
 		uint256 _assetSent,
