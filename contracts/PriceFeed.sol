@@ -146,7 +146,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 			uint256 updatedAt,
 			uint80 /* answeredInRound */
 		) {
-			if (roundId != 0 && updatedAt != 0 && answer != 0 && updatedAt <= block.timestamp) {
+			if (roundId != 0 && updatedAt != 0 && answer != 0) {
 				price = uint256(answer);
 				timestamp = updatedAt;
 			}
