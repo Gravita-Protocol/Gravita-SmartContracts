@@ -303,11 +303,11 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_closeVessel(_asset, false);
 	}
 
-	function closeVesselWithDebtSwap(address _asset) external override {
+	function closeVesselWithCollRepay(address _asset) external override {
 		_closeVessel(_asset, true);
 	}
 
-	function _closeVessel(address _asset, bool _swapDebt) internal {
+	function _closeVessel(address _asset, bool _repayDebtWithColl) internal {
 		_requireVesselIsActive(_asset, msg.sender);
 		uint256 price = IPriceFeed(priceFeed).fetchPrice(_asset);
 		_requireNotInRecoveryMode(_asset, price);
@@ -321,10 +321,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 refund = IFeeCollector(feeCollector).simulateRefund(msg.sender, _asset, 1 ether);
 		uint256 netDebt = debt - gasCompensation - refund;
 
-		uint256 swappedColl;
-		uint256 swappedDebt;
-		if (_swapDebt) {
-			(swappedColl, swappedDebt) = _swapDebtForCollateral(_asset, price, coll, netDebt);
+		uint256 repaidColl;
+		uint256 repaidDebt;
+		if (_repayDebtWithColl) {
+			(repaidColl, repaidDebt) = _repayDebtWithCollateral(_asset, price, coll, netDebt);
 		} else {
 			_requireSufficientDebtTokenBalance(msg.sender, netDebt);
 		}
@@ -338,7 +338,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
 
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, msg.sender, netDebt - swappedDebt, refund);
+		_repayDebtTokens(_asset, msg.sender, netDebt - repaidDebt, refund);
 		if (gasCompensation != 0) {
 			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation, 0);
 		}
@@ -346,26 +346,26 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		// Signal to the fee collector that debt has been paid in full
 		IFeeCollector(feeCollector).closeDebt(msg.sender, _asset);
 
-		// Send the collateral back to the user (minus whatever was swapped, if any)
-		IActivePool(activePool).sendAsset(_asset, msg.sender, coll - swappedColl);
+		// Send the collateral back to the user (minus whatever was used for repayment)
+		IActivePool(activePool).sendAsset(_asset, msg.sender, coll - repaidColl);
 	}
 
-	function _swapDebtForCollateral(
+	function _repayDebtWithCollateral(
 		address _asset,
 		uint256 _assetPrice,
 		uint256 _assetBalance,
 		uint256 _netDebt
-	) internal returns (uint256 swapCollAmount, uint256 swapDebtAmount) {
+	) internal returns (uint256 repayCollAmount, uint256 repayDebtAmount) {
 		uint256 debtTokenBalance = IDebtToken(debtToken).balanceOf(msg.sender);
 		if (debtTokenBalance < _netDebt) {
 			uint256 borrowingFee = IVesselManager(vesselManager).getBorrowingFee(_asset, _netDebt);
-			swapDebtAmount = _netDebt - debtTokenBalance;
-			require(swapDebtAmount <= borrowingFee, "BorrowerOperations: Can only swap the borrowing fee amount");
-			swapCollAmount = (swapDebtAmount * 1e18) / _assetPrice;
-			require(swapCollAmount <= _assetBalance, "BorrowerOperations: Not enough collateral to cover debt");
+			repayDebtAmount = _netDebt - debtTokenBalance;
+			require(repayDebtAmount <= borrowingFee, "BorrowerOperations: Can only repay the borrowing fee amount");
+			repayCollAmount = (repayDebtAmount * 1e18) / _assetPrice;
+			require(repayCollAmount <= _assetBalance, "BorrowerOperations: Not enough collateral to cover debt");
 			address protocolDestination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
-			IActivePool(activePool).sendAsset(_asset, protocolDestination, swapCollAmount);
-			IActivePool(activePool).decreaseDebt(_asset, swapDebtAmount);
+			IActivePool(activePool).sendAsset(_asset, protocolDestination, repayCollAmount);
+			IActivePool(activePool).decreaseDebt(_asset, repayDebtAmount);
 		}
 	}
 

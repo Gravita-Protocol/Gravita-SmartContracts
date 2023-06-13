@@ -32,7 +32,7 @@ const deploy = async (treasury, mintingAccounts) => {
 
 const f = v => ethers.utils.commify(ethers.utils.formatEther(v.toString()))
 
-contract("BorrowerOperations - Swap Tests", async accounts => {
+contract("BorrowerOperations - Repayment with collateral tests", async accounts => {
 	const [owner, whale, alice, bob, treasury] = accounts
 
 	const calcFees = async debtAmountBN => {
@@ -50,7 +50,7 @@ contract("BorrowerOperations - Swap Tests", async accounts => {
 		return wallet.address
 	}
 
-	describe("Debt Swap on Vessel Close", async () => {
+	describe("Debt Repayment With Collateral on Vessel Close", async () => {
 		before(async () => {
 			await deploy(treasury, accounts.slice(0, 3))
 			await openVessel({
@@ -74,7 +74,7 @@ contract("BorrowerOperations - Swap Tests", async accounts => {
 			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
 
-		it("closeVesselWithDebtSwap(): insufficient balance for netDebt, reverts", async () => {
+		it("closeVesselWithCollRepay(): insufficient balance for netDebt, reverts", async () => {
 			// alice opens vessel
 			const collAmount = dec(10_000, 18)
 			const borrowAmount = dec(1_000_000, 18)
@@ -83,10 +83,10 @@ contract("BorrowerOperations - Swap Tests", async accounts => {
 			})
 			// alice transfers tiny amount to someone else, and now she owns less than her net debt
 			await debtToken.transfer(bob, 1, { from: alice })
-			assertRevert(borrowerOperations.closeVesselWithDebtSwap(erc20.address, { from: alice }))
+			assertRevert(borrowerOperations.closeVesselWithCollRepay(erc20.address, { from: alice }))
 		})
 
-		it("closeVesselWithDebtSwap(): sufficient balance for full debt, no swap", async () => {
+		it("closeVesselWithCollRepay(): sufficient balance for full debt, no coll discount", async () => {
 			// alice opens vessel
 			const collAmount = dec(10_000, 18)
 			const borrowAmount = dec(1_000_000, 18)
@@ -94,10 +94,10 @@ contract("BorrowerOperations - Swap Tests", async accounts => {
 			await borrowerOperations.openVessel(erc20.address, collAmount, borrowAmount, ZERO_ADDRESS, ZERO_ADDRESS, {
 				from: alice,
 			})
-			// alice receives enough borrowingFee from someone, so she won't need a swap
+			// alice receives enough borrowingFee from someone, so she won't need to use her coll
 			const { minFee } = await calcFees(toBN(borrowAmount))
 			await debtToken.transfer(alice, minFee, { from: whale })
-			await borrowerOperations.closeVesselWithDebtSwap(erc20.address, { from: alice })
+			await borrowerOperations.closeVesselWithCollRepay(erc20.address, { from: alice })
 			const aliceCollBalanceAfter = await erc20.balanceOf(alice)
 			const aliceGraiBalanceAfter = await debtToken.balanceOf(alice)
 			// no changes to her collateral
@@ -105,7 +105,7 @@ contract("BorrowerOperations - Swap Tests", async accounts => {
 			assert.equal(aliceGraiBalanceAfter.toString(), "0")
 		})
 
-		it("closeVesselWithDebtSwap(): swapAmount <= borrowingFee, succeeds", async () => {
+		it("closeVesselWithCollRepay(): collRepayAmount <= borrowingFee, succeeds", async () => {
 			// set coll price to 1,500
 			const collPrice = dec(1_500, 18)
 			await priceFeed.setPrice(erc20.address, collPrice)
@@ -138,7 +138,7 @@ contract("BorrowerOperations - Swap Tests", async accounts => {
 			let treasuryCollBalanceDiff = treasuryCollBalanceMidway.sub(treasuryCollBalanceBefore)
 			assert.equal(treasuryCollBalanceDiff.toString(), "0")
 			// alice closes vessel; at a 1,500:1 asset:grai price the 192.30769 grai minFee becomes 0.128205126666666666 coll
-			await borrowerOperations.closeVesselWithDebtSwap(erc20.address, { from: alice })
+			await borrowerOperations.closeVesselWithCollRepay(erc20.address, { from: alice })
 			// snapshot at t2
 			const activePoolGraiContractAfter = await activePool.getDebtTokenBalance(erc20.address)
 			const activePoolCollContractAfter = await activePool.getAssetBalance(erc20.address)
