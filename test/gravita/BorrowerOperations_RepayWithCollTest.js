@@ -81,7 +81,7 @@ contract("BorrowerOperations - Repayment with collateral tests", async accounts 
 			await borrowerOperations.openVessel(erc20.address, collAmount, borrowAmount, ZERO_ADDRESS, ZERO_ADDRESS, {
 				from: alice,
 			})
-			// alice transfers tiny amount to someone else, and now she owns less than her net debt
+			// alice transfers a tiny amount to someone else, and now she owns less than her net debt
 			await debtToken.transfer(bob, 1, { from: alice })
 			assertRevert(borrowerOperations.closeVesselWithCollRepay(erc20.address, { from: alice }))
 		})
@@ -94,7 +94,7 @@ contract("BorrowerOperations - Repayment with collateral tests", async accounts 
 			await borrowerOperations.openVessel(erc20.address, collAmount, borrowAmount, ZERO_ADDRESS, ZERO_ADDRESS, {
 				from: alice,
 			})
-			// alice receives enough borrowingFee from someone, so she won't need to use her coll
+			// alice receives enough GRAI for the borrowingFee from someone else, so she won't need to use her coll
 			const { minFee } = await calcFees(toBN(borrowAmount))
 			await debtToken.transfer(alice, minFee, { from: whale })
 			await borrowerOperations.closeVesselWithCollRepay(erc20.address, { from: alice })
@@ -148,13 +148,13 @@ contract("BorrowerOperations - Repayment with collateral tests", async accounts 
 			const treasuryCollBalanceAfter = await erc20.balanceOf(treasury)
 			// verify balance changes
 			assert.equal(aliceGraiBalanceAfter.toString(), "0") // alice pays back all her grai
-			assert.equal(treasuryGraiBalanceMidway.toString(), treasuryGraiBalanceAfter) // treasury does not get any more GRAI fees on vessel close
+			assert.equal(treasuryGraiBalanceMidway.toString(), treasuryGraiBalanceAfter) // treasury does not get any more GRAI fees upon vessel close
 			treasuryCollBalanceDiff = treasuryCollBalanceAfter.sub(treasuryCollBalanceBefore)
 			const expectedTreasuryCollBalanceDiff = minFee.mul(toBN(1e18)).div(toBN(collPrice))
 			assert.equal(treasuryCollBalanceDiff.toString(), expectedTreasuryCollBalanceDiff) // expect treasury to receive 0.1282... coll from alice
 			const aliceCollBalanceDiff = aliceCollBalanceBefore.sub(aliceCollBalanceAfter)
 			assert.equal(aliceCollBalanceDiff.toString(), expectedTreasuryCollBalanceDiff) // expect alice to be 0.1282... coll short
-			assert.equal(activePoolCollContractAfter.toString(), activePoolCollContractBefore)
+			assert.equal(activePoolCollContractAfter.toString(), activePoolCollContractBefore) // active pool's coll and debt balances get back to t0's state
 			assert.equal(activePoolGraiContractAfter.toString(), activePoolGraiContractBefore)
 		})
 	})
