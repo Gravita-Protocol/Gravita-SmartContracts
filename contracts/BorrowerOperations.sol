@@ -338,9 +338,9 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
 
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, msg.sender, netDebt - swappedDebt);
+		_repayDebtTokens(_asset, msg.sender, netDebt - swappedDebt, refund);
 		if (gasCompensation != 0) {
-			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
+			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation, 0);
 		}
 
 		// Signal to the fee collector that debt has been paid in full
@@ -361,10 +361,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 			uint256 borrowingFee = IVesselManager(vesselManager).getBorrowingFee(_asset, _netDebt);
 			swapDebtAmount = _netDebt - debtTokenBalance;
 			require(swapDebtAmount <= borrowingFee, "BorrowerOperations: Can only swap the borrowing fee amount");
-			swapCollAmount = swapDebtAmount / _assetPrice;
-			require(swapCollAmount > _assetBalance, "BorrowerOperations: Not enough collateral to cover debt");
-			address destination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
-			IActivePool(activePool).sendAsset(_asset, destination, swapCollAmount);
+			swapCollAmount = (swapDebtAmount * 1e18) / _assetPrice;
+			require(swapCollAmount <= _assetBalance, "BorrowerOperations: Not enough collateral to cover debt");
+			address protocolDestination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
+			IActivePool(activePool).sendAsset(_asset, protocolDestination, swapCollAmount);
 			IActivePool(activePool).decreaseDebt(_asset, swapDebtAmount);
 		}
 	}
@@ -431,7 +431,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		if (_isDebtIncrease) {
 			_withdrawDebtTokens(_asset, _borrower, _debtTokenChange, _netDebtChange);
 		} else {
-			_repayDebtTokens(_asset, _borrower, _debtTokenChange);
+			_repayDebtTokens(_asset, _borrower, _debtTokenChange, 0);
 		}
 		if (_isCollIncrease) {
 			_activePoolAddColl(_asset, _collChange);
@@ -466,8 +466,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	// Burn the specified amount of debt tokens from _account and decreases the total active debt
-	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount) internal {
-		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount);
+	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount, uint256 _refund) internal {
+		/// @dev the borrowing fee partial refund is accounted for when decreasing the debt, as it was included when vessel was opened
+		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount + _refund);
+		/// @dev the borrowing fee partial refund is not burned here, as it has already been burned by the FeeCollector
 		IDebtToken(debtToken).burn(_account, _debtTokenAmount);
 	}
 
