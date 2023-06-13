@@ -324,9 +324,9 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
 
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, msg.sender, netDebt);
+		_repayDebtTokens(_asset, msg.sender, netDebt, refund);
 		if (gasCompensation != 0) {
-			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
+			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation, 0);
 		}
 
 		// Signal to the fee collector that debt has been paid in full
@@ -398,7 +398,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		if (_isDebtIncrease) {
 			_withdrawDebtTokens(_asset, _borrower, _debtTokenChange, _netDebtChange);
 		} else {
-			_repayDebtTokens(_asset, _borrower, _debtTokenChange);
+			_repayDebtTokens(_asset, _borrower, _debtTokenChange, 0);
 		}
 		if (_isCollIncrease) {
 			_activePoolAddColl(_asset, _collChange);
@@ -433,8 +433,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	// Burn the specified amount of debt tokens from _account and decreases the total active debt
-	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount) internal {
-		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount);
+	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount, uint256 _refund) internal {
+		/// @dev the borrowing fee partial refund is accounted for when decreasing the debt, as it was included when vessel was opened
+		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount + _refund);
+		/// @dev the borrowing fee partial refund is not burned here, as it has already been burned by the FeeCollector
 		IDebtToken(debtToken).burn(_account, _debtTokenAmount);
 	}
 
