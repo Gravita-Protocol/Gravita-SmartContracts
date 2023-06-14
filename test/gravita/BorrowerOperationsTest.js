@@ -4951,7 +4951,7 @@ contract("BorrowerOperations", async accounts => {
 			await borrowerOperations.closeVessel(erc20.address, { from: alice })
 
 			// Check after, subtracting alice's refund which was burnt by the FeeCollector
-			const activePool_Debt_After_Asset = (await activePool.getDebtTokenBalance(erc20.address)).sub(alicesRefund)
+			const activePool_Debt_After_Asset = await activePool.getDebtTokenBalance(erc20.address)
 			th.assertIsApproximatelyEqual(activePool_Debt_After_Asset.toString(), dennisDebt_Asset)
 		})
 
