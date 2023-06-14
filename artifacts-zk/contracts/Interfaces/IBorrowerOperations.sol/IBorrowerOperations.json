@@ -1,0 +1,378 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IBorrowerOperations",
+  "sourceName": "contracts/Interfaces/IBorrowerOperations.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_feeAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "BorrowingFeePaid",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "arrayIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "VesselCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_coll",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "stake",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum IBorrowerOperations.BorrowerOperation",
+          "name": "operation",
+          "type": "uint8"
+        }
+      ],
+      "name": "VesselUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_assetSent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "addColl",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_assetSent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_collWithdrawal",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtChange",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isDebtIncrease",
+          "type": "bool"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "adjustVessel",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        }
+      ],
+      "name": "claimCollateral",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "closeVessel",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        }
+      ],
+      "name": "getCompositeDebt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_assetAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "openVessel",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "repayDebtTokens",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_assetAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "withdrawColl",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "withdrawDebtTokens",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

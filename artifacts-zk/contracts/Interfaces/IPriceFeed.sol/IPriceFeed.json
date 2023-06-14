@@ -1,0 +1,136 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IPriceFeed",
+  "sourceName": "contracts/Interfaces/IPriceFeed.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "PriceFeed__DeprecatedFunctionError",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriceFeed__ExistingOracleRequired",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriceFeed__InvalidDecimalsError",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "PriceFeed__InvalidOracleResponseError",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriceFeed__TimelockOnlyError",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriceFeed__UnknownAssetError",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isEthIndexed",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isFallback",
+          "type": "bool"
+        }
+      ],
+      "name": "NewOracleRegistered",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "fetchPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_oracle",
+          "type": "address"
+        },
+        {
+          "internalType": "enum IPriceFeed.ProviderType",
+          "name": "_type",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_timeoutMinutes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isEthIndexed",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isFallback",
+          "type": "bool"
+        }
+      ],
+      "name": "setOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

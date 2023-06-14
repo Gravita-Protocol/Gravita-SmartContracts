@@ -1,0 +1,78 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IPythPriceFeed",
+  "sourceName": "contracts/Interfaces/IPythPriceFeed.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "PriceFeed__TimelockOnlyError",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "_priceId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "NewPriceIdRegistered",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_pythPriceUpdateData",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "fetchPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_priceId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "setTokenPriceId",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

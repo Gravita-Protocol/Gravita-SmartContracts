@@ -15,16 +15,7 @@ contract BorrowerOperationsTester is BorrowerOperations {
 		bool isDebtIncrease,
 		uint256 _price
 	) external pure returns (uint256) {
-		return
-			_getNewICRFromVesselChange(
-				_coll,
-				_debt,
-				_collChange,
-				isCollIncrease,
-				_debtChange,
-				isDebtIncrease,
-				_price
-			);
+		return _getNewICRFromVesselChange(_coll, _debt, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
 	}
 
 	function getNewTCRFromVesselChange(
@@ -35,15 +26,7 @@ contract BorrowerOperationsTester is BorrowerOperations {
 		bool isDebtIncrease,
 		uint256 _price
 	) external view returns (uint256) {
-		return
-			_getNewTCRFromVesselChange(
-				_asset,
-				_collChange,
-				isCollIncrease,
-				_debtChange,
-				isDebtIncrease,
-				_price
-			);
+		return _getNewTCRFromVesselChange(_asset, _collChange, isCollIncrease, _debtChange, isDebtIncrease, _price);
 	}
 
 	function getUSDValue(uint256 _coll, uint256 _price) external pure returns (uint256) {
@@ -58,18 +41,10 @@ contract BorrowerOperationsTester is BorrowerOperations {
 		uint256 _debtChange,
 		bool _isDebtIncrease,
 		address _upperHint,
-		address _lowerHint
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
 	) external {
-		_adjustVessel(
-			_asset,
-			_amount,
-			_borrower,
-			_collWithdrawal,
-			_debtChange,
-			_isDebtIncrease,
-			_upperHint,
-			_lowerHint
-		);
+		_adjustVessel(_asset, _amount, _borrower, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _pythPriceUpdateData);
 	}
 
 	// Payable fallback function

@@ -1,0 +1,700 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IAdminContract",
+  "sourceName": "contracts/Interfaces/IAdminContract.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "AdminContract__CollateralAlreadyInitialized",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AdminContract__OnlyOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AdminContract__OnlyTimelock",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "parameter",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "valueEntered",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minValue",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "SafeCheckError",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldBorrowingFee",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newBorrowingFee",
+          "type": "uint256"
+        }
+      ],
+      "name": "BorrowingFeeChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldCCR",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newCCR",
+          "type": "uint256"
+        }
+      ],
+      "name": "CCRChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "CollateralAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldMCR",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newMCR",
+          "type": "uint256"
+        }
+      ],
+      "name": "MCRChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldMinNet",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newMinNet",
+          "type": "uint256"
+        }
+      ],
+      "name": "MinNetDebtChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldMintCap",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newMintCap",
+          "type": "uint256"
+        }
+      ],
+      "name": "MintCapChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldPercentDiv",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newPercentDiv",
+          "type": "uint256"
+        }
+      ],
+      "name": "PercentDivisorChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_blockTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "RedemptionBlockTimestampChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "oldRedemptionFeeFloor",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newRedemptionFeeFloor",
+          "type": "uint256"
+        }
+      ],
+      "name": "RedemptionFeeFloorChanged",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DECIMAL_PRECISION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "_100pct",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtTokenGasCompensation",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_decimals",
+          "type": "uint256"
+        }
+      ],
+      "name": "addNewCollateral",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getBorrowingFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getCcr",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getDebtTokenGasCompensation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getIsActive",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getMcr",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getMinNetDebt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getMintCap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getPercentDivisor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getRedemptionBlockTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        }
+      ],
+      "name": "getRedemptionFeeFloor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        }
+      ],
+      "name": "getTotalAssetDebt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getValidCollateral",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "borrowingFee",
+          "type": "uint256"
+        }
+      ],
+      "name": "setBorrowingFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newCCR",
+          "type": "uint256"
+        }
+      ],
+      "name": "setCCR",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "borrowingFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "ccr",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "mcr",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minNetDebt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "mintCap",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "percentDivisor",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "redemptionFeeFloor",
+          "type": "uint256"
+        }
+      ],
+      "name": "setCollateralParameters",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newMCR",
+          "type": "uint256"
+        }
+      ],
+      "name": "setMCR",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minNetDebt",
+          "type": "uint256"
+        }
+      ],
+      "name": "setMinNetDebt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "mintCap",
+          "type": "uint256"
+        }
+      ],
+      "name": "setMintCap",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "precentDivisor",
+          "type": "uint256"
+        }
+      ],
+      "name": "setPercentDivisor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_blockTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRedemptionBlockTimestamp",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_collateral",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "redemptionFeeFloor",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRedemptionFeeFloor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

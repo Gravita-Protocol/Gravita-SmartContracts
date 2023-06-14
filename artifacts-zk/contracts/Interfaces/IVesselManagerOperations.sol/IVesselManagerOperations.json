@@ -1,0 +1,425 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IVesselManagerOperations",
+  "sourceName": "contracts/Interfaces/IVesselManagerOperations.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__EmptyAmount",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "lowerBoundary",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "upperBoundary",
+          "type": "uint256"
+        }
+      ],
+      "name": "VesselManagerOperations__FeePercentOutOfBounds",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "availableBalance",
+          "type": "uint256"
+        }
+      ],
+      "name": "VesselManagerOperations__InsufficientDebtTokenBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__InvalidArraySize",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__InvalidParam",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__NotTimelock",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__NothingToLiquidate",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__OnlyVesselManager",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__RedemptionIsBlocked",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tcr",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "mcr",
+          "type": "uint256"
+        }
+      ],
+      "name": "VesselManagerOperations__TCRMustBeAboveMCR",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__UnableToRedeemAnyAmount",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VesselManagerOperations__VesselNotActive",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_liquidatedDebt",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_liquidatedColl",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_collGasCompensation",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_debtTokenGasCompensation",
+          "type": "uint256"
+        }
+      ],
+      "name": "Liquidation",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_attemptedDebtAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_actualDebtAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_collSent",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_collFee",
+          "type": "uint256"
+        }
+      ],
+      "name": "Redemption",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_coll",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum IVesselManager.VesselManagerOperation",
+          "name": "_operation",
+          "type": "uint8"
+        }
+      ],
+      "name": "VesselLiquidated",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "address[]",
+          "name": "_vesselArray",
+          "type": "address[]"
+        }
+      ],
+      "name": "batchLiquidateVessels",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_coll",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        }
+      ],
+      "name": "computeNominalCR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_CR",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_numTrials",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_inputRandomSeed",
+          "type": "uint256"
+        }
+      ],
+      "name": "getApproxHint",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "hintAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "diff",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "latestRandomSeed",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maxIterations",
+          "type": "uint256"
+        }
+      ],
+      "name": "getRedemptionHints",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "firstRedemptionHint",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "partialRedemptionHintNICR",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "truncatedDebtTokenAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        }
+      ],
+      "name": "liquidate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_n",
+          "type": "uint256"
+        }
+      ],
+      "name": "liquidateVessels",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debtTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperPartialRedemptionHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerPartialRedemptionHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_firstRedemptionHint",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_partialRedemptionHintNICR",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maxIterations",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maxFeePercentage",
+          "type": "uint256"
+        }
+      ],
+      "name": "redeemCollateral",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}
