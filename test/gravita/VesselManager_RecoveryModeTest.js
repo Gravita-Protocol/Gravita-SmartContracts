@@ -1,3 +1,9 @@
+const {
+	time,
+	setBalance,
+	impersonateAccount,
+	stopImpersonatingAccount,
+} = require("@nomicfoundation/hardhat-network-helpers")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -84,12 +90,15 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 	const openVessel = async params => th.openVessel(contracts.core, params)
 	const calcSoftnedAmount = (collAmount, price) =>
-		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
+		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(10000)).div(price)
 
 	before(async () => {
 		await deploy(treasury, accounts.slice(0, 40))
-
-		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
+		setBalance(shortTimelock.address, 1e18)
+		await impersonateAccount(shortTimelock.address)
+		await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+		await stopImpersonatingAccount(shortTimelock.address)
+		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.redemptionSofteningParam()
 
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
