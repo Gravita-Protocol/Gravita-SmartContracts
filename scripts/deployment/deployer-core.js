@@ -9,7 +9,7 @@ const { Deployer } = require("./deployer-common.js")
 class CoreDeployer extends Deployer {
 	constructor(hre, targetNetwork) {
 		super(hre, targetNetwork)
-		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet)
+		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet, this.targetNetwork)
 	}
 
 	async run() {
@@ -17,17 +17,15 @@ class CoreDeployer extends Deployer {
 
 		await this.printDeployerBalance()
 
-		const { contracts, allUpgraded } = await this.helper.loadOrDeployOrUpgradeCoreContracts()
+		this.coreContracts = await this.helper.loadOrDeployOrUpgradeCoreContracts()
+		await this.helper.connectCoreContracts(this.coreContracts, this.config.GRAI_TOKEN_ADDRESS, this.config.TREASURY_WALLET)
 
-		// if (allUpgraded) {
-		// 	console.log(`All contracts have been upgraded, setting parameters...`)
-		// 	this.coreContracts = contracts
-		// 	await this.addCollaterals()
-		// 	await this.toggleContractSetupInitialization(contracts.adminContract)
-		// 	await this.helper.verifyCoreContracts()
-		// }
-		
-		await this.transferContractsOwnerships(contracts)
+		await this.addCollaterals()
+		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
+		await this.helper.verifyCoreContracts()
+
+		// disable ownership transfer for now
+		// await this.transferContractsOwnerships(contracts)
 
 		await this.printDeployerBalance()
 	}

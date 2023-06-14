@@ -1,4 +1,9 @@
-const { time, setBalance } = require("@nomicfoundation/hardhat-network-helpers")
+const {
+	time,
+	setBalance,
+	impersonateAccount,
+	stopImpersonatingAccount,
+} = require("@nomicfoundation/hardhat-network-helpers")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -88,7 +93,7 @@ contract("VesselManager", async accounts => {
 	const openVessel = async params => th.openVessel(contracts.core, params)
 	const withdrawGRAI = async params => th.withdrawGRAI(contracts.core, params)
 	const calcSoftnedAmount = (collAmount, price) =>
-		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
+		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(10000)).div(price)
 
 	describe("Vessel Manager", async () => {
 		before(async () => {
@@ -97,11 +102,15 @@ contract("VesselManager", async accounts => {
 			await grvtToken.unprotectedMint(multisig, dec(1, 24))
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
+			setBalance(shortTimelock.address, 1e18)
 			for (const acc of accounts.slice(0, 20)) {
 				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), { from: acc })
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
-			REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
+			await impersonateAccount(shortTimelock.address)
+			await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+			await stopImpersonatingAccount(shortTimelock.address)
+			REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.redemptionSofteningParam()
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
@@ -3526,6 +3535,14 @@ contract("VesselManager", async accounts => {
 
 				assert.equal(partialRedemptionHintNICR_Asset, "0")
 			}),
+				it("redemptionSofteninfParam(): revert on invalid value", async () => {
+					await impersonateAccount(shortTimelock.address)
+					let tx = vesselManagerOperations.setRedemptionSofteningParam("10100", { from: shortTimelock.address })
+					await th.assertRevert(tx)
+					let tx2 = vesselManagerOperations.setRedemptionSofteningParam("9600", { from: shortTimelock.address })
+					await th.assertRevert(tx2)
+					await stopImpersonatingAccount(shortTimelock.address)
+				}),
 				it("redeemCollateral(): soft redemption dates", async () => {
 					const redemptionWait = 14 * 24 * 60 * 60 // 14 days
 					const redemptionBlock = (await time.latest()) + redemptionWait

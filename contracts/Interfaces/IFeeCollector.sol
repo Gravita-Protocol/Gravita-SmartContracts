@@ -50,5 +50,7 @@ interface IFeeCollector {
 	function collectFees(address[] calldata _borrowers, address[] calldata _assets) external;
 
 	function handleRedemptionFee(address _asset, uint256 _amount) external;
+
+	function getProtocolRevenueDestination() external view returns (address);
 }
 

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "./TestContracts/AddressesHardhat.sol";
+import "./Dependencies/AddressesArbitrum.sol";
 
-contract Addresses is AddressesHardhat {}
+contract Addresses is AddressesArbitrum {}
 

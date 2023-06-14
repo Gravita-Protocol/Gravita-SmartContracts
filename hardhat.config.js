@@ -22,6 +22,9 @@ task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.GoerliTestnet).run()
 )
+task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testnet").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.ArbitrumGoerliTestnet).run()
+)
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
@@ -40,7 +43,7 @@ module.exports = {
 	solidity: {
 		compilers: [
 			{
-				version: "0.8.20",
+				version: "0.8.19",
 				settings: {
 					optimizer: {
 						enabled: true,
@@ -67,6 +70,10 @@ module.exports = {
 		},
 		goerli: {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		arbitrum_goerli: {
+			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {

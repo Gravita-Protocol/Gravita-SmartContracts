@@ -73,8 +73,6 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	mapping(address => uint256) public lastCollError_Redistribution;
 	mapping(address => uint256) public lastDebtError_Redistribution;
 
-	bool public isSetupInitialized;
-
 	// Modifiers ------------------------------------------------------------------------------------------------------
 
 	modifier onlyVesselManagerOperations() {
@@ -280,9 +278,12 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		uint256 _assetFeeAmount,
 		uint256 _assetRedeemedAmount
 	) external override onlyVesselManagerOperations {
-		// Send the asset fee to the fee collector
-		IActivePool(activePool).sendAsset(_asset, feeCollector, _assetFeeAmount);
-		IFeeCollector(feeCollector).handleRedemptionFee(_asset, _assetFeeAmount);
+		// Send the asset fee
+		if (_assetFeeAmount != 0) {
+			address destination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
+			IActivePool(activePool).sendAsset(_asset, destination, _assetFeeAmount);
+			IFeeCollector(feeCollector).handleRedemptionFee(_asset, _assetFeeAmount);
+		}
 		// Burn the total debt tokens that is cancelled with debt, and send the redeemed asset to msg.sender
 		IDebtToken(debtToken).burn(_receiver, _debtToRedeem);
 		// Update Active Pool, and send asset to account

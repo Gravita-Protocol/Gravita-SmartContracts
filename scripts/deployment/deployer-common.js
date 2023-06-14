@@ -8,8 +8,11 @@ const readline = require("readline-sync")
 const DeploymentTarget = Object.freeze({
 	Localhost: "localhost",
 	GoerliTestnet: "goerli",
+	ArbitrumGoerliTestnet: "arbitrum-goerli",
 	Mainnet: "mainnet",
 })
+
+const DeploymentTestnets = [DeploymentTarget.Localhost, DeploymentTarget.GoerliTestnet, DeploymentTarget.ArbitrumGoerliTestnet]
 
 function checkContinue() {
 	var userinput = readline.question(`\nContinue? [y/N]\n`);
@@ -125,4 +128,5 @@ function checkContinue() {
 module.exports = {
 	Deployer,
 	DeploymentTarget,
+	DeploymentTestnets
 }

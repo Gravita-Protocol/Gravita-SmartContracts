@@ -3,12 +3,16 @@
 pragma solidity ^0.8.19;
 
 interface IBorrowerOperations {
-	// --- Events ---
+	// --- Enums ---
 	enum BorrowerOperation {
 		openVessel,
 		closeVessel,
 		adjustVessel
 	}
+
+	// --- Events ---
+
+	event BorrowingFeePaid(address indexed _asset, address indexed _borrower, uint256 _feeAmount);
 	event VesselCreated(address indexed _asset, address indexed _borrower, uint256 arrayIndex);
 	event VesselUpdated(
 		address indexed _asset,
@@ -18,7 +22,6 @@ interface IBorrowerOperations {
 		uint256 stake,
 		BorrowerOperation operation
 	);
-	event BorrowingFeePaid(address indexed _asset, address indexed _borrower, uint256 _feeAmount);
 
 	// --- Functions ---
 

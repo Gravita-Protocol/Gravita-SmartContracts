@@ -265,7 +265,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * The GRVT issuance is shared between *all* depositors
 	 * - Sends depositor's accumulated gains (GRVT, collateral assets) to depositor
 	 * - Increases deposit stake, and takes new snapshots for each.
-	 * @param _amount amount of asset provided
+	 * @param _amount amount of debtToken provided
+	 * @param _assets an array of collaterals to be claimed. 
+	 * Skipping a collateral forfeits the available rewards (can be useful for gas optimizations)
 	 */
 	function provideToSP(uint256 _amount, address[] calldata _assets) external override nonReentrant {
 		_requireNonZeroAmount(_amount);
@@ -293,6 +295,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		// send any collateral gains accrued to the depositor
 		_sendGainsToDepositor(msg.sender, gainAssets, gainAmounts);
 	}
+	/** 
+	* @param _amount amount of debtToken to withdraw
+	* @param _assets an array of collaterals to be claimed. 
+	*/
 
 	function withdrawFromSP(uint256 _amount, address[] calldata _assets) external {
 		(address[] memory assets, uint256[] memory amounts) = _withdrawFromSP(_amount, _assets);
@@ -302,6 +308,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	/**
 	 * @notice withdraw from the stability pool
 	 * @param _amount debtToken amount to withdraw
+	 * @param _assets an array of collaterals to be claimed. 
 	 * @return assets address of assets withdrawn, amount of asset withdrawn
 	 */
 	function _withdrawFromSP(
