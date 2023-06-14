@@ -7,9 +7,10 @@ const {
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants.js")
 
 const th = testHelpers.TestHelper
-const { dec, toBN } = th
+const { dec, toBN, assertRevert } = th
 
 const ERROR_MARGIN = 1e9
 const MAX_FEE_FRACTION = toBN(1e18).div(toBN(1000)).mul(toBN(5)) // 0.5%
@@ -45,7 +46,7 @@ const deploy = async (treasury, mintingAccounts) => {
 }
 
 contract("FeeCollector", async accounts => {
-	const withdrawVUSD = async params => th.withdrawVUSD(contracts.core, params)
+	const withdrawGRAI = async params => th.withdrawGRAI(contracts.core, params)
 
 	const [treasury, alice, bob, whale] = accounts
 
@@ -165,18 +166,16 @@ contract("FeeCollector", async accounts => {
 				// move forward in time by 5 days
 				const timeIncrease = 5 * 24 * 60 * 60
 				await time.increase(timeIncrease)
-				// payback should refund remaining fee to borrower
-				const expectedRefund = maxFee.sub(collectedFee1)
+				// 100% payback should yield no refunds
 				const paybackTx = await closeVessel(alice, erc20.address, toBN(1e18)) // 1e18 = 100% payback
 				const feeCollectedEvents = th.getAllEventsByName(paybackTx, "FeeCollected")
 				assert.equal(feeCollectedEvents.length, 0)
-				const { borrower, amount: refundedAmount } = th.getAllEventsByName(paybackTx, "FeeRefunded")[0].args
-				assert.equal(borrower, alice)
-				assert.equal(refundedAmount.toString(), expectedRefund.toString())
+				const feeRefundedEvents = th.getAllEventsByName(paybackTx, "FeeRefunded")
+				assert.equal(feeRefundedEvents.length, 0)
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)
 				const treasuryBalance = await debtToken.balanceOf(treasury)
-				assert.equal(aliceBalance.toString(), refundedAmount.toString())
+				assert.equal(aliceBalance.toString(), "0")
 				assert.equal(treasuryBalance.toString(), collectedFee1.toString())
 			})
 
@@ -199,16 +198,14 @@ contract("FeeCollector", async accounts => {
 				const paybackTx = await closeVessel(alice, erc20.address)
 				const now = await time.latest()
 				const expectedCollectedFee = calcExpiredAmount(from, to, feeBalance, now)
-				const expectedRefund = feeBalance.sub(expectedCollectedFee)
 				const { amount: collectedFee2 } = th.getAllEventsByName(paybackTx, "FeeCollected")[0].args
-				const { borrower, amount: refundedAmount } = th.getAllEventsByName(paybackTx, "FeeRefunded")[0].args
-				assert.equal(borrower, alice)
-				th.assertIsApproximatelyEqual(refundedAmount, expectedRefund, ERROR_MARGIN)
 				th.assertIsApproximatelyEqual(collectedFee2, expectedCollectedFee, ERROR_MARGIN)
+				const feeRefundedEvents = th.getAllEventsByName(paybackTx, "FeeRefunded")
+				assert.equal(feeRefundedEvents.length, 0)
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)
 				const treasuryBalance = await debtToken.balanceOf(treasury)
-				assert.equal(aliceBalance.toString(), refundedAmount.toString())
+				assert.equal(aliceBalance.toString(), "0")
 				assert.equal(treasuryBalance.toString(), collectedFee1.add(collectedFee2).toString())
 			})
 
@@ -242,16 +239,15 @@ contract("FeeCollector", async accounts => {
 				// move forward in time to 66% of lifetime
 				await time.increaseTo(t1 + timeIncrease)
 				const expectedCollectedFee2 = decayRate2.mul(toBN(timeIncrease))
-				const expectedRefund2 = feeBalance2.sub(expectedCollectedFee2)
 				const paybackFraction2 = toBN(1 * 10 ** 18) // 100% of debt left
 				const paybackTx2 = await payVesselDebt(alice, erc20.address, paybackFraction2)
 				const { amount: collectedAmount2 } = th.getAllEventsByName(paybackTx2, "FeeCollected")[0].args
-				const { amount: refundedAmount2 } = th.getAllEventsByName(paybackTx2, "FeeRefunded")[0].args
-				th.assertIsApproximatelyEqual(refundedAmount2, expectedRefund2, ERROR_MARGIN)
 				th.assertIsApproximatelyEqual(expectedCollectedFee2, collectedAmount2, ERROR_MARGIN)
+				const feeRefundedEvents = th.getAllEventsByName(paybackTx2, "FeeRefunded")
+				assert.equal(feeRefundedEvents.length, 0)
 				// check final balances
 				const aliceBalance = await debtToken.balanceOf(alice)
-				const expectedAliceBalance = refundedAmount1.add(refundedAmount2)
+				const expectedAliceBalance = refundedAmount1
 				const treasuryBalance = await debtToken.balanceOf(treasury)
 				const expectedTreasuryBalance = minFee.add(collectedAmount1).add(collectedAmount2)
 				assert.equal(aliceBalance.toString(), expectedAliceBalance.toString())
@@ -357,6 +353,37 @@ contract("FeeCollector", async accounts => {
 				// expect no refunds at this point
 				assert.equal(feeRefundedEvents2.length, 0)
 			})
+
+			it("full payback should allow using refund as rebate", async () => {
+				// whale opens vessel
+				await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(20, 18)),
+					extraParams: { from: whale },
+				})
+				// alice opens vessel
+				const borrowAmount = dec(1_000_000, 18)
+				await borrowerOperations.openVessel(erc20.address, dec(10_000, 18), borrowAmount, ZERO_ADDRESS, ZERO_ADDRESS, {
+					from: alice,
+				})
+				// alice owes 1,000,000 + 200 (gasCompensation) + 5,000 (full borrowing fee) = 1,005,200
+				const gasCompensation = await adminContract.getDebtTokenGasCompensation(erc20.address)
+				assert.equal(gasCompensation.toString(), dec(200, 18))
+				const borrowingFee = await vesselManager.getBorrowingFee(erc20.address, borrowAmount)
+				assert.equal(borrowingFee.toString(), dec(5_000, 18))
+				const aliceTotalDebt = await vesselManager.getVesselDebt(erc20.address, alice)
+				assert.equal(aliceTotalDebt.toString(), dec(1_005_200, 18))
+				// trying to close the vessel will fail, alice does not have enough debt tokens
+				assertRevert(borrowerOperations.closeVessel(erc20.address, { from: alice }))
+				// refund available at this point should be maxFee - minFee
+				const { minFee, maxFee } = calcFees(toBN(borrowAmount))
+				const refund = await feeCollector.simulateRefund(alice, erc20.address, 1e18.toString())
+				assert.equal(refund.toString(), maxFee.sub(minFee))
+				// alice grabs enough debt tokens to pay for minFee
+				await debtToken.transfer(alice, minFee, { from: whale })
+				// this time, closing the vessel works
+				await borrowerOperations.closeVessel(erc20.address, { from: alice })
+			})
 		})
 
 		describe("Decay rates", async () => {
@@ -407,7 +434,7 @@ contract("FeeCollector", async accounts => {
 					ICR: toBN(dec(20, 18)),
 					extraParams: { from: whale },
 				})
-				const netDebtWhale = await th.getOpenVesselVUSDAmount(contracts.core, totalDebtWhale, erc20.address)
+				const netDebtWhale = await th.getOpenVesselGRAIAmount(contracts.core, totalDebtWhale, erc20.address)
 				const { minFee: minFeeWhale } = calcFees(netDebtWhale)
 				const treasuryBalance1 = await debtToken.balanceOf(treasury)
 				assert.equal(minFeeWhale.toString(), treasuryBalance1.toString())
@@ -418,11 +445,11 @@ contract("FeeCollector", async accounts => {
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: alice },
 				})
-				const netDebtAlice = await th.getOpenVesselVUSDAmount(contracts.core, totalDebtAlice, erc20.address)
+				const netDebtAlice = await th.getOpenVesselGRAIAmount(contracts.core, totalDebtAlice, erc20.address)
 
 				// alice increases debt, lowering her ICR to 1.11
 				const targetICR = toBN("1111111111111111111")
-				const { VUSDAmount: extraDebtAlice } = await withdrawVUSD({
+				const { GRAIAmount: extraDebtAlice } = await withdrawGRAI({
 					asset: erc20.address,
 					ICR: targetICR,
 					extraParams: { from: alice },

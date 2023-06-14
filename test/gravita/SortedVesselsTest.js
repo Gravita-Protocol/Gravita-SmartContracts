@@ -139,7 +139,7 @@ contract("SortedVessels", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(1000, 18)),
-				extraVUSDAmount: toBN(dec(3000, 18)),
+				extraGRAIAmount: toBN(dec(3000, 18)),
 				extraParams: { from: whale },
 			})
 
@@ -185,7 +185,7 @@ contract("SortedVessels", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(1000, 18)),
-				extraVUSDAmount: toBN(dec(3000, 18)),
+				extraGRAIAmount: toBN(dec(3000, 18)),
 				extraParams: { from: whale },
 			})
 
