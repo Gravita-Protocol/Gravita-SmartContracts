@@ -5,13 +5,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import "./Interfaces/IVesselManager.sol";
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IBorrowerOperations.sol";
+import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
-import "./Interfaces/ICollSurplusPool.sol";
+import "./Interfaces/IPythPriceFeed.sol";
+import "./Interfaces/IVesselManager.sol";
 import "./Addresses.sol";
 
 contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgradeable, IBorrowerOperations {
@@ -69,13 +70,14 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 _assetAmount,
 		uint256 _debtTokenAmount,
 		address _upperHint,
-		address _lowerHint
-	) external override {
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
+	) external payable override {
 		require(IAdminContract(adminContract).getIsActive(_asset), "BorrowerOps: Asset is not active");
 		LocalVariables_openVessel memory vars;
 		vars.asset = _asset;
 
-		vars.price = IPriceFeed(priceFeed).fetchPrice(vars.asset);
+		vars.price = IPythPriceFeed(priceFeed).fetchPrice{ value: msg.value }(vars.asset, _pythPriceUpdateData);
 		bool isRecoveryMode = _checkRecoveryMode(vars.asset, vars.price);
 
 		_requireVesselIsNotActive(vars.asset, msg.sender);
@@ -140,9 +142,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		address _asset,
 		uint256 _assetSent,
 		address _upperHint,
-		address _lowerHint
-	) external override nonReentrant {
-		_adjustVessel(_asset, _assetSent, msg.sender, 0, 0, false, _upperHint, _lowerHint);
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
+	) external payable override nonReentrant {
+		_adjustVessel(_asset, _assetSent, msg.sender, 0, 0, false, _upperHint, _lowerHint, _pythPriceUpdateData);
 	}
 
 	// Withdraw collateral from a vessel
@@ -150,9 +153,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		address _asset,
 		uint256 _collWithdrawal,
 		address _upperHint,
-		address _lowerHint
-	) external override nonReentrant {
-		_adjustVessel(_asset, 0, msg.sender, _collWithdrawal, 0, false, _upperHint, _lowerHint);
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
+	) external payable override nonReentrant {
+		_adjustVessel(_asset, 0, msg.sender, _collWithdrawal, 0, false, _upperHint, _lowerHint, _pythPriceUpdateData);
 	}
 
 	// Withdraw debt tokens from a vessel: mint new debt tokens to the owner, and increase the vessel's debt accordingly
@@ -160,9 +164,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		address _asset,
 		uint256 _debtTokenAmount,
 		address _upperHint,
-		address _lowerHint
-	) external override nonReentrant {
-		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, true, _upperHint, _lowerHint);
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
+	) external payable override nonReentrant {
+		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, true, _upperHint, _lowerHint, _pythPriceUpdateData);
 	}
 
 	// Repay debt tokens to a Vessel: Burn the repaid debt tokens, and reduce the vessel's debt accordingly
@@ -170,9 +175,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		address _asset,
 		uint256 _debtTokenAmount,
 		address _upperHint,
-		address _lowerHint
-	) external override nonReentrant {
-		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, false, _upperHint, _lowerHint);
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
+	) external payable override nonReentrant {
+		_adjustVessel(_asset, 0, msg.sender, 0, _debtTokenAmount, false, _upperHint, _lowerHint, _pythPriceUpdateData);
 	}
 
 	function adjustVessel(
@@ -182,8 +188,9 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 _debtTokenChange,
 		bool _isDebtIncrease,
 		address _upperHint,
-		address _lowerHint
-	) external override nonReentrant {
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
+	) external payable override nonReentrant {
 		_adjustVessel(
 			_asset,
 			_assetSent,
@@ -192,7 +199,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 			_debtTokenChange,
 			_isDebtIncrease,
 			_upperHint,
-			_lowerHint
+			_lowerHint,
+			_pythPriceUpdateData
 		);
 	}
 
@@ -207,11 +215,12 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 _debtTokenChange,
 		bool _isDebtIncrease,
 		address _upperHint,
-		address _lowerHint
+		address _lowerHint,
+		bytes[] calldata _pythPriceUpdateData
 	) internal {
 		LocalVariables_adjustVessel memory vars;
 		vars.asset = _asset;
-		vars.price = IPriceFeed(priceFeed).fetchPrice(vars.asset);
+		vars.price = IPythPriceFeed(priceFeed).fetchPrice{ value: msg.value }(vars.asset, _pythPriceUpdateData);
 		bool isRecoveryMode = _checkRecoveryMode(vars.asset, vars.price);
 
 		if (_isDebtIncrease) {
@@ -299,9 +308,9 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		);
 	}
 
-	function closeVessel(address _asset) external override {
+	function closeVessel(address _asset, bytes[] calldata _pythPriceUpdateData) external payable override {
 		_requireVesselIsActive(_asset, msg.sender);
-		uint256 price = IPriceFeed(priceFeed).fetchPrice(_asset);
+		uint256 price = IPythPriceFeed(priceFeed).fetchPrice{ value: msg.value }(_asset, _pythPriceUpdateData);
 		_requireNotInRecoveryMode(_asset, price);
 
 		IVesselManager(vesselManager).applyPendingRewards(_asset, msg.sender);

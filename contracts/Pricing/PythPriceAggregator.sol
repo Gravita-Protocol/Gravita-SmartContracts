@@ -17,16 +17,12 @@ interface ChainlinkAggregatorV3Interface {
 
 contract PythAggregator is ChainlinkAggregatorV3Interface {
 	
-	/// @notice Crypto.ETH/USD on Pyth EVM Mainnet (https://pyth.network/developers/price-feed-ids)
-	// string public constant priceId = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
+	IPyth public pyth;
+	string public priceId;
 
-	/// @notice Crypto.ETH/USD on Pyth EVM Testnet (https://pyth.network/developers/price-feed-ids)
-	string public constant priceId = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6";
-
-	IPyth pyth;
-
-	constructor(address pythContract) {
-		pyth = IPyth(pythContract);
+	constructor(address _pythContract, string memory _priceId) {
+		pyth = IPyth(_pythContract);
+		priceId = _priceId;
 	}
 
 	function decimals() external view override returns (uint8) {
