@@ -307,8 +307,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			vars.maxIterations = type(uint256).max;
 		}
 
-		uint256 softeningParam = redemptionSofteningParam;
-
 		while (currentVesselBorrower != address(0) && remainingDebt != 0 && vars.maxIterations-- != 0) {
 			uint256 currentVesselNetDebt = _getNetDebt(
 				vars.asset,
@@ -330,7 +328,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
 					// Apply redemption softening
-					collLot = (collLot * softeningParam) / PERCENTAGE_PRECISION;
+					collLot = (collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
 					uint256 newColl = currentVesselColl - collLot;
 					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
