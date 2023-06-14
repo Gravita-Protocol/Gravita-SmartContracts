@@ -5,7 +5,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+
+import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
 
@@ -136,17 +137,18 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	}
 
 	/**
-	 * Triggered by VesselManager.finalizeRedemption(); assumes _amount of _asset has been moved here from ActivePool.
+	 * Triggered by VesselManager.finalizeRedemption(); assumes _amount of _asset has been already transferred to
+	 * getProtocolRevenueDestination().
 	 */
 	function handleRedemptionFee(address _asset, uint256 _amount) external onlyVesselManager {
-		if (_amount != 0) {
-			address collector = _routeToGRVTStaking() ? grvtStaking : treasuryAddress;
-			IERC20Upgradeable(_asset).safeTransfer(collector, _amount);
-			if (_routeToGRVTStaking()) {
-				IGRVTStaking(grvtStaking).increaseFee_Asset(_asset, _amount);
-			}
-			emit RedemptionFeeCollected(_asset, _amount);
+		if (_routeToGRVTStaking()) {
+			IGRVTStaking(grvtStaking).increaseFee_Asset(_asset, _amount);
 		}
+		emit RedemptionFeeCollected(_asset, _amount);
+	}
+
+	function getProtocolRevenueDestination() public view override returns (address) {
+		return _routeToGRVTStaking() ? grvtStaking : treasuryAddress;
 	}
 
 	// Helper & internal methods ----------------------------------------------------------------------------------------
@@ -166,10 +168,10 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 			uint256 expiredAmount = _calcExpiredAmount(sRecord.from, sRecord.to, sRecord.amount);
 			_collectFee(_borrower, _asset, expiredAmount);
 			if (_paybackFraction == 1e18) {
-				// full payback
+				// on a full payback, there's no refund; refund amount is discounted from final payment
 				uint256 refundAmount = sRecord.amount - expiredAmount;
+				IDebtToken(debtToken).burnFromWhitelistedContract(refundAmount);
 				sRecord.amount = 0;
-				_refundFee(_borrower, _asset, refundAmount);
 				emit FeeRecordUpdated(_borrower, _asset, NOW, 0, 0);
 			} else {
 				// refund amount proportional to the payment
@@ -276,7 +278,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	 */
 	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount != 0) {
-			address collector = _routeToGRVTStaking() ? grvtStaking : treasuryAddress;
+			address collector = getProtocolRevenueDestination();
 			IERC20Upgradeable(debtToken).safeTransfer(collector, _feeAmount);
 			if (_routeToGRVTStaking()) {
 				IGRVTStaking(grvtStaking).increaseFee_DebtToken(_feeAmount);
@@ -295,7 +297,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	/**
 	 * Use a function for reading the constant, as it will be overwritten by the Tester contract.
 	 */
-	function _routeToGRVTStaking() internal virtual returns (bool) {
+	function _routeToGRVTStaking() internal view virtual returns (bool) {
 		return routeToGRVTStaking;
 	}
 
