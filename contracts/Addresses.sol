@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "./TestContracts/AddressesGoerli.sol";
+import "./TestContracts/AddressesHardhat.sol";
 
-contract Addresses is AddressesGoerli {}
+contract Addresses is AddressesHardhat {}
 
