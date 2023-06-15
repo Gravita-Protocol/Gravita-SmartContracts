@@ -3539,144 +3539,144 @@
             "offset": 0,
             "slot": "251",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:8"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:8"
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "252",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:9"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:9"
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "253",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:10"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:10"
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "254",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:11"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:11"
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "255",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:12"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:12"
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "256",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:13"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:13"
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "257",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:14"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:14"
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "258",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:15"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:15"
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "259",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:16"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:17"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:17"
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "261",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:18"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:18"
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "262",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:19"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:19"
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "263",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:20"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:20"
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "264",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:21"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:21"
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "265",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:22"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:22"
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "266",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:23"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:23"
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "267",
             "type": "t_address",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:24"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:24"
           },
           {
             "label": "isAddressSetupInitialized",
             "offset": 20,
             "slot": "267",
             "type": "t_bool",
-            "contract": "Addresses",
-            "src": "contracts\\Addresses.sol:26"
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:26"
           },
           {
             "label": "assetsBalances",
@@ -6884,7 +6884,7 @@
             "slot": "0",
             "type": "t_uint8",
             "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
             "retypedFrom": "bool"
           },
           {
@@ -6893,7 +6893,7 @@
             "slot": "0",
             "type": "t_bool",
             "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
           },
           {
             "label": "_status",
@@ -6901,7 +6901,7 @@
             "slot": "1",
             "type": "t_uint256",
             "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
           },
           {
             "label": "__gap",
@@ -6909,7 +6909,7 @@
             "slot": "2",
             "type": "t_array(t_uint256)49_storage",
             "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:80"
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:80"
           },
           {
             "label": "__gap",
@@ -6917,7 +6917,7 @@
             "slot": "51",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC1967UpgradeUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:197"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
           },
           {
             "label": "__gap",
@@ -6925,7 +6925,7 @@
             "slot": "101",
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
           },
           {
             "label": "__gap",
@@ -6933,7 +6933,7 @@
             "slot": "151",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
           },
           {
             "label": "_owner",
@@ -6941,7 +6941,7 @@
             "slot": "201",
             "type": "t_address",
             "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
           },
           {
             "label": "__gap",
@@ -6949,7 +6949,7 @@
             "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
           },
           {
             "label": "activePool",
@@ -6957,7 +6957,7 @@
             "slot": "251",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:8"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:8"
           },
           {
             "label": "adminContract",
@@ -6965,7 +6965,7 @@
             "slot": "252",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:9"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:9"
           },
           {
             "label": "borrowerOperations",
@@ -6973,7 +6973,7 @@
             "slot": "253",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:10"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:10"
           },
           {
             "label": "collSurplusPool",
@@ -6981,7 +6981,7 @@
             "slot": "254",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:11"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:11"
           },
           {
             "label": "communityIssuance",
@@ -6989,7 +6989,7 @@
             "slot": "255",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:12"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:12"
           },
           {
             "label": "debtToken",
@@ -6997,7 +6997,7 @@
             "slot": "256",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:13"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:13"
           },
           {
             "label": "defaultPool",
@@ -7005,7 +7005,7 @@
             "slot": "257",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:14"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:14"
           },
           {
             "label": "feeCollector",
@@ -7013,7 +7013,7 @@
             "slot": "258",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:15"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:15"
           },
           {
             "label": "gasPoolAddress",
@@ -7021,7 +7021,7 @@
             "slot": "259",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:16"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
             "label": "grvtStaking",
@@ -7029,7 +7029,7 @@
             "slot": "260",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:17"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:17"
           },
           {
             "label": "priceFeed",
@@ -7037,7 +7037,7 @@
             "slot": "261",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:18"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:18"
           },
           {
             "label": "sortedVessels",
@@ -7045,7 +7045,7 @@
             "slot": "262",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:19"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:19"
           },
           {
             "label": "stabilityPool",
@@ -7053,7 +7053,7 @@
             "slot": "263",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:20"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:20"
           },
           {
             "label": "timelockAddress",
@@ -7061,7 +7061,7 @@
             "slot": "264",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:21"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:21"
           },
           {
             "label": "treasuryAddress",
@@ -7069,7 +7069,7 @@
             "slot": "265",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:22"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:22"
           },
           {
             "label": "vesselManager",
@@ -7077,7 +7077,7 @@
             "slot": "266",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:23"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:23"
           },
           {
             "label": "vesselManagerOperations",
@@ -7085,7 +7085,7 @@
             "slot": "267",
             "type": "t_address",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:24"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:24"
           },
           {
             "label": "isAddressSetupInitialized",
@@ -7093,7 +7093,7 @@
             "slot": "267",
             "type": "t_bool",
             "contract": "AddressesArbitrum",
-            "src": "contracts/Dependencies/AddressesArbitrum.sol:26"
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:26"
           },
           {
             "label": "totalDebtTokenDeposits",
@@ -7101,15 +7101,15 @@
             "slot": "268",
             "type": "t_uint256",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:146"
+            "src": "contracts\\StabilityPool.sol:146"
           },
           {
             "label": "totalColl",
             "offset": 0,
             "slot": "269",
-            "type": "t_struct(Colls)8391_storage",
+            "type": "t_struct(Colls)13876_storage",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:151"
+            "src": "contracts\\StabilityPool.sol:151"
           },
           {
             "label": "deposits",
@@ -7117,15 +7117,15 @@
             "slot": "271",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:153"
+            "src": "contracts\\StabilityPool.sol:153"
           },
           {
             "label": "depositSnapshots",
             "offset": 0,
             "slot": "272",
-            "type": "t_mapping(t_address,t_struct(Snapshots)8695_storage)",
+            "type": "t_mapping(t_address,t_struct(Snapshots)14180_storage)",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:163"
+            "src": "contracts\\StabilityPool.sol:163"
           },
           {
             "label": "P",
@@ -7133,7 +7133,7 @@
             "slot": "273",
             "type": "t_uint256",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:171"
+            "src": "contracts\\StabilityPool.sol:171"
           },
           {
             "label": "currentScale",
@@ -7141,7 +7141,7 @@
             "slot": "274",
             "type": "t_uint128",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:176"
+            "src": "contracts\\StabilityPool.sol:176"
           },
           {
             "label": "currentEpoch",
@@ -7149,7 +7149,7 @@
             "slot": "274",
             "type": "t_uint128",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:179"
+            "src": "contracts\\StabilityPool.sol:179"
           },
           {
             "label": "epochToScaleToSum",
@@ -7157,7 +7157,7 @@
             "slot": "275",
             "type": "t_mapping(t_address,t_mapping(t_uint128,t_mapping(t_uint128,t_uint256)))",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:190"
+            "src": "contracts\\StabilityPool.sol:190"
           },
           {
             "label": "epochToScaleToG",
@@ -7165,7 +7165,7 @@
             "slot": "276",
             "type": "t_mapping(t_uint128,t_mapping(t_uint128,t_uint256))",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:199"
+            "src": "contracts\\StabilityPool.sol:199"
           },
           {
             "label": "lastGRVTError",
@@ -7173,7 +7173,7 @@
             "slot": "277",
             "type": "t_uint256",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:202"
+            "src": "contracts\\StabilityPool.sol:202"
           },
           {
             "label": "lastAssetError_Offset",
@@ -7181,7 +7181,7 @@
             "slot": "278",
             "type": "t_array(t_uint256)dyn_storage",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:204"
+            "src": "contracts\\StabilityPool.sol:204"
           },
           {
             "label": "lastDebtTokenLossError_Offset",
@@ -7189,7 +7189,7 @@
             "slot": "279",
             "type": "t_uint256",
             "contract": "StabilityPool",
-            "src": "contracts/StabilityPool.sol:205"
+            "src": "contracts\\StabilityPool.sol:205"
           }
         ],
         "types": {
@@ -7221,7 +7221,7 @@
             "label": "mapping(address => mapping(uint128 => mapping(uint128 => uint256)))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(Snapshots)8695_storage)": {
+          "t_mapping(t_address,t_struct(Snapshots)14180_storage)": {
             "label": "mapping(address => struct IStabilityPool.Snapshots)",
             "numberOfBytes": "32"
           },
@@ -7237,7 +7237,7 @@
             "label": "mapping(uint128 => uint256)",
             "numberOfBytes": "32"
           },
-          "t_struct(Colls)8391_storage": {
+          "t_struct(Colls)13876_storage": {
             "label": "struct IGravitaBase.Colls",
             "members": [
               {
@@ -7255,7 +7255,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Snapshots)8695_storage": {
+          "t_struct(Snapshots)14180_storage": {
             "label": "struct IStabilityPool.Snapshots",
             "members": [
               {
@@ -7294,6 +7294,911 @@
           "t_uint128": {
             "label": "uint128",
             "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "2c98be722e89d7994f62b954b1dbf3b60f64a1b12f077b3be4c0e054dc65706b": {
+      "address": "0xfEDeC426A974DAd4D3B9DcA26edB0DE02f812A0d",
+      "txHash": "0xb4c0803cc29ad0be2fbd66d3c6d6455bb31fe26add1ed0ea033705c1e6f3265f",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "109",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "110",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "111",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "112",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "113",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "114",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "115",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "116",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "117",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "117",
+            "type": "t_bool",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:26"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "118",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "119",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "6a60417edbdb6576051af41d6a17e1ab15bfa216e3a28e3ce0a9bdba3a5faf71": {
+      "address": "0x80C1eE743FE8f6DC3ccd34b69c73efFBF2EF5B05",
+      "txHash": "0x33431d79064d19be907139a5a4d6c4bf263199970c33db036793ba3e9a1cb7e5",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:26"
+          },
+          {
+            "label": "feeRecords",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)13669_storage))",
+            "contract": "FeeCollector",
+            "src": "contracts\\FeeCollector.sol:28"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)13669_storage))": {
+            "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(FeeRecord)13669_storage)": {
+            "label": "mapping(address => struct IFeeCollector.FeeRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(FeeRecord)13669_storage": {
+            "label": "struct IFeeCollector.FeeRecord",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "1644d49f5a578821e66e365bb44dafed80ff262e597e81922d2d73bc964899d2": {
+      "address": "0x9c20BFc5A956A82D9c6c2825D3cd0ec2eB867F34",
+      "txHash": "0x641f648285cd172a20c2eacaee4cb7f3d30557686fb86c9d81d13cb0345d9864",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_address",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesArbitrum",
+            "src": "contracts\\Dependencies\\AddressesArbitrum.sol:26"
+          },
+          {
+            "label": "oracleRecords",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_mapping(t_address,t_struct(OracleRecord)13965_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:32"
+          },
+          {
+            "label": "priceRecords",
+            "offset": 0,
+            "slot": "219",
+            "type": "t_mapping(t_address,t_struct(PriceRecord)13970_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:33"
+          },
+          {
+            "label": "oracles",
+            "offset": 0,
+            "slot": "220",
+            "type": "t_mapping(t_address,t_struct(OracleRecordV2)13954_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:35"
+          },
+          {
+            "label": "fallbacks",
+            "offset": 0,
+            "slot": "221",
+            "type": "t_mapping(t_address,t_struct(OracleRecordV2)13954_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:36"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_enum(ProviderType)13942": {
+            "label": "enum IPriceFeed.ProviderType",
+            "members": [
+              "Chainlink"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_struct(OracleRecord)13965_storage)": {
+            "label": "mapping(address => struct IPriceFeed.OracleRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(OracleRecordV2)13954_storage)": {
+            "label": "mapping(address => struct IPriceFeed.OracleRecordV2)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(PriceRecord)13970_storage)": {
+            "label": "mapping(address => struct IPriceFeed.PriceRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(OracleRecord)13965_storage": {
+            "label": "struct IPriceFeed.OracleRecord",
+            "members": [
+              {
+                "label": "chainLinkOracle",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxDeviationBetweenRounds",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isFeedWorking",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "2"
+              },
+              {
+                "label": "isEthIndexed",
+                "type": "t_bool",
+                "offset": 2,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(OracleRecordV2)13954_storage": {
+            "label": "struct IPriceFeed.OracleRecordV2",
+            "members": [
+              {
+                "label": "oracleAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "providerType",
+                "type": "t_enum(ProviderType)13942",
+                "offset": 20,
+                "slot": "0"
+              },
+              {
+                "label": "timeoutMinutes",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "decimals",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isEthIndexed",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(PriceRecord)13970_storage": {
+            "label": "struct IPriceFeed.PriceRecord",
+            "members": [
+              {
+                "label": "scaledPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
           },
           "t_uint256": {
             "label": "uint256",
