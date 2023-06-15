@@ -51,7 +51,7 @@ const fs = require("fs")
 			if (alreadyDeployed) {
 				// Non-Upgradeable contract, already deployed
 				console.log(`Using previous deployment: ${address} -> ${contractName}`)
-				return [await factory.attach(address), false]
+				return await factory.attach(address)
 			} else {
 				// Non-Upgradeable contract, new deployment
 				console.log(`(Deploying ${contractName}...)`)
@@ -65,7 +65,7 @@ const fs = require("fs")
 						)
 						await contract.deployed()
 						await this.updateState(contractName, contract, isUpgradeable, state)
-						return [contract, false]
+						return contract
 					} catch (e) {
 						console.log(`[Error: ${e.message}] Retrying...`)
 					}
@@ -76,37 +76,8 @@ const fs = require("fs")
 		if (alreadyDeployed) {
 			// Existing upgradeable contract
 			const existingContract = await factory.attach(address)
-			const owner = await existingContract.owner()
-			if (owner == this.deployerWallet.address) {
-				const existingConfigAddress = await existingContract.adminContract()
-				const isUpgraded = existingConfigAddress != ZERO_ADDRESS
-				if (isUpgraded) {
-					console.log(`Using previous deployment: ${address} -> ${contractName}`)
-					return [existingContract, true]
-				} else {
-					console.log(`(Upgrading ${contractName}...)`)
-					while (++retry < maxRetries) {
-						try {
-							const upgradedContract = await upgrades.upgradeProxy(address, factory, params)
-							await this.deployerWallet.provider.waitForTransaction(
-								upgradedContract.deployTransaction.hash,
-								this.configParams.TX_CONFIRMATIONS,
-								timeout
-							)
-							await this.updateState(contractName, upgradedContract, isUpgradeable, state)
-							return [upgradedContract, true]
-						} catch (e) {
-							console.log(`[Error: ${e.message}] Retrying...`)
-						}
-					}
-					throw Error(`ERROR: Unable to deploy contract ${contractName} after ${maxRetries} attempts.`)
-				}
-			} else {
-				console.log(
-					`[NOTICE] Cannot upgrade ${contractName}: deployer = ${this.deployerWallet.address}, owner = ${owner}`
-				)
-				return [existingContract, true]
-			}
+			console.log(`Using previous deployment: ${address} -> ${contractName}`)
+			return existingContract
 		} else {
 			// Upgradeable contract, new deployment
 			console.log(`(Deploying ${contractName}...)`)
@@ -124,7 +95,7 @@ const fs = require("fs")
 					)
 					await newContract.deployed()
 					await this.updateState(contractName, newContract, isUpgradeable, state)
-					return [newContract, false]
+					return newContract
 				} catch (e) {
 					console.log(`[Error: ${e.message}] Retrying...`)
 				}

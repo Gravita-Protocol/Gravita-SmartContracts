@@ -9,7 +9,7 @@ const { Deployer } = require("./deployer-common.js")
 class CoreDeployer extends Deployer {
 	constructor(hre, targetNetwork) {
 		super(hre, targetNetwork)
-		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet)
+		this.helper = new CoreDeploymentHelper(this.hre, this.config, this.deployerWallet, this.targetNetwork)
 	}
 
 	async run() {
@@ -17,17 +17,16 @@ class CoreDeployer extends Deployer {
 
 		await this.printDeployerBalance()
 
-		const { contracts, allUpgraded } = await this.helper.loadOrDeployOrUpgradeCoreContracts()
+		this.coreContracts = await this.helper.loadOrDeployCoreContracts()
+		// await this.helper.connectCoreContracts(this.coreContracts, this.config.GRAI_TOKEN_ADDRESS, this.config.TREASURY_WALLET)
 
-		// if (allUpgraded) {
-		// 	console.log(`All contracts have been upgraded, setting parameters...`)
-		// 	this.coreContracts = contracts
-		// 	await this.addCollaterals()
-		// 	await this.toggleContractSetupInitialization(contracts.adminContract)
-		// 	await this.helper.verifyCoreContracts()
-		// }
+		// await this.addCollaterals()
+		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
+
+		await this.helper.verifyCoreContracts()
 		
-		await this.transferContractsOwnerships(contracts)
+		// disable ownership transfer for now
+		// await this.transferContractsOwnerships(contracts)
 
 		await this.printDeployerBalance()
 	}
@@ -54,8 +53,8 @@ class CoreDeployer extends Deployer {
 	}
 
 	async addPriceFeedOracle(coll) {
-		const oracleRecord = await this.coreContracts.priceFeed.oracleRecords(coll.address)
-		if (!oracleRecord.exists) {
+		const oracleRecord = await this.coreContracts.priceFeed.oracles(coll.address)
+		if (oracleRecord.decimals == 0) {
 			const owner = await this.coreContracts.priceFeed.owner()
 			if (owner != this.deployerWallet.address) {
 				console.log(
@@ -64,17 +63,21 @@ class CoreDeployer extends Deployer {
 				return
 			}
 			console.log(`[${coll.name}] PriceFeed.setOracle()`)
+			const oracleProviderType = 0 // enum IPriceFeed.ProviderType.Chainlink
+			const isFallback = false
 			await this.helper.sendAndWaitForTransaction(
 				this.coreContracts.priceFeed.setOracle(
 					coll.address,
 					coll.oracleAddress,
-					coll.oraclePriceDeviation.toString(),
-					coll.oracleIsEthIndexed
+					oracleProviderType,
+					coll.oracleTimeoutMinutes,
+					coll.oracleIsEthIndexed,
+					isFallback
 				)
 			)
 			console.log(`[${coll.name}] Oracle Price Feed has been set @ ${coll.oracleAddress}`)
 		} else {
-			if (oracleRecord.chainLinkOracle == coll.oracleAddress) {
+			if (oracleRecord.oracleAddress == coll.oracleAddress) {
 				console.log(`[${coll.name}] Oracle Price Feed had already been set @ ${coll.oracleAddress}`)
 			} else {
 				console.log(
