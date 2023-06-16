@@ -17098,7 +17098,7 @@
             "label": "collateralParams",
             "offset": 0,
             "slot": "265",
-            "type": "t_mapping(t_address,t_struct(CollateralParams)12813_storage)",
+            "type": "t_mapping(t_address,t_struct(CollateralParams)2205_storage)",
             "contract": "AdminContract",
             "src": "contracts\\AdminContract.sol:38"
           },
@@ -17144,11 +17144,11 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_mapping(t_address,t_struct(CollateralParams)12813_storage)": {
+          "t_mapping(t_address,t_struct(CollateralParams)2205_storage)": {
             "label": "mapping(address => struct IAdminContract.CollateralParams)",
             "numberOfBytes": "32"
           },
-          "t_struct(CollateralParams)12813_storage": {
+          "t_struct(CollateralParams)2205_storage": {
             "label": "struct IAdminContract.CollateralParams",
             "members": [
               {
@@ -20207,6 +20207,364 @@
           "t_bool": {
             "label": "bool",
             "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "7ac238ae45770d800aaf162a6a44b8fc936c7156b41ced4147b11b0dc9090166": {
+      "address": "0x8dEB2588d0e800046064A557dcDFbb9316EB26Ad",
+      "txHash": "0x08abe0bb0c69f97e595642c1d4fde430ac19e02fc85c0a5937b21148083357da",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:33"
+          },
+          {
+            "label": "collateralParams",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_mapping(t_address,t_struct(CollateralParams)2215_storage)",
+            "contract": "AdminContract",
+            "src": "contracts\\AdminContract.sol:38"
+          },
+          {
+            "label": "validCollateral",
+            "offset": 0,
+            "slot": "266",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "AdminContract",
+            "src": "contracts\\AdminContract.sol:42"
+          },
+          {
+            "label": "isSetupInitialized",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AdminContract",
+            "src": "contracts\\AdminContract.sol:44"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_struct(CollateralParams)2215_storage)": {
+            "label": "mapping(address => struct IAdminContract.CollateralParams)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(CollateralParams)2215_storage": {
+            "label": "struct IAdminContract.CollateralParams",
+            "members": [
+              {
+                "label": "decimals",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "index",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "borrowingFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "ccr",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "mcr",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "debtTokenGasCompensation",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "minNetDebt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "mintCap",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "percentDivisor",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "redemptionFeeFloor",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "10"
+              },
+              {
+                "label": "redemptionBlockTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "11"
+              }
+            ],
+            "numberOfBytes": "384"
           },
           "t_uint256": {
             "label": "uint256",

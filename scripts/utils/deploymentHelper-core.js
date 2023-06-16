@@ -88,6 +88,8 @@ class CoreDeploymentHelper extends DeploymentHelper {
 				if (!isAddressSetupInitialized) {
 					console.log(`${key}.setAddresses()...`)
 					await setAddresses(contract)
+				} else {
+					console.log(`${key}.setAddresses() already set!`)
 				}
 			}
 		}

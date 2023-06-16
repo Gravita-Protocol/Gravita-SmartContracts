@@ -18,10 +18,12 @@ class CoreDeployer extends Deployer {
 		await this.printDeployerBalance()
 
 		this.coreContracts = await this.helper.loadOrDeployCoreContracts()
-		// await this.helper.connectCoreContracts(this.coreContracts, this.config.GRAI_TOKEN_ADDRESS, this.config.TREASURY_WALLET)
+		await this.helper.connectCoreContracts(this.coreContracts, this.config.GRAI_TOKEN_ADDRESS, this.config.TREASURY_WALLET)
 
-		// await this.addCollaterals()
-		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
+		await this.addCollaterals()
+
+		// disable admin->timelock toggle for now
+		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
 
 		await this.helper.verifyCoreContracts()
 		
