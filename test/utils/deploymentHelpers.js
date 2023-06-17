@@ -151,6 +151,8 @@ class DeploymentHelper {
 			const contract = core[key]
 			if (contract.setAddresses && contract.isAddressSetupInitialized) {
 				await setAddresses(contract)
+				await contract.setCommunityIssuance(grvt.communityIssuance.address)
+				await contract.setGRVTStaking(grvt.grvtStaking.address)
 			}
 		}
 		await core.debtToken.setAddresses(
@@ -159,12 +161,6 @@ class DeploymentHelper {
 			core.vesselManager.address
 		)
 		await core.debtToken.addWhitelist(core.feeCollector.address)
-		for (const key in grvt) {
-			const contract = grvt[key]
-			if (contract.setAddresses && contract.isAddressSetupInitialized) {
-				await setAddresses(contract)
-			}
-		}
 
 		await core.priceFeedTestnet.setPrice(core.erc20.address, dec(200, "ether"))
 		await core.priceFeedTestnet.setPrice(core.erc20B.address, dec(100, "ether"))
