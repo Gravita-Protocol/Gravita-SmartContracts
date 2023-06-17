@@ -1,3 +1,4 @@
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants.js")
 const { DeploymentTestnets } = require("../deployment/deployer-common.js")
 const DeploymentHelper = require("./deploymentHelper-common.js")
 
@@ -10,10 +11,9 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		this.state = this.loadPreviousDeployment()
 	}
 
-	async loadOrDeployOrUpgradeCoreContracts() {
+	async loadOrDeployCoreContracts() {
 		console.log(`Deploying core contracts...`)
 
-		// Upgradeable contracts
 		const activePool = await this.deployUpgradeable("ActivePool")
 		const adminContract = await this.deployUpgradeable("AdminContract")
 		const borrowerOperations = await this.deployUpgradeable("BorrowerOperations")
@@ -26,10 +26,9 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		const vesselManager = await this.deployUpgradeable("VesselManager")
 		const vesselManagerOperations = await this.deployUpgradeable("VesselManagerOperations")
 
-		// Non-upgradable contracts
 		const gasPool = await this.deployNonUpgradeable("GasPool")
 
-		let timelock, timelockDelay, timelockFactory
+		let timelockDelay, timelockFactory
 		if (this.isTestnet) {
 			timelockDelay = 5 * 60 // 5 minutes
 			timelockFactory = "TimelockTester"
@@ -38,10 +37,11 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			timelockFactory = "Timelock"
 		}
 		const timelockParams = [timelockDelay, this.configParams.SYSTEM_PARAMS_ADMIN]
-		timelock = await this.deployNonUpgradeable(timelockFactory, timelockParams)
+		const timelock = await this.deployNonUpgradeable(timelockFactory, timelockParams)
+		await this.verifyContract(timelockFactory, this.state, timelockParams)
 
-		// Debt Token is already deployed on L2
-		// const debtToken = await this.deployNonUpgradeable("DebtToken")
+		const debtToken = await this.deployNonUpgradeable("DebtToken")
+		await debtToken.setAddresses(borrowerOperations.address, stabilityPool.address, vesselManager.address)
 
 		const contracts = {
 			activePool,
@@ -62,15 +62,14 @@ class CoreDeploymentHelper extends DeploymentHelper {
 		return contracts
 	}
 
-	async connectCoreContracts(contracts, debtTokenAddress, treasuryAddress) {
-		console.log(`debtToken: ${debtTokenAddress} treasury: ${treasuryAddress}`)
+	async connectCoreContracts(contracts, treasuryAddress) {
 		const setAddresses = async contract => {
-			await contract.setAddresses([
+			const addresses = [
 				contracts.activePool.address,
 				contracts.adminContract.address,
 				contracts.borrowerOperations.address,
 				contracts.collSurplusPool.address,
-				debtTokenAddress,
+				contracts.debtToken.address,
 				contracts.defaultPool.address,
 				contracts.feeCollector.address,
 				contracts.gasPool.address,
@@ -81,16 +80,30 @@ class CoreDeploymentHelper extends DeploymentHelper {
 				treasuryAddress,
 				contracts.vesselManager.address,
 				contracts.vesselManagerOperations.address,
-			])
+			]
+			for (const [i, addr] of addresses.entries()) {
+				if (!addr || addr == ZERO_ADDRESS) {
+					throw new Error(`setAddresses :: Invalid address for index ${i}`)
+				}
+			}
+			await contract.setAddresses(addresses)
 		}
 		for (const key in contracts) {
 			const contract = contracts[key]
-			if (contract.setAddresses) {
+			if (contract.setAddresses && contract.isAddressSetupInitialized) {
 				const isAddressSetupInitialized = await contract.isAddressSetupInitialized()
 				if (!isAddressSetupInitialized) {
 					console.log(`${key}.setAddresses()...`)
-					await setAddresses(contract)
+					try {
+						await setAddresses(contract)
+					} catch (e) {
+						console.log(`${key}.setAddresses() failed!`)
+					}
+				} else {
+					console.log(`${key}.setAddresses() already set!`)
 				}
+			} else {
+				console.log(`(${key} has no setAddresses() or isAddressSetupInitialized() function)`)
 			}
 		}
 	}
@@ -122,7 +135,6 @@ class CoreDeploymentHelper extends DeploymentHelper {
 			await this.verifyContract("StabilityPool", this.state)
 			await this.verifyContract("VesselManager", this.state)
 			await this.verifyContract("VesselManagerOperations", this.state)
-			await this.verifyContract("Timelock", this.state)
 		}
 	}
 }
