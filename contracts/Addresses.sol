@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "./TestContracts/AddressesHardhat.sol";
-import "./TestContracts/AddressesGoerli.sol";
+import "./Dependencies/AddressesConfigurable.sol";
 
-contract Addresses is AddressesArbitrum {}
+contract Addresses is AddressesConfigurable {}
 

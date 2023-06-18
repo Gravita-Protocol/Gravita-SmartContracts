@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-abstract contract AddressesGoerli is OwnableUpgradeable {
+abstract contract AddressesConfigurable is OwnableUpgradeable {
 	address public activePool;
 	address public adminContract;
 	address public borrowerOperations;

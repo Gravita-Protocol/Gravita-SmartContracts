@@ -414,8 +414,10 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
 			await sortedVessels.initialize()
-			await sortedVessels.setBorrowerOperations(sortedVesselsTester.address)
-			await sortedVessels.setVesselManager(sortedVesselsTester.address)
+
+			const addresses = new Array(15).fill(sortedVesselsTester.address, 0)
+			await sortedVessels.setAddresses(addresses)
+	
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})
 
