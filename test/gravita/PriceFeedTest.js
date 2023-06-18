@@ -83,7 +83,9 @@ contract("PriceFeed", async accounts => {
 		timelock = await Timelock.new(86400 * 2, owner)
 		setBalance(timelock.address, 1e18)
 
-		await priceFeed.setTimelock(timelock.address)
+		const addresses = new Array(15).fill(ZERO_ADDRESS, 0)
+		addresses[11] = timelock.address
+		await priceFeed.setAddresses(addresses)
 		await setOracle(ZERO_ADDRESS, mockOracle.address)
 	})
 
