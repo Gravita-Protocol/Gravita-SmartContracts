@@ -2,12 +2,17 @@ import "@matterlabs/hardhat-zksync-deploy"
 import "@matterlabs/hardhat-zksync-solc"
 import "@matterlabs/hardhat-zksync-verify"
 import "@openzeppelin/hardhat-upgrades"
+import { task } from "hardhat/config"
+
+import { CoreDeployer, DeploymentTarget } from "./scripts/deployment/deploy-core"
 
 require("dotenv").config()
 
-function accounts() {
-	return [`${process.env.DEPLOYER_PRIVATEKEY}`]
-}
+task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Localhost).run()
+)
+
+const accounts = () => [`${process.env.DEPLOYER_PRIVATEKEY}`]
 
 module.exports = {
 	zksolc: {

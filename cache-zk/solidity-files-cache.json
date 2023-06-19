@@ -17,7 +17,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -54,6 +55,54 @@
         "ActivePool"
       ]
     },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Addresses.sol": {
+      "lastModificationDate": 1687093582959,
+      "contentHash": "37346e47bc11efbd741a4398facc0418",
+      "sourceName": "contracts/Addresses.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./Dependencies/AddressesConfigurable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "Addresses"
+      ]
+    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\SafetyTransfer.sol": {
       "lastModificationDate": 1684960833817,
       "contentHash": "b32d4159a1ccf4d7c1da226b2a17986b",
@@ -70,7 +119,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -101,53 +151,6 @@
         "SafetyTransfer"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Addresses.sol": {
-      "lastModificationDate": 1686770560821,
-      "contentHash": "00beecb7e57048dc1d815c14cdf8975e",
-      "sourceName": "contracts/Addresses.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "./Dependencies/AddressesArbitrum.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "Addresses"
-      ]
-    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IActivePool.sol": {
       "lastModificationDate": 1684960833823,
       "contentHash": "cd2ce39b989505138e5d3bcfdd6ffcb7",
@@ -164,7 +167,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -211,7 +215,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -258,7 +263,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -306,7 +312,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -355,7 +362,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -388,10 +396,10 @@
         "SafeERC20Upgradeable"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IERC20Decimals.sol": {
-      "lastModificationDate": 1684960833828,
-      "contentHash": "8730369427db68d359291757c889e561",
-      "sourceName": "contracts/Interfaces/IERC20Decimals.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\AddressesConfigurable.sol": {
+      "lastModificationDate": 1687093573017,
+      "contentHash": "ed4bc04df0b394f14df80eb0fc33ee67",
+      "sourceName": "contracts/Dependencies/AddressesConfigurable.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -404,52 +412,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "IERC20Decimals"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\AddressesArbitrum.sol": {
-      "lastModificationDate": 1686770560822,
-      "contentHash": "d7bf693dfa0c33faf3b2c7fde0b56075",
-      "sourceName": "contracts/Dependencies/AddressesArbitrum.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -477,7 +441,7 @@
         "^0.8.19"
       ],
       "artifacts": [
-        "AddressesArbitrum"
+        "AddressesConfigurable"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol": {
@@ -496,7 +460,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -543,7 +508,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -590,7 +556,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -619,6 +586,52 @@
         "AddressUpgradeable"
       ]
     },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IERC20Decimals.sol": {
+      "lastModificationDate": 1684960833828,
+      "contentHash": "8730369427db68d359291757c889e561",
+      "sourceName": "contracts/Interfaces/IERC20Decimals.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "IERC20Decimals"
+      ]
+    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IPool.sol": {
       "lastModificationDate": 1684960833832,
       "contentHash": "dac6aa5f750253e0f36cb17966751944",
@@ -635,7 +648,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -682,7 +696,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -727,7 +742,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -772,7 +788,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -808,6 +825,52 @@
         "ERC1967UpgradeUpgradeable"
       ]
     },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\StorageSlotUpgradeable.sol": {
+      "lastModificationDate": 1683653387305,
+      "contentHash": "731fafe5fdaca6e0749253ab7ce7d3b9",
+      "sourceName": "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "StorageSlotUpgradeable"
+      ]
+    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\interfaces\\IERC1967Upgradeable.sol": {
       "lastModificationDate": 1683653387252,
       "contentHash": "1d98f0f04dba67b0b50e61141b23e6d3",
@@ -824,7 +887,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -869,7 +933,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -898,51 +963,6 @@
         "IBeaconUpgradeable"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\StorageSlotUpgradeable.sol": {
-      "lastModificationDate": 1683653387305,
-      "contentHash": "731fafe5fdaca6e0749253ab7ce7d3b9",
-      "sourceName": "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "StorageSlotUpgradeable"
-      ]
-    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\token\\ERC20\\IERC20Upgradeable.sol": {
       "lastModificationDate": 1683653387255,
       "contentHash": "a9ed3c7bc7d9ebb5e34f20829274f088",
@@ -959,7 +979,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1004,7 +1025,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1049,7 +1071,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1097,7 +1120,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1151,7 +1175,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1196,7 +1221,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1241,7 +1267,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1288,7 +1315,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1319,10 +1347,10 @@
         "GRVTStakingTester"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\SortedVessels.sol": {
-      "lastModificationDate": 1684960833838,
-      "contentHash": "9ae8e6208e4d4a8626c6f6c94ddd9c07",
-      "sourceName": "contracts/SortedVessels.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\VesselManagerOperations.sol": {
+      "lastModificationDate": 1686854208460,
+      "contentHash": "ea2153e370cef9c8b0e9d734bd1f98e9",
+      "sourceName": "contracts/VesselManagerOperations.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -1335,7 +1363,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1357,23 +1386,21 @@
         }
       },
       "imports": [
-        "./Addresses.sol",
-        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "./Interfaces/ISortedVessels.sol",
-        "./Interfaces/IVesselManager.sol"
+        "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol",
+        "./Dependencies/GravitaBase.sol",
+        "./Interfaces/IVesselManagerOperations.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "SortedVessels"
+        "VesselManagerOperations"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\ISortedVessels.sol": {
-      "lastModificationDate": 1684960833833,
-      "contentHash": "432238b6f2b0934a2677f58b271747e2",
-      "sourceName": "contracts/Interfaces/ISortedVessels.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\GravitaBase.sol": {
+      "lastModificationDate": 1684960833816,
+      "contentHash": "d280a4abd59dc2f5106886ae84b88a30",
+      "sourceName": "contracts/Dependencies/GravitaBase.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -1386,7 +1413,260 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "./BaseMath.sol",
+        "./GravitaMath.sol",
+        "../Interfaces/IActivePool.sol",
+        "../Interfaces/IDefaultPool.sol",
+        "../Interfaces/IGravitaBase.sol",
+        "../Interfaces/IAdminContract.sol",
+        "../Interfaces/IDefaultPool.sol",
+        "../Addresses.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "GravitaBase"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IVesselManagerOperations.sol": {
+      "lastModificationDate": 1686854208457,
+      "contentHash": "de133f4c81a1f494737dea37d1489cea",
+      "sourceName": "contracts/Interfaces/IVesselManagerOperations.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./IGravitaBase.sol",
+        "./IVesselManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "IVesselManagerOperations"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IDefaultPool.sol": {
+      "lastModificationDate": 1684960833827,
+      "contentHash": "e829da7ce9d4f4a9c8c36d821eaf8c36",
+      "sourceName": "contracts/Interfaces/IDefaultPool.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./IPool.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "IDefaultPool"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IGravitaBase.sol": {
+      "lastModificationDate": 1684960833831,
+      "contentHash": "2cb0d78e45aab5cc046289d038549abd",
+      "sourceName": "contracts/Interfaces/IGravitaBase.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./IAdminContract.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "IGravitaBase"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IAdminContract.sol": {
+      "lastModificationDate": 1684960833823,
+      "contentHash": "1e30d86f4b41695c20626e9b5c8e8847",
+      "sourceName": "contracts/Interfaces/IAdminContract.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./IActivePool.sol",
+        "./IDefaultPool.sol",
+        "./IPriceFeed.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "IAdminContract"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IPriceFeed.sol": {
+      "lastModificationDate": 1686854208457,
+      "contentHash": "6ff6cce4fa228c2f18e64655d9db84b2",
+      "sourceName": "contracts/Interfaces/IPriceFeed.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1412,7 +1692,8 @@
         "^0.8.19"
       ],
       "artifacts": [
-        "ISortedVessels"
+        "ChainlinkAggregatorV3Interface",
+        "IPriceFeed"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IVesselManager.sol": {
@@ -1431,7 +1712,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1484,7 +1766,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1531,7 +1814,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1563,10 +1847,10 @@
         "IDebtToken"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IDefaultPool.sol": {
-      "lastModificationDate": 1684960833827,
-      "contentHash": "e829da7ce9d4f4a9c8c36d821eaf8c36",
-      "sourceName": "contracts/Interfaces/IDefaultPool.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\ISortedVessels.sol": {
+      "lastModificationDate": 1684960833833,
+      "contentHash": "432238b6f2b0934a2677f58b271747e2",
+      "sourceName": "contracts/Interfaces/ISortedVessels.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -1579,7 +1863,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1600,61 +1885,12 @@
           }
         }
       },
-      "imports": [
-        "./IPool.sol"
-      ],
+      "imports": [],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "IDefaultPool"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IGravitaBase.sol": {
-      "lastModificationDate": 1684960833831,
-      "contentHash": "2cb0d78e45aab5cc046289d038549abd",
-      "sourceName": "contracts/Interfaces/IGravitaBase.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "./IAdminContract.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "IGravitaBase"
+        "ISortedVessels"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IStabilityPool.sol": {
@@ -1673,7 +1909,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1720,7 +1957,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1749,10 +1987,10 @@
         "IERC20"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IAdminContract.sol": {
-      "lastModificationDate": 1684960833823,
-      "contentHash": "1e30d86f4b41695c20626e9b5c8e8847",
-      "sourceName": "contracts/Interfaces/IAdminContract.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\VesselManager.sol": {
+      "lastModificationDate": 1687093567648,
+      "contentHash": "dc46063cf8f3fcd487b21f030db1fa8e",
+      "sourceName": "contracts/VesselManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -1765,7 +2003,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1787,21 +2026,22 @@
         }
       },
       "imports": [
-        "./IActivePool.sol",
-        "./IDefaultPool.sol",
-        "./IPriceFeed.sol"
+        "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol",
+        "./Dependencies/GravitaBase.sol",
+        "./Interfaces/IVesselManager.sol",
+        "./Interfaces/IFeeCollector.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "IAdminContract"
+        "VesselManager"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IPriceFeed.sol": {
-      "lastModificationDate": 1686770560824,
-      "contentHash": "6ff6cce4fa228c2f18e64655d9db84b2",
-      "sourceName": "contracts/Interfaces/IPriceFeed.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IFeeCollector.sol": {
+      "lastModificationDate": 1686854208456,
+      "contentHash": "ba738be030586489a49cd706a7ff8c75",
+      "sourceName": "contracts/Interfaces/IFeeCollector.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -1814,7 +2054,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1840,12 +2081,165 @@
         "^0.8.19"
       ],
       "artifacts": [
-        "ChainlinkAggregatorV3Interface",
-        "IPriceFeed"
+        "IFeeCollector"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\FeeCollector.sol": {
+      "lastModificationDate": 1686854208455,
+      "contentHash": "eae1ce3cc684337891c73378ab5219c3",
+      "sourceName": "contracts/FeeCollector.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol",
+        "./Interfaces/IDebtToken.sol",
+        "./Interfaces/IFeeCollector.sol",
+        "./Interfaces/IGRVTStaking.sol",
+        "./Addresses.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "FeeCollector"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\FeeCollectorTester.sol": {
+      "lastModificationDate": 1686256119911,
+      "contentHash": "1c274a57c7dbd282737ae72d251fcf5b",
+      "sourceName": "contracts/TestContracts/FeeCollectorTester.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../FeeCollector.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "FeeCollectorTester"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\SortedVessels.sol": {
+      "lastModificationDate": 1684960833838,
+      "contentHash": "9ae8e6208e4d4a8626c6f6c94ddd9c07",
+      "sourceName": "contracts/SortedVessels.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./Addresses.sol",
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "./Interfaces/ISortedVessels.sol",
+        "./Interfaces/IVesselManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "SortedVessels"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Pricing\\PythPriceFeed.sol": {
-      "lastModificationDate": 1686774705011,
+      "lastModificationDate": 1687093567638,
       "contentHash": "83a768287004b1a08dbd53295f73f304",
       "sourceName": "contracts/Pricing/PythPriceFeed.sol",
       "solcConfig": {
@@ -1860,7 +2254,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1897,7 +2292,7 @@
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IPythPriceFeed.sol": {
-      "lastModificationDate": 1686774542336,
+      "lastModificationDate": 1687093567635,
       "contentHash": "3ca7b3c0a7d5ca8e6ac151986512df0b",
       "sourceName": "contracts/Interfaces/IPythPriceFeed.sol",
       "solcConfig": {
@@ -1912,7 +2307,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -1957,7 +2353,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2005,7 +2402,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2050,7 +2448,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2080,7 +2479,7 @@
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Pricing\\PythPriceAggregator.sol": {
-      "lastModificationDate": 1686773727457,
+      "lastModificationDate": 1687093567636,
       "contentHash": "72e77e4b902f9915d90a1607364b1528",
       "sourceName": "contracts/Pricing/PythPriceAggregator.sol",
       "solcConfig": {
@@ -2095,7 +2494,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2129,7 +2529,7 @@
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\BorrowerOperations.sol": {
-      "lastModificationDate": 1686774927319,
+      "lastModificationDate": 1687093567632,
       "contentHash": "0288c003fbf476840da934175a47c5f6",
       "sourceName": "contracts/BorrowerOperations.sol",
       "solcConfig": {
@@ -2144,7 +2544,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2186,64 +2587,8 @@
         "BorrowerOperations"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\GravitaBase.sol": {
-      "lastModificationDate": 1684960833816,
-      "contentHash": "d280a4abd59dc2f5106886ae84b88a30",
-      "sourceName": "contracts/Dependencies/GravitaBase.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "./BaseMath.sol",
-        "./GravitaMath.sol",
-        "../Interfaces/IActivePool.sol",
-        "../Interfaces/IDefaultPool.sol",
-        "../Interfaces/IGravitaBase.sol",
-        "../Interfaces/IAdminContract.sol",
-        "../Interfaces/IDefaultPool.sol",
-        "../Addresses.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "GravitaBase"
-      ]
-    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IBorrowerOperations.sol": {
-      "lastModificationDate": 1686774852107,
+      "lastModificationDate": 1687093567634,
       "contentHash": "7a4025e66e58ced5b914f0576fdbf131",
       "sourceName": "contracts/Interfaces/IBorrowerOperations.sol",
       "solcConfig": {
@@ -2258,7 +2603,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2287,53 +2633,8 @@
         "IBorrowerOperations"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IFeeCollector.sol": {
-      "lastModificationDate": 1686770560823,
-      "contentHash": "ba738be030586489a49cd706a7ff8c75",
-      "sourceName": "contracts/Interfaces/IFeeCollector.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "IFeeCollector"
-      ]
-    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\BorrowerOperationsTester.sol": {
-      "lastModificationDate": 1686781115183,
+      "lastModificationDate": 1687093567646,
       "contentHash": "ae11bfd80048dc985ba6338501d17c4c",
       "sourceName": "contracts/TestContracts/BorrowerOperationsTester.sol",
       "solcConfig": {
@@ -2348,7 +2649,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2379,10 +2681,10 @@
         "BorrowerOperationsTester"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\VesselManagerOperations.sol": {
-      "lastModificationDate": 1686770560829,
-      "contentHash": "ea2153e370cef9c8b0e9d734bd1f98e9",
-      "sourceName": "contracts/VesselManagerOperations.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\PriceFeed.sol": {
+      "lastModificationDate": 1686854208458,
+      "contentHash": "52cc3fd54f0fa2e451c781f88f751ad6",
+      "sourceName": "contracts/PriceFeed.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -2395,7 +2697,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2417,21 +2720,22 @@
         }
       },
       "imports": [
-        "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol",
-        "./Dependencies/GravitaBase.sol",
-        "./Interfaces/IVesselManagerOperations.sol"
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "./Addresses.sol",
+        "./Interfaces/IPriceFeed.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "VesselManagerOperations"
+        "PriceFeed"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IVesselManagerOperations.sol": {
-      "lastModificationDate": 1686770560825,
-      "contentHash": "de133f4c81a1f494737dea37d1489cea",
-      "sourceName": "contracts/Interfaces/IVesselManagerOperations.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\PriceFeedTestnet.sol": {
+      "lastModificationDate": 1687210563205,
+      "contentHash": "80ade10ed89c9e631bce3edc069ad281",
+      "sourceName": "contracts/TestContracts/PriceFeedTestnet.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -2444,7 +2748,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2466,20 +2771,20 @@
         }
       },
       "imports": [
-        "./IGravitaBase.sol",
-        "./IVesselManager.sol"
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "../Interfaces/IPriceFeed.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "IVesselManagerOperations"
+        "PriceFeedTestnet"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\VesselManager.sol": {
-      "lastModificationDate": 1686770560828,
-      "contentHash": "dc46063cf8f3fcd487b21f030db1fa8e",
-      "sourceName": "contracts/VesselManager.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
+      "lastModificationDate": 1683653391290,
+      "contentHash": "e436cea06129be2c73cda4b1acc848b5",
+      "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -2492,7 +2797,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2514,16 +2820,349 @@
         }
       },
       "imports": [
-        "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol",
-        "./Dependencies/GravitaBase.sol",
-        "./Interfaces/IVesselManager.sol",
-        "./Interfaces/IFeeCollector.sol"
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
+      "lastModificationDate": 1683653391095,
+      "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Context"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol": {
+      "lastModificationDate": 1683653391150,
+      "contentHash": "834a0dde221759af42b030253315b086",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./IERC20.sol",
+        "./extensions/IERC20Metadata.sol",
+        "../../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC20"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\IERC20Metadata.sol": {
+      "lastModificationDate": 1683653391246,
+      "contentHash": "909ab67fc5c25033fe6cd364f8c056f9",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../IERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20Metadata"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\utils\\SafeERC20.sol": {
+      "lastModificationDate": 1683653391302,
+      "contentHash": "0320a90f714843ca19373ed143fc4466",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../IERC20.sol",
+        "../extensions/draft-IERC20Permit.sol",
+        "../../../utils/Address.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "SafeERC20"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Address.sol": {
+      "lastModificationDate": 1683653391085,
+      "contentHash": "f31ad6fc4bbf9c06203987220156a6ba",
+      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.1"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\draft-IERC20Permit.sol": {
+      "lastModificationDate": 1683653391115,
+      "contentHash": "fb77f144244b9ab12533aa6ce85ef8c5",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20Permit"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\GRVT\\LockedGRVT.sol": {
+      "lastModificationDate": 1684960833821,
+      "contentHash": "0cc510a2960e374d4cb451f41838371b",
+      "sourceName": "contracts/GRVT/LockedGRVT.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "VesselManager"
+        "LockedGRVT"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\StabilityPool.sol": {
@@ -2542,7 +3181,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2596,7 +3236,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2641,7 +3282,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2688,7 +3330,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2740,7 +3383,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2771,10 +3415,10 @@
         "CommunityIssuanceTester"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\PriceFeedTestnet.sol": {
-      "lastModificationDate": 1686770560828,
-      "contentHash": "079d393029c1ed430d3d89c56c02a25b",
-      "sourceName": "contracts/TestContracts/PriceFeedTestnet.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\GravitaMathTester.sol": {
+      "lastModificationDate": 1684960833847,
+      "contentHash": "15dbd0a53c3825feacf5d99bf14beb6a",
+      "sourceName": "contracts/TestContracts/GravitaMathTester.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -2787,7 +3431,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2809,13 +3454,13 @@
         }
       },
       "imports": [
-        "../Interfaces/IPriceFeed.sol"
+        "../Dependencies/GravitaMath.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "PriceFeedTestnet"
+        "GravitaMathTester"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\FunctionCaller.sol": {
@@ -2834,7 +3479,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2868,53 +3514,6 @@
         "FunctionCaller"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\GravitaMathTester.sol": {
-      "lastModificationDate": 1684960833847,
-      "contentHash": "15dbd0a53c3825feacf5d99bf14beb6a",
-      "sourceName": "contracts/TestContracts/GravitaMathTester.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../Dependencies/GravitaMath.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "GravitaMathTester"
-      ]
-    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\SortedVesselsTester.sol": {
       "lastModificationDate": 1684960833850,
       "contentHash": "bb5bf816f113f18540c9fb3eb471cac8",
@@ -2931,7 +3530,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -2962,10 +3562,10 @@
         "SortedVesselsTester"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\PriceFeed.sol": {
-      "lastModificationDate": 1686770560826,
-      "contentHash": "52cc3fd54f0fa2e451c781f88f751ad6",
-      "sourceName": "contracts/PriceFeed.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\AdminContract.sol": {
+      "lastModificationDate": 1686875433659,
+      "contentHash": "3cb71696695c8788510f860be0897b8b",
+      "sourceName": "contracts/AdminContract.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -2978,7 +3578,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -3000,1149 +3601,19 @@
         }
       },
       "imports": [
-        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "./Addresses.sol",
-        "./Interfaces/IPriceFeed.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "PriceFeed"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\FeeCollector.sol": {
-      "lastModificationDate": 1686770560823,
-      "contentHash": "eae1ce3cc684337891c73378ab5219c3",
-      "sourceName": "contracts/FeeCollector.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
         "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol",
-        "./Interfaces/IDebtToken.sol",
-        "./Interfaces/IFeeCollector.sol",
-        "./Interfaces/IGRVTStaking.sol",
+        "./Interfaces/IAdminContract.sol",
+        "./Interfaces/IStabilityPool.sol",
+        "./Interfaces/IActivePool.sol",
+        "./Interfaces/IDefaultPool.sol",
         "./Addresses.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "FeeCollector"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\FeeCollectorTester.sol": {
-      "lastModificationDate": 1686256119911,
-      "contentHash": "1c274a57c7dbd282737ae72d251fcf5b",
-      "sourceName": "contracts/TestContracts/FeeCollectorTester.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../FeeCollector.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "FeeCollectorTester"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\IERC20Metadata.sol": {
-      "lastModificationDate": 1683653391246,
-      "contentHash": "909ab67fc5c25033fe6cd364f8c056f9",
-      "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../IERC20.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC20Metadata"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol": {
-      "lastModificationDate": 1683653391150,
-      "contentHash": "834a0dde221759af42b030253315b086",
-      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "./IERC20.sol",
-        "./extensions/IERC20Metadata.sol",
-        "../../utils/Context.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ERC20"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
-      "lastModificationDate": 1683653391095,
-      "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
-      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Context"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
-      "lastModificationDate": 1683653391290,
-      "contentHash": "e436cea06129be2c73cda4b1acc848b5",
-      "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../utils/Context.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Ownable"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\GRVT\\LockedGRVT.sol": {
-      "lastModificationDate": 1684960833821,
-      "contentHash": "0cc510a2960e374d4cb451f41838371b",
-      "sourceName": "contracts/GRVT/LockedGRVT.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
-        "@openzeppelin/contracts/access/Ownable.sol",
-        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "LockedGRVT"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\utils\\SafeERC20.sol": {
-      "lastModificationDate": 1683653391302,
-      "contentHash": "0320a90f714843ca19373ed143fc4466",
-      "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../IERC20.sol",
-        "../extensions/draft-IERC20Permit.sol",
-        "../../../utils/Address.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "SafeERC20"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Address.sol": {
-      "lastModificationDate": 1683653391085,
-      "contentHash": "f31ad6fc4bbf9c06203987220156a6ba",
-      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.1"
-      ],
-      "artifacts": [
-        "Address"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\draft-IERC20Permit.sol": {
-      "lastModificationDate": 1683653391115,
-      "contentHash": "fb77f144244b9ab12533aa6ce85ef8c5",
-      "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC20Permit"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\GasPool.sol": {
-      "lastModificationDate": 1684960833822,
-      "contentHash": "259992ef69de46049f44155e4ef287a9",
-      "sourceName": "contracts/GasPool.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/access/Ownable.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "GasPool"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\DebtToken.sol": {
-      "lastModificationDate": 1686256119903,
-      "contentHash": "4337de03b740c23e27ce7ce3781d3e62",
-      "sourceName": "contracts/DebtToken.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/access/Ownable.sol",
-        "./Dependencies/ERC20Permit.sol",
-        "./Interfaces/IDebtToken.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "DebtToken"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\ERC20Permit.sol": {
-      "lastModificationDate": 1686256119905,
-      "contentHash": "23769f339a766a6eabfcf74e6379daf6",
-      "sourceName": "contracts/Dependencies/ERC20Permit.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/token/ERC20/ERC20.sol",
-        "@openzeppelin/contracts/utils/cryptography/ECDSA.sol",
-        "@openzeppelin/contracts/utils/Counters.sol",
-        "../Interfaces/IERC2612Permit.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "ERC20Permit"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IERC2612Permit.sol": {
-      "lastModificationDate": 1684960833828,
-      "contentHash": "8c3cf2022d0ad6c32ea5625b16e0661e",
-      "sourceName": "contracts/Interfaces/IERC2612Permit.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "IERC2612Permit"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Counters.sol": {
-      "lastModificationDate": 1683653391096,
-      "contentHash": "74654e3ae5d7f39555055dfe244dab7a",
-      "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Counters"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\cryptography\\ECDSA.sol": {
-      "lastModificationDate": 1683653391117,
-      "contentHash": "fe1190dbb6431c2464246925713f0f7f",
-      "sourceName": "@openzeppelin/contracts/utils/cryptography/ECDSA.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../Strings.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ECDSA"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Strings.sol": {
-      "lastModificationDate": 1683653391307,
-      "contentHash": "396031251978f8febfd90cb62cb240ec",
-      "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "./math/Math.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Strings"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\math\\Math.sol": {
-      "lastModificationDate": 1683653391285,
-      "contentHash": "b9c58920ce74d6dc819161786112e7ee",
-      "sourceName": "@openzeppelin/contracts/utils/math/Math.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Math"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\DebtTokenWhitelistedTester.sol": {
-      "lastModificationDate": 1684960833841,
-      "contentHash": "16a00cd4d3828ee2dcd1b263a6fb25c9",
-      "sourceName": "contracts/TestContracts/DebtTokenWhitelistedTester.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../DebtToken.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "DebtTokenWhitelistedTester"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\DebtTokenTester.sol": {
-      "lastModificationDate": 1684960833841,
-      "contentHash": "5cdd59a1618c6a4f5c2317876fd5076f",
-      "sourceName": "contracts/TestContracts/DebtTokenTester.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../DebtToken.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "DebtTokenTester"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\ERC20Test.sol": {
-      "lastModificationDate": 1684960833843,
-      "contentHash": "ca2cb1551ccfa66fbfb446ff6fc8de9d",
-      "sourceName": "contracts/TestContracts/ERC20Test.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../Dependencies/ERC20Permit.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "ERC20Test"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\GRVT\\GRVTToken.sol": {
-      "lastModificationDate": 1684960833820,
-      "contentHash": "e2a62968f2f9c7c0ac3f9772afbc86b8",
-      "sourceName": "contracts/GRVT/GRVTToken.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../Dependencies/ERC20Permit.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "GRVTToken"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\GRVTTokenTester.sol": {
-      "lastModificationDate": 1684960833847,
-      "contentHash": "ca028a952ce61e3af9388fd96a14b53e",
-      "sourceName": "contracts/TestContracts/GRVTTokenTester.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "../GRVT/GRVTToken.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "GRVTTokenTester"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\ERC20Mock.sol": {
-      "lastModificationDate": 1684960833842,
-      "contentHash": "918ea6afd06841c044a6cddec0d85c72",
-      "sourceName": "contracts/TestContracts/ERC20Mock.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "ERC20Mock"
+        "AdminContract"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\DefaultPool.sol": {
@@ -4161,7 +3632,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4213,7 +3685,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4260,7 +3733,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4307,7 +3781,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4343,10 +3818,10 @@
         "CollSurplusPool"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\AdminContract.sol": {
-      "lastModificationDate": 1684960833805,
-      "contentHash": "3cb71696695c8788510f860be0897b8b",
-      "sourceName": "contracts/AdminContract.sol",
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\DebtToken.sol": {
+      "lastModificationDate": 1687014285516,
+      "contentHash": "f518b29fb40b6f8f2beaf11fe72b5492",
+      "sourceName": "contracts/DebtToken.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -4359,7 +3834,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4381,19 +3857,684 @@
         }
       },
       "imports": [
-        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
-        "./Interfaces/IAdminContract.sol",
-        "./Interfaces/IStabilityPool.sol",
-        "./Interfaces/IActivePool.sol",
-        "./Interfaces/IDefaultPool.sol",
-        "./Addresses.sol"
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "./Dependencies/ERC20Permit.sol",
+        "./Interfaces/IDebtToken.sol"
       ],
       "versionPragmas": [
         "^0.8.19"
       ],
       "artifacts": [
-        "AdminContract"
+        "DebtToken"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\ERC20Permit.sol": {
+      "lastModificationDate": 1686256119905,
+      "contentHash": "23769f339a766a6eabfcf74e6379daf6",
+      "sourceName": "contracts/Dependencies/ERC20Permit.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+        "@openzeppelin/contracts/utils/cryptography/ECDSA.sol",
+        "@openzeppelin/contracts/utils/Counters.sol",
+        "../Interfaces/IERC2612Permit.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "ERC20Permit"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Interfaces\\IERC2612Permit.sol": {
+      "lastModificationDate": 1684960833828,
+      "contentHash": "8c3cf2022d0ad6c32ea5625b16e0661e",
+      "sourceName": "contracts/Interfaces/IERC2612Permit.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "IERC2612Permit"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Counters.sol": {
+      "lastModificationDate": 1683653391096,
+      "contentHash": "74654e3ae5d7f39555055dfe244dab7a",
+      "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Counters"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\cryptography\\ECDSA.sol": {
+      "lastModificationDate": 1683653391117,
+      "contentHash": "fe1190dbb6431c2464246925713f0f7f",
+      "sourceName": "@openzeppelin/contracts/utils/cryptography/ECDSA.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../Strings.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ECDSA"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\Strings.sol": {
+      "lastModificationDate": 1683653391307,
+      "contentHash": "396031251978f8febfd90cb62cb240ec",
+      "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "./math/Math.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Strings"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\node_modules\\@openzeppelin\\contracts\\utils\\math\\Math.sol": {
+      "lastModificationDate": 1683653391285,
+      "contentHash": "b9c58920ce74d6dc819161786112e7ee",
+      "sourceName": "@openzeppelin/contracts/utils/math/Math.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Math"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\DebtTokenWhitelistedTester.sol": {
+      "lastModificationDate": 1684960833841,
+      "contentHash": "16a00cd4d3828ee2dcd1b263a6fb25c9",
+      "sourceName": "contracts/TestContracts/DebtTokenWhitelistedTester.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../DebtToken.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "DebtTokenWhitelistedTester"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\DebtTokenTester.sol": {
+      "lastModificationDate": 1684960833841,
+      "contentHash": "5cdd59a1618c6a4f5c2317876fd5076f",
+      "sourceName": "contracts/TestContracts/DebtTokenTester.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../DebtToken.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "DebtTokenTester"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\ERC20Test.sol": {
+      "lastModificationDate": 1684960833843,
+      "contentHash": "ca2cb1551ccfa66fbfb446ff6fc8de9d",
+      "sourceName": "contracts/TestContracts/ERC20Test.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/ERC20Permit.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "ERC20Test"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\GRVT\\GRVTToken.sol": {
+      "lastModificationDate": 1684960833820,
+      "contentHash": "e2a62968f2f9c7c0ac3f9772afbc86b8",
+      "sourceName": "contracts/GRVT/GRVTToken.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../Dependencies/ERC20Permit.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "GRVTToken"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\GRVTTokenTester.sol": {
+      "lastModificationDate": 1684960833847,
+      "contentHash": "ca028a952ce61e3af9388fd96a14b53e",
+      "sourceName": "contracts/TestContracts/GRVTTokenTester.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "../GRVT/GRVTToken.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "GRVTTokenTester"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\ERC20Mock.sol": {
+      "lastModificationDate": 1684960833842,
+      "contentHash": "918ea6afd06841c044a6cddec0d85c72",
+      "sourceName": "contracts/TestContracts/ERC20Mock.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "ERC20Mock"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\GasPool.sol": {
+      "lastModificationDate": 1684960833822,
+      "contentHash": "259992ef69de46049f44155e4ef287a9",
+      "sourceName": "contracts/GasPool.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "GasPool"
+      ]
+    },
+    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\Dependencies\\AddressesArbitrum.sol": {
+      "lastModificationDate": 1687093567633,
+      "contentHash": "d7bf693dfa0c33faf3b2c7fde0b56075",
+      "sourceName": "contracts/Dependencies/AddressesArbitrum.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "mode": "3"
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        },
+        "zksolc": {
+          "version": "1.3.10",
+          "compilerSource": "binary",
+          "settings": {
+            "optimizer": {
+              "enabled": true,
+              "mode": "3"
+            },
+            "compilerPath": "",
+            "experimental": {}
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "AddressesArbitrum"
       ]
     },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\VesselManagerTester.sol": {
@@ -4412,7 +4553,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4459,7 +4601,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4504,7 +4647,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4551,7 +4695,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4596,7 +4741,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4643,7 +4789,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4675,96 +4822,6 @@
         "WstEth2UsdPriceAggregator"
       ]
     },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\AddressesGoerli.sol": {
-      "lastModificationDate": 1686256119909,
-      "contentHash": "a3bfc7f32f1a2b1ee4acaa4b79ace576",
-      "sourceName": "contracts/TestContracts/AddressesGoerli.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "AddressesGoerli"
-      ]
-    },
-    "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\AddressesHardhat.sol": {
-      "lastModificationDate": 1686256119910,
-      "contentHash": "2b7a2ae5bfda12ae232425d51da450d1",
-      "sourceName": "contracts/TestContracts/AddressesHardhat.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "mode": "3"
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        },
-        "zksolc": {
-          "version": "1.3.10",
-          "compilerSource": "binary",
-          "settings": {
-            "optimizer": {
-              "enabled": true,
-              "mode": "3"
-            },
-            "compilerPath": "",
-            "experimental": {}
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "AddressesHardhat"
-      ]
-    },
     "C:\\Users\\gbirc\\Desktop\\Gravita\\Gravita-SmartContracts\\contracts\\TestContracts\\MockWstETH.sol": {
       "lastModificationDate": 1684960833848,
       "contentHash": "1e9ebf1ba27e7aa3d89632b8cfc9a001",
@@ -4781,7 +4838,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4827,7 +4885,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4872,7 +4931,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
@@ -4919,7 +4979,8 @@
               "*": [
                 "abi",
                 "evm.methodIdentifiers",
-                "metadata"
+                "metadata",
+                "storageLayout"
               ],
               "": [
                 "ast"
