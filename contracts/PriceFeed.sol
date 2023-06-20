@@ -25,7 +25,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	uint256 private constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT = 0.2 ether;
 	uint256 private constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT = 0.5 ether;
 
-	uint256 public constant SEQUENCER_GRACE_PERIOD_TIME = 3_600;
+	uint256 public constant SEQUENCER_GRACE_PERIOD_SECONDS = 3_600;
 
 	// State ------------------------------------------------------------------------------------------------------------
 
@@ -134,8 +134,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 			(
 				/* uint80 roundId */,
 				int256 answer,
-				uint256 startedAt,
-				/* uint256 updatedAt, */,
+				/* uint256 startedAt */,
+				uint256 updatedAt,
 				/* uint80 answeredInRound */
 			) =	ChainlinkAggregatorV3Interface(sequencerUptimeFeed).latestRoundData();
 
@@ -146,8 +146,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 				revert PriceFeed__SequencerDown();
 			}
 
-			uint256 timeSinceSequencerUp = block.timestamp - startedAt;
-			if (timeSinceSequencerUp <= SEQUENCER_GRACE_PERIOD_TIME) {
+			uint256 timeSinceSequencerUp = block.timestamp - updatedAt;
+			if (timeSinceSequencerUp <= SEQUENCER_GRACE_PERIOD_SECONDS) {
 				revert PriceFeed__SequencerGracePeriodNotOver();
 			}
 		}

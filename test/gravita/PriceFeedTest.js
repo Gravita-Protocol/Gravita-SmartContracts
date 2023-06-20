@@ -9,7 +9,7 @@ const { assert } = require("hardhat")
 
 const ERC20Mock = artifacts.require("ERC20Mock")
 const FixedPriceAggregator = artifacts.require("FixedPriceAggregator")
-const MockChainlink = artifacts.require("MockAggregator")
+const MockAggregator = artifacts.require("MockAggregator")
 const MockWstETH = artifacts.require("MockWstETH")
 const PriceFeed = artifacts.require("PriceFeed")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
@@ -64,12 +64,12 @@ contract("PriceFeed", async accounts => {
 	}
 
 	const createMockOracle = async (_price, _decimals) => {
-		const oracle = await MockChainlink.new()
+		const oracle = await MockAggregator.new()
 		await oracle.setDecimals(_decimals)
 		await oracle.setPrice(_price)
 		await oracle.setLatestRoundId(3)
 		await oracle.setPrevRoundId(2)
-		await oracle.setUpdateTime(await time.latest())
+		await oracle.setUpdatedAt(await time.latest())
 		return oracle
 	}
 
@@ -286,8 +286,12 @@ contract("PriceFeed", async accounts => {
 
 	describe("fetchPrice() fallbacks", async () => {
 		it("fetchPrice: oracle is stale, no fallback, reverts", async () => {
-			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 1)
-			assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+			await mockOracle.setPriceIsAlwaysUpToDate(false)
+			const oracleRecord = await priceFeed.oracles(ZERO_ADDRESS)
+			const timeoutMinutes = oracleRecord.timeoutMinutes
+			const staleTimeout = Number(timeoutMinutes) * 60 + 1
+			await time.increase(staleTimeout)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 
 		it("fetchPrice: oracle is stale, fallback is good, returns fallback response", async () => {
@@ -298,7 +302,7 @@ contract("PriceFeed", async accounts => {
 			await mockOracle.setPriceIsAlwaysUpToDate(false)
 			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 30)
 
-			fallbackOracle.setUpdateTime(await time.latest())
+			fallbackOracle.setUpdatedAt(await time.latest())
 			const feedPrice = await priceFeed.fetchPrice(ZERO_ADDRESS)
 			assert.equal(fallbackPrice.toString(), feedPrice.toString())
 		})
@@ -311,7 +315,65 @@ contract("PriceFeed", async accounts => {
 			await fallbackOracle.setPriceIsAlwaysUpToDate(false)
 			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 30)
 
-			assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+		})
+	})
+
+	describe("Sequencer Uptime Feed Tests", async () => {
+
+		it("setSequencerUptimeFeed() access control", async () => {
+			const uptimeFeed = await MockAggregator.new()
+			const uptimeFeed2 = await MockAggregator.new()
+			// setting the address from a random user should fail
+			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed.address, { from: alice }))
+			// setting the address from the timelock for the first time should fail
+			await impersonateAccount(timelock.address)
+			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed.address, { from: timelock.address }))
+			await stopImpersonatingAccount(timelock.address)
+			// setting the address from contract owner should succeed
+			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			assert.equal(uptimeFeed.address, await priceFeed.sequencerUptimeFeed())
+			// overwriting the address from contract owner should fail
+			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed2.address))
+			// overwriting the address from random user should fail
+			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed2.address, { from: alice }))
+			// overwriting the address from the timelock should succeed
+			await impersonateAccount(timelock.address)
+			await priceFeed.setSequencerUptimeFeed(uptimeFeed2.address, { from: timelock.address })
+			await stopImpersonatingAccount(timelock.address)
+			assert.equal(uptimeFeed2.address, await priceFeed.sequencerUptimeFeed())
+		})
+
+		it("SequencerUptimeFeed with 'up' answer should not affect fetchPrice()", async () => {
+			const uptimeFeed = await MockAggregator.new()
+			const sequencerIsUp = 0
+			const gracePeriod = Number(await priceFeed.SEQUENCER_GRACE_PERIOD_SECONDS())
+			const sequencerUpdatedAt = Number(await time.latest()) - gracePeriod - 1
+			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
+			await uptimeFeed.setPrice(sequencerIsUp)
+			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
+			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+		})
+
+		it("SequencerUptimeFeed with 'up' answer but updateTime < gracePeriod should revert fetchPrice()", async () => {
+			const uptimeFeed = await MockAggregator.new()
+			const sequencerIsUp = 0
+			const gracePeriod = Number(await priceFeed.SEQUENCER_GRACE_PERIOD_SECONDS())
+			const sequencerUpdatedAt = Number(await time.latest()) - Math.floor(gracePeriod / 2)
+			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
+			await uptimeFeed.setPrice(sequencerIsUp)
+			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
+			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+		})
+
+		it("SequencerUptimeFeed with 'down' answer should revert fetchPrice()", async () => {
+			const uptimeFeed = await MockAggregator.new()
+			const sequencerIsDown = 1
+			await uptimeFeed.setPrice(sequencerIsDown)
+			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 	})
 })
