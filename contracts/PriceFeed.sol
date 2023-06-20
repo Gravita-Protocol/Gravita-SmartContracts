@@ -9,10 +9,9 @@ import "./Addresses.sol";
 import "./Interfaces/IPriceFeed.sol";
 
 /**
- * @title The PriceFeed contract contains a directory of oracles for fetching prices for assets based on their 
+ * @title The PriceFeed contract contains a directory of oracles for fetching prices for assets based on their
  *     addresses; optionally fallback oracles can also be registered in case the primary source fails or is stale.
- * @author spider-g
- */ 
+ */
 contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses {
 	// Constants --------------------------------------------------------------------------------------------------------
 
@@ -26,6 +25,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	uint256 private constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT = 0.2 ether;
 	uint256 private constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT = 0.5 ether;
 
+	uint256 public constant SEQUENCER_GRACE_PERIOD_TIME = 3_600;
+
 	// State ------------------------------------------------------------------------------------------------------------
 
 	/// @dev Deprecated, but retained for upgradeability
@@ -35,6 +36,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	mapping(address => OracleRecordV2) public oracles;
 	mapping(address => OracleRecordV2) public fallbacks;
 
+	address public sequencerUptimeFeed;
+
 	// Initializer ------------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
@@ -43,6 +46,20 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	// Admin routines ---------------------------------------------------------------------------------------------------
+
+	/**
+	 * @dev Requires msg.sender to be the contract owner when the sequencer is first set. Subsequent updates need to come
+	 *     through the timelock contract.
+	 */
+	function setSequencerUptimeFeed(address _sequencerUptimeFeed) external {
+		if (sequencerUptimeFeed == address(0)) {
+			_checkOwner();
+		} else if (msg.sender != timelockAddress) {
+			revert PriceFeed__TimelockOnlyError();
+		}
+		sequencerUptimeFeed = _sequencerUptimeFeed;
+		emit SequencerUptimeFeedUpdated(_sequencerUptimeFeed);
+	}
 
 	function setOracle(
 		address _token,
@@ -93,6 +110,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	 *     - VesselManagerOperations.redeemCollateral()
 	 */
 	function fetchPrice(address _token) public view override returns (uint256) {
+		_checkSequencerUptimeFeed();
 		// Tries fetching the price from the oracle
 		OracleRecordV2 memory oracle = oracles[_token];
 		uint256 price = _fetchOracleScaledPrice(oracle);
@@ -109,6 +127,31 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	// Internal functions -----------------------------------------------------------------------------------------------
+
+	function _checkSequencerUptimeFeed() internal view {
+		if (sequencerUptimeFeed != address(0)) {
+			// prettier-ignore
+			(
+				/* uint80 roundId */,
+				int256 answer,
+				uint256 startedAt,
+				/* uint256 updatedAt, */,
+				/* uint80 answeredInRound */
+			) =	ChainlinkAggregatorV3Interface(sequencerUptimeFeed).latestRoundData();
+
+			// answer == 0 -> sequencer is up
+			// answer == 1 -> sequencer is down
+			bool isSequencerUp = answer == 0;
+			if (!isSequencerUp) {
+				revert PriceFeed__SequencerDown();
+			}
+
+			uint256 timeSinceSequencerUp = block.timestamp - startedAt;
+			if (timeSinceSequencerUp <= SEQUENCER_GRACE_PERIOD_TIME) {
+				revert PriceFeed__SequencerGracePeriodNotOver();
+			}
+		}
+	}
 
 	function _fetchDecimals(address _oracle, ProviderType _type) internal view returns (uint8) {
 		if (_type == ProviderType.Chainlink) {
@@ -156,7 +199,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	/**
-	 * @dev Fetches the ETH:USD price (using the zero address as being the ETH asset), then multiplies it by the 
+	 * @dev Fetches the ETH:USD price (using the zero address as being the ETH asset), then multiplies it by the
 	 *     indexed price. Assumes an oracle has been set for that purpose.
 	 */
 	function _calcEthIndexedPrice(uint256 _ethAmount) internal view returns (uint256) {
@@ -165,7 +208,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	/**
-	 * @dev Scales oracle's response up/down to Gravita's target precision; returns unaltered price if already on 
+	 * @dev Scales oracle's response up/down to Gravita's target precision; returns unaltered price if already on
 	 *     target digits.
 	 */
 	function _scalePriceByDigits(uint256 _price, uint256 _priceDigits) internal pure returns (uint256) {
@@ -180,7 +223,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	// Access control functions -----------------------------------------------------------------------------------------
 
 	/**
-	 * @dev Requires msg.sender to be the contract owner when the oracle is first set. Subsequent updates need to come 
+	 * @dev Requires msg.sender to be the contract owner when the oracle is first set. Subsequent updates need to come
 	 *     through the timelock contract.
 	 */
 	function _requireOwnerOrTimelock(address _token, bool _isFallback) internal view {
@@ -198,3 +241,4 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
+

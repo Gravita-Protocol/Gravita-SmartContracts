@@ -93,6 +93,9 @@ class CoreDeploymentHelper extends DeploymentHelper {
 				}
 			}
 		}
+		if (this.configParams.SEQUENCER_UPTIME_FEED_ADDRESS) {
+			await contracts.priceFeed.setSequencerUptimeFeed(this.configParams.SEQUENCER_UPTIME_FEED_ADDRESS)
+		}
 	}
 
 	async deployUpgradeable(contractName, params = []) {
@@ -128,3 +131,4 @@ class CoreDeploymentHelper extends DeploymentHelper {
 }
 
 module.exports = CoreDeploymentHelper
+
