@@ -57,12 +57,11 @@ interface IPriceFeed {
 
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
-	error PriceFeed__InvalidOracleResponseError(address token);
-	error PriceFeed__InvalidDecimalsError();
 	error PriceFeed__ExistingOracleRequired();
+	error PriceFeed__InvalidDecimalsError();
+	error PriceFeed__InvalidOracleResponseError(address token);
 	error PriceFeed__TimelockOnlyError();
 	error PriceFeed__UnknownAssetError();
-	error PriceFeed__DeprecatedFunctionError();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
@@ -81,4 +80,3 @@ interface IPriceFeed {
 		bool _isFallback
 	) external;
 }
-
