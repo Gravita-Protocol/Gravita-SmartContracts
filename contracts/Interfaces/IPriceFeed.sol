@@ -57,7 +57,6 @@ interface IPriceFeed {
 
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
-	error PriceFeed__DeprecatedFunctionError();
 	error PriceFeed__ExistingOracleRequired();
 	error PriceFeed__InvalidDecimalsError();
 	error PriceFeed__InvalidOracleResponseError(address token);
