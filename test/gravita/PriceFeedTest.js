@@ -9,15 +9,16 @@ const { assert } = require("hardhat")
 
 const ERC20Mock = artifacts.require("ERC20Mock")
 const FixedPriceAggregator = artifacts.require("FixedPriceAggregator")
-const MockChainlink = artifacts.require("MockAggregator")
+const MockAggregator = artifacts.require("MockAggregator")
 const MockWstETH = artifacts.require("MockWstETH")
-const PriceFeed = artifacts.require("PriceFeed")
+const PriceFeed = artifacts.require("PriceFeedL2")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
+const VesselManagerOperations = artifacts.require("VesselManagerOperations")
 const WstEth2UsdPriceAggregator = artifacts.require("WstEth2UsdPriceAggregator")
 
 const { TestHelper } = require("../utils/testHelpers.js")
-const { dec, assertRevert, toBN, getLatestBlockTimestamp, fastForwardTime } = TestHelper
+const { dec, assertRevert, toBN } = TestHelper
 
 const DEFAULT_DIGITS = 18
 const DEFAULT_PRICE = dec(100, DEFAULT_DIGITS)
@@ -32,9 +33,10 @@ const DefaultOracleOptions = {
 contract("PriceFeed", async accounts => {
 	const [owner, alice] = accounts
 	let priceFeed
+	let erc20
 	let mockOracle
 	let timelock
-	let erc20
+	let vesselManagerOperations
 
 	const setOracle = async (erc20Address, aggregatorAddress, opts = DefaultOracleOptions) => {
 		const callSetter = async (_token, _oracle, _opts, _caller) => {
@@ -64,19 +66,20 @@ contract("PriceFeed", async accounts => {
 	}
 
 	const createMockOracle = async (_price, _decimals) => {
-		const oracle = await MockChainlink.new()
+		const oracle = await MockAggregator.new()
 		await oracle.setDecimals(_decimals)
 		await oracle.setPrice(_price)
 		await oracle.setLatestRoundId(3)
 		await oracle.setPrevRoundId(2)
-		await oracle.setUpdateTime(await time.latest())
+		await oracle.setUpdatedAt(await time.latest())
 		return oracle
 	}
 
 	beforeEach(async () => {
 		priceFeed = await PriceFeed.new()
-		mockOracle = await createMockOracle(DEFAULT_PRICE, DEFAULT_DIGITS)
 		erc20 = await ERC20Mock.new("MOCK", "MOCK", DEFAULT_DIGITS)
+		mockOracle = await createMockOracle(DEFAULT_PRICE, DEFAULT_DIGITS)
+		vesselManagerOperations = await VesselManagerOperations.new()
 
 		await priceFeed.initialize()
 
@@ -84,6 +87,7 @@ contract("PriceFeed", async accounts => {
 		setBalance(timelock.address, 1e18)
 
 		await priceFeed.setTimelock(timelock.address)
+		await priceFeed.setVesselManagerOperations(vesselManagerOperations.address)
 		await setOracle(ZERO_ADDRESS, mockOracle.address)
 	})
 
@@ -286,8 +290,12 @@ contract("PriceFeed", async accounts => {
 
 	describe("fetchPrice() fallbacks", async () => {
 		it("fetchPrice: oracle is stale, no fallback, reverts", async () => {
-			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 1)
-			assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+			await mockOracle.setPriceIsAlwaysUpToDate(false)
+			const oracleRecord = await priceFeed.oracles(ZERO_ADDRESS)
+			const timeoutMinutes = oracleRecord.timeoutMinutes
+			const staleTimeout = Number(timeoutMinutes) * 60 + 1
+			await time.increase(staleTimeout)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 
 		it("fetchPrice: oracle is stale, fallback is good, returns fallback response", async () => {
@@ -298,7 +306,7 @@ contract("PriceFeed", async accounts => {
 			await mockOracle.setPriceIsAlwaysUpToDate(false)
 			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 30)
 
-			fallbackOracle.setUpdateTime(await time.latest())
+			fallbackOracle.setUpdatedAt(await time.latest())
 			const feedPrice = await priceFeed.fetchPrice(ZERO_ADDRESS)
 			assert.equal(fallbackPrice.toString(), feedPrice.toString())
 		})
@@ -311,7 +319,96 @@ contract("PriceFeed", async accounts => {
 			await fallbackOracle.setPriceIsAlwaysUpToDate(false)
 			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 30)
 
-			assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+		})
+	})
+
+	describe("Sequencer Uptime Feed Tests", async () => {
+
+		it("setSequencerUptimeFeed() access control", async () => {
+			const uptimeFeed = await MockAggregator.new()
+			const uptimeFeed2 = await MockAggregator.new()
+			// setting the address from a random user should fail
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address, { from: alice }))
+			// setting the address from the timelock for the first time should fail
+			await impersonateAccount(timelock.address)
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address, { from: timelock.address }))
+			await stopImpersonatingAccount(timelock.address)
+			// setting the address from contract owner should succeed
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+			assert.equal(uptimeFeed.address, await priceFeed.sequencerUptimeFeedAddress())
+			// overwriting the address from contract owner should fail
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed2.address))
+			// overwriting the address from random user should fail
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed2.address, { from: alice }))
+			// overwriting the address from the timelock should succeed
+			await impersonateAccount(timelock.address)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed2.address, { from: timelock.address })
+			await stopImpersonatingAccount(timelock.address)
+			assert.equal(uptimeFeed2.address, await priceFeed.sequencerUptimeFeedAddress())
+		})
+
+		it("SequencerUptimeFeed with 'up' answer should not affect fetchPrice()", async () => {
+			const sequencerIsUp = 0
+			const delay = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
+			const sequencerUpdatedAt = Number(await time.latest()) - delay - 1
+			const uptimeFeed = await MockAggregator.new()
+			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
+			await uptimeFeed.setPrice(sequencerIsUp)
+			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+		})
+
+		it("SequencerUptimeFeed with 'up' answer but updatedAt < borrowingDelay should revert fetchPrice()", async () => {
+			const sequencerIsUp = 0
+			const borrowingDelay = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
+			const sequencerUpdatedAt = Number(await time.latest()) - Math.floor(borrowingDelay / 2)
+			const uptimeFeed = await MockAggregator.new()
+			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
+			await uptimeFeed.setPrice(sequencerIsUp)
+			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
+		})
+
+		it("SequencerUptimeFeed with 'up' answer but borrowingDelay < updatedAt < liquidationDelay should revert fetchPrice() when liquidating", async () => {
+			const sequencerIsUp = 0
+			const borrowingDelay = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
+			const liquidationDelay = Number(await priceFeed.SEQUENCER_LIQUIDATION_DELAY_SECONDS())
+			assert.isTrue(liquidationDelay > borrowingDelay)
+
+			// setup as borrowingDelay < updatedAt < liquidationDelay
+			const sequencerUpdatedAt = Number(await time.latest()) - borrowingDelay
+			const uptimeFeed = await MockAggregator.new()
+			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
+			await uptimeFeed.setPrice(sequencerIsUp)
+			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+
+			// fetching as VesselManagerOperations should revert
+			await impersonateAccount(vesselManagerOperations.address)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS, { from: vesselManagerOperations.address }))
+			await stopImpersonatingAccount(vesselManagerOperations.address)
+
+			// but fetching as non-VesselManagerOperations should succeed
+			await priceFeed.fetchPrice(ZERO_ADDRESS)
+
+			// wait out delay difference
+			await time.increase(liquidationDelay - borrowingDelay)
+
+			// this time, fetching as VesselManagerOperations should succeed
+			await impersonateAccount(vesselManagerOperations.address)
+			await priceFeed.fetchPrice(ZERO_ADDRESS, { from: vesselManagerOperations.address })
+			await stopImpersonatingAccount(vesselManagerOperations.address)
+		})
+
+		it("SequencerUptimeFeed with 'down' answer should revert fetchPrice()", async () => {
+			const uptimeFeed = await MockAggregator.new()
+			const sequencerIsDown = 1
+			await uptimeFeed.setPrice(sequencerIsDown)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 	})
 })

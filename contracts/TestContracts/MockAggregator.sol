@@ -4,19 +4,15 @@ pragma solidity ^0.8.19;
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract MockAggregator is AggregatorV3Interface {
-	// storage variables to hold the mock data
 	uint8 private decimalsVal = 8;
-	int256 private price = 190000000000;
-	int256 private prevPrice = 190000000000;
-	uint256 private updateTime;
-	uint256 private prevUpdateTime;
+	int256 private answer = 190000000000;
+	int256 private prevAnswer = 190000000000;
+	uint256 private startedAt;
+	uint256 private updatedAt;
 
 	uint80 private latestRoundId = 2;
 	uint80 private prevRoundId = 1;
 
-	bool latestRevert;
-	bool prevRevert;
-	bool decimalsRevert;
 	bool priceIsAlwaysUpToDate = true;
 
 	// --- Functions ---
@@ -26,33 +22,19 @@ contract MockAggregator is AggregatorV3Interface {
 	}
 
 	function setPrice(int256 _price) external {
-		// setting a price will also set the previous one, so we don't create a deviation problem between rounds
-		price = _price;
-		prevPrice = _price;
+		answer = _price;
 	}
 
 	function setPrevPrice(int256 _prevPrice) external {
-		prevPrice = _prevPrice;
+		prevAnswer = _prevPrice;
 	}
 
-	function setPrevUpdateTime(uint256 _prevUpdateTime) external {
-		prevUpdateTime = _prevUpdateTime;
+	function setStartedAt(uint256 _startedAt) external {
+		startedAt = _startedAt;
 	}
 
-	function setUpdateTime(uint256 _updateTime) external {
-		updateTime = _updateTime;
-	}
-
-	function setLatestRevert() external {
-		latestRevert = !latestRevert;
-	}
-
-	function setPrevRevert() external {
-		prevRevert = !prevRevert;
-	}
-
-	function setDecimalsRevert() external {
-		decimalsRevert = !decimalsRevert;
+	function setUpdatedAt(uint256 _updatedAt) external {
+		updatedAt = _updatedAt;
 	}
 
 	function setLatestRoundId(uint80 _latestRoundId) external {
@@ -70,50 +52,17 @@ contract MockAggregator is AggregatorV3Interface {
 	// --- Getters that adhere to the AggregatorV3 interface ---
 
 	function decimals() external view override returns (uint8) {
-		if (decimalsRevert) {
-			require(1 == 0, "decimals reverted");
-		}
-
 		return decimalsVal;
 	}
 
-	function latestRoundData()
-		external
-		view
-		override
-		returns (
-			uint80 roundId,
-			int256 answer,
-			uint256 startedAt,
-			uint256 updatedAt,
-			uint80 answeredInRound
-		)
-	{
-		if (latestRevert) {
-			require(1 == 0, "latestRoundData reverted");
-		}
-		uint256 timestamp = priceIsAlwaysUpToDate ? block.timestamp - 2 minutes : updateTime;
-		return (latestRoundId, price, 0, timestamp, 0);
+	function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
+		uint256 timestamp = priceIsAlwaysUpToDate ? block.timestamp - 2 minutes : updatedAt;
+		return (latestRoundId, answer, startedAt, timestamp, 0);
 	}
 
-	function getRoundData(uint80)
-		external
-		view
-		override
-		returns (
-			uint80 roundId,
-			int256 answer,
-			uint256 startedAt,
-			uint256 updatedAt,
-			uint80 answeredInRound
-		)
-	{
-		if (prevRevert) {
-			require(1 == 0, "getRoundData reverted");
-		}
-
-		uint256 timestamp = priceIsAlwaysUpToDate ? block.timestamp - 5 minutes : updateTime;
-		return (prevRoundId, prevPrice, 0, timestamp, 0);
+	function getRoundData(uint80) external view override returns (uint80, int256, uint256, uint256, uint80) {
+		uint256 timestamp = priceIsAlwaysUpToDate ? block.timestamp - 5 minutes : updatedAt;
+		return (prevRoundId, prevAnswer, startedAt, timestamp, 0);
 	}
 
 	function description() external pure override returns (string memory) {

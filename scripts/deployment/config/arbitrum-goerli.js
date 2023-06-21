@@ -11,6 +11,9 @@ const TREASURY_WALLET = "0x19596e1D6cd97916514B5DBaA4730781eFE49975"
 
 const GRAI_TOKEN_ADDRESS = "0x72aD48cc8f7F6261a2c2c8f0C8Fa89efd617e578"
 
+// from https://docs.chain.link/data-feeds/l2-sequencer-feeds
+const SEQUENCER_UPTIME_FEED_ADDRESS = "0x4da69F028a5790fCCAfe81a75C0D24f46ceCDd69";
+
 // Core Contracts Config ----------------------------------------------------------------------------------------------
 
 const COLLATERAL = [
@@ -38,9 +41,10 @@ module.exports = {
 	COLLATERAL,
 	CONTRACT_UPGRADES_ADMIN,
 	ETHERSCAN_BASE_URL,
-  GRAI_TOKEN_ADDRESS,
+	GRAI_TOKEN_ADDRESS,
 	GRVT_BENEFICIARIES,
 	OUTPUT_FILE,
+	SEQUENCER_UPTIME_FEED_ADDRESS,
 	SYSTEM_PARAMS_ADMIN,
 	TREASURY_WALLET,
 	TX_CONFIRMATIONS,
