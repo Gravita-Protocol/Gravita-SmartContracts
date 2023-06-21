@@ -61,21 +61,16 @@ interface IPriceFeed {
 	error PriceFeed__ExistingOracleRequired();
 	error PriceFeed__InvalidDecimalsError();
 	error PriceFeed__InvalidOracleResponseError(address token);
-	error PriceFeed__SequencerDown();
-	error PriceFeed__SequencerGracePeriodNotOver();
 	error PriceFeed__TimelockOnlyError();
 	error PriceFeed__UnknownAssetError();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
 	event NewOracleRegistered(address token, address oracleAddress, bool isEthIndexed, bool isFallback);
-	event SequencerUptimeFeedUpdated(address _sequencerUptimeFeed);
 
 	// Functions ------------------------------------------------------------------------------------------------------
 
 	function fetchPrice(address _token) external view returns (uint256);
-
-	function setSequencerUptimeFeed(address _sequencerUptimeFeed) external;
 
 	function setOracle(
 		address _token,

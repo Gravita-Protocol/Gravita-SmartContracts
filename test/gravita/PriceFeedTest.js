@@ -11,13 +11,13 @@ const ERC20Mock = artifacts.require("ERC20Mock")
 const FixedPriceAggregator = artifacts.require("FixedPriceAggregator")
 const MockAggregator = artifacts.require("MockAggregator")
 const MockWstETH = artifacts.require("MockWstETH")
-const PriceFeed = artifacts.require("PriceFeed")
+const PriceFeed = artifacts.require("PriceFeedL2")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const Timelock = artifacts.require("Timelock")
 const WstEth2UsdPriceAggregator = artifacts.require("WstEth2UsdPriceAggregator")
 
 const { TestHelper } = require("../utils/testHelpers.js")
-const { dec, assertRevert, toBN, getLatestBlockTimestamp, fastForwardTime } = TestHelper
+const { dec, assertRevert, toBN } = TestHelper
 
 const DEFAULT_DIGITS = 18
 const DEFAULT_PRICE = dec(100, DEFAULT_DIGITS)
@@ -325,46 +325,46 @@ contract("PriceFeed", async accounts => {
 			const uptimeFeed = await MockAggregator.new()
 			const uptimeFeed2 = await MockAggregator.new()
 			// setting the address from a random user should fail
-			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed.address, { from: alice }))
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address, { from: alice }))
 			// setting the address from the timelock for the first time should fail
 			await impersonateAccount(timelock.address)
-			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed.address, { from: timelock.address }))
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address, { from: timelock.address }))
 			await stopImpersonatingAccount(timelock.address)
 			// setting the address from contract owner should succeed
-			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
-			assert.equal(uptimeFeed.address, await priceFeed.sequencerUptimeFeed())
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+			assert.equal(uptimeFeed.address, await priceFeed.sequencerUptimeFeedAddress())
 			// overwriting the address from contract owner should fail
-			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed2.address))
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed2.address))
 			// overwriting the address from random user should fail
-			await assertRevert(priceFeed.setSequencerUptimeFeed(uptimeFeed2.address, { from: alice }))
+			await assertRevert(priceFeed.setSequencerUptimeFeedAddress(uptimeFeed2.address, { from: alice }))
 			// overwriting the address from the timelock should succeed
 			await impersonateAccount(timelock.address)
-			await priceFeed.setSequencerUptimeFeed(uptimeFeed2.address, { from: timelock.address })
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed2.address, { from: timelock.address })
 			await stopImpersonatingAccount(timelock.address)
-			assert.equal(uptimeFeed2.address, await priceFeed.sequencerUptimeFeed())
+			assert.equal(uptimeFeed2.address, await priceFeed.sequencerUptimeFeedAddress())
 		})
 
 		it("SequencerUptimeFeed with 'up' answer should not affect fetchPrice()", async () => {
 			const uptimeFeed = await MockAggregator.new()
 			const sequencerIsUp = 0
-			const gracePeriod = Number(await priceFeed.SEQUENCER_GRACE_PERIOD_SECONDS())
+			const gracePeriod = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
 			const sequencerUpdatedAt = Number(await time.latest()) - gracePeriod - 1
 			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
 			await uptimeFeed.setPrice(sequencerIsUp)
 			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
-			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
 			await priceFeed.fetchPrice(ZERO_ADDRESS)
 		})
 
 		it("SequencerUptimeFeed with 'up' answer but updateTime < gracePeriod should revert fetchPrice()", async () => {
 			const uptimeFeed = await MockAggregator.new()
 			const sequencerIsUp = 0
-			const gracePeriod = Number(await priceFeed.SEQUENCER_GRACE_PERIOD_SECONDS())
+			const gracePeriod = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
 			const sequencerUpdatedAt = Number(await time.latest()) - Math.floor(gracePeriod / 2)
 			await uptimeFeed.setPriceIsAlwaysUpToDate(false)
 			await uptimeFeed.setPrice(sequencerIsUp)
 			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
-			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
 			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 
@@ -372,7 +372,7 @@ contract("PriceFeed", async accounts => {
 			const uptimeFeed = await MockAggregator.new()
 			const sequencerIsDown = 1
 			await uptimeFeed.setPrice(sequencerIsDown)
-			await priceFeed.setSequencerUptimeFeed(uptimeFeed.address)
+			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
 			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 	})

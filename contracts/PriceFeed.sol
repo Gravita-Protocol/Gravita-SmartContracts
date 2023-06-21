@@ -25,8 +25,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	uint256 private constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_LOWER_LIMIT = 0.2 ether;
 	uint256 private constant MAX_PRICE_DEVIATION_BETWEEN_ROUNDS_UPPER_LIMIT = 0.5 ether;
 
-	uint256 public constant SEQUENCER_GRACE_PERIOD_SECONDS = 3_600;
-
 	// State ------------------------------------------------------------------------------------------------------------
 
 	/// @dev Deprecated, but retained for upgradeability
@@ -36,8 +34,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	mapping(address => OracleRecordV2) public oracles;
 	mapping(address => OracleRecordV2) public fallbacks;
 
-	address public sequencerUptimeFeed;
-
 	// Initializer ------------------------------------------------------------------------------------------------------
 
 	function initialize() public initializer {
@@ -46,20 +42,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	// Admin routines ---------------------------------------------------------------------------------------------------
-
-	/**
-	 * @dev Requires msg.sender to be the contract owner when the sequencer is first set. Subsequent updates need to come
-	 *     through the timelock contract.
-	 */
-	function setSequencerUptimeFeed(address _sequencerUptimeFeed) external {
-		if (sequencerUptimeFeed == address(0)) {
-			_checkOwner();
-		} else if (msg.sender != timelockAddress) {
-			revert PriceFeed__TimelockOnlyError();
-		}
-		sequencerUptimeFeed = _sequencerUptimeFeed;
-		emit SequencerUptimeFeedUpdated(_sequencerUptimeFeed);
-	}
 
 	function setOracle(
 		address _token,
@@ -109,8 +91,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	 *     - VesselManagerOperations.batchLiquidateVessels()
 	 *     - VesselManagerOperations.redeemCollateral()
 	 */
-	function fetchPrice(address _token) public view override returns (uint256) {
-		_checkSequencerUptimeFeed();
+	function fetchPrice(address _token) public view virtual returns (uint256) {
 		// Tries fetching the price from the oracle
 		OracleRecordV2 memory oracle = oracles[_token];
 		uint256 price = _fetchOracleScaledPrice(oracle);
@@ -127,31 +108,6 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	// Internal functions -----------------------------------------------------------------------------------------------
-
-	function _checkSequencerUptimeFeed() internal view {
-		if (sequencerUptimeFeed != address(0)) {
-			// prettier-ignore
-			(
-				/* uint80 roundId */,
-				int256 answer,
-				/* uint256 startedAt */,
-				uint256 updatedAt,
-				/* uint80 answeredInRound */
-			) =	ChainlinkAggregatorV3Interface(sequencerUptimeFeed).latestRoundData();
-
-			// answer == 0 -> sequencer is up
-			// answer == 1 -> sequencer is down
-			bool isSequencerUp = answer == 0;
-			if (!isSequencerUp) {
-				revert PriceFeed__SequencerDown();
-			}
-
-			uint256 timeSinceSequencerUp = block.timestamp - updatedAt;
-			if (timeSinceSequencerUp <= SEQUENCER_GRACE_PERIOD_SECONDS) {
-				revert PriceFeed__SequencerGracePeriodNotOver();
-			}
-		}
-	}
 
 	function _fetchDecimals(address _oracle, ProviderType _type) internal view returns (uint8) {
 		if (_type == ProviderType.Chainlink) {

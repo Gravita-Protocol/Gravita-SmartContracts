@@ -29,8 +29,6 @@ contract PriceFeedTestnet is IPriceFeed {
 		bool _isFallback
 	) external override {}
 
-	function setSequencerUptimeFeed(address _sequencerUptimeFeed) external override {}
-
 	function fetchPrice(address _asset) external view override returns (uint256) {
 		return this.getPrice(_asset);
 	}
