@@ -1,17 +1,14 @@
-require("@nomicfoundation/hardhat-toolbox")
-require("@nomiclabs/hardhat-truffle5")
-require("@nomiclabs/hardhat-ethers")
-require("@nomiclabs/hardhat-etherscan")
-require("@openzeppelin/hardhat-upgrades")
-// require("hardhat-gas-reporter")
-// require("hardhat-contract-sizer")
-// require("hardhat-interface-generator")
-require("@openzeppelin/hardhat-defender")
-require("solidity-coverage")
-
-require("dotenv").config()
+import "@nomicfoundation/hardhat-toolbox"
+import "@nomiclabs/hardhat-truffle5"
+import "@nomiclabs/hardhat-ethers"
+import "@nomiclabs/hardhat-etherscan"
+import "@openzeppelin/hardhat-upgrades"
+import "@openzeppelin/hardhat-defender"
+import "solidity-coverage"
 
 import { task } from "hardhat/config"
+
+require("dotenv").config()
 
 const accounts = require("./hardhatAccountsList2k.js")
 const accountsList = accounts.accountsList

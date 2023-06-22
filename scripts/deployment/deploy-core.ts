@@ -41,6 +41,8 @@ export class CoreDeployer {
 
 	isTestnetDeployment = () => this.targetNetwork != DeploymentTarget.Mainnet
 	isLocalhostDeployment = () => this.targetNetwork == DeploymentTarget.Localhost
+	isLayer2Deployment = () =>
+		[DeploymentTarget.ArbitrumGoerliTestnet, DeploymentTarget.OptimismGoerliTestnet].includes(this.targetNetwork)
 
 	/**
 	 * Main function that is invoked by the deployment process.
@@ -87,10 +89,11 @@ export class CoreDeployer {
 
 		const gasPool = await this.deployNonUpgradeable("GasPool")
 
-		// TODO PriceFeedL2
 		let priceFeed
 		if (this.isLocalhostDeployment()) {
 			priceFeed = await this.deployNonUpgradeable("PriceFeedTestnet")
+		} else if (this.isLayer2Deployment()) {
+			priceFeed = await this.deployUpgradeable("PriceFeedL2")
 		} else {
 			priceFeed = await this.deployUpgradeable("PriceFeed")
 		}
@@ -152,7 +155,6 @@ export class CoreDeployer {
 	}
 
 	async loadOrDeploy(contractName: string, isUpgradeable: boolean, params: string[]) {
-		// TODO Zksync Deployer
 		let retry = 0
 		const maxRetries = 10
 		const timeout = 600_000 // 10 minutes
@@ -161,7 +163,7 @@ export class CoreDeployer {
 		const alreadyDeployed = this.state[contractName] && address
 		if (!isUpgradeable) {
 			if (alreadyDeployed) {
-				// Non-Upgradeable contract, already deployed
+				// Existing non-upgradeable contract
 				console.log(`Using previous deployment: ${address} -> ${contractName}`)
 				return factory.attach(address)
 			} else {
@@ -327,10 +329,9 @@ export class CoreDeployer {
 	}
 
 	/**
-	 * Calls PriceFeed.setOracle().
+	 * Calls PriceFeed.setOracle()
 	 */
 	async addPriceFeedOracle(coll: any) {
-		// TODO Pyth Price Feed
 		const oracleRecord = await this.coreContracts.priceFeed.oracles(coll.address)
 		if (oracleRecord.decimals == 0) {
 			const owner = await this.coreContracts.priceFeed.owner()
@@ -488,19 +489,19 @@ export class CoreDeployer {
 		if (!this.config.ETHERSCAN_BASE_URL) {
 			console.log("(No Etherscan URL defined, skipping contract verification)")
 		} else {
-			await this.verifyContract("ActivePool", this.state)
-			await this.verifyContract("AdminContract", this.state)
-			await this.verifyContract("BorrowerOperations", this.state)
-			await this.verifyContract("CollSurplusPool", this.state)
-			await this.verifyContract("DebtToken", this.state)
-			await this.verifyContract("DefaultPool", this.state)
-			await this.verifyContract("FeeCollector", this.state)
-			await this.verifyContract("GasPool", this.state)
-			await this.verifyContract("PriceFeed", this.state)
-			await this.verifyContract("SortedVessels", this.state)
-			await this.verifyContract("StabilityPool", this.state)
-			await this.verifyContract("VesselManager", this.state)
-			await this.verifyContract("VesselManagerOperations", this.state)
+			await this.verifyContract("ActivePool")
+			await this.verifyContract("AdminContract")
+			await this.verifyContract("BorrowerOperations")
+			await this.verifyContract("CollSurplusPool")
+			await this.verifyContract("DebtToken")
+			await this.verifyContract("DefaultPool")
+			await this.verifyContract("FeeCollector")
+			await this.verifyContract("GasPool")
+			await this.verifyContract("PriceFeed")
+			await this.verifyContract("SortedVessels")
+			await this.verifyContract("StabilityPool")
+			await this.verifyContract("VesselManager")
+			await this.verifyContract("VesselManagerOperations")
 		}
 	}
 
@@ -530,3 +531,4 @@ export class CoreDeployer {
 		this.saveDeployment()
 	}
 }
+
