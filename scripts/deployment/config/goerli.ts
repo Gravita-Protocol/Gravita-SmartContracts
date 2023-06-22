@@ -1,5 +1,5 @@
-const { utils } = require("ethers")
-const toEther = val => utils.parseEther(String(val))
+import { BigNumber, utils } from "ethers"
+const toEther = (val: any): BigNumber => utils.parseEther(String(val))
 
 const OUTPUT_FILE = "./scripts/deployment/output/goerli.json"
 const TX_CONFIRMATIONS = 2
@@ -9,7 +9,8 @@ const CONTRACT_UPGRADES_ADMIN = "0x30638E3318F2DF6f83A6ffb237ad66F11Ae9FC53"
 const SYSTEM_PARAMS_ADMIN = "0xBC375E1Cc5434a00E8C00C71EBCBd53364426596"
 const TREASURY_WALLET = "0x19596e1D6cd97916514B5DBaA4730781eFE49975"
 
-// Core Contracts Config ----------------------------------------------------------------------------------------------
+// Updated 06/20/2023 from Gravita-Protocol/layer-zero branch gravita-proxy file deployments/goerli/GravitaProxy.json commit 1564b4d
+const GRAI_TOKEN_ADDRESS = "0x06D268FE822db85918aEf4485DE373eed4CE95fa"
 
 const COLLATERAL = [
 	{
@@ -62,17 +63,11 @@ const COLLATERAL = [
 	},
 ]
 
-// Grvt Contracts Config ----------------------------------------------------------------------------------------------
-
-const GRVT_BENEFICIARIES = {
-	"0x19596e1D6cd97916514B5DBaA4730781eFE49975": 1_000_000,
-}
-
 module.exports = {
 	COLLATERAL,
 	CONTRACT_UPGRADES_ADMIN,
 	ETHERSCAN_BASE_URL,
-	GRVT_BENEFICIARIES,
+	GRAI_TOKEN_ADDRESS,
 	OUTPUT_FILE,
 	SYSTEM_PARAMS_ADMIN,
 	TREASURY_WALLET,
