@@ -266,6 +266,16 @@ export class CoreDeployer {
 				console.log(`(${key} has no setAddresses() or isAddressSetupInitialized() function)`)
 			}
 		}
+		try {
+			console.log(`DebtToken.setAddresses()...`)
+			await this.coreContracts.debtToken.setAddresses(
+				this.coreContracts.borrowerOperations.address,
+				this.coreContracts.stabilityPool.address,
+				this.coreContracts.vesselManager.address
+			)
+		} catch (e) {
+			console.log(`DebtToken.setAddresses() failed!`)
+		}
 	}
 
 	async addCollaterals() {
