@@ -2,12 +2,12 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IRewardStaking.sol";
-import "../interfaces/IConvexDeposits.sol";
-import "../interfaces/CvxMining.sol";
-import "../interfaces/IBooster.sol";
-import "../interfaces/IRewardHook.sol";
-import "../interfaces/ITokenWrapper.sol";
+import "./Interfaces/IRewardStaking.sol";
+import "./Interfaces/IConvexDeposits.sol";
+import "./Interfaces/CvxMining.sol";
+import "./Interfaces/IBooster.sol";
+import "./Interfaces/IRewardHook.sol";
+import "./Interfaces/ITokenWrapper.sol";
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
@@ -58,10 +58,13 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
     address public rewardHook;
     mapping(address => address) public rewardRedirect;
 
-    //management
+    //Admin
     bool public isShutdown;
     bool public isInit;
     address internal _owner;
+    address public treasuryAddress;
+
+    uint256 public protocolFee = 0.1 ether; //10% TODO separate cvx and crv rewards?
 
     string internal _tokenname;
     string internal _tokensymbol;
@@ -143,6 +146,10 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
         isShutdown = true;
         emit Shutdown();
     }
+
+    funtion setTreasuryAddress (address _treasury) external onlyOwner(
+        treasuryAddress = _treasury
+    )
 
     function setApprovals() public {
         IERC20(curveToken).safeApprove(convexBooster, 0);
@@ -310,18 +317,25 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 
             uint userI = reward.reward_integral_for[_accounts[u]];
             if(_isClaim || userI < reward.reward_integral){
+                uint256 receiveable = reward.claimable_reward[_accounts[u]].add(_balances[u].mul( reward.reward_integral.sub(userI)).div(1e20));
+                uint256 receivable_user = receiveable*(1 ether - protocolFee)/1 ether ; //90% of reward
                 if(_isClaim){
-                    uint256 receiveable = reward.claimable_reward[_accounts[u]].add(_balances[u].mul( reward.reward_integral.sub(userI)).div(1e20));
                     if(receiveable > 0){
                         reward.claimable_reward[_accounts[u]] = 0;
                         //cheat for gas savings by transfering to the second index in accounts list
                         //if claiming only the 0 index will update so 1 index can hold forwarding info
                         //guaranteed to have an address in u+1 so no need to check
-                        _transferReward(reward.reward_token, _accounts[u+1], receiveable);
+                        //Deduct protocol fee
+                        _transferReward(reward.reward_token, _accounts[u+1], receivable_user);
+                        //Add protocol rewards as claimable, to be claimed at a later date
+                        reward.claimable_reward[treasuryAddress] += receiveable - receivable_user;
                         bal = bal.sub(receiveable);
                     }
                 }else{
-                    reward.claimable_reward[_accounts[u]] = reward.claimable_reward[_accounts[u]].add(_balances[u].mul( reward.reward_integral.sub(userI)).div(1e20));
+                    uint256 receiveable = reward.claimable_reward[_accounts[u]].add(_balances[u].mul( reward.reward_integral.sub(userI)).div(1e20));
+                    
+                    reward.claimable_reward[_accounts[u]] = receivable_user;
+                    reward.claimable_reward[treasuryAddress] += receiveable - receivable_user;
                 }
                 reward.reward_integral_for[_accounts[u]] = reward.reward_integral;
             }
@@ -333,6 +347,21 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
         }
     }
 
+    //Claim function for the treasury that skips the protocol fee
+    function claimToTreasurySingle(uint256 _index) external{
+        require(_msgSender == treasuryAddress, "!Treasury")
+        RewardType storage reward = rewards[_index];
+        if(reward.reward_token == address(0)){
+            return;
+        }
+        uint256 receiveable = reward.claimable_reward[treasuryAddress];
+        reward.claimable_reward[treasuryAddress] = 0;
+        _transferReward(reward.reward_token, treasuryAddress, receivable);
+    }
+
+
+    /// @param  _accounts[0] sender address
+    /// @param  _accounts[1] _forwardTo address 
     function _checkpoint(address[2] memory _accounts) internal nonReentrant{
         uint256 supply = _getTotalSupply();
         uint256[2] memory depositedBalance;
@@ -354,6 +383,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
         emit UserCheckpoint(_accounts[0],_accounts[1]);
     }
 
+    //
     function _checkpointAndClaim(address[2] memory _accounts) internal nonReentrant{
         uint256 supply = _getTotalSupply();
         uint256[2] memory depositedBalance;
