@@ -8,12 +8,11 @@ import "./Interfaces/CvxMining.sol";
 import "./Interfaces/IBooster.sol";
 import "./Interfaces/IRewardHook.sol";
 import "./Interfaces/ITokenWrapper.sol";
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
+import "@openzeppelin/contracts-3.4.0/math/SafeMath.sol";
+import "@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-3.4.0/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-3.4.0/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-3.4.0/utils/ReentrancyGuard.sol";
 
 //Example of a tokenize a convex staked position.
 //if used as collateral some modifications will be needed to fit the specific platform
@@ -21,10 +20,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 //Based on Curve.fi's gauge wrapper implementations at https://github.com/curvefi/curve-dao-contracts/tree/master/contracts/gauges/wrappers
 contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
-    using SafeERC20
-    for IERC20;
-    using SafeMath
-    for uint256;
+	using SafeERC20 for IERC20;
+	using SafeMath for uint256;
 
 	struct EarnedData {
 		address token;
@@ -291,6 +288,8 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 
 			uint userI = reward.reward_integral_for[_accounts[u]];
 			if (_isClaim || userI < reward.reward_integral) {
+				//reward.claimable_reward[_accounts[u]] current claimable amopunt
+				// add(_balances[u].mul(reward.reward_integral.sub(userI)) => token_balance *(general_reward/token - user_claimed_reward/token)
 				uint256 receiveable = reward.claimable_reward[_accounts[u]].add(
 					_balances[u].mul(reward.reward_integral.sub(userI)).div(1e20)
 				);
@@ -322,8 +321,8 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 	}
 
 	//Claim function for the treasury that skips the protocol fee
-    function claimToTreasurySingle(uint256 _index) external{
-        require(_msgSender == treasuryAddress, "!Treasury");
+	function claimToTreasurySingle(uint256 _index) external {
+		require(treasuryAddress == msg.sender, "!Treasury");
 		RewardType storage reward = rewards[_index];
 		if (reward.reward_token == address(0)) {
 			return;
@@ -333,8 +332,9 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 		_transferReward(reward.reward_token, treasuryAddress, receiveable);
 	}
 
-	/// @param  _accounts[0] sender address
-	/// @param  _accounts[1] _forwardTo address
+	/// usually:
+	/// @param  _accounts[0] from address
+	/// @param  _accounts[1] to address
 	function _checkpoint(address[2] memory _accounts) internal nonReentrant {
 		uint256 supply = _getTotalSupply();
 		uint256[2] memory depositedBalance;
