@@ -57,3 +57,5 @@ build
 
 # dotenv
 .env
+
+typechain-types
