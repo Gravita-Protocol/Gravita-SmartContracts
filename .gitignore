@@ -19,6 +19,8 @@ bin
 .idea
 .vscode
 
+# Typechain
+typechain-types
 
 # FOLLOWING ARE FROM THE FORK -- Waiting for cleanup
 
