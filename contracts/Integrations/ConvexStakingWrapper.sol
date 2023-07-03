@@ -8,18 +8,19 @@ import "./Interfaces/CvxMining.sol";
 import "./Interfaces/IBooster.sol";
 import "./Interfaces/IRewardHook.sol";
 import "./Interfaces/ITokenWrapper.sol";
+import "./Addresses.sol";
 import "@openzeppelin/contracts-3.4.0/math/SafeMath.sol";
 import "@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-3.4.0/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-3.4.0/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-3.4.0/utils/ReentrancyGuard.sol";
 
-//Example of a tokenize a convex staked position.
+//Example of a tokenized convex staked position.
 //if used as collateral some modifications will be needed to fit the specific platform
 // from https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
 
 //Based on Curve.fi's gauge wrapper implementations at https://github.com/curvefi/curve-dao-contracts/tree/master/contracts/gauges/wrappers
-contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
+contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	using SafeERC20 for IERC20;
 	using SafeMath for uint256;
 
@@ -59,13 +60,13 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 	bool public isShutdown;
 	bool public isInit;
 	address internal _owner;
-	address public treasuryAddress;
 
-	uint256 public protocolFee = 0.1 ether; //10% TODO separate cvx and crv rewards?
+	uint256 public protocolFee = 0.1 ether;
 
 	string internal _tokenname;
 	string internal _tokensymbol;
 
+	// Events -----------------------------------------------------------------------------------------------------------
 	event Deposited(address indexed _user, address indexed _account, uint256 _amount, bool _wrapped);
 	event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -75,6 +76,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 	event Shutdown();
 	event HookSet(address _hook);
 	event UserCheckpoint(address _userA, address _userB);
+	event ProtocolFeeChanged(uint256 oldProtocolFee, uint256 newProtocolFee);
 
 	constructor() public ERC20("StakedConvexToken", "stkCvx") {}
 
@@ -137,11 +139,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 		isShutdown = true;
 		emit Shutdown();
 	}
-
-	function setTreasuryAddress(address _treasury) external onlyOwner {
-		treasuryAddress = _treasury;
-	}
-
+	
 	function setApprovals() public {
 		IERC20(curveToken).safeApprove(convexBooster, 0);
 		IERC20(curveToken).safeApprove(convexBooster, uint256(-1));
@@ -505,6 +503,19 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard {
 	//helper function
 	function earmarkRewards() external returns (bool) {
 		return IBooster(convexBooster).earmarkRewards(convexPoolId);
+	}
+
+	function setProtocolFee(uint256 _newfee) external onlyTimelock {
+		uint256 oldFee = protocolFee;
+		protocolFee = _newfee;
+		emit ProtocolFeeChanged(oldFee, _newfee);
+	}
+
+	modifier onlyTimelock() {
+		if (msg.sender != timelockAddress) {
+			revert("Only Timelock");
+		}
+		_;
 	}
 }
 
