@@ -9,6 +9,7 @@
 	"scripts": {
 		"hardhat": "hardhat",
 		"test": "hardhat test --max-memory 4096 --show-stack-traces",
+		"test-ganache": "npx hardhat --network ganache test ./test/gravita-ganache/StakeWrapperCvx.js",
 		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
 		"deploy-core-goerli": "npx hardhat deploy-core-goerli --network goerli --show-stack-traces",
 		"deploy-core-arbitrum-goerli": "npx hardhat deploy-core-arbitrum-goerli --network arbitrum_goerli --show-stack-traces",
@@ -49,6 +50,7 @@
 		"eth-permit": "^0.2.3",
 		"ethereumjs-util": "^7.1.5",
 		"ethers": "5.7.2",
+		"ganache": "^7.8.0",
 		"hardhat": "^2.14.0",
 		"hardhat-contract-sizer": "^2.8.0",
 		"hardhat-gas-reporter": "^1.0.9",

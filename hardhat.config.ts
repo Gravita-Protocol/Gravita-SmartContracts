@@ -2,6 +2,7 @@ import "@nomicfoundation/hardhat-toolbox"
 import "@nomiclabs/hardhat-truffle5"
 import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-etherscan"
+import "@nomiclabs/hardhat-ganache"
 import "@openzeppelin/hardhat-upgrades"
 import "@openzeppelin/hardhat-defender"
 import "solidity-coverage"
@@ -55,6 +56,21 @@ module.exports = {
 					},
 				},
 			},
+			{
+				// version 0.6.12 is used by integrations (StakeWrapper)
+				version: "0.6.12",
+				settings: {
+					optimizer: {
+						enabled: true,
+						runs: 200,
+					},
+					outputSelection: {
+						"*": {
+							"*": ["storageLayout"],
+						},
+					},
+				},
+			},
 		],
 	},
 	networks: {
@@ -67,11 +83,20 @@ module.exports = {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
 		},
+		ganache: {
+			url: "http://localhost:7545",
+			chain: {
+				chainId: 1337,
+			},
+			server: {
+				port: 7545
+			}
+		},
 		goerli: {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-    arbitrum_goerli: {
+		arbitrum_goerli: {
 			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},

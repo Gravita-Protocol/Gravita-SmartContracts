@@ -1,19 +1,12 @@
-// const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin-test-helpers');
-const { BN, time } = require("openzeppelin-test-helpers")
+const { time } = require("@openzeppelin/test-helpers")
 var jsonfile = require("jsonfile")
-var contractList = jsonfile.readFileSync("./contracts.json")
+var contractList = jsonfile.readFileSync("./test/gravita-ganache/contracts.json")
 
 const Booster = artifacts.require("Booster")
-const CrvDepositor = artifacts.require("CrvDepositor")
 const ConvexToken = artifacts.require("ConvexToken")
-const cvxCrvToken = artifacts.require("cvxCrvToken")
-const CurveVoterProxy = artifacts.require("CurveVoterProxy")
 const BaseRewardPool = artifacts.require("BaseRewardPool")
 const ConvexStakingWrapper = artifacts.require("ConvexStakingWrapper")
-const IERC20 = artifacts.require("IERC20")
-const ICurveAavePool = artifacts.require("ICurveAavePool")
-const IExchange = artifacts.require("IExchange")
-const IUniswapV2Router01 = artifacts.require("IUniswapV2Router01")
+const IERC20 = artifacts.require("@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol:IERC20")
 const CvxMining = artifacts.require("CvxMining")
 
 const unlockAccount = async address => {
@@ -35,31 +28,21 @@ const unlockAccount = async address => {
 	})
 }
 
-contract("Test stake wrapper", async accounts => {
+contract("StakeWrapperCvx", async accounts => {
 	it("should deposit lp tokens and earn rewards while being transferable", async () => {
 		let deployer = "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277"
-		let multisig = "0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB"
 		let addressZero = "0x0000000000000000000000000000000000000000"
 
 		//system
 		let booster = await Booster.at(contractList.system.booster)
-		let voteproxy = await CurveVoterProxy.at(contractList.system.voteProxy)
 		let cvx = await ConvexToken.at(contractList.system.cvx)
 		let crv = await IERC20.at("0xD533a949740bb3306d119CC777fa900bA034cd52")
-		let stkaave = await IERC20.at("0x4da27a545c0c5B758a6BA100e3a049001de870f5")
-		let cvxCrv = await cvxCrvToken.at(contractList.system.cvxCrv)
-		let cvxCrvLP = await IERC20.at(contractList.system.cvxCrvCrvSLP)
-		let exchange = await IExchange.at("0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F")
-		let exchangerouter = await IUniswapV2Router01.at("0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F")
-		let weth = await IERC20.at("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 		let userA = accounts[0]
 		let userB = accounts[1]
-		let userC = accounts[2]
 		let userF = accounts[9]
 		await web3.eth.sendTransaction({ from: userF, to: deployer, value: web3.utils.toWei("80.0", "ether") })
 
-		let starttime = await time.latest()
 		let gauge = "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1"
 		await unlockAccount(gauge)
 		let curveLP = await IERC20.at("0x3A283D9c08E8b55966afb64C515f5143cf907611")
