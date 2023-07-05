@@ -28,6 +28,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 		address _stabilityPoolAddress,
 		address _vesselManagerAddress
 	) public onlyOwner() {
+		require(_borrowerOperationsAddress != address(0) && _stabilityPoolAddress != address(0) && _vesselManagerAddress != address(0), "Invalid address");
 		borrowerOperationsAddress = _borrowerOperationsAddress;
 		stabilityPoolAddress = _stabilityPoolAddress;
 		vesselManagerAddress = _vesselManagerAddress;
