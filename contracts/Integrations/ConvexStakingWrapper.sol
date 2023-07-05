@@ -2,13 +2,15 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "./Interfaces/IRewardStaking.sol";
-import "./Interfaces/IConvexDeposits.sol";
+import "../Interfaces/IBorrowerOperations.sol";
+import "../Interfaces/IVesselManager.sol";
+import "./Addresses.sol";
 import "./Interfaces/CvxMining.sol";
 import "./Interfaces/IBooster.sol";
+import "./Interfaces/IConvexDeposits.sol";
 import "./Interfaces/IRewardHook.sol";
+import "./Interfaces/IRewardStaking.sol";
 import "./Interfaces/ITokenWrapper.sol";
-import "./Addresses.sol";
 import "@openzeppelin/contracts-3.4.0/math/SafeMath.sol";
 import "@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-3.4.0/token/ERC20/SafeERC20.sol";
@@ -46,7 +48,6 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	address public convexToken;
 	address public convexPool;
 	uint256 public convexPoolId;
-	address public collateralVault;
 	uint256 private constant CRV_INDEX = 0;
 	uint256 private constant CVX_INDEX = 1;
 
@@ -96,7 +97,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		isShutdown = false;
 		isInit = true;
 
-		// collateralVault = _vault;
+		// vesselManager = _vault;
 
 		//add rewards
 		addRewards();
@@ -139,7 +140,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		isShutdown = true;
 		emit Shutdown();
 	}
-	
+
 	function setApprovals() public {
 		IERC20(curveToken).safeApprove(convexBooster, 0);
 		IERC20(curveToken).safeApprove(convexBooster, uint256(-1));
@@ -237,12 +238,15 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	}
 
 	function _getDepositedBalance(address _account) internal view virtual returns (uint256) {
-		if (_account == address(0) || _account == collateralVault) {
+		if (_account == address(0) || _account == vesselManager) {
 			return 0;
 		}
-		//get balance from collateralVault
-
-		return balanceOf(_account);
+		//get balance from vesselManager
+		uint256 collateral;
+        if(vesselManager != address(0)){
+           collateral = IVesselManager(vesselManager).getVesselColl(address(this), _borrower);
+        }
+		return balanceOf(_account).add(collateral);
 	}
 
 	function _getTotalSupply() internal view virtual returns (uint256) {
@@ -281,7 +285,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		for (uint256 u = 0; u < _accounts.length; u++) {
 			//do not give rewards to address 0
 			if (_accounts[u] == address(0)) continue;
-			if (_accounts[u] == collateralVault) continue;
+			if (_accounts[u] == vesselManager) continue;
 			if (_isClaim && u != 0) continue; //only update/claim for first address and use second as forwarding
 
 			uint userI = reward.reward_integral_for[_accounts[u]];
