@@ -921,7 +921,20 @@ contract("StabilityPool", async accounts => {
 				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), [erc20.address, erc20B.address, erc20.address], {
 					from: whale,
 				})
-				await assertRevert(txPromise, "StabilityPool__DuplicateElementOnArray")
+				await assertRevert(txPromise, "StabilityPool__ArrayNotInAscendingOrder")
+			})
+
+			it("provideToSP(): passing asset array in non-ascending order will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// first call won't revert as there is no initial deposit
+				await stabilityPool.provideToSP(dec(199_000, 18), [erc20.address, erc20B.address], { from: whale })
+				// correct order
+				await stabilityPool.provideToSP(dec(199_000, 18), [erc20.address, erc20B.address], { from: whale })
+				// incorrect order - should revert
+				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), [erc20B.address, erc20.address], {
+					from: whale,
+				})
+				await assertRevert(txPromise, "StabilityPool__ArrayNotInAscendingOrder")
 			})
 
 			it("provideToSP(): passing wrong address to asset list has no impact", async () => {

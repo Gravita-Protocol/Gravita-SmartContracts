@@ -565,19 +565,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	}
 
 	/**
-	 * @notice Calculates all the gains earned by the deposit since its last snapshots were taken.
-	 * @param _depositor address of depositor in question
-	 * @return assets, amounts
-	 */
-	function getDepositorGains(address _depositor) internal view returns (address[] memory, uint256[] memory) {
-		return getDepositorGains(_depositor, IAdminContract(adminContract).getValidCollateral());
-	}
-
-	/**
 	 * @notice get gains on each possible asset by looping through
 	 * @dev assets with _getGainFromSnapshots function
 	 * @param initialDeposit Amount of initial deposit
 	 * @param snapshots struct snapshots
+	 * @param _assets ascending ordered array of assets to calculate and claim gains
 	 */
 	function _calculateNewGains(
 		uint256 initialDeposit,
@@ -585,13 +577,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		address[] memory _assets
 	) internal view returns (uint256[] memory amounts) {
 		uint256 assetsLen = _assets.length;
-		// revert if there is a duplicate on the array
+		// asset list must be on ascending order - used to avoid any repeated elements
 		unchecked {
-			for (uint256 i = 0; i < assetsLen; i++) {
-				for (uint256 j = i + 1; j < assetsLen; j++) {
-					if (_assets[i] == _assets[j]) {
-						revert StabilityPool__DuplicateElementOnArray();
-					}
+			for (uint256 i = 1; i < assetsLen; i++) {
+				if (_assets[i] <= _assets[i-1]) {
+					revert StabilityPool__ArrayNotInAscendingOrder();
 				}
 			}
 		}
