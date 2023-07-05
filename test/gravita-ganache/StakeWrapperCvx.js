@@ -9,6 +9,9 @@ const ConvexStakingWrapper = artifacts.require("ConvexStakingWrapper")
 const IERC20 = artifacts.require("@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol:IERC20")
 const CvxMining = artifacts.require("CvxMining")
 
+var snapshotId
+var initialSnapshotId
+
 const unlockAccount = async address => {
 	return new Promise((resolve, reject) => {
 		web3.currentProvider.send(
@@ -28,7 +31,26 @@ const unlockAccount = async address => {
 	})
 }
 
+const f = v => ethers.utils.formatEther(v.toString())
+
 contract("StakeWrapperCvx", async accounts => {
+
+	before(async () => {
+		initialSnapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	beforeEach(async () => {
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
+
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
+
+	after(async () => {
+		await network.provider.send("evm_revert", [initialSnapshotId])
+	})
+
 	it("should deposit lp tokens and earn rewards while being transferable", async () => {
 		let deployer = "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277"
 		let addressZero = "0x0000000000000000000000000000000000000000"
@@ -41,16 +63,21 @@ contract("StakeWrapperCvx", async accounts => {
 		let userA = accounts[0]
 		let userB = accounts[1]
 		let userF = accounts[9]
-		await web3.eth.sendTransaction({ from: userF, to: deployer, value: web3.utils.toWei("80.0", "ether") })
+		console.log(`send from userF to deployer`)
+		console.log(`userF balance = ${f(await web3.eth.getBalance(userF))}`)
+		await web3.eth.sendTransaction({ from: userF, to: deployer, value: web3.utils.toWei("8.0", "ether") })
 
 		let gauge = "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1"
+		console.log(`unlock gauge account`)
 		await unlockAccount(gauge)
 		let curveLP = await IERC20.at("0x3A283D9c08E8b55966afb64C515f5143cf907611")
 		let convexLP = await IERC20.at("0x0bC857f97c0554d1d0D602b56F2EEcE682016fBA")
 		let convexRewards = await BaseRewardPool.at("0xb1Fb0BA0676A1fFA83882c7F4805408bA232C1fA")
 		let poolId = 64
 
+		console.log(`curveLP.transfer from gauge to userA`)
 		await curveLP.transfer(userA, web3.utils.toWei("10.0", "ether"), { from: gauge, gasPrice: 0 })
+		console.log(`curveLP.transfer from gauge to userB`)
 		await curveLP.transfer(userB, web3.utils.toWei("5.0", "ether"), { from: gauge, gasPrice: 0 })
 		var userABalance = await curveLP.balanceOf(userA)
 		var userBBalance = await curveLP.balanceOf(userB)
