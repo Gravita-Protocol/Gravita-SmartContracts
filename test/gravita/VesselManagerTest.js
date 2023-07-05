@@ -45,6 +45,9 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
+
+	// getDepositorGains() expects a sorted collateral array
+	validCollateral = validCollateral.slice(0).sort((a, b) => toBN(a.toLowerCase()).sub(toBN(b.toLowerCase())))
 }
 
 /* NOTE: Some tests involving ETH redemption fees do not test for specific fee values.
