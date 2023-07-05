@@ -37,7 +37,9 @@ abstract contract AddressesConfigurable is OwnableUpgradeable {
 	function setAddresses(address[] calldata _addresses) external onlyOwner {
 		require(!isAddressSetupInitialized, "Setup is already initialized");
 		require(_addresses.length == 15, "Expected 15 addresses at setup");
-
+		for (uint i = 0; i < 15; i++) {
+			require(_addresses[i] != address(0), "Invalid address");
+		}
 		activePool = _addresses[0];
 		adminContract = _addresses[1];
 		borrowerOperations = _addresses[2];
