@@ -36,6 +36,9 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
+
+	// getDepositorGains() expects a sorted collateral array
+	validCollateral = validCollateral.slice(0).sort((a, b) => toBN(a.toLowerCase()).sub(toBN(b.toLowerCase())))
 }
 
 contract("StabilityPool", async accounts => {
@@ -117,6 +120,7 @@ contract("StabilityPool", async accounts => {
 		after(async () => {
 			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
+
 		describe("Providing", async () => {
 			it("provideToSP(): increases the Stability Pool balance", async () => {
 				await _openVessel(erc20, (extraDebtTokenAmt = 200), alice)
@@ -921,7 +925,19 @@ contract("StabilityPool", async accounts => {
 				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), [erc20.address, erc20B.address, erc20.address], {
 					from: whale,
 				})
-				await assertRevert(txPromise, "StabilityPool__DuplicateElementOnArray")
+				await assertRevert(txPromise, "StabilityPool__ArrayNotInAscendingOrder")
+			})
+
+			it("provideToSP(): passing asset array in non-ascending order will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// correct order
+				await stabilityPool.provideToSP(dec(199_000, 18), validCollateral, { from: whale })
+				// incorrect order - should revert
+				const validCollateralReverse = validCollateral.slice(0).reverse()
+				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), validCollateralReverse, {
+					from: whale,
+				})
+				await assertRevert(txPromise, "StabilityPool__ArrayNotInAscendingOrder")
 			})
 
 			it("provideToSP(): passing wrong address to asset list has no impact", async () => {

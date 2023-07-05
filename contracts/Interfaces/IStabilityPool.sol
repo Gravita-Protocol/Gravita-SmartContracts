@@ -40,7 +40,7 @@ interface IStabilityPool is IDeposit {
 	error StabilityPool__ActivePoolOnly(address sender, address expected);
 	error StabilityPool__AdminContractOnly(address sender, address expected);
 	error StabilityPool__VesselManagerOnly(address sender, address expected);
-	error StabilityPool__DuplicateElementOnArray();
+	error StabilityPool__ArrayNotInAscendingOrder();
 
 	// --- Functions ---
 
