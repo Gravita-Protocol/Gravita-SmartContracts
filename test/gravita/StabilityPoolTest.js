@@ -1274,7 +1274,8 @@ contract("StabilityPool", async accounts => {
 				// Expect alice to be entitled to 15000/200000 of the liquidated coll
 
 				const aliceExpectedGainERC20 = liquidatedCollERC20.mul(toBN(dec(15_000, 18))).div(toBN(dec(200_000, 18)))
-				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][idx]
 				assert.isTrue(aliceExpectedGainERC20.eq(aliceGainERC20))
 
 				// Alice retrieves all of her deposit
@@ -1334,7 +1335,8 @@ contract("StabilityPool", async accounts => {
 				// Expect alice to be entitled to 1000/200000 of the liquidated coll
 
 				const aliceExpectedGainERC20 = liquidatedCollERC20.mul(toBN(dec(1000, 18))).div(toBN(dec(200_000, 18)))
-				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][idx]
 				assert.isTrue(aliceExpectedGainERC20.eq(aliceGainERC20))
 
 				// Alice withdraws from SP, chooses not to receive gains to avoid transfer/swap costs

@@ -1037,9 +1037,10 @@ contract("VesselManager", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, carol))
 				// Check Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated ETH
 				const dennis_Deposit_Before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
+				const idx = validCollateral.indexOf(erc20.address)
 				const dennis_ETHGain_Before_Asset = (
 					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 				assert.isAtMost(th.getDifference(dennis_Deposit_Before_Asset, spDeposit.sub(liquidatedDebt_Asset)), 1000000)
 				assert.isAtMost(th.getDifference(dennis_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
 
@@ -1060,7 +1061,7 @@ contract("VesselManager", async accounts => {
 				const dennis_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
 				const dennis_ETHGain_After_Asset = (
 					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 
 				assert.equal(dennis_Deposit_Before_Asset, dennis_Deposit_After_Asset)
 				assert.equal(dennis_ETHGain_Before_Asset, dennis_ETHGain_After_Asset)
@@ -1104,7 +1105,8 @@ contract("VesselManager", async accounts => {
 				// Check Bob' SP deposit has absorbed Carol's debt, and he has received her liquidated ETH
 
 				const bob_Deposit_Before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
-				const bob_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const bob_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx].toString()
 
 				assert.isAtMost(th.getDifference(bob_Deposit_Before_Asset, spDeposit.sub(liquidatedDebt_Asset)), 1000000)
 				assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
@@ -1121,7 +1123,7 @@ contract("VesselManager", async accounts => {
 				// Check Bob' SP deposit does not change after liquidation attempt
 
 				const bob_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
-				const bob_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const bob_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx].toString()
 
 				assert.equal(bob_Deposit_Before_Asset, bob_Deposit_After_Asset)
 				assert.equal(bob_ETHGain_Before_Asset, bob_ETHGain_After_Asset)
@@ -1166,7 +1168,8 @@ contract("VesselManager", async accounts => {
 				// Check Bob' SP deposit has absorbed Carol's debt, and he has received her liquidated ETH
 
 				const bob_Deposit_Before_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
-				const bob_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const bob_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx]
 
 				assert.isAtMost(th.getDifference(bob_Deposit_Before_Asset, B_spDeposit.sub(C_debt_Asset)), 1000000)
 				assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, th.applyLiquidationFee(C_collateral_Asset)), 1000)
@@ -1197,7 +1200,7 @@ contract("VesselManager", async accounts => {
 				const alice_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const alice_ETHGain_After_Asset = (
 					await stabilityPool.getDepositorGains(alice, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 
 				const totalDeposits_Asset = bob_Deposit_Before_Asset.add(A_spDeposit)
 
@@ -1217,7 +1220,7 @@ contract("VesselManager", async accounts => {
 				)
 
 				const bob_Deposit_After_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
-				const bob_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1]
+				const bob_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx]
 
 				assert.isAtMost(
 					th.getDifference(
@@ -2499,9 +2502,10 @@ contract("VesselManager", async accounts => {
 				const alice_Deposit_After_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
 				const bob_Deposit_After_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
 
-				const whale_ETHGain_Asset = (await stabilityPool.getDepositorGains(whale, validCollateral))[1][1]
-				const alice_ETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
-				const bob_ETHGain_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const whale_ETHGain_Asset = (await stabilityPool.getDepositorGains(whale, validCollateral))[idx][idx]
+				const alice_ETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][idx]
+				const bob_ETHGain_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx]
 
 				assert.isAtMost(
 					th.getDifference(
@@ -5058,13 +5062,14 @@ contract("VesselManager", async accounts => {
 				const carol_SPDeposit_before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(carol)).toString()
 				const dennis_SPDeposit_before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
 
-				const bob_ETHGain_before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const bob_ETHGain_before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx].toString()
 				const carol_ETHGain_before_Asset = (
 					await stabilityPool.getDepositorGains(carol, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 				const dennis_ETHGain_before_Asset = (
 					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 
 				// Check the remaining GRAI and ETH in Stability Pool after liquidation is non-zero
 
@@ -5095,13 +5100,13 @@ contract("VesselManager", async accounts => {
 				const carol_SPDeposit_after_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(carol)).toString()
 				const dennis_SPDeposit_after_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
 
-				const bob_ETHGain_after_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const bob_ETHGain_after_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][idx].toString()
 				const carol_ETHGain_after_Asset = (
 					await stabilityPool.getDepositorGains(carol, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 				const dennis_ETHGain_after_Asset = (
 					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][1].toString()
+				)[idx][idx].toString()
 
 				// Check B, C, D Stability Pool deposits and ETH gain have not been affected by redemptions from their vessels
 				assert.equal(bob_SPDeposit_before_Asset, bob_SPDeposit_after_Asset)
