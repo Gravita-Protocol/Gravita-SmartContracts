@@ -1167,7 +1167,8 @@ contract("StabilityPool", async accounts => {
 
 				// Alice makes second deposit
 				await stabilityPool.provideToSP(dec(10000, 18), validCollateral, { from: alice })
-				assert.equal((await stabilityPool.getDepositorGains(alice, validCollateral))[1][1], "0")
+				const idx = validCollateral.indexOf(erc20.address)
+				assert.equal((await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1], "0")
 
 				const ERC20inSP_Before = (await stabilityPool.getCollateral(erc20.address)).toString()
 
@@ -1275,7 +1276,7 @@ contract("StabilityPool", async accounts => {
 
 				const aliceExpectedGainERC20 = liquidatedCollERC20.mul(toBN(dec(15_000, 18))).div(toBN(dec(200_000, 18)))
 				const idx = validCollateral.indexOf(erc20.address)
-				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][idx]
+				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1]
 				assert.isTrue(aliceExpectedGainERC20.eq(aliceGainERC20))
 
 				// Alice retrieves all of her deposit
@@ -1336,7 +1337,7 @@ contract("StabilityPool", async accounts => {
 
 				const aliceExpectedGainERC20 = liquidatedCollERC20.mul(toBN(dec(1000, 18))).div(toBN(dec(200_000, 18)))
 				const idx = validCollateral.indexOf(erc20.address)
-				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][idx]
+				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1]
 				assert.isTrue(aliceExpectedGainERC20.eq(aliceGainERC20))
 
 				// Alice withdraws from SP, chooses not to receive gains to avoid transfer/swap costs
@@ -1491,8 +1492,9 @@ contract("StabilityPool", async accounts => {
 				const alice_Deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const bob_Deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 
-				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
-				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1].toString()
+				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][1].toString()
 
 				// Check non-zero balance and AssetGain in the Stability Pool
 				const debtInPool = await stabilityPool.getTotalDebtTokenDeposits()
@@ -1510,8 +1512,8 @@ contract("StabilityPool", async accounts => {
 
 				const alice_Deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const bob_Deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
-				const alice_Gain_After = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
-				const bob_Gain_After = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const alice_Gain_After = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1].toString()
+				const bob_Gain_After = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][1].toString()
 
 				// Check compounded deposits and Collateral gains for A and B have not changed
 				assert.equal(alice_Deposit_Before, alice_Deposit_After)
@@ -1688,7 +1690,8 @@ contract("StabilityPool", async accounts => {
 				const A_GRVTBalBefore = await grvtToken.balanceOf(alice)
 
 				// Check Alice has gains to withdraw
-				const A_pendingColGain = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const A_pendingColGain = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1]
 				const A_pendingGRVTGain = await stabilityPool.getDepositorGRVTGain(alice)
 				assert.isTrue(A_pendingColGain.gt(toBN("0")))
 				assert.isTrue(A_pendingGRVTGain.gt(toBN("0")))
@@ -1801,7 +1804,8 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: dennis })
 
 				// Check Dennis has 0 collateral gains
-				const dennis_ETHGain = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const dennis_ETHGain = (await stabilityPool.getDepositorGains(dennis, validCollateral))[idx][1].toString()
 				assert.equal(dennis_ETHGain, "0")
 
 				const dennis_Balance_BeforeERC20 = (await erc20.balanceOf(dennis)).toString()
@@ -2032,9 +2036,10 @@ contract("StabilityPool", async accounts => {
 				const bob_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
 				const carol_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(carol)
 
-				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
-				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1]
-				const carol_Gain_Before = (await stabilityPool.getDepositorGains(carol, validCollateral))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1]
+				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][1]
+				const carol_Gain_Before = (await stabilityPool.getDepositorGains(carol, validCollateral))[idx][1]
 
 				const GRAIinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
 				const GRAIinSP_BeforeERC20 = await stabilityPool.getTotalDebtTokenDeposits()
@@ -2357,8 +2362,9 @@ contract("StabilityPool", async accounts => {
 				assert.equal(bob_Deposit, "0")
 
 				// Get collateral gain for A and B
-				const alice_Gain_1 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
-				const bob_Gain_1 = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const alice_Gain_1 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1].toString()
+				const bob_Gain_1 = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][1].toString()
 
 				// Whale deposits 10_000 tokens to Stability Pool
 				await stabilityPool.provideToSP(dec(1, 24), validCollateral, { from: whale })
@@ -2368,8 +2374,8 @@ contract("StabilityPool", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_2))
 
 				// Check Alice and Bob have not received collateral gains from liquidation 2 while their deposit was 0
-				const alice_Gain_2 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
-				const bob_Gain_2 = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const alice_Gain_2 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1].toString()
+				const bob_Gain_2 = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][1].toString()
 
 				assert.equal(alice_Gain_1, alice_Gain_2)
 				assert.equal(bob_Gain_1, bob_Gain_2)
@@ -2379,8 +2385,8 @@ contract("StabilityPool", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_3))
 
 				// Check Alice and Bob have not received collateral gains from liquidation 3 while their deposit was 0
-				const alice_Gain_3 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
-				const bob_Gain_3 = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
+				const alice_Gain_3 = (await stabilityPool.getDepositorGains(alice, validCollateral))[idx][1].toString()
+				const bob_Gain_3 = (await stabilityPool.getDepositorGains(bob, validCollateral))[idx][1].toString()
 
 				assert.equal(alice_Gain_1, alice_Gain_3)
 				assert.equal(bob_Gain_1, bob_Gain_3)
