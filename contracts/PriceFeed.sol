@@ -47,7 +47,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 		address _token,
 		address _oracle,
 		ProviderType _type,
-		uint256 _timeoutMinutes,
+		uint256 _timeoutSeconds,
 		bool _isEthIndexed,
 		bool _isFallback
 	) external override {
@@ -63,7 +63,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 		OracleRecordV2 memory newOracle = OracleRecordV2({
 			oracleAddress: _oracle,
 			providerType: _type,
-			timeoutMinutes: _timeoutMinutes,
+			timeoutSeconds: _timeoutSeconds,
 			decimals: decimals,
 			isEthIndexed: _isEthIndexed
 		});
@@ -125,14 +125,14 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 		if (ProviderType.Chainlink == oracle.providerType) {
 			(oraclePrice, priceTimestamp) = _fetchChainlinkOracleResponse(oracle.oracleAddress);
 		}
-		if (oraclePrice != 0 && !_isStalePrice(priceTimestamp, oracle.timeoutMinutes)) {
+		if (oraclePrice != 0 && !_isStalePrice(priceTimestamp, oracle.timeoutSeconds)) {
 			return _scalePriceByDigits(oraclePrice, oracle.decimals);
 		}
 		return 0;
 	}
 
-	function _isStalePrice(uint256 _priceTimestamp, uint256 _oracleTimeoutMinutes) internal view returns (bool) {
-		return block.timestamp - _priceTimestamp > _oracleTimeoutMinutes * 60;
+	function _isStalePrice(uint256 _priceTimestamp, uint256 _oracleTimeoutSeconds) internal view returns (bool) {
+		return block.timestamp - _priceTimestamp > _oracleTimeoutSeconds;
 	}
 
 	function _fetchChainlinkOracleResponse(
