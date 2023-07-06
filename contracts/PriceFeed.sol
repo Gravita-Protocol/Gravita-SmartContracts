@@ -183,7 +183,7 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	 *     through the timelock contract.
 	 */
 	function _requireOwnerOrTimelock(address _token, bool _isFallback) internal view {
-		OracleRecordV2 memory record = _isFallback ? fallbacks[_token] : oracles[_token];
+		OracleRecordV2 storage record = _isFallback ? fallbacks[_token] : oracles[_token];
 		if (record.oracleAddress == address(0)) {
 			_checkOwner();
 		} else if (msg.sender != timelockAddress) {
