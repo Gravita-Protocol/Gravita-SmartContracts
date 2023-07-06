@@ -958,7 +958,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		if (msg.sender != timelockAddress) {
 			revert VesselManagerOperations__NotTimelock();
 		}
-		if (_redemptionSofteningParam < 9700 || _redemptionSofteningParam > 10000) {
+		if (_redemptionSofteningParam < 9700 || _redemptionSofteningParam > PERCENTAGE_PRECISION) {
 			revert VesselManagerOperations__InvalidParam();
 		}
 		redemptionSofteningParam = _redemptionSofteningParam;
