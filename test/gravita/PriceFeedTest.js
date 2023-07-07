@@ -25,7 +25,7 @@ const DEFAULT_PRICE = dec(100, DEFAULT_DIGITS)
 
 const DefaultOracleOptions = {
 	providerType: 0, // IPriceFeed.sol::enum ProviderType.Chainlink
-	timeoutMinutes: 60,
+	timeoutSeconds: 3600,
 	isEthIndexed: false,
 	isFallback: false,
 }
@@ -44,7 +44,7 @@ contract("PriceFeed", async accounts => {
 				_token,
 				_oracle,
 				_opts.providerType,
-				_opts.timeoutMinutes,
+				_opts.timeoutSeconds,
 				_opts.isEthIndexed,
 				_opts.isFallback,
 				{
@@ -110,7 +110,7 @@ contract("PriceFeed", async accounts => {
 					ZERO_ADDRESS,
 					mockOracle.address,
 					DefaultOracleOptions.providerType,
-					DefaultOracleOptions.timeoutMinutes,
+					DefaultOracleOptions.timeoutSeconds,
 					DefaultOracleOptions.isEthIndexed,
 					DefaultOracleOptions.isFallback,
 					{
@@ -191,7 +191,7 @@ contract("PriceFeed", async accounts => {
 				erc20.address,
 				one_to_one_oracle.address,
 				DefaultOracleOptions.providerType,
-				DefaultOracleOptions.timeoutMinutes,
+				DefaultOracleOptions.timeoutSeconds,
 				DefaultOracleOptions.isEthIndexed,
 				DefaultOracleOptions.isFallback
 			)
@@ -232,7 +232,7 @@ contract("PriceFeed", async accounts => {
 				mock_wstETH.address,
 				wstEth_to_usd_oracle.address,
 				DefaultOracleOptions.providerType,
-				DefaultOracleOptions.timeoutMinutes,
+				DefaultOracleOptions.timeoutSeconds,
 				DefaultOracleOptions.isEthIndexed,
 				DefaultOracleOptions.isFallback
 			)
@@ -294,8 +294,8 @@ contract("PriceFeed", async accounts => {
 		it("fetchPrice: oracle is stale, no fallback, reverts", async () => {
 			await mockOracle.setPriceIsAlwaysUpToDate(false)
 			const oracleRecord = await priceFeed.oracles(ZERO_ADDRESS)
-			const timeoutMinutes = oracleRecord.timeoutMinutes
-			const staleTimeout = Number(timeoutMinutes) * 60 + 1
+			const timeoutSeconds = oracleRecord.timeoutSeconds
+			const staleTimeout = Number(timeoutSeconds) + 1
 			await time.increase(staleTimeout)
 			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
@@ -306,7 +306,7 @@ contract("PriceFeed", async accounts => {
 			await setOracle(ZERO_ADDRESS, fallbackOracle.address, { ...DefaultOracleOptions, isFallback: true })
 
 			await mockOracle.setPriceIsAlwaysUpToDate(false)
-			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 30)
+			await time.increase(DefaultOracleOptions.timeoutSeconds + 30)
 
 			fallbackOracle.setUpdatedAt(await time.latest())
 			const feedPrice = await priceFeed.fetchPrice(ZERO_ADDRESS)
@@ -319,7 +319,7 @@ contract("PriceFeed", async accounts => {
 
 			await mockOracle.setPriceIsAlwaysUpToDate(false)
 			await fallbackOracle.setPriceIsAlwaysUpToDate(false)
-			await time.increase(DefaultOracleOptions.timeoutMinutes * 60 + 30)
+			await time.increase(DefaultOracleOptions.timeoutSeconds + 30)
 
 			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
@@ -415,3 +415,4 @@ contract("PriceFeed", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+
