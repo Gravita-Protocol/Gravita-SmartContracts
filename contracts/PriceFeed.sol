@@ -168,10 +168,12 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	 *     target digits.
 	 */
 	function _scalePriceByDigits(uint256 _price, uint256 _priceDigits) internal pure returns (uint256) {
-		if (_priceDigits > TARGET_DIGITS) {
-			return _price / (10 ** (_priceDigits - TARGET_DIGITS));
-		} else if (_priceDigits < TARGET_DIGITS) {
-			return _price * (10 ** (TARGET_DIGITS - _priceDigits));
+		unchecked {
+			if (_priceDigits > TARGET_DIGITS) {
+				return _price / (10 ** (_priceDigits - TARGET_DIGITS));
+			} else if (_priceDigits < TARGET_DIGITS) {
+				return _price * (10 ** (TARGET_DIGITS - _priceDigits));
+			}
 		}
 		return _price;
 	}
