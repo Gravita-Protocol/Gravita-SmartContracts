@@ -2,8 +2,6 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "../Interfaces/IBorrowerOperations.sol";
-import "../Interfaces/IVesselManager.sol";
 import "./Addresses.sol";
 import "./Interfaces/CvxMining.sol";
 import "./Interfaces/IBooster.sol";
@@ -244,7 +242,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		//get balance from vesselManager
 		uint256 collateral;
         if(vesselManager != address(0)){
-           collateral = IVesselManager(vesselManager).getVesselColl(address(this), _borrower);
+           // collateral = IVesselManager(vesselManager).getVesselColl(address(this), _borrower);
         }
 		return balanceOf(_account).add(collateral);
 	}
