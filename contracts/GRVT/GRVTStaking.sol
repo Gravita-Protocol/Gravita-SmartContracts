@@ -39,12 +39,11 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	mapping(address => uint256) public sentToTreasuryTracker;
 
 	IERC20Upgradeable public override grvtToken;
-	address public constant debtToken = address(0);
 
-	address public activePoolAddress;
+	address public debtTokenAddress;
 	address public feeCollectorAddress;
+	address public treasuryAddress;
 	address public vesselManagerAddress;
-	address public constant treasury = address(0);
 
 	bool public isSetupInitialized;
 
@@ -59,14 +58,18 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	// --- Functions ---
 	function setAddresses(
-		address _grvtTokenAddress,
+		address _debtTokenAddress,
 		address _feeCollectorAddress,
+		address _grvtTokenAddress,
+		address _treasuryAddress,
 		address _vesselManagerAddress
 	) external onlyOwner {
 		require(!isSetupInitialized, "Setup is already initialized");
 
-		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
+		debtTokenAddress = _debtTokenAddress;
 		feeCollectorAddress = _feeCollectorAddress;
+		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
+		treasuryAddress = _treasuryAddress;
 		vesselManagerAddress = _vesselManagerAddress;
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
@@ -92,7 +95,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 				if (i == 0) {
 					uint256 debtTokenGain = _getPendingDebtTokenGain(msg.sender);
-					IERC20Upgradeable(address(debtToken)).safeTransfer(msg.sender, debtTokenGain);
+					IERC20Upgradeable(debtTokenAddress).safeTransfer(msg.sender, debtTokenGain);
 					emit StakingGainsDebtTokensWithdrawn(msg.sender, debtTokenGain);
 				}
 
@@ -134,7 +137,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 			if (i == 0) {
 				uint256 debtTokenGain = _getPendingDebtTokenGain(msg.sender);
-				IERC20Upgradeable(address(debtToken)).safeTransfer(msg.sender, debtTokenGain);
+				IERC20Upgradeable(debtTokenAddress).safeTransfer(msg.sender, debtTokenGain);
 				emit StakingGainsDebtTokensWithdrawn(msg.sender, debtTokenGain);
 			}
 
@@ -191,7 +194,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 
 	function increaseFee_DebtToken(uint256 _debtTokenFee) external override callerIsFeeCollector {
 		if (paused()) {
-			sendToTreasury(address(debtToken), _debtTokenFee);
+			sendToTreasury(debtTokenAddress, _debtTokenFee);
 			return;
 		}
 
@@ -205,7 +208,7 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	}
 
 	function sendToTreasury(address _asset, uint256 _amount) internal {
-		_sendAsset(treasury, _asset, _amount);
+		_sendAsset(treasuryAddress, _asset, _amount);
 		sentToTreasuryTracker[_asset] += _amount;
 		emit SentToTreasury(_asset, _amount);
 	}

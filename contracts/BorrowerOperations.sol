@@ -89,7 +89,8 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_requireAtLeastMinNetDebt(vars.asset, vars.netDebt);
 
 		// ICR is based on the composite debt, i.e. the requested debt token amount + borrowing fee + gas comp.
-		vars.compositeDebt = _getCompositeDebt(vars.asset, vars.netDebt);
+		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset);
+		vars.compositeDebt = vars.netDebt + gasCompensation;
 		require(vars.compositeDebt != 0, "compositeDebt cannot be 0");
 
 		vars.ICR = GravitaMath._computeCR(_assetAmount, vars.compositeDebt, vars.price);
@@ -119,12 +120,9 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		_activePoolAddColl(vars.asset, _assetAmount);
 		_withdrawDebtTokens(vars.asset, msg.sender, _debtTokenAmount, vars.netDebt);
 		// Move the debtToken gas compensation to the Gas Pool
-		_withdrawDebtTokens(
-			vars.asset,
-			gasPoolAddress,
-			IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset),
-			IAdminContract(adminContract).getDebtTokenGasCompensation(vars.asset)
-		);
+		if (gasCompensation != 0) {
+			_withdrawDebtTokens(vars.asset, gasPoolAddress, gasCompensation, gasCompensation);
+		}
 
 		emit VesselUpdated(
 			vars.asset,
@@ -311,10 +309,11 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		uint256 coll = IVesselManager(vesselManager).getVesselColl(_asset, msg.sender);
 		uint256 debt = IVesselManager(vesselManager).getVesselDebt(_asset, msg.sender);
 
-		_requireSufficientDebtTokenBalance(
-			msg.sender,
-			debt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)
-		);
+		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
+		uint256 refund = IFeeCollector(feeCollector).simulateRefund(msg.sender, _asset, 1 ether);
+		uint256 netDebt = debt - gasCompensation - refund;
+
+		_requireSufficientDebtTokenBalance(msg.sender, netDebt);
 
 		uint256 newTCR = _getNewTCRFromVesselChange(_asset, coll, false, debt, false, price);
 		_requireNewTCRisAboveCCR(_asset, newTCR);
@@ -323,10 +322,12 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		IVesselManager(vesselManager).closeVessel(_asset, msg.sender);
 
 		emit VesselUpdated(_asset, msg.sender, 0, 0, 0, BorrowerOperation.closeVessel);
-		uint256 gasCompensation = IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
+
 		// Burn the repaid debt tokens from the user's balance and the gas compensation from the Gas Pool
-		_repayDebtTokens(_asset, msg.sender, debt - gasCompensation);
-		_repayDebtTokens(_asset, gasPoolAddress, gasCompensation);
+		_repayDebtTokens(_asset, msg.sender, netDebt, refund);
+		if (gasCompensation != 0) {
+			_repayDebtTokens(_asset, gasPoolAddress, gasCompensation, 0);
+		}
 
 		// Signal to the fee collector that debt has been paid in full
 		IFeeCollector(feeCollector).closeDebt(msg.sender, _asset);
@@ -342,8 +343,6 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		// send asset from CollSurplusPool to owner
 		ICollSurplusPool(collSurplusPool).claimColl(_asset, msg.sender);
 	}
-
-	// --- Helper functions ---
 
 	function _triggerBorrowingFee(address _asset, uint256 _debtTokenAmount) internal returns (uint256) {
 		uint256 debtTokenFee = IVesselManager(vesselManager).getBorrowingFee(_asset, _debtTokenAmount);
@@ -399,7 +398,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		if (_isDebtIncrease) {
 			_withdrawDebtTokens(_asset, _borrower, _debtTokenChange, _netDebtChange);
 		} else {
-			_repayDebtTokens(_asset, _borrower, _debtTokenChange);
+			_repayDebtTokens(_asset, _borrower, _debtTokenChange, 0);
 		}
 		if (_isCollIncrease) {
 			_activePoolAddColl(_asset, _collChange);
@@ -434,8 +433,10 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 	}
 
 	// Burn the specified amount of debt tokens from _account and decreases the total active debt
-	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount) internal {
-		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount);
+	function _repayDebtTokens(address _asset, address _account, uint256 _debtTokenAmount, uint256 _refund) internal {
+		/// @dev the borrowing fee partial refund is accounted for when decreasing the debt, as it was included when vessel was opened
+		IActivePool(activePool).decreaseDebt(_asset, _debtTokenAmount + _refund);
+		/// @dev the borrowing fee partial refund is not burned here, as it has already been burned by the FeeCollector
 		IDebtToken(debtToken).burn(_account, _debtTokenAmount);
 	}
 

@@ -94,7 +94,7 @@ contract("AdminContract", async accounts => {
 		await adminContract.setMCR(ZERO_ADDRESS, "1100000000000000000")
 		await adminContract.setMinNetDebt(ZERO_ADDRESS, dec(2_000, 18))
 		await adminContract.setMintCap(ZERO_ADDRESS, dec(1_000_000, 18))
-		await adminContract.setPercentDivisor(ZERO_ADDRESS, 100)
+		await adminContract.setPercentDivisor(ZERO_ADDRESS, 200)
 		await adminContract.setRedemptionFeeFloor(ZERO_ADDRESS, (0.005e18).toString())
 
 		assert.equal((await adminContract.getBorrowingFee(ZERO_ADDRESS)).toString(), BORROWING_FEE)
@@ -286,13 +286,13 @@ contract("AdminContract", async accounts => {
 
 		await openVessel({
 			asset: erc20.address,
-			extraVUSDAmount: toBN(dec(5000, 18)),
+			extraGRAIAmount: toBN(dec(5000, 18)),
 			ICR: toBN(dec(2, 18)),
 			extraParams: { from: A },
 		})
 		await openVessel({
 			asset: erc20.address,
-			extraVUSDAmount: toBN(dec(5000, 18)),
+			extraGRAIAmount: toBN(dec(5000, 18)),
 			ICR: toBN(dec(2, 18)),
 			extraParams: { from: B },
 		})

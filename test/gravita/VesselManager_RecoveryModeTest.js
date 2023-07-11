@@ -1,3 +1,9 @@
+const {
+	time,
+	setBalance,
+	impersonateAccount,
+	stopImpersonatingAccount,
+} = require("@nomicfoundation/hardhat-network-helpers")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -9,6 +15,7 @@ const timeValues = testHelpers.TimeValues
 var contracts
 var snapshotId
 var initialSnapshotId
+var validCollateral
 
 const deploy = async (treasury, mintingAccounts) => {
 	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
@@ -34,6 +41,10 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtStaking = contracts.grvt.grvtStaking
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
+	validCollateral = await adminContract.getValidCollateral()
+
+	// getDepositorGains() expects a sorted collateral array
+	validCollateral = validCollateral.slice(0).sort((a, b) => toBN(a.toLowerCase()).sub(toBN(b.toLowerCase())))
 }
 
 contract("VesselManager - in Recovery Mode", async accounts => {
@@ -75,18 +86,22 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		G,
 		H,
 		I,
-		treasury
+		treasury,
 	] = accounts
 
 	let REDEMPTION_SOFTENING_PARAM
 
 	const openVessel = async params => th.openVessel(contracts.core, params)
-	const calcSoftnedAmount = (collAmount, price) => collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(1000)).div(price)
+	const calcSoftnedAmount = (collAmount, price) =>
+		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(10000)).div(price)
 
 	before(async () => {
 		await deploy(treasury, accounts.slice(0, 40))
-
-		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.REDEMPTION_SOFTENING_PARAM()
+		setBalance(shortTimelock.address, 1e18)
+		await impersonateAccount(shortTimelock.address)
+		await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+		await stopImpersonatingAccount(shortTimelock.address)
+		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.redemptionSofteningParam()
 
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
@@ -227,7 +242,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(150, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: bob },
 		})
 
@@ -335,7 +350,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(150, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: bob },
 		})
 
@@ -349,7 +364,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(bob_Vessel_isInSortedList_Before_Asset)
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -380,7 +395,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(150, 16)),
-			extraVUSDAmount: spDeposit,
+			extraGRAIAmount: spDeposit,
 			extraParams: { from: alice },
 		})
 		await openVessel({
@@ -395,13 +410,13 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		})
 
 		// Alice deposits to SP
-		await stabilityPool.provideToSP(spDeposit, { from: alice })
+		await stabilityPool.provideToSP(spDeposit, validCollateral, { from: alice })
 
 		// check rewards-per-unit-staked before
 		assert.equal((await stabilityPool.P()).toString(), "1000000000000000000")
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%, and all Vessels below 100% ICR
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%, and all Vessels below 100% ICR
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -418,7 +433,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 	it("liquidate(), with 100 < ICR < 110%: removes stake and updates totalStakes", async () => {
 		// --- SETUP ---
-		//  Bob withdraws up to 2000 VUSD of debt, bringing his ICR to 210%
+		//  Bob withdraws up to 2000 GRAI of debt, bringing his ICR to 210%
 
 		const { collateral: A_coll_Asset, totalDebt: A_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
@@ -428,7 +443,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(210, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: bob },
 		})
 
@@ -450,7 +465,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(totalStakes_Before_Asset.toString(), A_coll_Asset.add(B_coll_Asset))
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR to 117%
+		// price drops to 1ETH:100GRAI, reducing TCR to 117%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		price = await priceFeed.getPrice(erc20.address)
 
@@ -474,7 +489,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 	it("liquidate(), with 100% < ICR < 110%: updates system snapshots correctly", async () => {
 		// --- SETUP ---
 		//  Alice and Dennis withdraw such that their ICR is ~150%
-		//  Bob withdraws up to 20000 VUSD of debt, bringing his ICR to 210%
+		//  Bob withdraws up to 20000 GRAI of debt, bringing his ICR to 210%
 
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
@@ -484,7 +499,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(210, 16)),
-			extraVUSDAmount: dec(20000, 18),
+			extraGRAIAmount: dec(20000, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
@@ -504,7 +519,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(totalCollateralSnapshot_1_Asset, 0)
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%, and all Vessels below 100% ICR
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%, and all Vessels below 100% ICR
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -563,7 +578,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 	it("liquidate(), with 100% < ICR < 110%: closes the Vessel and removes it from the Vessel array", async () => {
 		// --- SETUP ---
-		//  Bob withdraws up to 2000 VUSD of debt, bringing his ICR to 210%
+		//  Bob withdraws up to 2000 GRAI of debt, bringing his ICR to 210%
 
 		await openVessel({
 			asset: erc20.address,
@@ -573,7 +588,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(210, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: bob },
 		})
 
@@ -584,7 +599,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(bob_Vessel_isInSortedList_Before_Asset)
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -608,19 +623,19 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 	it("liquidate(), with 100% < ICR < 110%: offsets as much debt as possible with the Stability Pool, then redistributes the remainder coll and debt", async () => {
 		// --- SETUP ---
 		//  Alice and Dennis withdraw such that their ICR is ~150%
-		//  Bob withdraws up to 2000 VUSD of debt, bringing his ICR to 210%
+		//  Bob withdraws up to 2000 GRAI of debt, bringing his ICR to 210%
 		const spDeposit = toBN(dec(390, 18))
 
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(150, 16)),
-			extraVUSDAmount: spDeposit,
+			extraGRAIAmount: spDeposit,
 			extraParams: { from: alice },
 		})
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(210, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
@@ -629,11 +644,11 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits 390VUSD to the Stability Pool
-		await stabilityPool.provideToSP(spDeposit, { from: alice })
+		// Alice deposits 390GRAI to the Stability Pool
+		await stabilityPool.provideToSP(spDeposit, validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -644,50 +659,50 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const bob_ICR_Asset = await vesselManager.getCurrentICR(erc20.address, bob, price)
 		assert.equal(bob_ICR_Asset, "1050000000000000000")
 
-		// check pool VUSD before liquidation
+		// check pool GRAI before liquidation
 
-		const stabilityPoolVUSD_Before_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
-		assert.equal(stabilityPoolVUSD_Before_Asset, "390000000000000000000")
+		const stabilityPoolGRAI_Before_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+		assert.equal(stabilityPoolGRAI_Before_Asset, "390000000000000000000")
 
 		// check Pool reward term before liquidation
 
 		assert.equal((await stabilityPool.P()).toString(), "1000000000000000000")
 
-		/* Now, liquidate Bob. Liquidated coll is 21 ether, and liquidated debt is 2000 VUSD.
+		/* Now, liquidate Bob. Liquidated coll is 21 ether, and liquidated debt is 2000 GRAI.
     
-    With 390 VUSD in the StabilityPool, 390 VUSD should be offset with the pool, leaving 0 in the pool.
+    With 390 GRAI in the StabilityPool, 390 GRAI should be offset with the pool, leaving 0 in the pool.
   
     Stability Pool rewards for alice should be:
-    VUSDLoss: 390VUSD
+    GRAILoss: 390GRAI
     AssetGain: (390 / 2000) * 21*0.995 = 4.074525 ether
-    After offsetting 390 VUSD and 4.074525 ether, the remainders - 1610 VUSD and 16.820475 ether - should be redistributed to all active Vessels.
+    After offsetting 390 GRAI and 4.074525 ether, the remainders - 1610 GRAI and 16.820475 ether - should be redistributed to all active Vessels.
    */
 		// Liquidate Bob
 		await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
 
 		const aliceDeposit_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
-		const aliceETHGain_Asset = (await stabilityPool.getDepositorGains(alice))[1][1]
+		const aliceETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
 		const aliceExpectedETHGain_Asset = spDeposit.mul(th.applyLiquidationFee(B_coll_Asset)).div(B_totalDebt_Asset)
 
 		assert.equal(aliceDeposit_Asset.toString(), 0)
 		assert.equal(aliceETHGain_Asset.toString(), aliceExpectedETHGain_Asset)
 
-		/* Now, check redistribution to active Vessels. Remainders of 1610 VUSD and 16.82 ether are distributed.
+		/* Now, check redistribution to active Vessels. Remainders of 1610 GRAI and 16.82 ether are distributed.
     
     Now, only Alice and Dennis have a stake in the system - 3 ether each, thus total stakes is 6 ether.
   
     Rewards-per-unit-staked from the redistribution should be:
   
-    L_VUSDDebt = 1610 / 6 = 268.333 VUSD
+    L_GRAIDebt = 1610 / 6 = 268.333 GRAI
     L_ETH = 16.820475 /6 =  2.8034125 ether
     */
 
-		const L_VUSDDebt_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
+		const L_GRAIDebt_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
 		const L_ETH_Asset = (await vesselManager.L_Colls(erc20.address)).toString()
 
 		assert.isAtMost(
 			th.getDifference(
-				L_VUSDDebt_Asset,
+				L_GRAIDebt_Asset,
 				B_totalDebt_Asset.sub(spDeposit).mul(mv._1e18BN).div(A_coll_Asset.add(D_coll_Asset))
 			),
 			100
@@ -720,18 +735,18 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -758,10 +773,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal((await stabilityPool.P()).toString(), "1000000000000000000")
 
 		// Check that redistribution rewards don't change
-		const L_VUSDDebt_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
+		const L_GRAIDebt_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
 		const L_ETH_Asset = (await vesselManager.L_Colls(erc20.address)).toString()
 
-		assert.equal(L_VUSDDebt_Asset, "0")
+		assert.equal(L_GRAIDebt_Asset, "0")
 		assert.equal(L_ETH_Asset, "0")
 
 		// Check that Bob's Vessel and stake remains active with unchanged coll and debt
@@ -779,36 +794,36 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(bob_isInSortedVesselsList_Asset)
 	})
 
-	it("liquidate(), with 110% < ICR < TCR, and StabilityPool VUSD > debt to liquidate: offsets the vessel entirely with the pool", async () => {
+	it("liquidate(), with 110% < ICR < TCR, and StabilityPool GRAI > debt to liquidate: offsets the vessel entirely with the pool", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_Asset,
+			extraGRAIAmount: B_totalDebt_Asset,
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits VUSD in the Stability Pool
+		// Alice deposits GRAI in the Stability Pool
 		const spDeposit = B_totalDebt_Asset.add(toBN(1))
-		await stabilityPool.provideToSP(spDeposit, { from: alice })
+		await stabilityPool.provideToSP(spDeposit, validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 		const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
@@ -823,14 +838,14 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Liquidate Bob
 		await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
 
-		/* Check accrued Stability Pool rewards after. Total Pool deposits was 1490 VUSD, Alice sole depositor.
-    As liquidated debt (250 VUSD) was completely offset
-    Alice's expected compounded deposit: (1490 - 250) = 1240VUSD
+		/* Check accrued Stability Pool rewards after. Total Pool deposits was 1490 GRAI, Alice sole depositor.
+    As liquidated debt (250 GRAI) was completely offset
+    Alice's expected compounded deposit: (1490 - 250) = 1240GRAI
     Alice's expected ETH gain:  Bob's liquidated capped coll (minus gas comp), 2.75*0.995 ether
   
     */
 		const aliceExpectedDeposit_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
-		const aliceExpectedETHGain_Asset = (await stabilityPool.getDepositorGains(alice))[1][1]
+		const aliceExpectedETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
 
 		assert.isAtMost(th.getDifference(aliceExpectedDeposit_Asset.toString(), spDeposit.sub(B_totalDebt_Asset)), 2000)
 		assert.isAtMost(
@@ -859,36 +874,36 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		)
 	})
 
-	it("liquidate(), with ICR% = 110 < TCR, and StabilityPool VUSD > debt to liquidate: offsets the vessel entirely with the pool, there’s no collateral surplus", async () => {
+	it("liquidate(), with ICR% = 110 < TCR, and StabilityPool GRAI > debt to liquidate: offsets the vessel entirely with the pool, there’s no collateral surplus", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 220%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 220%. Bob has lowest ICR.
 
 		const { totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_Asset,
+			extraGRAIAmount: B_totalDebt_Asset,
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits VUSD in the Stability Pool
+		// Alice deposits GRAI in the Stability Pool
 		const spDeposit = B_totalDebt_Asset.add(toBN(1))
-		await stabilityPool.provideToSP(spDeposit, { from: alice })
+		await stabilityPool.provideToSP(spDeposit, validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 		await th.getTCR(contracts.core)
@@ -903,14 +918,14 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Liquidate Bob
 		await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
 
-		/* Check accrued Stability Pool rewards after. Total Pool deposits was 1490 VUSD, Alice sole depositor.
-    As liquidated debt (250 VUSD) was completely offset
-    Alice's expected compounded deposit: (1490 - 250) = 1240VUSD
+		/* Check accrued Stability Pool rewards after. Total Pool deposits was 1490 GRAI, Alice sole depositor.
+    As liquidated debt (250 GRAI) was completely offset
+    Alice's expected compounded deposit: (1490 - 250) = 1240GRAI
     Alice's expected ETH gain:  Bob's liquidated capped coll (minus gas comp), 2.75*0.995 ether
     */
 
 		const aliceExpectedDeposit_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
-		const aliceExpectedETHGain_Asset = (await stabilityPool.getDepositorGains(alice))[1][1]
+		const aliceExpectedETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
 
 		assert.isAtMost(th.getDifference(aliceExpectedDeposit_Asset.toString(), spDeposit.sub(B_totalDebt_Asset)), 2000)
 		assert.isAtMost(
@@ -925,35 +940,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(erc20.address, bob), "0")
 	})
 
-	it("liquidate(), with 110% < ICR < TCR, and StabilityPool VUSD > debt to liquidate: removes stake and updates totalStakes", async () => {
+	it("liquidate(), with 110% < ICR < TCR, and StabilityPool GRAI > debt to liquidate: removes stake and updates totalStakes", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_Asset,
+			extraGRAIAmount: B_totalDebt_Asset,
 			extraParams: { from: alice },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits VUSD in the Stability Pool
-		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(1)), { from: alice })
+		// Alice deposits GRAI in the Stability Pool
+		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(1)), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -1001,35 +1016,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		)
 	})
 
-	it("liquidate(), with 110% < ICR < TCR, and StabilityPool VUSD > debt to liquidate: updates system snapshots", async () => {
+	it("liquidate(), with 110% < ICR < TCR, and StabilityPool GRAI > debt to liquidate: updates system snapshots", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		const { totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_Asset,
+			extraGRAIAmount: B_totalDebt_Asset,
 			extraParams: { from: alice },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits VUSD in the Stability Pool
-		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(1)), { from: alice })
+		// Alice deposits GRAI in the Stability Pool
+		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(1)), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -1060,35 +1075,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(totalCollateralSnapshot_After_Asset.toString(), A_coll_Asset.add(D_coll_Asset))
 	})
 
-	it("liquidate(), with 110% < ICR < TCR, and StabilityPool VUSD > debt to liquidate: closes the Vessel", async () => {
+	it("liquidate(), with 110% < ICR < TCR, and StabilityPool GRAI > debt to liquidate: closes the Vessel", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_Asset,
+			extraGRAIAmount: B_totalDebt_Asset,
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits VUSD in the Stability Pool
-		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(1)), { from: alice })
+		// Alice deposits GRAI in the Stability Pool
+		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(1)), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -1135,8 +1150,8 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		)
 	})
 
-	it("liquidate(), with 110% < ICR < TCR, and StabilityPool VUSD > debt to liquidate: can liquidate vessels out of order", async () => {
-		// taking out 1000 VUSD, CR of 200%
+	it("liquidate(), with 110% < ICR < TCR, and StabilityPool GRAI > debt to liquidate: can liquidate vessels out of order", async () => {
+		// taking out 1000 GRAI, CR of 200%
 		const { totalDebt: A_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
@@ -1175,10 +1190,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: totalLiquidatedDebt_Asset,
+			extraGRAIAmount: totalLiquidatedDebt_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, { from: whale })
+		await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -1275,37 +1290,37 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 	})
 
 	/* --- liquidate() applied to vessel with ICR > 110% that has the lowest ICR, and Stability Pool 
-  VUSD is LESS THAN the liquidated debt: a non fullfilled liquidation --- */
+  GRAI is LESS THAN the liquidated debt: a non fullfilled liquidation --- */
 
-	it("liquidate(), with ICR > 110%, and StabilityPool VUSD < liquidated debt: Vessel remains active", async () => {
+	it("liquidate(), with ICR > 110%, and StabilityPool GRAI < liquidated debt: Vessel remains active", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(1500, 18),
+			extraGRAIAmount: dec(1500, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits 1490 VUSD in the Stability Pool
-		await stabilityPool.provideToSP("1490000000000000000000", { from: alice })
+		// Alice deposits 1490 GRAI in the Stability Pool
+		await stabilityPool.provideToSP("1490000000000000000000", validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1324,7 +1339,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			"VesselManager: nothing to liquidate"
 		)
 
-		/* Since the pool only contains 100 VUSD, and Bob's pre-liquidation debt was 250 VUSD,
+		/* Since the pool only contains 100 GRAI, and Bob's pre-liquidation debt was 250 GRAI,
     expect Bob's vessel to remain untouched, and remain active after liquidation */
 
 		const bob_VesselStatus_After_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_STATUS_INDEX]
@@ -1334,35 +1349,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(bob_Vessel_isInSortedList_After_Asset)
 	})
 
-	it("liquidate(), with ICR > 110%, and StabilityPool VUSD < liquidated debt: Vessel remains in VesselOwners array", async () => {
+	it("liquidate(), with ICR > 110%, and StabilityPool GRAI < liquidated debt: Vessel remains in VesselOwners array", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(1500, 18),
+			extraGRAIAmount: dec(1500, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits 100 VUSD in the Stability Pool
-		await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+		// Alice deposits 100 GRAI in the Stability Pool
+		await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1381,7 +1396,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			"VesselManager: nothing to liquidate"
 		)
 
-		/* Since the pool only contains 100 VUSD, and Bob's pre-liquidation debt was 250 VUSD,
+		/* Since the pool only contains 100 GRAI, and Bob's pre-liquidation debt was 250 GRAI,
     expect Bob's vessel to only be partially offset, and remain active after liquidation */
 
 		// Check Bob is in Vessel owners array
@@ -1405,35 +1420,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(addressIdx_Asset.toString(), idxOnStruct_Asset)
 	})
 
-	it("liquidate(), with ICR > 110%, and StabilityPool VUSD < liquidated debt: nothing happens", async () => {
+	it("liquidate(), with ICR > 110%, and StabilityPool GRAI < liquidated debt: nothing happens", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(1500, 18),
+			extraGRAIAmount: dec(1500, 18),
 			extraParams: { from: alice },
 		})
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits 100 VUSD in the Stability Pool
-		await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+		// Alice deposits 100 GRAI in the Stability Pool
+		await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1444,7 +1459,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			"VesselManager: nothing to liquidate"
 		)
 
-		/*  Since Bob's debt (250 VUSD) is larger than all VUSD in the Stability Pool, Liquidation won’t happen
+		/*  Since Bob's debt (250 GRAI) is larger than all GRAI in the Stability Pool, Liquidation won’t happen
     After liquidation, totalStakes snapshot should equal Alice's stake (20 ether) + Dennis stake (2 ether) = 22 ether.
     Since there has been no redistribution, the totalCollateral snapshot should equal the totalStakes snapshot: 22 ether.
     Bob's new coll and stake should remain the same, and the updated totalStakes should still equal 25 ether.
@@ -1464,35 +1479,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(totalStakes_After_Asset.toString(), A_coll_Asset.add(B_coll_Asset).add(D_coll_Asset))
 	})
 
-	it("liquidate(), with ICR > 110%, and StabilityPool VUSD < liquidated debt: updates system shapshots", async () => {
+	it("liquidate(), with ICR > 110%, and StabilityPool GRAI < liquidated debt: updates system shapshots", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(1500, 18),
+			extraGRAIAmount: dec(1500, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits 100 VUSD in the Stability Pool
-		await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+		// Alice deposits 100 GRAI in the Stability Pool
+		await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1521,35 +1536,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(totalCollateralSnapshot_After_Asset, totalCollateralSnapshot_Before_Asset)
 	})
 
-	it("liquidate(), with ICR > 110%, and StabilityPool VUSD < liquidated debt: causes correct Pool offset and ETH gain, and doesn't redistribute to active vessels", async () => {
+	it("liquidate(), with ICR > 110%, and StabilityPool GRAI < liquidated debt: causes correct Pool offset and ETH gain, and doesn't redistribute to active vessels", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(1500, 18),
+			extraGRAIAmount: dec(1500, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 
-		// Alice deposits 100 VUSD in the Stability Pool
-		await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+		// Alice deposits 100 GRAI in the Stability Pool
+		await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1563,7 +1578,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// check Stability Pool rewards. Nothing happened, so everything should remain the same
 
 		const aliceExpectedDeposit_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
-		const aliceExpectedETHGain_Asset = (await stabilityPool.getDepositorGains(alice))[1][1]
+		const aliceExpectedETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1]
 
 		assert.equal(aliceExpectedDeposit_Asset.toString(), dec(100, 18))
 		assert.equal(aliceExpectedETHGain_Asset.toString(), "0")
@@ -1571,49 +1586,49 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		/* For this Recovery Mode test case with ICR > 110%, there should be no redistribution of remainder to active Vessels. 
     Redistribution rewards-per-unit-staked should be zero. */
 
-		const L_VUSDDebt_After_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
+		const L_GRAIDebt_After_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
 		const L_ETH_After_Asset = (await vesselManager.L_Colls(erc20.address)).toString()
 
-		assert.equal(L_VUSDDebt_After_Asset, "0")
+		assert.equal(L_GRAIDebt_After_Asset, "0")
 		assert.equal(L_ETH_After_Asset, "0")
 	})
 
-	it("liquidate(), with ICR > 110%, and StabilityPool VUSD < liquidated debt: ICR of non liquidated vessel does not change", async () => {
+	it("liquidate(), with ICR > 110%, and StabilityPool GRAI < liquidated debt: ICR of non liquidated vessel does not change", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
-		// Bob withdraws up to 250 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
-		// Carol withdraws up to debt of 240 VUSD, -> ICR of 250%.
+		// Alice withdraws up to 1500 GRAI of debt, and Dennis up to 150, resulting in ICRs of 266%.
+		// Bob withdraws up to 250 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Carol withdraws up to debt of 240 GRAI, -> ICR of 250%.
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(1500, 18),
+			extraGRAIAmount: dec(1500, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(250, 18),
+			extraGRAIAmount: dec(250, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(250, 16)),
-			extraVUSDAmount: dec(240, 18),
+			extraGRAIAmount: dec(240, 18),
 			extraParams: { from: carol },
 		})
 
-		// Alice deposits 100 VUSD in the Stability Pool
-		await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+		// Alice deposits 100 GRAI in the Stability Pool
+		await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -1636,7 +1651,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			"VesselManager: nothing to liquidate"
 		)
 
-		//Check SP VUSD has been completely emptied
+		//Check SP GRAI has been completely emptied
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), dec(100, 18))
 
 		// Check Bob remains active
@@ -1662,8 +1677,8 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 		assert.isFalse(await sortedVessels.contains(erc20.address, bob))
 
-		// Alice provides another 50 VUSD to pool
-		await stabilityPool.provideToSP(dec(50, 18), { from: alice })
+		// Alice provides another 50 GRAI to pool
+		await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: alice })
 
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
@@ -1678,7 +1693,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// L2: Try to liquidate Carol. Nothing happens
 		await assertRevert(vesselManagerOperations.liquidate(erc20.address, carol), "VesselManager: nothing to liquidate")
 
-		//Check SP VUSD has been completely emptied
+		//Check SP GRAI has been completely emptied
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), dec(150, 18))
 
 		// Check Carol's collateral and debt remains the same
@@ -1695,23 +1710,23 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		//Confirm liquidations have not led to any redistributions to vessels
 
-		const L_VUSDDebt_After_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
+		const L_GRAIDebt_After_Asset = (await vesselManager.L_Debts(erc20.address)).toString()
 		const L_ETH_After_Asset = (await vesselManager.L_Colls(erc20.address)).toString()
 
-		assert.equal(L_VUSDDebt_After_Asset, "0")
+		assert.equal(L_GRAIDebt_After_Asset, "0")
 		assert.equal(L_ETH_After_Asset, "0")
 	})
 
-	it("liquidate() with ICR > 110%, and StabilityPool VUSD < liquidated debt: total liquidated coll and debt is correct", async () => {
-		// Whale provides 50 VUSD to the SP
+	it("liquidate() with ICR > 110%, and StabilityPool GRAI < liquidated debt: total liquidated coll and debt is correct", async () => {
+		// Whale provides 50 GRAI to the SP
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(300, 16)),
-			extraVUSDAmount: dec(50, 18),
+			extraGRAIAmount: dec(50, 18),
 			extraParams: { from: whale },
 		})
 
-		await stabilityPool.provideToSP(dec(50, 18), { from: whale })
+		await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: whale })
 
 		await openVessel({
 			asset: erc20.address,
@@ -1772,13 +1787,13 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 	// ---
 
 	it("liquidate(): Doesn't liquidate undercollateralized vessel if it is the only vessel in the system", async () => {
-		// Alice creates a single vessel with 0.62 ETH and a debt of 62 VUSD, and provides 10 VUSD to SP
+		// Alice creates a single vessel with 0.62 ETH and a debt of 62 GRAI, and provides 10 GRAI to SP
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
 			extraParams: { from: alice },
 		})
-		await stabilityPool.provideToSP(dec(10, 18), { from: alice })
+		await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
 
 		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
@@ -1822,8 +1837,8 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: alice },
 		})
 
-		// Alice proves 10 VUSD to SP
-		await stabilityPool.provideToSP(dec(10, 18), { from: alice })
+		// Alice proves 10 GRAI to SP
+		await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
 
 		assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
@@ -1887,8 +1902,8 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		// Confirm SP is empty
 
-		const VUSDinSP_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
-		assert.equal(VUSDinSP_Asset, "0")
+		const GRAIinSP_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+		assert.equal(GRAIinSP_Asset, "0")
 
 		// Attempt to liquidate bob
 		await assertRevert(vesselManagerOperations.liquidate(erc20.address, bob), "VesselManager: nothing to liquidate")
@@ -1925,8 +1940,8 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: C },
 		})
 
-		// C fills SP with 130 VUSD
-		await stabilityPool.provideToSP(dec(130, 18), { from: C })
+		// C fills SP with 130 GRAI
+		await stabilityPool.provideToSP(dec(130, 18), validCollateral, { from: C })
 
 		await priceFeed.setPrice(erc20.address, dec(150, 18))
 		const price = await priceFeed.getPrice(erc20.address)
@@ -2052,7 +2067,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: carol },
 		})
 
-		// Defaulter opens with 60 VUSD, 0.6 ETH
+		// Defaulter opens with 60 GRAI, 0.6 ETH
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
@@ -2080,7 +2095,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(bob_ICR_Before_Asset.gte(mv._MCR))
 		assert.isTrue(carol_ICR_Before_Asset.lte(mv._MCR))
 
-		// Liquidate defaulter. 30 VUSD and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 VUSD, 0.1 ETH
+		// Liquidate defaulter. 30 GRAI and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 GRAI, 0.1 ETH
 		await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
 		const alice_ICR_After_Asset = await vesselManager.getCurrentICR(erc20.address, alice, price)
@@ -2114,7 +2129,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await vesselManagerOperations.liquidate(erc20.address, bob)
 		await vesselManagerOperations.liquidate(erc20.address, carol)
 
-		/*  Since there is 0 VUSD in the stability Pool, A, with ICR >110%, should stay active.
+		/*  Since there is 0 GRAI in the stability Pool, A, with ICR >110%, should stay active.
     Check Alice stays active, Carol gets liquidated, and Bob gets liquidated 
     (because his pending rewards bring his ICR < MCR) */
 
@@ -2140,15 +2155,15 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: bob },
 		})
 
 		// Bob sends tokens to Dennis, who has no vessel
 		await debtToken.transfer(dennis, spDeposit_Asset, { from: bob })
 
-		//Dennis provides 200 VUSD to SP
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: dennis })
+		//Dennis provides 200 GRAI to SP
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: dennis })
 
 		// Price drop
 		await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -2162,7 +2177,9 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Check Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated ETH
 
 		const dennis_Deposit_Before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
-		const dennis_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(dennis))[1][1].toString()
+		const dennis_ETHGain_Before_Asset = (
+			await stabilityPool.getDepositorGains(dennis, validCollateral)
+		)[1][1].toString()
 		assert.isAtMost(th.getDifference(dennis_Deposit_Before_Asset, spDeposit_Asset.sub(C_totalDebt_Asset)), 1000)
 		assert.isAtMost(th.getDifference(dennis_ETHGain_Before_Asset, th.applyLiquidationFee(C_coll_Asset)), 1000)
 
@@ -2177,7 +2194,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Check Dennis' SP deposit does not change after liquidation attempt
 
 		const dennis_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
-		const dennis_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(dennis))[1][1].toString()
+		const dennis_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][1].toString()
 		assert.equal(dennis_Deposit_Before_Asset, dennis_Deposit_After_Asset)
 		assert.equal(dennis_ETHGain_Before_Asset, dennis_ETHGain_After_Asset)
 	})
@@ -2186,26 +2203,26 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: dec(1000, 18),
+			extraGRAIAmount: dec(1000, 18),
 			extraParams: { from: whale },
 		})
 
-		const { VUSDAmount: A_VUSDAmount_Asset } = await openVessel({
+		const { GRAIAmount: A_GRAIAmount_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(300, 18),
+			extraGRAIAmount: dec(300, 18),
 			extraParams: { from: alice },
 		})
-		const { VUSDAmount: B_VUSDAmount_Asset } = await openVessel({
+		const { GRAIAmount: B_GRAIAmount_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(200, 18),
+			extraGRAIAmount: dec(200, 18),
 			extraParams: { from: bob },
 		})
-		const { VUSDAmount: C_VUSDAmount_Asset } = await openVessel({
+		const { GRAIAmount: C_GRAIAmount_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(206, 16)),
-			extraVUSDAmount: dec(100, 18),
+			extraGRAIAmount: dec(100, 18),
 			extraParams: { from: carol },
 		})
 
@@ -2215,10 +2232,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 		// Check token balances
-		assert.equal((await debtToken.balanceOf(alice)).toString(), A_VUSDAmount_Asset)
-		assert.equal((await debtToken.balanceOf(bob)).toString(), B_VUSDAmount_Asset)
+		assert.equal((await debtToken.balanceOf(alice)).toString(), A_GRAIAmount_Asset)
+		assert.equal((await debtToken.balanceOf(bob)).toString(), B_GRAIAmount_Asset)
 
-		assert.equal((await debtToken.balanceOf(carol)).toString(), C_VUSDAmount_Asset)
+		assert.equal((await debtToken.balanceOf(carol)).toString(), C_GRAIAmount_Asset)
 
 		// Check sortedList size is 4
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "4")
@@ -2239,34 +2256,34 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "1")
 
 		// Confirm token balances have not changed
-		assert.equal((await debtToken.balanceOf(alice)).toString(), A_VUSDAmount_Asset)
-		assert.equal((await debtToken.balanceOf(bob)).toString(), B_VUSDAmount_Asset)
-		assert.equal((await debtToken.balanceOf(carol)).toString(), C_VUSDAmount_Asset)
+		assert.equal((await debtToken.balanceOf(alice)).toString(), A_GRAIAmount_Asset)
+		assert.equal((await debtToken.balanceOf(bob)).toString(), B_GRAIAmount_Asset)
+		assert.equal((await debtToken.balanceOf(carol)).toString(), C_GRAIAmount_Asset)
 	})
 
 	it("liquidate(), with 110% < ICR < TCR, can claim collateral, re-open, be reedemed and claim again", async () => {
 		// --- SETUP ---
-		// Alice withdraws up to 1500 VUSD of debt, resulting in ICRs of 266%.
-		// Bob withdraws up to 480 VUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
+		// Alice withdraws up to 1500 GRAI of debt, resulting in ICRs of 266%.
+		// Bob withdraws up to 480 GRAI of debt, resulting in ICR of 240%. Bob has lowest ICR.
 
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: dec(480, 18),
+			extraGRAIAmount: dec(480, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_Asset,
+			extraGRAIAmount: B_totalDebt_Asset,
 			extraParams: { from: alice },
 		})
 
-		// Alice deposits VUSD in the Stability Pool
-		await stabilityPool.provideToSP(B_totalDebt_Asset, { from: alice })
+		// Alice deposits GRAI in the Stability Pool
+		await stabilityPool.provideToSP(B_totalDebt_Asset, validCollateral, { from: alice })
 
 		// --- TEST ---
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		let price = await priceFeed.getPrice(erc20.address)
 		const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
@@ -2301,7 +2318,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// skip bootstrapping phase
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-		// Bob re-opens the vessel, price 200, total debt 80 VUSD, ICR = 120% (lowest one)
+		// Bob re-opens the vessel, price 200, total debt 80 GRAI, ICR = 120% (lowest one)
 		// Dennis redeems 30, so Bob has a surplus of (200 * 0.48 - 30) / 200 = 0.33 ETH
 		await priceFeed.setPrice(erc20.address, "200000000000000000000")
 
@@ -2309,13 +2326,13 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			asset: erc20.address,
 			assetSent: bob_remainingCollateral_Asset,
 			ICR: toBN(dec(150, 16)),
-			extraVUSDAmount: dec(480, 18),
+			extraGRAIAmount: dec(480, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_netDebt_2_Asset,
+			extraGRAIAmount: B_netDebt_2_Asset,
 			extraParams: { from: dennis },
 		})
 
@@ -2335,19 +2352,19 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 	it("liquidate(), with 110% < ICR < TCR, can claim collateral, after another claim from a redemption", async () => {
 		// --- SETUP ---
-		// Bob withdraws up to 90 VUSD of debt, resulting in ICR of 222%
-		// Dennis withdraws to 150 VUSD of debt, resulting in ICRs of 266%.
+		// Bob withdraws up to 90 GRAI of debt, resulting in ICR of 222%
+		// Dennis withdraws to 150 GRAI of debt, resulting in ICRs of 266%.
 
 		const { collateral: B_coll_Asset, netDebt: B_netDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(222, 16)),
-			extraVUSDAmount: dec(90, 18),
+			extraGRAIAmount: dec(90, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_netDebt_Asset,
+			extraGRAIAmount: B_netDebt_Asset,
 			extraParams: { from: dennis },
 		})
 
@@ -2369,24 +2386,24 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const bob_balanceAfter_Asset = th.toBN(await erc20.balanceOf(bob))
 		th.assertIsApproximatelyEqual(bob_balanceAfter_Asset, bob_balanceBefore_Asset.add(bob_surplus_Asset))
 
-		// Bob re-opens the vessel, price 200, total debt 250 VUSD, ICR = 240% (lowest one)
+		// Bob re-opens the vessel, price 200, total debt 250 GRAI, ICR = 240% (lowest one)
 		const { collateral: B_coll_2_Asset, totalDebt: B_totalDebt_2_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: _3_Ether,
 			ICR: toBN(dec(240, 16)),
 			extraParams: { from: bob },
 		})
-		// Alice deposits VUSD in the Stability Pool
+		// Alice deposits GRAI in the Stability Pool
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(266, 16)),
-			extraVUSDAmount: B_totalDebt_2_Asset,
+			extraGRAIAmount: B_totalDebt_2_Asset,
 			extraParams: { from: alice },
 		})
-		await stabilityPool.provideToSP(B_totalDebt_2_Asset, { from: alice })
+		await stabilityPool.provideToSP(B_totalDebt_2_Asset, validCollateral, { from: alice })
 
-		// price drops to 1ETH:100VUSD, reducing TCR below 150%
+		// price drops to 1ETH:100GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "100000000000000000000")
 		price = await priceFeed.getPrice(erc20.address)
 		const TCR_Asset = await th.getTCR(contracts.core, erc20.address)
@@ -2427,7 +2444,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// make 8 Vessels accordingly
 		// --- SETUP ---
 
-		// Everyone withdraws some VUSD from their Vessel, resulting in different ICRs
+		// Everyone withdraws some GRAI from their Vessel, resulting in different ICRs
 
 		await openVessel({
 			asset: erc20.address,
@@ -2462,7 +2479,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { totalDebt: H_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(222, 16)),
-			extraVUSDAmount: dec(5000, 18),
+			extraGRAIAmount: dec(5000, 18),
 			extraParams: { from: harry },
 		})
 		const liquidationAmount_Asset = E_totalDebt_Asset.add(F_totalDebt_Asset)
@@ -2471,15 +2488,15 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(400, 16)),
-			extraVUSDAmount: liquidationAmount_Asset,
+			extraGRAIAmount: liquidationAmount_Asset,
 			extraParams: { from: alice },
 		})
 
-		// Alice deposits VUSD to Stability Pool
-		await stabilityPool.provideToSP(liquidationAmount_Asset, { from: alice })
+		// Alice deposits GRAI to Stability Pool
+		await stabilityPool.provideToSP(liquidationAmount_Asset, validCollateral, { from: alice })
 
 		// price drops
-		// price drops to 1ETH:90VUSD, reducing TCR below 150%
+		// price drops to 1ETH:90GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "90000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -2625,14 +2642,14 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(400, 16)),
-			extraVUSDAmount: liquidationAmount_Asset,
+			extraGRAIAmount: liquidationAmount_Asset,
 			extraParams: { from: alice },
 		})
 
-		// Alice deposits VUSD to Stability Pool
-		await stabilityPool.provideToSP(liquidationAmount_Asset, { from: alice })
+		// Alice deposits GRAI to Stability Pool
+		await stabilityPool.provideToSP(liquidationAmount_Asset, validCollateral, { from: alice })
 
-		// price drops to 1ETH:85VUSD, reducing TCR below 150%
+		// price drops to 1ETH:85GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "85000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -2814,19 +2831,19 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(100, 18),
+			extraGRAIAmount: dec(100, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(200, 18),
+			extraGRAIAmount: dec(200, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(300, 18),
+			extraGRAIAmount: dec(300, 18),
 			extraParams: { from: carol },
 		})
 
@@ -2888,7 +2905,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(300, 18),
+			extraGRAIAmount: dec(300, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
@@ -2903,11 +2920,11 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		})
 
 		// Whale puts some tokens in Stability Pool
-		await stabilityPool.provideToSP(dec(300, 18), { from: whale })
+		await stabilityPool.provideToSP(dec(300, 18), validCollateral, { from: whale })
 
 		// --- TEST ---
 
-		// Price drops to 1ETH:100VUSD, reducing Bob and Carol's ICR below MCR
+		// Price drops to 1ETH:100GRAI, reducing Bob and Carol's ICR below MCR
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -2946,14 +2963,14 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 	})
 
 	it("liquidateVessels(): a liquidation sequence containing Pool offsets increases the TCR", async () => {
-		// Whale provides 500 VUSD to SP
+		// Whale provides 500 GRAI to SP
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(500, 18),
+			extraGRAIAmount: dec(500, 18),
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(dec(500, 18), { from: whale })
+		await stabilityPool.provideToSP(dec(500, 18), validCollateral, { from: whale })
 
 		await openVessel({
 			asset: erc20.address,
@@ -2974,25 +2991,25 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(198, 16)),
-			extraVUSDAmount: dec(101, 18),
+			extraGRAIAmount: dec(101, 18),
 			extraParams: { from: defaulter_1 },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(184, 16)),
-			extraVUSDAmount: dec(217, 18),
+			extraGRAIAmount: dec(217, 18),
 			extraParams: { from: defaulter_2 },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(183, 16)),
-			extraVUSDAmount: dec(328, 18),
+			extraGRAIAmount: dec(328, 18),
 			extraParams: { from: defaulter_3 },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(186, 16)),
-			extraVUSDAmount: dec(431, 18),
+			extraGRAIAmount: dec(431, 18),
 			extraParams: { from: defaulter_4 },
 		})
 
@@ -3015,7 +3032,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		const TCR_Before_Asset = await th.getTCR(contracts.core, erc20.address)
 
-		// Check Stability Pool has 500 VUSD
+		// Check Stability Pool has 500 GRAI
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), dec(500, 18))
 
 		await vesselManagerOperations.liquidateVessels(erc20.address, 8)
@@ -3035,7 +3052,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { collateral: W_coll_Asset, totalDebt: W_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(250, 16)),
-			extraVUSDAmount: dec(500, 18),
+			extraGRAIAmount: dec(500, 18),
 			extraParams: { from: whale },
 		})
 		const { collateral: A_coll_Asset, totalDebt: A_totalDebt_Asset } = await openVessel({
@@ -3056,25 +3073,25 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { collateral: d1_coll_Asset, totalDebt: d1_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(198, 16)),
-			extraVUSDAmount: dec(101, 18),
+			extraGRAIAmount: dec(101, 18),
 			extraParams: { from: defaulter_1 },
 		})
 		const { collateral: d2_coll_Asset, totalDebt: d2_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(184, 16)),
-			extraVUSDAmount: dec(217, 18),
+			extraGRAIAmount: dec(217, 18),
 			extraParams: { from: defaulter_2 },
 		})
 		const { collateral: d3_coll_Asset, totalDebt: d3_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(183, 16)),
-			extraVUSDAmount: dec(328, 18),
+			extraGRAIAmount: dec(328, 18),
 			extraParams: { from: defaulter_3 },
 		})
 		const { collateral: d4_coll_Asset, totalDebt: d4_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(166, 16)),
-			extraVUSDAmount: dec(431, 18),
+			extraGRAIAmount: dec(431, 18),
 			extraParams: { from: defaulter_4 },
 		})
 
@@ -3162,7 +3179,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: carol },
 		})
 
-		// Defaulter opens with 60 VUSD, 0.6 ETH
+		// Defaulter opens with 60 GRAI, 0.6 ETH
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
@@ -3190,7 +3207,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(bob_ICR_Before_Asset.gte(mv._MCR))
 		assert.isTrue(carol_ICR_Before_Asset.lte(mv._MCR))
 
-		// Liquidate defaulter. 30 VUSD and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 VUSD, 0.1 ETH
+		// Liquidate defaulter. 30 GRAI and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 GRAI, 0.1 ETH
 		await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
 		const alice_ICR_After_Asset = await vesselManager.getCurrentICR(erc20.address, alice, price)
@@ -3221,7 +3238,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Liquidate A, B, C
 		await vesselManagerOperations.liquidateVessels(erc20.address, 10)
 
-		/*  Since there is 0 VUSD in the stability Pool, A, with ICR >110%, should stay active.
+		/*  Since there is 0 GRAI in the stability Pool, A, with ICR >110%, should stay active.
    Check Alice stays active, Carol gets liquidated, and Bob gets liquidated 
    (because his pending rewards bring his ICR < MCR) */
 
@@ -3271,7 +3288,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price)).gte(mv._MCR))
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, carol, price)).gte(mv._MCR))
 
-		// Confirm 0 VUSD in Stability Pool
+		// Confirm 0 GRAI in Stability Pool
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), "0")
 
 		// Attempt liqudation sequence
@@ -3329,15 +3346,15 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: dennis },
 		})
 
-		// Whale adds VUSD to SP
+		// Whale adds GRAI to SP
 		const spDeposit_Asset = F_totalDebt_Asset.add(G_totalDebt_Asset)
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(285, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops, but all vessels remain active
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -3354,7 +3371,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price)).gte(mv._MCR))
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, carol, price)).gte(mv._MCR))
 
-		// Confirm VUSD in Stability Pool
+		// Confirm GRAI in Stability Pool
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), spDeposit_Asset.toString())
 
 		// Attempt liqudation sequence
@@ -3453,15 +3470,15 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: dennis },
 		})
 
-		// Whale adds VUSD to SP
+		// Whale adds GRAI to SP
 		const spDeposit_Asset = F_totalDebt_Asset.add(G_totalDebt_Asset).add(A_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(285, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops, but all vessels remain active
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -3478,7 +3495,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price)).gte(mv._MCR))
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, carol, price)).gte(mv._MCR))
 
-		// Confirm VUSD in Stability Pool
+		// Confirm GRAI in Stability Pool
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), spDeposit_Asset.toString())
 
 		// Attempt liqudation sequence
@@ -3567,17 +3584,17 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		// D, E, F open vessels that will fall below MCR when price drops to 100
 
-		const { VUSDAmount: VUSDAmountD_Asset } = await openVessel({
+		const { GRAIAmount: GRAIAmountD_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
 			extraParams: { from: dennis },
 		})
-		const { VUSDAmount: VUSDAmountE_Asset } = await openVessel({
+		const { GRAIAmount: GRAIAmountE_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(133, 16)),
 			extraParams: { from: erin },
 		})
-		const { VUSDAmount: VUSDAmountF_Asset } = await openVessel({
+		const { GRAIAmount: GRAIAmountF_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(111, 16)),
 			extraParams: { from: freddy },
@@ -3587,9 +3604,9 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "4")
 
 		// Check token balances before
-		assert.equal((await debtToken.balanceOf(dennis)).toString(), VUSDAmountD_Asset)
-		assert.equal((await debtToken.balanceOf(erin)).toString(), VUSDAmountE_Asset)
-		assert.equal((await debtToken.balanceOf(freddy)).toString(), VUSDAmountF_Asset)
+		assert.equal((await debtToken.balanceOf(dennis)).toString(), GRAIAmountD_Asset)
+		assert.equal((await debtToken.balanceOf(erin)).toString(), GRAIAmountE_Asset)
+		assert.equal((await debtToken.balanceOf(freddy)).toString(), GRAIAmountF_Asset)
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -3610,40 +3627,40 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isFalse(await sortedVessels.contains(erc20.address, freddy))
 
 		// Check token balances of users whose vessels were liquidated, have not changed
-		assert.equal((await debtToken.balanceOf(dennis)).toString(), VUSDAmountD_Asset)
-		assert.equal((await debtToken.balanceOf(erin)).toString(), VUSDAmountE_Asset)
-		assert.equal((await debtToken.balanceOf(freddy)).toString(), VUSDAmountF_Asset)
+		assert.equal((await debtToken.balanceOf(dennis)).toString(), GRAIAmountD_Asset)
+		assert.equal((await debtToken.balanceOf(erin)).toString(), GRAIAmountE_Asset)
+		assert.equal((await debtToken.balanceOf(freddy)).toString(), GRAIAmountF_Asset)
 	})
 
 	it("liquidateVessels(): Liquidating vessels at 100 < ICR < 110 with SP deposits correctly impacts their SP deposit and ETH gain", async () => {
-		// Whale provides VUSD to the SP
-		const { VUSDAmount: W_VUSDAmount_Asset } = await openVessel({
+		// Whale provides GRAI to the SP
+		const { GRAIAmount: W_GRAIAmount_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(300, 16)),
-			extraVUSDAmount: dec(4000, 18),
+			extraGRAIAmount: dec(4000, 18),
 			extraParams: { from: whale },
 		})
 
-		await stabilityPool.provideToSP(W_VUSDAmount_Asset, { from: whale })
+		await stabilityPool.provideToSP(W_GRAIAmount_Asset, validCollateral, { from: whale })
 
 		const {
-			VUSDAmount: A_VUSDAmount_Asset,
+			GRAIAmount: A_GRAIAmount_Asset,
 			totalDebt: A_totalDebt_Asset,
 			collateral: A_coll_Asset,
 		} = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(191, 16)),
-			extraVUSDAmount: dec(40, 18),
+			extraGRAIAmount: dec(40, 18),
 			extraParams: { from: alice },
 		})
 		const {
-			VUSDAmount: B_VUSDAmount_Asset,
+			GRAIAmount: B_GRAIAmount_Asset,
 			totalDebt: B_totalDebt_Asset,
 			collateral: B_coll_Asset,
 		} = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: dec(240, 18),
+			extraGRAIAmount: dec(240, 18),
 			extraParams: { from: bob },
 		})
 		const { totalDebt: C_totalDebt_Asset, collateral: C_coll_Asset } = await openVessel({
@@ -3653,10 +3670,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		})
 
 		// A, B provide to the SP
-		await stabilityPool.provideToSP(A_VUSDAmount_Asset, { from: alice })
-		await stabilityPool.provideToSP(B_VUSDAmount_Asset, { from: bob })
+		await stabilityPool.provideToSP(A_GRAIAmount_Asset, validCollateral, { from: alice })
+		await stabilityPool.provideToSP(B_GRAIAmount_Asset, validCollateral, { from: bob })
 
-		const totalDeposit_Asset = W_VUSDAmount_Asset.add(A_VUSDAmount_Asset).add(B_VUSDAmount_Asset)
+		const totalDeposit_Asset = W_GRAIAmount_Asset.add(A_GRAIAmount_Asset).add(B_GRAIAmount_Asset)
 
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "4")
 
@@ -3667,7 +3684,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Confirm Recovery Mode
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-		// Check VUSD in Pool
+		// Check GRAI in Pool
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), totalDeposit_Asset)
 
 		// *** Check A, B, C ICRs 100<ICR<110
@@ -3693,35 +3710,35 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "1")
 
 		/* Prior to liquidation, SP deposits were:
-    Whale: 400 VUSD
-    Alice:  40 VUSD
-    Bob:   240 VUSD
-    Carol: 0 VUSD
-    Total VUSD in Pool: 680 VUSD
+    Whale: 400 GRAI
+    Alice:  40 GRAI
+    Bob:   240 GRAI
+    Carol: 0 GRAI
+    Total GRAI in Pool: 680 GRAI
     Then, liquidation hits A,B,C: 
-    Total liquidated debt = 100 + 300 + 100 = 500 VUSD
+    Total liquidated debt = 100 + 300 + 100 = 500 GRAI
     Total liquidated ETH = 1 + 3 + 1 = 5 ETH
-    Whale VUSD Loss: 500 * (400/680) = 294.12 VUSD
-    Alice VUSD Loss:  500 *(40/680) = 29.41 VUSD
-    Bob VUSD Loss: 500 * (240/680) = 176.47 VUSD
-    Whale remaining deposit: (400 - 294.12) = 105.88 VUSD
-    Alice remaining deposit: (40 - 29.41) = 10.59 VUSD
-    Bob remaining deposit: (240 - 176.47) = 63.53 VUSD
+    Whale GRAI Loss: 500 * (400/680) = 294.12 GRAI
+    Alice GRAI Loss:  500 *(40/680) = 29.41 GRAI
+    Bob GRAI Loss: 500 * (240/680) = 176.47 GRAI
+    Whale remaining deposit: (400 - 294.12) = 105.88 GRAI
+    Alice remaining deposit: (40 - 29.41) = 10.59 GRAI
+    Bob remaining deposit: (240 - 176.47) = 63.53 GRAI
     Whale ETH Gain: 5*0.995 * (400/680) = 2.93 ETH
     Alice ETH Gain: 5*0.995 *(40/680) = 0.293 ETH
     Bob ETH Gain: 5*0.995 * (240/680) = 1.76 ETH
-    Total remaining deposits: 180 VUSD
+    Total remaining deposits: 180 GRAI
     Total ETH gain: 5*0.995 ETH */
 
-		// Check remaining VUSD Deposits and ETH gain, for whale and depositors whose vessels were liquidated
+		// Check remaining GRAI Deposits and ETH gain, for whale and depositors whose vessels were liquidated
 
 		const whale_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(whale)).toString()
 		const alice_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 		const bob_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 
-		const whale_ETHGain_Asset = (await stabilityPool.getDepositorGains(whale))[1][1].toString()
-		const alice_ETHGain_Asset = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-		const bob_ETHGain_Asset = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+		const whale_ETHGain_Asset = (await stabilityPool.getDepositorGains(whale, validCollateral))[1][1].toString()
+		const alice_ETHGain_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
+		const bob_ETHGain_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
 
 		const liquidatedDebt_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset)
 		const liquidatedColl_Asset = A_coll_Asset.add(B_coll_Asset).add(C_coll_Asset)
@@ -3729,21 +3746,21 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isAtMost(
 			th.getDifference(
 				whale_Deposit_After_Asset,
-				W_VUSDAmount_Asset.sub(liquidatedDebt_Asset.mul(W_VUSDAmount_Asset).div(totalDeposit_Asset))
+				W_GRAIAmount_Asset.sub(liquidatedDebt_Asset.mul(W_GRAIAmount_Asset).div(totalDeposit_Asset))
 			),
 			100000
 		)
 		assert.isAtMost(
 			th.getDifference(
 				alice_Deposit_After_Asset,
-				A_VUSDAmount_Asset.sub(liquidatedDebt_Asset.mul(A_VUSDAmount_Asset).div(totalDeposit_Asset))
+				A_GRAIAmount_Asset.sub(liquidatedDebt_Asset.mul(A_GRAIAmount_Asset).div(totalDeposit_Asset))
 			),
 			100000
 		)
 		assert.isAtMost(
 			th.getDifference(
 				bob_Deposit_After_Asset,
-				B_VUSDAmount_Asset.sub(liquidatedDebt_Asset.mul(B_VUSDAmount_Asset).div(totalDeposit_Asset))
+				B_GRAIAmount_Asset.sub(liquidatedDebt_Asset.mul(B_GRAIAmount_Asset).div(totalDeposit_Asset))
 			),
 			100000
 		)
@@ -3751,54 +3768,54 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isAtMost(
 			th.getDifference(
 				whale_ETHGain_Asset,
-				th.applyLiquidationFee(liquidatedColl_Asset.mul(W_VUSDAmount_Asset).div(totalDeposit_Asset))
+				th.applyLiquidationFee(liquidatedColl_Asset.mul(W_GRAIAmount_Asset).div(totalDeposit_Asset))
 			),
 			2000
 		)
 		assert.isAtMost(
 			th.getDifference(
 				alice_ETHGain_Asset,
-				th.applyLiquidationFee(liquidatedColl_Asset.mul(A_VUSDAmount_Asset).div(totalDeposit_Asset))
+				th.applyLiquidationFee(liquidatedColl_Asset.mul(A_GRAIAmount_Asset).div(totalDeposit_Asset))
 			),
 			2000
 		)
 		assert.isAtMost(
 			th.getDifference(
 				bob_ETHGain_Asset,
-				th.applyLiquidationFee(liquidatedColl_Asset.mul(B_VUSDAmount_Asset).div(totalDeposit_Asset))
+				th.applyLiquidationFee(liquidatedColl_Asset.mul(B_GRAIAmount_Asset).div(totalDeposit_Asset))
 			),
 			2000
 		)
 
 		// Check total remaining deposits and ETH gain in Stability Pool
 
-		const total_VUSDinSP_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+		const total_GRAIinSP_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 		const total_ETHinSP_Asset = (await stabilityPool.getCollateral(erc20.address)).toString()
 
-		assert.isAtMost(th.getDifference(total_VUSDinSP_Asset, totalDeposit_Asset.sub(liquidatedDebt_Asset)), 1000)
+		assert.isAtMost(th.getDifference(total_GRAIinSP_Asset, totalDeposit_Asset.sub(liquidatedDebt_Asset)), 1000)
 		assert.isAtMost(th.getDifference(total_ETHinSP_Asset, th.applyLiquidationFee(liquidatedColl_Asset)), 1000)
 	})
 
 	it("liquidateVessels(): Liquidating vessels at ICR <=100% with SP deposits does not alter their deposit or ETH gain", async () => {
-		// Whale provides 400 VUSD to the SP
+		// Whale provides 400 GRAI to the SP
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(300, 16)),
-			extraVUSDAmount: dec(400, 18),
+			extraGRAIAmount: dec(400, 18),
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(dec(400, 18), { from: whale })
+		await stabilityPool.provideToSP(dec(400, 18), validCollateral, { from: whale })
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(182, 16)),
-			extraVUSDAmount: dec(170, 18),
+			extraGRAIAmount: dec(170, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(180, 16)),
-			extraVUSDAmount: dec(300, 18),
+			extraGRAIAmount: dec(300, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
@@ -3809,8 +3826,8 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		// A, B provide 100, 300 to the SP
 
-		await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-		await stabilityPool.provideToSP(dec(300, 18), { from: bob })
+		await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+		await stabilityPool.provideToSP(dec(300, 18), validCollateral, { from: bob })
 
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "4")
 
@@ -3821,11 +3838,11 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Confirm Recovery Mode
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-		// Check VUSD and ETH in Pool  before
-		const VUSDinSP_Before_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+		// Check GRAI and ETH in Pool  before
+		const GRAIinSP_Before_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 		const ETHinSP_Before_Asset = (await stabilityPool.getCollateral(erc20.address)).toString()
 
-		assert.equal(VUSDinSP_Before_Asset, dec(800, 18))
+		assert.equal(GRAIinSP_Before_Asset, dec(800, 18))
 		assert.equal(ETHinSP_Before_Asset, "0")
 
 		// *** Check A, B, C ICRs < 100
@@ -3846,22 +3863,22 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// check system sized reduced to 1 vessels
 		assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "1")
 
-		// Check VUSD and ETH in Pool after
-		const VUSDinSP_After_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+		// Check GRAI and ETH in Pool after
+		const GRAIinSP_After_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 		const ETHinSP_After_Asset = (await stabilityPool.getCollateral(erc20.address)).toString()
 
-		assert.equal(VUSDinSP_Before_Asset, VUSDinSP_After_Asset)
+		assert.equal(GRAIinSP_Before_Asset, GRAIinSP_After_Asset)
 		assert.equal(ETHinSP_Before_Asset, ETHinSP_After_Asset)
 
-		// Check remaining VUSD Deposits and ETH gain, for whale and depositors whose vessels were liquidated
+		// Check remaining GRAI Deposits and ETH gain, for whale and depositors whose vessels were liquidated
 
 		const whale_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(whale)).toString()
 		const alice_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 		const bob_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 
-		const whale_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(whale))[1][1].toString()
-		const alice_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-		const bob_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+		const whale_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(whale, validCollateral))[1][1].toString()
+		const alice_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][1].toString()
+		const bob_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][1].toString()
 
 		assert.equal(whale_Deposit_After_Asset, dec(400, 18))
 		assert.equal(alice_Deposit_After_Asset, dec(100, 18))
@@ -3900,16 +3917,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(300, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -3931,7 +3948,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C, D, E.
     With 253 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated. 
-    That leaves 50 VUSD in the Pool to absorb exactly half of Carol's debt (100) */
+    That leaves 50 GRAI in the Pool to absorb exactly half of Carol's debt (100) */
 		await vesselManagerOperations.liquidateVessels(erc20.address, 10)
 
 		// Check A and B closed
@@ -3973,16 +3990,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4004,7 +4021,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C.
     With 253 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated. 
-    That leaves 50 VUSD in the Pool to absorb exactly half of Carol's debt (100) */
+    That leaves 50 GRAI in the Pool to absorb exactly half of Carol's debt (100) */
 		await vesselManagerOperations.liquidateVessels(erc20.address, 10)
 
 		// Check C is in Vessel owners array
@@ -4046,7 +4063,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: D_totalDebt_Asset,
+			extraGRAIAmount: D_totalDebt_Asset,
 			extraParams: { from: carol },
 		})
 		await openVessel({
@@ -4055,16 +4072,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(D_totalDebt_Asset)
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4090,7 +4107,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C, D, E.
      With 300 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated.
-     That leaves 97 VUSD in the Pool that won’t be enough to absorb Carol,
+     That leaves 97 GRAI in the Pool that won’t be enough to absorb Carol,
      but it will be enough to liquidate Dennis. Afterwards the pool will be empty,
      so Erin won’t liquidated. */
 
@@ -4130,7 +4147,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: D_totalDebt_Asset,
+			extraGRAIAmount: D_totalDebt_Asset,
 			extraParams: { from: carol },
 		})
 		await openVessel({
@@ -4139,16 +4156,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(D_totalDebt_Asset)
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4174,7 +4191,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C, D, E.
      With 301 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated.
-     That leaves 97 VUSD in the Pool that won’t be enough to absorb Carol,
+     That leaves 97 GRAI in the Pool that won’t be enough to absorb Carol,
      but it will be enough to liquidate Dennis. Afterwards the pool will be empty,
      so Erin won’t liquidated.
      Note that, compared to the previous test, this one will make 1 more loop iteration,
@@ -4223,16 +4240,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4257,10 +4274,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C, D, E.
     With 253 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated. 
-    That leaves 50 VUSD in the Pool that won’t be enough to absorb any other vessel */
+    That leaves 50 GRAI in the Pool that won’t be enough to absorb any other vessel */
 		await vesselManagerOperations.liquidateVessels(erc20.address, 10)
 
-		// Expect system debt reduced by 203 VUSD and system coll 2.3 ETH
+		// Expect system debt reduced by 203 GRAI and system coll 2.3 ETH
 		const entireSystemCollAfter_Asset = await vesselManager.getEntireSystemColl(erc20.address)
 		const entireSystemDebtAfter_Asset = await vesselManager.getEntireSystemDebt(erc20.address)
 
@@ -4298,16 +4315,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(240, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4329,10 +4346,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C, D, E.
     With 253 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated. 
-    That leaves 50 VUSD in the Pool which won’t be enough for any other liquidation */
+    That leaves 50 GRAI in the Pool which won’t be enough for any other liquidation */
 		const liquidationTx_Asset = await vesselManagerOperations.liquidateVessels(erc20.address, 10)
 
-		const [liquidatedDebt_Asset, liquidatedColl_Asset, collGasComp_Asset, VUSDGasComp_Asset] =
+		const [liquidatedDebt_Asset, liquidatedColl_Asset, collGasComp_Asset, GRAIGasComp_Asset] =
 			th.getEmittedLiquidationValues(liquidationTx_Asset)
 
 		th.assertIsApproximatelyEqual(liquidatedDebt_Asset, A_totalDebt_Asset.add(B_totalDebt_Asset))
@@ -4344,7 +4361,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			collGasComp_Asset,
 			equivalentColl_Asset.sub(th.applyLiquidationFee(equivalentColl_Asset))
 		) // 0.5% of 283/120*1.1
-		assert.equal(VUSDGasComp_Asset.toString(), dec(400, 18))
+		assert.equal(GRAIGasComp_Asset.toString(), dec(400, 18))
 
 		// check collateral surplus
 
@@ -4405,16 +4422,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4436,7 +4453,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		/* Liquidate vessels. Vessels are ordered by ICR, from low to high:  A, B, C, D, E.
     With 253 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated. 
-    That leaves 50 VUSD in the Pool to absorb exactly half of Carol's debt (100) */
+    That leaves 50 GRAI in the Pool to absorb exactly half of Carol's debt (100) */
 		await vesselManagerOperations.liquidateVessels(erc20.address, 10)
 
 		const ICR_C_After_Asset = await vesselManager.getCurrentICR(erc20.address, carol, price)
@@ -4484,14 +4501,14 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(426, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: alice },
 		})
 
-		// Alice deposits VUSD to Stability Pool
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: alice })
+		// Alice deposits GRAI to Stability Pool
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: alice })
 
-		// price drops to 1ETH:85VUSD, reducing TCR below 150%
+		// price drops to 1ETH:85GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "85000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -4619,14 +4636,14 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(426, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: alice },
 		})
 
-		// Alice deposits VUSD to Stability Pool
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: alice })
+		// Alice deposits GRAI to Stability Pool
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: alice })
 
-		// price drops to 1ETH:85VUSD, reducing TCR below 150%
+		// price drops to 1ETH:85GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "85000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -4750,25 +4767,25 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { totalDebt: A_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(426, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(426, 16)),
-			extraVUSDAmount: A_totalDebt_Asset,
+			extraGRAIAmount: A_totalDebt_Asset,
 			extraParams: { from: whale },
 		})
 
-		// Alice deposits VUSD to Stability Pool
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: alice })
+		// Alice deposits GRAI to Stability Pool
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: alice })
 
 		// to compensate borrowing fee
 		await debtToken.transfer(alice, A_totalDebt_Asset, { from: whale })
 		// Alice closes vessel
 		await borrowerOperations.closeVessel(erc20.address, { from: alice })
 
-		// price drops to 1ETH:85VUSD, reducing TCR below 150%
+		// price drops to 1ETH:85GRAI, reducing TCR below 150%
 		await priceFeed.setPrice(erc20.address, "85000000000000000000")
 		const price = await priceFeed.getPrice(erc20.address)
 
@@ -4878,16 +4895,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -4948,16 +4965,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5021,7 +5038,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { totalDebt: C_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: D_totalDebt_Asset,
+			extraGRAIAmount: D_totalDebt_Asset,
 			extraParams: { from: carol },
 		})
 		await openVessel({
@@ -5030,16 +5047,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5064,7 +5081,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(ICR_E_Asset.gt(mv._MCR) && ICR_E_Asset.lt(TCR_Asset))
 
 		/* With 300 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated.
-     That leaves 97 VUSD in the Pool that won’t be enough to absorb Carol,
+     That leaves 97 GRAI in the Pool that won’t be enough to absorb Carol,
      but it will be enough to liquidate Dennis. Afterwards the pool will be empty,
      so Erin won’t liquidated. */
 		const vesselsToLiquidate = [alice, bob, carol, dennis, erin]
@@ -5103,7 +5120,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const { totalDebt: C_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraVUSDAmount: D_totalDebt_Asset,
+			extraGRAIAmount: D_totalDebt_Asset,
 			extraParams: { from: carol },
 		})
 		await openVessel({
@@ -5112,16 +5129,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5146,7 +5163,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue(ICR_E_Asset.gt(mv._MCR) && ICR_E_Asset.lt(TCR_Asset))
 
 		/* With 301 in the SP, Alice (102 debt) and Bob (101 debt) should be entirely liquidated.
-     That leaves 97 VUSD in the Pool that won’t be enough to absorb Carol,
+     That leaves 97 GRAI in the Pool that won’t be enough to absorb Carol,
      but it will be enough to liquidate Dennis. Afterwards the pool will be empty,
      so Erin won’t liquidated.
      Note that, compared to the previous test, this one will make 1 more loop iteration,
@@ -5196,16 +5213,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5231,7 +5248,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const vesselsToLiquidate = [alice, bob, carol]
 		await vesselManagerOperations.batchLiquidateVessels(erc20.address, vesselsToLiquidate)
 
-		// Expect system debt reduced by 203 VUSD and system coll by 2 ETH
+		// Expect system debt reduced by 203 GRAI and system coll by 2 ETH
 
 		const entireSystemCollAfter_Asset = await vesselManager.getEntireSystemColl(erc20.address)
 		const entireSystemDebtAfter_Asset = await vesselManager.getEntireSystemDebt(erc20.address)
@@ -5270,16 +5287,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5302,7 +5319,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		const vesselsToLiquidate = [alice, bob, carol]
 		const liquidationTx_Asset = await vesselManagerOperations.batchLiquidateVessels(erc20.address, vesselsToLiquidate)
 
-		const [liquidatedDebt_Asset, liquidatedColl_Asset, collGasComp_Asset, VUSDGasComp_Asset] =
+		const [liquidatedDebt_Asset, liquidatedColl_Asset, collGasComp_Asset, GRAIGasComp_Asset] =
 			th.getEmittedLiquidationValues(liquidationTx_Asset)
 
 		th.assertIsApproximatelyEqual(liquidatedDebt_Asset, A_totalDebt_Asset.add(B_totalDebt_Asset))
@@ -5317,7 +5334,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			equivalentColl_Asset.sub(th.applyLiquidationFee(equivalentColl_Asset))
 		) // 0.5% of 283/120*1.1
 
-		assert.equal(VUSDGasComp_Asset.toString(), dec(400, 18))
+		assert.equal(GRAIGasComp_Asset.toString(), dec(400, 18))
 
 		// check collateral surplus
 
@@ -5379,16 +5396,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// Whale provides VUSD to the SP
+		// Whale provides GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(220, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5415,7 +5432,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.equal(ICR_C_Before_Asset.toString(), ICR_C_After_Asset)
 	})
 
-	it("batchLiquidateVessels(), with 110% < ICR < TCR, and StabilityPool VUSD > debt to liquidate: can liquidate vessels out of order", async () => {
+	it("batchLiquidateVessels(), with 110% < ICR < TCR, and StabilityPool GRAI > debt to liquidate: can liquidate vessels out of order", async () => {
 		const { totalDebt: A_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
@@ -5439,26 +5456,26 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(280, 16)),
-			extraVUSDAmount: dec(500, 18),
+			extraGRAIAmount: dec(500, 18),
 			extraParams: { from: erin },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(282, 16)),
-			extraVUSDAmount: dec(500, 18),
+			extraGRAIAmount: dec(500, 18),
 			extraParams: { from: freddy },
 		})
 
-		// Whale provides 1000 VUSD to the SP
+		// Whale provides 1000 GRAI to the SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(C_totalDebt_Asset).add(D_totalDebt_Asset)
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(219, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops
 		await priceFeed.setPrice(erc20.address, dec(120, 18))
@@ -5659,7 +5676,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: I },
 		})
 
-		// Whale adds VUSD to SP
+		// Whale adds GRAI to SP
 
 		const spDeposit_Asset = A_totalDebt_Asset.add(C_totalDebt_Asset)
 			.add(D_totalDebt_Asset)
@@ -5669,10 +5686,10 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(245, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops, but all vessels remain active
 		await priceFeed.setPrice(erc20.address, dec(110, 18))
@@ -5781,18 +5798,18 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		// Confirm Recovery Mode
 		assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-		// Whale withdraws entire deposit, and re-deposits 132 VUSD
+		// Whale withdraws entire deposit, and re-deposits 132 GRAI
 		// Increasing the price for a moment to avoid pending liquidations to block withdrawal
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
-		await stabilityPool.withdrawFromSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.withdrawFromSP(spDeposit_Asset, validCollateral, { from: whale })
 		await priceFeed.setPrice(erc20.address, dec(110, 18))
-		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(dec(50, 18))), {
+		await stabilityPool.provideToSP(B_totalDebt_Asset.add(toBN(dec(50, 18))), validCollateral, {
 			from: whale,
 		})
 
 		// B and E are still in range 110-TCR.
 		// Attempt to liquidate B, G, H, I, E.
-		// Expected Stability Pool to fully absorb B (92 VUSD + 10 virtual debt),
+		// Expected Stability Pool to fully absorb B (92 GRAI + 10 virtual debt),
 		// but not E as there are not enough funds in Stability Pool
 
 		const stabilityBefore_Asset = await stabilityPool.getTotalDebtTokenDeposits()
@@ -5872,16 +5889,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: dennis },
 		})
 
-		// Whale adds VUSD to SP
+		// Whale adds GRAI to SP
 
 		const spDeposit_Asset = F_totalDebt_Asset.add(G_totalDebt_Asset)
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(285, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops, but all vessels remain active
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -5898,7 +5915,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price)).gte(mv._MCR))
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, carol, price)).gte(mv._MCR))
 
-		// Confirm VUSD in Stability Pool
+		// Confirm GRAI in Stability Pool
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), spDeposit_Asset.toString())
 
 		const vesselsToLiquidate = [freddy, greta, alice, bob, carol, dennis, whale]
@@ -6003,16 +6020,16 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 			extraParams: { from: dennis },
 		})
 
-		// Whale opens vessel and adds 220 VUSD to SP
+		// Whale opens vessel and adds 220 GRAI to SP
 
 		const spDeposit_Asset = F_totalDebt_Asset.add(G_totalDebt_Asset).add(A_totalDebt_Asset.div(toBN(2)))
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(285, 16)),
-			extraVUSDAmount: spDeposit_Asset,
+			extraGRAIAmount: spDeposit_Asset,
 			extraParams: { from: whale },
 		})
-		await stabilityPool.provideToSP(spDeposit_Asset, { from: whale })
+		await stabilityPool.provideToSP(spDeposit_Asset, validCollateral, { from: whale })
 
 		// Price drops, but all vessels remain active
 		await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -6029,7 +6046,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, bob, price)).gte(mv._MCR))
 		assert.isTrue((await vesselManager.getCurrentICR(erc20.address, carol, price)).gte(mv._MCR))
 
-		// Confirm VUSD in Stability Pool
+		// Confirm GRAI in Stability Pool
 		assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), spDeposit_Asset.toString())
 
 		const vesselsToLiquidate = [freddy, greta, alice, bob, carol, dennis, whale]
@@ -6113,3 +6130,4 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+

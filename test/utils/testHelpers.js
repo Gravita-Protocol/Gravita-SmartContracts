@@ -316,7 +316,7 @@ class TestHelper {
 	// --- Gas compensation calculation functions ---
 
 	// Given a composite debt, returns the actual debt  - i.e. subtracts the virtual debt.
-	// Virtual debt = 50 VUSD.
+	// Virtual debt = 50 GRAI.
 	static async getActualDebtFromComposite(compositeDebt, contracts, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
 		const issuedDebt = await contracts.vesselManager.getActualDebtFromComposite(
@@ -326,7 +326,7 @@ class TestHelper {
 		return issuedDebt
 	}
 
-	// Adds the gas compensation (50 VUSD)
+	// Adds the gas compensation (50 GRAI)
 	static async getCompositeDebt(contracts, debt, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
 		const compositeDebt = contracts.borrowerOperations.getCompositeDebt(asset, debt)
@@ -349,21 +349,21 @@ class TestHelper {
 	}
 
 	/*
-	 * given the requested VUSD amomunt in openVessel, returns the total debt
+	 * given the requested GRAI amomunt in openVessel, returns the total debt
 	 * So, it adds the gas compensation and the borrowing fee
 	 */
-	static async getOpenVesselTotalDebt(contracts, VUSDAmount, asset) {
+	static async getOpenVesselTotalDebt(contracts, GRAIAmount, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
-		const fee = await contracts.vesselManager.getBorrowingFee(asset, VUSDAmount)
-		const compositeDebt = await this.getCompositeDebt(contracts, VUSDAmount, asset)
+		const fee = await contracts.vesselManager.getBorrowingFee(asset, GRAIAmount)
+		const compositeDebt = await this.getCompositeDebt(contracts, GRAIAmount, asset)
 		return compositeDebt.add(fee)
 	}
 
 	/*
-	 * given the desired total debt, returns the VUSD amount that needs to be requested in openVessel
+	 * given the desired total debt, returns the GRAI amount that needs to be requested in openVessel
 	 * So, it subtracts the gas compensation and then the borrowing fee
 	 */
-	static async getOpenVesselVUSDAmount(contracts, totalDebt, asset) {
+	static async getOpenVesselGRAIAmount(contracts, totalDebt, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
 		const actualDebt = await this.getActualDebtFromComposite(totalDebt, contracts, asset)
 		const netDebt = await this.getNetBorrowingAmount(contracts, actualDebt, asset)
@@ -380,10 +380,10 @@ class TestHelper {
 	}
 
 	// Adds the borrowing fee
-	static async getAmountWithBorrowingFee(contracts, VUSDAmount, asset) {
+	static async getAmountWithBorrowingFee(contracts, GRAIAmount, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
-		const fee = await contracts.vesselManager.getBorrowingFee(asset, VUSDAmount)
-		return VUSDAmount.add(fee)
+		const fee = await contracts.vesselManager.getBorrowingFee(asset, GRAIAmount)
+		return GRAIAmount.add(fee)
 	}
 
 	// Adds the redemption fee
@@ -406,12 +406,12 @@ class TestHelper {
 	static getEmittedRedemptionValues(redemptionTx) {
 		for (let i = 0; i < redemptionTx.logs.length; i++) {
 			if (redemptionTx.logs[i].event === "Redemption") {
-				const VUSDAmount = redemptionTx.logs[i].args[1]
-				const totalVUSDRedeemed = redemptionTx.logs[i].args[2]
+				const GRAIAmount = redemptionTx.logs[i].args[1]
+				const totalGRAIRedeemed = redemptionTx.logs[i].args[2]
 				const totalAssetDrawn = redemptionTx.logs[i].args[3]
 				const ETHFee = redemptionTx.logs[i].args[4]
 
-				return [VUSDAmount, totalVUSDRedeemed, totalAssetDrawn, ETHFee]
+				return [GRAIAmount, totalGRAIRedeemed, totalAssetDrawn, ETHFee]
 			}
 		}
 		throw "The transaction logs do not contain a redemption event"
@@ -423,9 +423,9 @@ class TestHelper {
 				const liquidatedDebt = liquidationTx.logs[i].args[1]
 				const liquidatedColl = liquidationTx.logs[i].args[2]
 				const collGasComp = liquidationTx.logs[i].args[3]
-				const VUSDGasComp = liquidationTx.logs[i].args[4]
+				const GRAIGasComp = liquidationTx.logs[i].args[4]
 
-				return [liquidatedDebt, liquidatedColl, collGasComp, VUSDGasComp]
+				return [liquidatedDebt, liquidatedColl, collGasComp, GRAIGasComp]
 			}
 		}
 		throw "The transaction logs do not contain a liquidation event"
@@ -453,7 +453,7 @@ class TestHelper {
 		throw "The transaction logs do not contain a liquidation event"
 	}
 
-	static getVUSDFeeFromVUSDBorrowingEvent(tx) {
+	static getGRAIFeeFromGRAIBorrowingEvent(tx) {
 		for (let i = 0; i < tx.logs.length; i++) {
 			if (tx.logs[i].event === "BorrowingFeePaid") {
 				return tx.logs[i].args[2].toString()
@@ -529,12 +529,12 @@ class TestHelper {
 			asset,
 			account
 		)
-		const pendingVUSDDebtReward = await contracts.vesselManager.getPendingDebtTokenReward(
+		const pendingGRAIDebtReward = await contracts.vesselManager.getPendingDebtTokenReward(
 			asset,
 			account
 		)
 		const entireColl = rawColl.add(pendingAssetReward)
-		const entireDebt = rawDebt.add(pendingVUSDDebtReward)
+		const entireDebt = rawDebt.add(pendingGRAIDebtReward)
 
 		return { entireColl, entireDebt }
 	}
@@ -557,7 +557,7 @@ class TestHelper {
 		return { newColl, newDebt }
 	}
 
-	static async getCollAndDebtFromWithdrawVUSD(contracts, account, amount) {
+	static async getCollAndDebtFromWithdrawGRAI(contracts, account, amount) {
 		const fee = await contracts.vesselManager.getBorrowingFee(amount)
 		const { entireColl, entireDebt } = await this.getEntireCollAndDebt(contracts, account)
 
@@ -567,7 +567,7 @@ class TestHelper {
 		return { newColl, newDebt }
 	}
 
-	static async getCollAndDebtFromRepayVUSD(contracts, account, amount) {
+	static async getCollAndDebtFromRepayGRAI(contracts, account, amount) {
 		const { entireColl, entireDebt } = await this.getEntireCollAndDebt(contracts, account)
 
 		const newColl = entireColl
@@ -576,26 +576,26 @@ class TestHelper {
 		return { newColl, newDebt }
 	}
 
-	static async getCollAndDebtFromAdjustment(contracts, account, ETHChange, VUSDChange) {
+	static async getCollAndDebtFromAdjustment(contracts, account, ETHChange, GRAIChange) {
 		const { entireColl, entireDebt } = await this.getEntireCollAndDebt(contracts, account)
 
 		// const coll = (await contracts.vesselManager.Vessels(account))[1]
 		// const debt = (await contracts.vesselManager.Vessels(account))[0]
 
-		const fee = VUSDChange.gt(this.toBN("0"))
-			? await contracts.vesselManager.getBorrowingFee(VUSDChange)
+		const fee = GRAIChange.gt(this.toBN("0"))
+			? await contracts.vesselManager.getBorrowingFee(GRAIChange)
 			: this.toBN("0")
 		const newColl = entireColl.add(ETHChange)
-		const newDebt = entireDebt.add(VUSDChange).add(fee)
+		const newDebt = entireDebt.add(GRAIChange).add(fee)
 
 		return { newColl, newDebt }
 	}
 
 	// --- BorrowerOperations gas functions ---
 
-	static async openVessel_allAccounts(accounts, contracts, ETHAmount, VUSDAmount) {
+	static async openVessel_allAccounts(accounts, contracts, ETHAmount, GRAIAmount) {
 		const gasCostList = []
-		const totalDebt = await this.getOpenVesselTotalDebt(contracts, VUSDAmount)
+		const totalDebt = await this.getOpenVesselTotalDebt(contracts, GRAIAmount)
 
 		for (const account of accounts) {
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
@@ -606,7 +606,7 @@ class TestHelper {
 
 			const tx = await contracts.borrowerOperations.openVessel(
 				this._100pct,
-				VUSDAmount,
+				GRAIAmount,
 				upperHint,
 				lowerHint,
 				{ from: account, value: ETHAmount }
@@ -622,10 +622,10 @@ class TestHelper {
 		maxETH,
 		accounts,
 		contracts,
-		VUSDAmount
+		GRAIAmount
 	) {
 		const gasCostList = []
-		const totalDebt = await this.getOpenVesselTotalDebt(contracts, VUSDAmount)
+		const totalDebt = await this.getOpenVesselTotalDebt(contracts, GRAIAmount)
 
 		for (const account of accounts) {
 			const randCollAmount = this.randAmountInWei(minETH, maxETH)
@@ -637,7 +637,7 @@ class TestHelper {
 
 			const tx = await contracts.borrowerOperations.openVessel(
 				this._100pct,
-				VUSDAmount,
+				GRAIAmount,
 				upperHint,
 				lowerHint,
 				{ from: account, value: randCollAmount }
@@ -648,7 +648,7 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async openVessel_allAccounts_randomETH_ProportionalVUSD(
+	static async openVessel_allAccounts_randomETH_ProportionalGRAI(
 		minETH,
 		maxETH,
 		accounts,
@@ -659,8 +659,8 @@ class TestHelper {
 
 		for (const account of accounts) {
 			const randCollAmount = this.randAmountInWei(minETH, maxETH)
-			const proportionalVUSD = web3.utils.toBN(proportion).mul(web3.utils.toBN(randCollAmount))
-			const totalDebt = await this.getOpenVesselTotalDebt(contracts, proportionalVUSD)
+			const proportionalGRAI = web3.utils.toBN(proportion).mul(web3.utils.toBN(randCollAmount))
+			const totalDebt = await this.getOpenVesselTotalDebt(contracts, proportionalGRAI)
 
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
@@ -670,7 +670,7 @@ class TestHelper {
 
 			const tx = await contracts.borrowerOperations.openVessel(
 				this._100pct,
-				proportionalVUSD,
+				proportionalGRAI,
 				upperHint,
 				lowerHint,
 				{ from: account, value: randCollAmount }
@@ -681,13 +681,13 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async openVessel_allAccounts_randomETH_randomVUSD(
+	static async openVessel_allAccounts_randomETH_randomGRAI(
 		minETH,
 		maxETH,
 		accounts,
 		contracts,
-		minVUSDProportion,
-		maxVUSDProportion,
+		minGRAIProportion,
+		maxGRAIProportion,
 		logging = false
 	) {
 		const gasCostList = []
@@ -698,11 +698,11 @@ class TestHelper {
 		for (const account of accounts) {
 			const randCollAmount = this.randAmountInWei(minETH, maxETH)
 			// console.log(`randCollAmount ${randCollAmount }`)
-			const randVUSDProportion = this.randAmountInWei(minVUSDProportion, maxVUSDProportion)
-			const proportionalVUSD = web3.utils
-				.toBN(randVUSDProportion)
+			const randGRAIProportion = this.randAmountInWei(minGRAIProportion, maxGRAIProportion)
+			const proportionalGRAI = web3.utils
+				.toBN(randGRAIProportion)
 				.mul(web3.utils.toBN(randCollAmount).div(_1e18))
-			const totalDebt = await this.getOpenVesselTotalDebt(contracts, proportionalVUSD)
+			const totalDebt = await this.getOpenVesselTotalDebt(contracts, proportionalGRAI)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
 				randCollAmount,
@@ -712,7 +712,7 @@ class TestHelper {
 			const feeFloor = this.dec(5, 16)
 			const tx = await contracts.borrowerOperations.openVessel(
 				this._100pct,
-				proportionalVUSD,
+				proportionalGRAI,
 				upperHint,
 				lowerHint,
 				{ from: account, value: randCollAmount }
@@ -721,7 +721,7 @@ class TestHelper {
 			if (logging && tx.receipt.status) {
 				i++
 				const ICR = await contracts.vesselManager.getCurrentICR(account, price)
-				// console.log(`${i}. Vessel opened. addr: ${this.squeezeAddr(account)} coll: ${randCollAmount} debt: ${proportionalVUSD} ICR: ${ICR}`)
+				// console.log(`${i}. Vessel opened. addr: ${this.squeezeAddr(account)} coll: ${randCollAmount} debt: ${proportionalGRAI} ICR: ${ICR}`)
 			}
 			const gas = this.gasUsed(tx)
 			gasCostList.push(gas)
@@ -729,9 +729,9 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async openVessel_allAccounts_randomVUSD(
-		minVUSD,
-		maxVUSD,
+	static async openVessel_allAccounts_randomGRAI(
+		minGRAI,
+		maxGRAI,
 		accounts,
 		contracts,
 		ETHAmount
@@ -739,8 +739,8 @@ class TestHelper {
 		const gasCostList = []
 
 		for (const account of accounts) {
-			const randVUSDAmount = this.randAmountInWei(minVUSD, maxVUSD)
-			const totalDebt = await this.getOpenVesselTotalDebt(contracts, randVUSDAmount)
+			const randGRAIAmount = this.randAmountInWei(minGRAI, maxGRAI)
+			const totalDebt = await this.getOpenVesselTotalDebt(contracts, randGRAIAmount)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
 				ETHAmount,
@@ -749,7 +749,7 @@ class TestHelper {
 
 			const tx = await contracts.borrowerOperations.openVessel(
 				this._100pct,
-				randVUSDAmount,
+				randGRAIAmount,
 				upperHint,
 				lowerHint,
 				{ from: account, value: ETHAmount }
@@ -771,19 +771,19 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async openVessel_allAccounts_decreasingVUSDAmounts(
+	static async openVessel_allAccounts_decreasingGRAIAmounts(
 		accounts,
 		contracts,
 		ETHAmount,
-		maxVUSDAmount
+		maxGRAIAmount
 	) {
 		const gasCostList = []
 
 		let i = 0
 		for (const account of accounts) {
-			const VUSDAmount = (maxVUSDAmount - i).toString()
-			const VUSDAmountWei = web3.utils.toWei(VUSDAmount, "ether")
-			const totalDebt = await this.getOpenVesselTotalDebt(contracts, VUSDAmountWei)
+			const GRAIAmount = (maxGRAIAmount - i).toString()
+			const GRAIAmountWei = web3.utils.toWei(GRAIAmount, "ether")
+			const totalDebt = await this.getOpenVesselTotalDebt(contracts, GRAIAmountWei)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
 				ETHAmount,
@@ -792,7 +792,7 @@ class TestHelper {
 
 			const tx = await contracts.borrowerOperations.openVessel(
 				this._100pct,
-				VUSDAmountWei,
+				GRAIAmountWei,
 				upperHint,
 				lowerHint,
 				{ from: account, value: ETHAmount }
@@ -809,7 +809,7 @@ class TestHelper {
 		{
 			asset,
 			assetSent,
-			extraVUSDAmount,
+			extraGRAIAmount,
 			upperHint,
 			lowerHint,
 			ICR,
@@ -817,8 +817,8 @@ class TestHelper {
 		}
 	) {
 		if (!asset) asset = this.ZERO_ADDRESS
-		if (!extraVUSDAmount) extraVUSDAmount = this.toBN(0)
-		else if (typeof extraVUSDAmount == "string") extraVUSDAmount = this.toBN(extraVUSDAmount)
+		if (!extraGRAIAmount) extraGRAIAmount = this.toBN(0)
+		else if (typeof extraGRAIAmount == "string") extraGRAIAmount = this.toBN(extraGRAIAmount)
 		if (!upperHint) upperHint = this.ZERO_ADDRESS
 		if (!lowerHint) lowerHint = this.ZERO_ADDRESS
 
@@ -829,7 +829,7 @@ class TestHelper {
 				asset
 			)
 		).add(this.toBN(1)) // add 1 to avoid rounding issues
-		const VUSDAmount = MIN_DEBT.add(extraVUSDAmount)
+		const GRAIAmount = MIN_DEBT.add(extraGRAIAmount)
 
 		if (
 			!ICR &&
@@ -839,7 +839,7 @@ class TestHelper {
 			ICR = this.toBN(this.dec(15, 17)) // 150%
 		} else if (typeof ICR == "string") ICR = this.toBN(ICR)
 
-		const totalDebt = await this.getOpenVesselTotalDebt(contracts, VUSDAmount, asset)
+		const totalDebt = await this.getOpenVesselTotalDebt(contracts, GRAIAmount, asset)
 		const netDebt = await this.getActualDebtFromComposite(totalDebt, contracts, asset)
 
 		if (extraParams.value) {
@@ -858,14 +858,14 @@ class TestHelper {
 		const tx = await contracts.borrowerOperations.openVessel(
 			asset,
 			assetSent,
-			VUSDAmount,
+			GRAIAmount,
 			upperHint,
 			lowerHint,
 			extraParams
 		)
 
 		return {
-			VUSDAmount,
+			GRAIAmount,
 			netDebt,
 			totalDebt,
 			ICR,
@@ -874,17 +874,17 @@ class TestHelper {
 		}
 	}
 
-	static async withdrawVUSD(
+	static async withdrawGRAI(
 		contracts,
-		{ asset, VUSDAmount, ICR, upperHint, lowerHint, extraParams }
+		{ asset, GRAIAmount, ICR, upperHint, lowerHint, extraParams }
 	) {
 		if (!asset) asset = this.ZERO_ADDRESS
 		if (!upperHint) upperHint = this.ZERO_ADDRESS
 		if (!lowerHint) lowerHint = this.ZERO_ADDRESS
 
 		assert(
-			!(VUSDAmount && ICR) && (VUSDAmount || ICR),
-			"Specify either VUSD amount or target ICR, but not both"
+			!(GRAIAmount && ICR) && (GRAIAmount || ICR),
+			"Specify either GRAI amount or target ICR, but not both"
 		)
 
 		let increasedTotalDebt
@@ -898,39 +898,39 @@ class TestHelper {
 			const targetDebt = coll.mul(price).div(ICR)
 			assert(targetDebt > debt, "ICR is already greater than or equal to target")
 			increasedTotalDebt = targetDebt.sub(debt)
-			VUSDAmount = await this.getNetBorrowingAmount(contracts, increasedTotalDebt)
+			GRAIAmount = await this.getNetBorrowingAmount(contracts, increasedTotalDebt)
 		} else {
-			increasedTotalDebt = await this.getAmountWithBorrowingFee(contracts, VUSDAmount)
+			increasedTotalDebt = await this.getAmountWithBorrowingFee(contracts, GRAIAmount)
 		}
 
 		await contracts.borrowerOperations.withdrawDebtTokens(
 			asset,
-			VUSDAmount,
+			GRAIAmount,
 			upperHint,
 			lowerHint,
 			extraParams
 		)
 
 		return {
-			VUSDAmount,
+			GRAIAmount,
 			increasedTotalDebt,
 		}
 	}
 
-	static async adjustVessel_allAccounts(accounts, contracts, ETHAmount, VUSDAmount) {
+	static async adjustVessel_allAccounts(accounts, contracts, ETHAmount, GRAIAmount) {
 		const gasCostList = []
 
 		for (const account of accounts) {
 			let tx
 
 			let ETHChangeBN = this.toBN(ETHAmount)
-			let VUSDChangeBN = this.toBN(VUSDAmount)
+			let GRAIChangeBN = this.toBN(GRAIAmount)
 
 			const { newColl, newDebt } = await this.getCollAndDebtFromAdjustment(
 				contracts,
 				account,
 				ETHChangeBN,
-				VUSDChangeBN
+				GRAIChangeBN
 			)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
@@ -940,15 +940,15 @@ class TestHelper {
 
 			const zero = this.toBN("0")
 
-			let isDebtIncrease = VUSDChangeBN.gt(zero)
-			VUSDChangeBN = VUSDChangeBN.abs()
+			let isDebtIncrease = GRAIChangeBN.gt(zero)
+			GRAIChangeBN = GRAIChangeBN.abs()
 
 			// Add ETH to vessel
 			if (ETHChangeBN.gt(zero)) {
 				tx = await contracts.borrowerOperations.adjustVessel(
 					this._100pct,
 					0,
-					VUSDChangeBN,
+					GRAIChangeBN,
 					isDebtIncrease,
 					upperHint,
 					lowerHint,
@@ -960,7 +960,7 @@ class TestHelper {
 				tx = await contracts.borrowerOperations.adjustVessel(
 					this._100pct,
 					ETHChangeBN,
-					VUSDChangeBN,
+					GRAIChangeBN,
 					isDebtIncrease,
 					upperHint,
 					lowerHint,
@@ -979,8 +979,8 @@ class TestHelper {
 		contracts,
 		ETHMin,
 		ETHMax,
-		VUSDMin,
-		VUSDMax
+		GRAIMin,
+		GRAIMax
 	) {
 		const gasCostList = []
 
@@ -988,13 +988,13 @@ class TestHelper {
 			let tx
 
 			let ETHChangeBN = this.toBN(this.randAmountInWei(ETHMin, ETHMax))
-			let VUSDChangeBN = this.toBN(this.randAmountInWei(VUSDMin, VUSDMax))
+			let GRAIChangeBN = this.toBN(this.randAmountInWei(GRAIMin, GRAIMax))
 
 			const { newColl, newDebt } = await this.getCollAndDebtFromAdjustment(
 				contracts,
 				account,
 				ETHChangeBN,
-				VUSDChangeBN
+				GRAIChangeBN
 			)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
@@ -1004,15 +1004,15 @@ class TestHelper {
 
 			const zero = this.toBN("0")
 
-			let isDebtIncrease = VUSDChangeBN.gt(zero)
-			VUSDChangeBN = VUSDChangeBN.abs()
+			let isDebtIncrease = GRAIChangeBN.gt(zero)
+			GRAIChangeBN = GRAIChangeBN.abs()
 
 			// Add ETH to vessel
 			if (ETHChangeBN.gt(zero)) {
 				tx = await contracts.borrowerOperations.adjustVessel(
 					this._100pct,
 					0,
-					VUSDChangeBN,
+					GRAIChangeBN,
 					isDebtIncrease,
 					upperHint,
 					lowerHint,
@@ -1024,7 +1024,7 @@ class TestHelper {
 				tx = await contracts.borrowerOperations.adjustVessel(
 					this._100pct,
 					ETHChangeBN,
-					VUSDChangeBN,
+					GRAIChangeBN,
 					isDebtIncrease,
 					lowerHint,
 					upperHint,
@@ -1033,7 +1033,7 @@ class TestHelper {
 			}
 
 			const gas = this.gasUsed(tx)
-			// console.log(`ETH change: ${ETHChangeBN},  VUSDChange: ${VUSDChangeBN}, gas: ${gas} `)
+			// console.log(`ETH change: ${ETHChangeBN},  GRAIChange: ${GRAIChangeBN}, gas: ${gas} `)
 
 			gasCostList.push(gas)
 		}
@@ -1148,11 +1148,11 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async withdrawVUSD_allAccounts(accounts, contracts, amount) {
+	static async withdrawGRAI_allAccounts(accounts, contracts, amount) {
 		const gasCostList = []
 
 		for (const account of accounts) {
-			const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawVUSD(
+			const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawGRAI(
 				contracts,
 				account,
 				amount
@@ -1176,16 +1176,16 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async withdrawVUSD_allAccounts_randomAmount(min, max, accounts, contracts) {
+	static async withdrawGRAI_allAccounts_randomAmount(min, max, accounts, contracts) {
 		const gasCostList = []
 
 		for (const account of accounts) {
-			const randVUSDAmount = this.randAmountInWei(min, max)
+			const randGRAIAmount = this.randAmountInWei(min, max)
 
-			const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawVUSD(
+			const { newColl, newDebt } = await this.getCollAndDebtFromWithdrawGRAI(
 				contracts,
 				account,
-				randVUSDAmount
+				randGRAIAmount
 			)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
@@ -1195,7 +1195,7 @@ class TestHelper {
 
 			const tx = await contracts.borrowerOperations.withdrawDebtTokens(
 				this._100pct,
-				randVUSDAmount,
+				randGRAIAmount,
 				upperHint,
 				lowerHint,
 				{ from: account }
@@ -1206,11 +1206,11 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async repayVUSD_allAccounts(accounts, contracts, amount) {
+	static async repayGRAI_allAccounts(accounts, contracts, amount) {
 		const gasCostList = []
 
 		for (const account of accounts) {
-			const { newColl, newDebt } = await this.getCollAndDebtFromRepayVUSD(
+			const { newColl, newDebt } = await this.getCollAndDebtFromRepayGRAI(
 				contracts,
 				account,
 				amount
@@ -1230,16 +1230,16 @@ class TestHelper {
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async repayVUSD_allAccounts_randomAmount(min, max, accounts, contracts) {
+	static async repayGRAI_allAccounts_randomAmount(min, max, accounts, contracts) {
 		const gasCostList = []
 
 		for (const account of accounts) {
-			const randVUSDAmount = this.randAmountInWei(min, max)
+			const randGRAIAmount = this.randAmountInWei(min, max)
 
-			const { newColl, newDebt } = await this.getCollAndDebtFromRepayVUSD(
+			const { newColl, newDebt } = await this.getCollAndDebtFromRepayGRAI(
 				contracts,
 				account,
-				randVUSDAmount
+				randGRAIAmount
 			)
 			const { upperHint, lowerHint } = await this.getBorrowerOpsListHint(
 				contracts,
@@ -1247,8 +1247,8 @@ class TestHelper {
 				newDebt
 			)
 
-			const tx = await contracts.borrowerOperations.repayVUSD(
-				randVUSDAmount,
+			const tx = await contracts.borrowerOperations.repayGRAI(
+				randGRAIAmount,
 				upperHint,
 				lowerHint,
 				{ from: account }
@@ -1276,7 +1276,7 @@ class TestHelper {
 	static async redeemCollateral(
 		redeemer,
 		contracts,
-		VUSDAmount,
+		GRAIAmount,
 		asset,
 		maxFee = this._100pct
 	) {
@@ -1287,7 +1287,7 @@ class TestHelper {
 			redeemer,
 			price,
 			contracts,
-			VUSDAmount,
+			GRAIAmount,
 			asset,
 			maxFee
 		)
@@ -1298,7 +1298,7 @@ class TestHelper {
 	static async redeemCollateralAndGetTxObject(
 		redeemer,
 		contracts,
-		VUSDAmount,
+		GRAIAmount,
 		asset,
 		maxFee = this._100pct
 	) {
@@ -1309,7 +1309,7 @@ class TestHelper {
 			redeemer,
 			price,
 			contracts,
-			VUSDAmount,
+			GRAIAmount,
 			asset,
 			maxFee
 		)
@@ -1329,21 +1329,21 @@ class TestHelper {
 		const price = await contracts.priceFeedTestnet.getPrice(asset)
 
 		for (const redeemer of accounts) {
-			const randVUSDAmount = this.randAmountInWei(min, max)
+			const randGRAIAmount = this.randAmountInWei(min, max)
 
-			await this.performRedemptionTx(redeemer, price, contracts, randVUSDAmount, asset)
+			await this.performRedemptionTx(redeemer, price, contracts, randGRAIAmount, asset)
 			const gas = this.gasUsed(tx)
 			gasCostList.push(gas)
 		}
 		return this.getGasMetrics(gasCostList)
 	}
 
-	static async performRedemptionTx(redeemer, price, contracts, VUSDAmount, asset, maxFee = 0) {
+	static async performRedemptionTx(redeemer, price, contracts, GRAIAmount, asset, maxFee = 0) {
 		if (!asset) asset = this.ZERO_ADDRESS
 
 		const redemptionhint = await contracts.vesselManagerOperations.getRedemptionHints(
 			asset,
-			VUSDAmount,
+			GRAIAmount,
 			price,
 			0
 		)
@@ -1368,7 +1368,7 @@ class TestHelper {
 		)
 		const tx = await contracts.vesselManagerOperations.redeemCollateral(
 			asset,
-			VUSDAmount,
+			GRAIAmount,
 			firstRedemptionHint,
 			exactPartialRedemptionHint[0],
 			exactPartialRedemptionHint[1],
@@ -1417,8 +1417,8 @@ class TestHelper {
 	static async provideToSP_allAccounts_randomAmount(min, max, accounts, stabilityPool) {
 		const gasCostList = []
 		for (const account of accounts) {
-			const randomVUSDAmount = this.randAmountInWei(min, max)
-			const tx = await stabilityPool.provideToSP(randomVUSDAmount, this.ZERO_ADDRESS, {
+			const randomGRAIAmount = this.randAmountInWei(min, max)
+			const tx = await stabilityPool.provideToSP(randomGRAIAmount, this.ZERO_ADDRESS, {
 				from: account,
 			})
 			const gas = this.gasUsed(tx)
@@ -1440,8 +1440,8 @@ class TestHelper {
 	static async withdrawFromSP_allAccounts_randomAmount(min, max, accounts, stabilityPool) {
 		const gasCostList = []
 		for (const account of accounts) {
-			const randomVUSDAmount = this.randAmountInWei(min, max)
-			const tx = await stabilityPool.withdrawFromSP(randomVUSDAmount, { from: account })
+			const randomGRAIAmount = this.randAmountInWei(min, max)
+			const tx = await stabilityPool.withdrawFromSP(randomGRAIAmount, { from: account })
 			const gas = this.gasUsed(tx)
 			gasCostList.push(gas)
 		}

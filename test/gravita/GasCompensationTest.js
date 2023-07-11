@@ -8,6 +8,7 @@ const mv = testHelpers.MoneyValues
 var contracts
 var snapshotId
 var initialSnapshotId
+var validCollateral
 
 const openVessel = async params => th.openVessel(contracts.core, params)
 const deploy = async (treasury, mintingAccounts) => {
@@ -33,6 +34,7 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtStaking = contracts.grvt.grvtStaking
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
+	validCollateral = await adminContract.getValidCollateral()
 }
 
 contract("Gas compensation tests", async accounts => {
@@ -208,23 +210,23 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 200
     coll = 9.999 ETH 
-    debt = 10 VUSD
+    debt = 10 GRAI
     0.5% of coll = 0.04995 ETH. USD value: $9.99
-    -> Expect composite debt = 10 + 200  = 2100 VUSD*/
+    -> Expect composite debt = 10 + 200  = 2100 GRAI*/
 		assert.equal(await vesselManager.getCompositeDebt(erc20.address, dec(10, 18)), dec(210, 18))
 
 		/* ETH:USD price = 200
      coll = 0.055 ETH  
-     debt = 0 VUSD
+     debt = 0 GRAI
      0.5% of coll = 0.000275 ETH. USD value: $0.055
-     -> Expect composite debt = 0 + 200 = 200 VUSD*/
+     -> Expect composite debt = 0 + 200 = 200 GRAI*/
 		assert.equal(await vesselManager.getCompositeDebt(erc20.address, 0), dec(200, 18))
 
 		// /* ETH:USD price = 200
 		// coll = 6.09232408808723580 ETH
-		// debt = 200 VUSD
+		// debt = 200 GRAI
 		// 0.5% of coll = 0.004995 ETH. USD value: $6.09
-		// -> Expect  composite debt =  200 + 200 = 400  VUSD */
+		// -> Expect  composite debt =  200 + 200 = 400  GRAI */
 		assert.equal(await vesselManager.getCompositeDebt(erc20.address, dec(200, 18)), "400000000000000000000")
 	})
 
@@ -236,9 +238,9 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 200
     coll = 10 ETH  
-    debt = 123.45 VUSD
+    debt = 123.45 GRAI
     0.5% of coll = 0.5 ETH. USD value: $10
-    -> Expect composite debt = (123.45 + 200) = 323.45 VUSD  */
+    -> Expect composite debt = (123.45 + 200) = 323.45 GRAI  */
 		assert.equal(await vesselManager.getCompositeDebt(erc20.address, "123450000000000000000"), "323450000000000000000")
 	})
 
@@ -252,8 +254,8 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 200 $/E
     coll = 100 ETH  
-    debt = 2000 VUSD
-    -> Expect composite debt = (2000 + 200) = 2200 VUSD  */
+    debt = 2000 GRAI
+    -> Expect composite debt = (2000 + 200) = 2200 GRAI  */
 		assert.equal(
 			(await vesselManager.getCompositeDebt(erc20.address, dec(2000, 18))).toString(),
 			"2200000000000000000000"
@@ -262,8 +264,8 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 200 $/E
     coll = 10.001 ETH  
-    debt = 200 VUSD
-    -> Expect composite debt = (200 + 200) = 400 VUSD  */
+    debt = 200 GRAI
+    -> Expect composite debt = (200 + 200) = 400 GRAI  */
 		assert.equal(
 			(await vesselManager.getCompositeDebt(erc20.address, dec(200, 18))).toString(),
 			"400000000000000000000"
@@ -272,8 +274,8 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 200 $/E
     coll = 37.5 ETH  
-    debt = 500 VUSD
-    -> Expect composite debt = (500 + 200) = 700 VUSD  */
+    debt = 500 GRAI
+    -> Expect composite debt = (500 + 200) = 700 GRAI  */
 		assert.equal(
 			(await vesselManager.getCompositeDebt(erc20.address, dec(500, 18))).toString(),
 			"700000000000000000000"
@@ -282,8 +284,8 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 45323.54542 $/E
     coll = 94758.230582309850 ETH  
-    debt = 1 billion VUSD
-    -> Expect composite debt = (1000000000 + 200) = 1000000200 VUSD  */
+    debt = 1 billion GRAI
+    -> Expect composite debt = (1000000000 + 200) = 1000000200 GRAI  */
 		await priceFeed.setPrice(erc20.address, "45323545420000000000000")
 		assert.isAtMost(
 			th.getDifference(
@@ -296,8 +298,8 @@ contract("Gas compensation tests", async accounts => {
 		/* 
     ETH:USD price = 1000000 $/E (1 million)
     coll = 300000000 ETH   (300 million)
-    debt = 54321.123456789 VUSD
-   -> Expect composite debt = (54321.123456789 + 200) = 54521.123456789 VUSD */
+    debt = 54321.123456789 GRAI
+   -> Expect composite debt = (54321.123456789 + 200) = 54521.123456789 GRAI */
 		await priceFeed.setPrice(erc20.address, dec(1, 24))
 		assert.equal(
 			(await vesselManager.getCompositeDebt(erc20.address, "54321123456789000000000")).toString(),
@@ -314,7 +316,7 @@ contract("Gas compensation tests", async accounts => {
 			extraParams: { from: whale },
 		})
 
-		// A opens with 1 ETH, 110 VUSD
+		// A opens with 1 ETH, 110 GRAI
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN("1818181818181818181"),
@@ -324,7 +326,7 @@ contract("Gas compensation tests", async accounts => {
 		// Expect aliceICR = (1 * 200) / (110) = 181.81%
 		assert.isAtMost(th.getDifference(alice_ICRERC20, "1818181818181818181"), 1000)
 
-		// B opens with 0.5 ETH, 50 VUSD
+		// B opens with 0.5 ETH, 50 GRAI
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
@@ -334,19 +336,19 @@ contract("Gas compensation tests", async accounts => {
 		// Expect Bob's ICR = (0.5 * 200) / 50 = 200%
 		assert.isAtMost(th.getDifference(bob_ICRERC20, dec(2, 18)), 1000)
 
-		// F opens with 1 ETH, 100 VUSD
+		// F opens with 1 ETH, 100 GRAI
 
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(100, 18),
+			extraGRAIAmount: dec(100, 18),
 			extraParams: { from: flyn },
 		})
 		const flyn_ICRERC20 = (await vesselManager.getCurrentICR(erc20.address, flyn, price)).toString()
 		// Expect Flyn's ICR = (1 * 200) / 100 = 200%
 		assert.isAtMost(th.getDifference(flyn_ICRERC20, dec(2, 18)), 1000)
 
-		// C opens with 2.5 ETH, 160 VUSD
+		// C opens with 2.5 ETH, 160 GRAI
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(3125, 15)),
@@ -356,7 +358,7 @@ contract("Gas compensation tests", async accounts => {
 		// Expect Carol's ICR = (2.5 * 200) / (160) = 312.50%
 		assert.isAtMost(th.getDifference(carol_ICRERC20, "3125000000000000000"), 1000)
 
-		// D opens with 1 ETH, 0 VUSD
+		// D opens with 1 ETH, 0 GRAI
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(4, 18)),
@@ -366,7 +368,7 @@ contract("Gas compensation tests", async accounts => {
 		// Expect Dennis's ICR = (1 * 200) / (50) = 400.00%
 		assert.isAtMost(th.getDifference(dennis_ICRERC20, dec(4, 18)), 1000)
 
-		// E opens with 4405.45 ETH, 32598.35 VUSD
+		// E opens with 4405.45 ETH, 32598.35 GRAI
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN("27028668628933700000"),
@@ -376,7 +378,7 @@ contract("Gas compensation tests", async accounts => {
 		// Expect Erin's ICR = (4405.45 * 200) / (32598.35) = 2702.87%
 		assert.isAtMost(th.getDifference(erin_ICRERC20, "27028668628933700000"), 100000)
 
-		// H opens with 1 ETH, 180 VUSD
+		// H opens with 1 ETH, 180 GRAI
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN("1111111111111111111"),
@@ -398,44 +400,44 @@ contract("Gas compensation tests", async accounts => {
 		const { totalDebt: A_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(100, 18),
+			extraGRAIAmount: dec(100, 18),
 			extraParams: { from: alice },
 		})
 		const { totalDebt: B_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(200, 18),
+			extraGRAIAmount: dec(200, 18),
 			extraParams: { from: bob },
 		})
 		const { totalDebt: C_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(300, 18),
+			extraGRAIAmount: dec(300, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: A_totalDebtERC20,
+			extraGRAIAmount: A_totalDebtERC20,
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: B_totalDebtERC20.add(C_totalDebtERC20),
+			extraGRAIAmount: B_totalDebtERC20.add(C_totalDebtERC20),
 			extraParams: { from: erin },
 		})
 
 		// console.log(((await community.GRVTSupplyCap()).toString()))
 
-		// D, E each provide VUSD to SP
+		// D, E each provide GRAI to SP
 
-		await stabilityPool.provideToSP(A_totalDebtERC20, { from: dennis })
-		await stabilityPool.provideToSP(B_totalDebtERC20.add(C_totalDebtERC20), {
+		await stabilityPool.provideToSP(A_totalDebtERC20, validCollateral, { from: dennis })
+		await stabilityPool.provideToSP(B_totalDebtERC20.add(C_totalDebtERC20), validCollateral, {
 			from: erin,
 		})
 
-		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		const GRAIinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
 		// --- Price drops to 9.99 ---
 		await priceFeed.setPrice(erc20.address, "9990000000000000000")
@@ -461,9 +463,9 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN("200"))
 		assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
 
-		// Check SP VUSD has decreased due to the liquidation
-		const VUSDinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
-		assert.isTrue(VUSDinSP_AERC20.lte(VUSDinSP_0ERC20))
+		// Check SP GRAI has decreased due to the liquidation
+		const GRAIinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		assert.isTrue(GRAIinSP_AERC20.lte(GRAIinSP_0ERC20))
 
 		// Check ETH in SP has received the liquidation
 		assert.equal(
@@ -494,10 +496,10 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_bobCollERC20 = bobCollERC20.div(web3.utils.toBN("200"))
 		assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20) // 0.5% of 2 ETH
 
-		// Check SP VUSD has decreased due to the liquidation of B
-		const VUSDinSP_BERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		// Check SP GRAI has decreased due to the liquidation of B
+		const GRAIinSP_BERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
-		assert.isTrue(VUSDinSP_BERC20.lt(VUSDinSP_AERC20))
+		assert.isTrue(GRAIinSP_BERC20.lt(GRAIinSP_AERC20))
 
 		// Check ETH in SP has received the liquidation
 		assert.equal(
@@ -529,8 +531,8 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_carolCollERC20 = carolCollERC20.div(web3.utils.toBN("200"))
 		assert.equal(compensationReceived_CERC20, _0pt5percent_carolCollERC20)
 
-		// Check SP VUSD has decreased due to the liquidation of C
-		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_BERC20))
+		// Check SP GRAI has decreased due to the liquidation of C
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(GRAIinSP_BERC20))
 
 		// Check ETH in SP has not changed due to the lquidation of C
 		const ETHinSP_CERC20 = await stabilityPool.getCollateral(erc20.address)
@@ -556,40 +558,40 @@ contract("Gas compensation tests", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(200, 18),
+			extraGRAIAmount: dec(200, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(120, 16)),
-			extraVUSDAmount: dec(5000, 18),
+			extraGRAIAmount: dec(5000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(60, 18)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(80, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(80, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 
-		// D, E each provide 10000 VUSD to SP
+		// D, E each provide 10000 GRAI to SP
 
-		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: erin })
 
-		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		const GRAIinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 		const ETHinSP_0ERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		// --- Price drops to 199.999 ---
@@ -623,9 +625,9 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_aliceCollERC20 = aliceCollERC20.div(web3.utils.toBN("200"))
 		assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
 
-		// Check SP VUSD has decreased due to the liquidation of A
-		const VUSDinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
-		assert.isTrue(VUSDinSP_AERC20.lte(VUSDinSP_0ERC20))
+		// Check SP GRAI has decreased due to the liquidation of A
+		const GRAIinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		assert.isTrue(GRAIinSP_AERC20.lte(GRAIinSP_0ERC20))
 
 		// Check ETH in SP has increased by the remainder of B's coll
 
@@ -668,8 +670,8 @@ contract("Gas compensation tests", async accounts => {
 		const compensationReceived_BERC20 = liquidatorBalance_after_BERC20.sub(liquidatorBalance_before_BERC20).toString()
 		assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20)
 
-		// Check SP VUSD has decreased due to the liquidation of B
-		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_AERC20))
+		// Check SP GRAI has decreased due to the liquidation of B
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(GRAIinSP_AERC20))
 
 		// Check ETH in SP has increased by the remainder of B's coll
 
@@ -693,40 +695,40 @@ contract("Gas compensation tests", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(1875, 15)),
-			extraVUSDAmount: dec(8000, 18),
+			extraGRAIAmount: dec(8000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(4, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(4, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 
-		// D, E each provide 10000 VUSD to SP
+		// D, E each provide 10000 GRAI to SP
 
-		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: erin })
 
-		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		const GRAIinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 		const ETHinSP_0ERC20 = await stabilityPool.getCollateral(erc20.address)
 
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
@@ -760,9 +762,9 @@ contract("Gas compensation tests", async accounts => {
 		const compensationReceived_AERC20 = liquidatorBalance_after_AERC20.sub(liquidatorBalance_before_AERC20).toString()
 		assert.equal(compensationReceived_AERC20, _0pt5percent_aliceCollERC20)
 
-		// Check SP VUSD has decreased due to the liquidation of A
-		const VUSDinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
-		assert.isTrue(VUSDinSP_AERC20.lte(VUSDinSP_0ERC20))
+		// Check SP GRAI has decreased due to the liquidation of A
+		const GRAIinSP_AERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		assert.isTrue(GRAIinSP_AERC20.lte(GRAIinSP_0ERC20))
 
 		// Check ETH in SP has increased by the remainder of A's coll
 
@@ -801,8 +803,8 @@ contract("Gas compensation tests", async accounts => {
 		const compensationReceived_BERC20 = liquidatorBalance_after_BERC20.sub(liquidatorBalance_before_BERC20).toString()
 		assert.equal(compensationReceived_BERC20, _0pt5percent_bobCollERC20)
 
-		// Check SP VUSD has decreased due to the liquidation of B
-		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_AERC20))
+		// Check SP GRAI has decreased due to the liquidation of B
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(GRAIinSP_AERC20))
 
 		// Check ETH in SP has increased by the remainder of B's coll
 
@@ -825,38 +827,38 @@ contract("Gas compensation tests", async accounts => {
 		const { totalDebt: A_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(100, 18),
+			extraGRAIAmount: dec(100, 18),
 			extraParams: { from: alice },
 		})
 		const { totalDebt: B_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(200, 18),
+			extraGRAIAmount: dec(200, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(300, 18),
+			extraGRAIAmount: dec(300, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: A_totalDebtERC20,
+			extraGRAIAmount: A_totalDebtERC20,
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: B_totalDebtERC20,
+			extraGRAIAmount: B_totalDebtERC20,
 			extraParams: { from: erin },
 		})
 
-		// D, E each provide VUSD to SP
+		// D, E each provide GRAI to SP
 
-		await stabilityPool.provideToSP(A_totalDebtERC20, { from: dennis })
-		await stabilityPool.provideToSP(B_totalDebtERC20, { from: erin })
+		await stabilityPool.provideToSP(A_totalDebtERC20, validCollateral, { from: dennis })
+		await stabilityPool.provideToSP(B_totalDebtERC20, validCollateral, { from: erin })
 
 		// --- Price drops to 9.99 ---
 		await priceFeed.setPrice(erc20.address, "9990000000000000000")
@@ -929,38 +931,38 @@ contract("Gas compensation tests", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(200, 18),
+			extraGRAIAmount: dec(200, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(120, 16)),
-			extraVUSDAmount: dec(5000, 18),
+			extraGRAIAmount: dec(5000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(60, 18)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(80, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(80, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 
-		// D, E each provide 10000 VUSD to SP
+		// D, E each provide 10000 GRAI to SP
 
-		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: erin })
 
 		// --- Price drops to 199.999 ---
 		await priceFeed.setPrice(erc20.address, "199999000000000000000")
@@ -1055,38 +1057,38 @@ contract("Gas compensation tests", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(1875, 15)),
-			extraVUSDAmount: dec(8000, 18),
+			extraGRAIAmount: dec(8000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(2, 18)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(4, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(4, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 
-		// D, E each provide 10000 VUSD to SP
+		// D, E each provide 10000 GRAI to SP
 
-		await stabilityPool.provideToSP(dec(1, 23), { from: dennis })
-		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: dennis })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: erin })
 
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
 		const price_1 = await priceFeed.getPrice(erc20.address)
@@ -1164,46 +1166,46 @@ contract("Gas compensation tests", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(118, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(526, 16)),
-			extraVUSDAmount: dec(8000, 18),
+			extraGRAIAmount: dec(8000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(488, 16)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(545, 16)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(10, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(10, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: flyn },
 		})
 
-		// D, E each provide 10000 VUSD to SP
+		// D, E each provide 10000 GRAI to SP
 
-		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
-		await stabilityPool.provideToSP(dec(1, 23), { from: flyn })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: flyn })
 
-		const VUSDinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+		const GRAIinSP_0ERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
 		// price drops to 200
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
@@ -1266,8 +1268,8 @@ contract("Gas compensation tests", async accounts => {
 		await vesselManagerOperations.liquidateVessels(erc20.address, 4, { from: liquidator })
 		const liquidatorBalance_afterERC20 = web3.utils.toBN(await erc20.balanceOf(liquidator))
 
-		// Check VUSD in SP has decreased
-		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(VUSDinSP_0ERC20))
+		// Check GRAI in SP has decreased
+		assert.isTrue((await stabilityPool.getTotalDebtTokenDeposits()).lt(GRAIinSP_0ERC20))
 
 		// Check liquidator's balance has increased by the expected compensation amount
 
@@ -1292,29 +1294,29 @@ contract("Gas compensation tests", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(118, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: alice },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(526, 16)),
-			extraVUSDAmount: dec(8000, 18),
+			extraGRAIAmount: dec(8000, 18),
 			extraParams: { from: bob },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(488, 16)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(545, 16)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 
-		const VUSDinDefaultPool_0ERC20 = await defaultPool.getDebtTokenBalance(erc20.address)
+		const GRAIinDefaultPool_0ERC20 = await defaultPool.getDebtTokenBalance(erc20.address)
 
 		// price drops to 200
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
@@ -1371,8 +1373,8 @@ contract("Gas compensation tests", async accounts => {
 		await vesselManagerOperations.liquidateVessels(erc20.address, 4, { from: liquidator })
 		const liquidatorBalance_afterERC20 = web3.utils.toBN(await erc20.balanceOf(liquidator))
 
-		// Check VUSD in DefaultPool has decreased
-		assert.isTrue((await defaultPool.getDebtTokenBalance(erc20.address)).gt(VUSDinDefaultPool_0ERC20))
+		// Check GRAI in DefaultPool has decreased
+		assert.isTrue((await defaultPool.getDebtTokenBalance(erc20.address)).gt(GRAIinDefaultPool_0ERC20))
 
 		// Check liquidator's balance has increased by the expected compensation amount
 		const compensationReceivedERC20 = liquidatorBalance_afterERC20.sub(liquidatorBalance_beforeERC20).toString()
@@ -1397,44 +1399,44 @@ contract("Gas compensation tests", async accounts => {
 		const { totalDebt: A_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(118, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: alice },
 		})
 		const { totalDebt: B_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(526, 16)),
-			extraVUSDAmount: dec(8000, 18),
+			extraGRAIAmount: dec(8000, 18),
 			extraParams: { from: bob },
 		})
 		const { totalDebt: C_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(488, 16)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		const { totalDebt: D_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(545, 16)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(10, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(10, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: flyn },
 		})
 
-		// D, E each provide 10000 VUSD to SP
+		// D, E each provide 10000 GRAI to SP
 
-		await stabilityPool.provideToSP(dec(1, 23), { from: erin })
-		await stabilityPool.provideToSP(dec(1, 23), { from: flyn })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: erin })
+		await stabilityPool.provideToSP(dec(1, 23), validCollateral, { from: flyn })
 
 		// price drops to 200
 		await priceFeed.setPrice(erc20.address, dec(200, 18))
@@ -1489,7 +1491,7 @@ contract("Gas compensation tests", async accounts => {
 			.add(carolCollERC20.sub(_0pt5percent_carolCollERC20))
 			.add(dennisCollERC20.sub(_0pt5percent_dennisCollERC20))
 
-		// Expect liquidatedDebt = 51 + 190 + 1025 + 13510 = 14646 VUSD
+		// Expect liquidatedDebt = 51 + 190 + 1025 + 13510 = 14646 GRAI
 		const expectedLiquidatedDebtERC20 = A_totalDebtERC20.add(B_totalDebtERC20)
 			.add(C_totalDebtERC20)
 			.add(D_totalDebtERC20)
@@ -1520,37 +1522,37 @@ contract("Gas compensation tests", async accounts => {
 		const { totalDebt: A_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(118, 16)),
-			extraVUSDAmount: dec(2000, 18),
+			extraGRAIAmount: dec(2000, 18),
 			extraParams: { from: alice },
 		})
 		const { totalDebt: B_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(526, 16)),
-			extraVUSDAmount: dec(8000, 18),
+			extraGRAIAmount: dec(8000, 18),
 			extraParams: { from: bob },
 		})
 		const { totalDebt: C_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(488, 16)),
-			extraVUSDAmount: dec(600, 18),
+			extraGRAIAmount: dec(600, 18),
 			extraParams: { from: carol },
 		})
 		const { totalDebt: D_totalDebtERC20 } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(545, 16)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: dennis },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(10, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: erin },
 		})
 		await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(10, 18)),
-			extraVUSDAmount: dec(1, 23),
+			extraGRAIAmount: dec(1, 23),
 			extraParams: { from: flyn },
 		})
 
@@ -1600,7 +1602,7 @@ contract("Gas compensation tests", async accounts => {
 			.add(carolCollERC20.sub(_0pt5percent_carolCollERC20))
 			.add(dennisCollERC20.sub(_0pt5percent_dennisCollERC20))
 
-		// Expect liquidatedDebt = 51 + 190 + 1025 + 13510 = 14646 VUSD
+		// Expect liquidatedDebt = 51 + 190 + 1025 + 13510 = 14646 GRAI
 		const expectedLiquidatedDebtERC20 = A_totalDebtERC20.add(B_totalDebtERC20)
 			.add(C_totalDebtERC20)
 			.add(D_totalDebtERC20)
@@ -1626,14 +1628,14 @@ contract("Gas compensation tests", async accounts => {
 		const _10_accounts = accounts.slice(1, 11)
 
 		let debt = 50
-		// create 10 vessels, constant coll, descending debt 100 to 90 VUSD
+		// create 10 vessels, constant coll, descending debt 100 to 90 GRAI
 		for (const account of _10_accounts) {
 			const debtString = debt.toString().concat("000000000000000000")
 
 			await openVessel({
 				asset: erc20.address,
 				assetSent: dec(30, "ether"),
-				extraVUSDAmount: debtString,
+				extraGRAIAmount: debtString,
 				extraParams: { from: account },
 			})
 
@@ -1685,14 +1687,14 @@ contract("Gas compensation tests", async accounts => {
 		const _20_accounts = accounts.slice(1, 21)
 
 		let coll = 50
-		// create 20 vessels, increasing collateral, constant debt = 100VUSD
+		// create 20 vessels, increasing collateral, constant debt = 100GRAI
 		for (const account of _20_accounts) {
 			const collString = coll.toString().concat("000000000000000000")
 
 			await openVessel({
 				asset: erc20.address,
 				assetSent: collString,
-				extraVUSDAmount: dec(100, 18),
+				extraGRAIAmount: dec(100, 18),
 				extraParams: { from: account },
 			})
 
@@ -1742,7 +1744,7 @@ contract("Gas compensation tests", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				assetSent: collString,
-				extraVUSDAmount: dec(100, 18),
+				extraGRAIAmount: dec(100, 18),
 				extraParams: { from: account },
 			})
 
@@ -1782,3 +1784,4 @@ contract("Gas compensation tests", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+

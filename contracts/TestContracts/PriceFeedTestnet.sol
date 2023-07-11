@@ -8,7 +8,6 @@ import "../Interfaces/IPriceFeed.sol";
  * variable. The contract does not connect to a live Chainlink price feed.
  */
 contract PriceFeedTestnet is IPriceFeed {
-
 	string public constant NAME = "PriceFeedTestnet";
 
 	mapping(address => uint256) public prices;
@@ -23,12 +22,15 @@ contract PriceFeedTestnet is IPriceFeed {
 
 	function setOracle(
 		address _token,
-		address _chainlinkOracle,
-		uint256 _maxDeviationBetweenRounds,
-		bool _isEthIndexed
+		address _oracle,
+		ProviderType _type,
+		uint256 _timeoutMinutes,
+		bool _isEthIndexed,
+		bool _isFallback
 	) external override {}
 
 	function fetchPrice(address _asset) external view override returns (uint256) {
 		return this.getPrice(_asset);
 	}
 }
+

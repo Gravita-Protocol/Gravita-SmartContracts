@@ -9,9 +9,10 @@ import "./Interfaces/IVesselManagerOperations.sol";
 
 contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
-	uint256 public constant REDEMPTION_SOFTENING_PARAM = 970; // 97%
-	uint256 public constant PERCENTAGE_PRECISION = 1000;
+	uint256 public constant PERCENTAGE_PRECISION = 100_00;
 	uint256 public constant BATCH_SIZE_LIMIT = 25;
+
+	uint256 public redemptionSofteningParam;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -327,7 +328,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
 					// Apply redemption softening
-					collLot = (collLot * REDEMPTION_SOFTENING_PARAM) / PERCENTAGE_PRECISION;
+					collLot = (collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
 					uint256 newColl = currentVesselColl - collLot;
 					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
@@ -913,7 +914,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
 		// Apply redemption softening
-		singleRedemption.collLot = (singleRedemption.collLot * REDEMPTION_SOFTENING_PARAM) / PERCENTAGE_PRECISION;
+		singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
 		// Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
 
@@ -951,6 +952,17 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		}
 
 		return singleRedemption;
+	}
+
+	function setRedemptionSofteningParam(uint256 _redemptionSofteningParam) public {
+		if (msg.sender != timelockAddress) {
+			revert VesselManagerOperations__NotTimelock();
+		}
+		if (_redemptionSofteningParam < 9700 || _redemptionSofteningParam > PERCENTAGE_PRECISION) {
+			revert VesselManagerOperations__InvalidParam();
+		}
+		redemptionSofteningParam = _redemptionSofteningParam;
+		emit RedemptionSoftenParamChanged(_redemptionSofteningParam);
 	}
 
 	function authorizeUpgrade(address newImplementation) public {

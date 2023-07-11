@@ -6,6 +6,7 @@ const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
 
 var contracts
+var validCollateral
 var snapshotId
 var initialSnapshotId
 
@@ -34,6 +35,10 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtStaking = contracts.grvt.grvtStaking
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
+	validCollateral = await adminContract.getValidCollateral()
+
+	// getDepositorGains() expects a sorted collateral array
+	validCollateral = validCollateral.slice(0).sort((a, b) => toBN(a.toLowerCase()).sub(toBN(b.toLowerCase())))
 }
 
 contract("StabilityPool", async accounts => {
@@ -56,7 +61,8 @@ contract("StabilityPool", async accounts => {
 		treasury,
 	] = accounts
 
-	const getOpenVesselVUSDAmount = async (totalDebt, asset) => th.getOpenVesselVUSDAmount(contracts.core, totalDebt, asset)
+	const getOpenVesselGRAIAmount = async (totalDebt, asset) =>
+		th.getOpenVesselGRAIAmount(contracts.core, totalDebt, asset)
 
 	async function _openVessel(erc20Contract, extraDebtTokenAmt, sender) {
 		await _openVesselWithICR(erc20Contract, extraDebtTokenAmt, 2, sender)
@@ -65,7 +71,7 @@ contract("StabilityPool", async accounts => {
 	async function _openVesselWithICR(erc20Contract, extraDebtTokenAmt, icr, sender) {
 		await th.openVessel(contracts.core, {
 			asset: erc20Contract.address,
-			extraVUSDAmount: toBN(dec(extraDebtTokenAmt, 18)),
+			extraGRAIAmount: toBN(dec(extraDebtTokenAmt, 18)),
 			ICR: toBN(dec(icr, 18)),
 			extraParams: { from: sender },
 		})
@@ -75,7 +81,7 @@ contract("StabilityPool", async accounts => {
 		await th.openVessel(contracts.core, {
 			asset: erc20Contract.address,
 			assetSent: toBN(dec(collAmt, 18)),
-			extraVUSDAmount: toBN(dec(extraDebtTokenAmt, 18)),
+			extraGRAIAmount: toBN(dec(extraDebtTokenAmt, 18)),
 			//ICR: toBN(dec(2, 18)),
 			extraParams: { from: sender },
 		})
@@ -85,7 +91,7 @@ contract("StabilityPool", async accounts => {
 		await openVessel({
 			asset: erc20Contract.address,
 			assetSent: toBN(dec(50, 18)),
-			extraVUSDAmount: toBN(dec(extraDebtTokenAmt, 18)),
+			extraGRAIAmount: toBN(dec(extraDebtTokenAmt, 18)),
 			ICR: toBN(dec(icr, 18)),
 			extraParams: { from: whale },
 		})
@@ -114,29 +120,30 @@ contract("StabilityPool", async accounts => {
 		after(async () => {
 			await network.provider.send("evm_revert", [initialSnapshotId])
 		})
+
 		describe("Providing", async () => {
 			it("provideToSP(): increases the Stability Pool balance", async () => {
 				await _openVessel(erc20, (extraDebtTokenAmt = 200), alice)
-				await stabilityPool.provideToSP(200, { from: alice })
+				await stabilityPool.provideToSP(200, validCollateral, { from: alice })
 				assert.equal(await stabilityPool.getTotalDebtTokenDeposits(), 200)
 			})
 
 			it("provideToSP(): reverts when trying to make a SP deposit without debt token balance", async () => {
-				const aliceTxPromise = stabilityPool.provideToSP(200, { from: alice })
+				const aliceTxPromise = stabilityPool.provideToSP(200, validCollateral, { from: alice })
 				await assertRevert(aliceTxPromise, "revert")
 			})
 
 			it("provideToSP(): updates the user's deposit record in StabilityPool", async () => {
 				await _openVessel(erc20, (extraDebtTokenAmt = 200), alice)
 				assert.equal(await stabilityPool.deposits(alice), 0)
-				await stabilityPool.provideToSP(200, { from: alice })
+				await stabilityPool.provideToSP(200, validCollateral, { from: alice })
 				assert.equal(await stabilityPool.deposits(alice), 200)
 			})
 
 			it("provideToSP(): reduces the user's debt token balance by the correct amount", async () => {
 				await _openVessel(erc20, (extraDebtTokenAmt = 200), alice)
 				const alice_balance_Before = await debtToken.balanceOf(alice)
-				await stabilityPool.provideToSP(400, { from: alice })
+				await stabilityPool.provideToSP(400, validCollateral, { from: alice })
 				const alice_balance_After = await debtToken.balanceOf(alice)
 				assert.equal(alice_balance_Before.sub(alice_balance_After), "400")
 			})
@@ -146,7 +153,7 @@ contract("StabilityPool", async accounts => {
 				await openWhaleVessel(erc20B)
 
 				const whaleDebtTokenBalance = await debtToken.balanceOf(whale)
-				await stabilityPool.provideToSP(whaleDebtTokenBalance.div(toBN(2)), { from: whale })
+				await stabilityPool.provideToSP(whaleDebtTokenBalance.div(toBN(2)), validCollateral, { from: whale })
 
 				// 2 Vessels opened, each withdraws minimum debt
 				await _openVessel(erc20, (extraDebtTokenAmt = 0), defaulter_1)
@@ -195,7 +202,7 @@ contract("StabilityPool", async accounts => {
 				assert.equal(alice_snapshot_G_Before, "0")
 
 				// Make deposit
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 				// Check 'After' snapshots
 				const alice_snapshot_After = await stabilityPool.depositSnapshots(alice)
@@ -213,7 +220,7 @@ contract("StabilityPool", async accounts => {
 			it("provideToSP(): multiple deposits = updates user's deposit and snapshots", async () => {
 				await openWhaleVessel(erc20)
 				const whaleDebtTokenBalance = await debtToken.balanceOf(whale)
-				await stabilityPool.provideToSP(whaleDebtTokenBalance.div(toBN(2)), { from: whale })
+				await stabilityPool.provideToSP(whaleDebtTokenBalance.div(toBN(2)), validCollateral, { from: whale })
 
 				// 3 Vessels opened for each collateral
 				await _openVessel(erc20, (extraDebtTokenAmt = 160), defaulter_1) // ICR = 2,000000000000000000
@@ -226,10 +233,10 @@ contract("StabilityPool", async accounts => {
 
 				// Alice & Dennis open vessels receiving 250 & depositing 150 to SP
 				await _openVesselWithICR(erc20, (extraDebtTokenAmt = 250), (icr = 3), alice)
-				await stabilityPool.provideToSP(dec(150, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(150, 18), validCollateral, { from: alice })
 
 				await _openVesselWithICR(erc20B, (extraDebtTokenAmt = 250), (icr = 3), dennis)
-				await stabilityPool.provideToSP(dec(150, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(150, 18), validCollateral, { from: dennis })
 
 				const alice_Snapshot_0 = await stabilityPool.depositSnapshots(alice)
 				const alice_Snapshot_S_0_ERC1 = await stabilityPool.S(alice, erc20.address)
@@ -254,13 +261,13 @@ contract("StabilityPool", async accounts => {
 
 				const alice_compoundedDeposit_1 = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
 				const alice_topUp_1 = toBN(dec(100, 18))
-				await stabilityPool.provideToSP(alice_topUp_1, { from: alice })
+				await stabilityPool.provideToSP(alice_topUp_1, validCollateral, { from: alice })
 				const alice_newDeposit_1 = (await stabilityPool.deposits(alice)).toString()
 				assert.equal(alice_compoundedDeposit_1.add(alice_topUp_1), alice_newDeposit_1)
 
 				const dennis_compoundedDeposit_1 = await stabilityPool.getCompoundedDebtTokenDeposits(dennis)
 				const dennis_topUp_1 = toBN(dec(100, 18))
-				await stabilityPool.provideToSP(dennis_topUp_1, { from: dennis })
+				await stabilityPool.provideToSP(dennis_topUp_1, validCollateral, { from: dennis })
 				const dennis_newDeposit_1 = (await stabilityPool.deposits(dennis)).toString()
 				assert.equal(dennis_compoundedDeposit_1.add(dennis_topUp_1), dennis_newDeposit_1)
 
@@ -287,10 +294,10 @@ contract("StabilityPool", async accounts => {
 
 				// Bob and Erin open vessels and deposit to StabilityPool
 				await _openVessel(erc20, (extraDebtTokenAmt = 1_000), bob)
-				await stabilityPool.provideToSP(dec(800, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(800, 18), validCollateral, { from: bob })
 
 				await _openVessel(erc20B, (extraDebtTokenAmt = 1_000), erin)
-				await stabilityPool.provideToSP(dec(800, 18), { from: erin })
+				await stabilityPool.provideToSP(dec(800, 18), validCollateral, { from: erin })
 
 				// Defaulters 3 and 6 Vessels are closed
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_3, { from: owner })
@@ -305,8 +312,8 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(S_2_ERC2.gt(S_1_ERC2))
 
 				// Alice and Dennis make deposit #3: 100
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(100, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: dennis })
 
 				// check their new snapshots are correct
 				const alice_Snapshot_2 = await stabilityPool.depositSnapshots(alice)
@@ -330,11 +337,13 @@ contract("StabilityPool", async accounts => {
 				const bobBal = await debtToken.balanceOf(bob)
 
 				// Alice attempts to deposit 1 wei more than her balance
-				const aliceTxPromise = stabilityPool.provideToSP(aliceBal.add(toBN(1)), { from: alice })
+				const aliceTxPromise = stabilityPool.provideToSP(aliceBal.add(toBN(1)), validCollateral, { from: alice })
 				await assertRevert(aliceTxPromise, "revert")
 
 				// Bob attempts to deposit 235534 more than his balance
-				const bobTxPromise = stabilityPool.provideToSP(bobBal.add(toBN(dec(235534, 18))), { from: bob })
+				const bobTxPromise = stabilityPool.provideToSP(bobBal.add(toBN(dec(235534, 18))), validCollateral, {
+					from: bob,
+				})
 				await assertRevert(bobTxPromise, "revert")
 			})
 
@@ -343,7 +352,7 @@ contract("StabilityPool", async accounts => {
 				const maxBytes32 = web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 				// Alice attempts to deposit 2^256-1
 				try {
-					aliceTx = await stabilityPool.provideToSP(maxBytes32, { from: alice })
+					aliceTx = await stabilityPool.provideToSP(maxBytes32, validCollateral, { from: alice })
 					assert.isFalse(aliceTx.receipt.status)
 				} catch (error) {
 					assert.include(error.message, "revert")
@@ -359,9 +368,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 2_000, bob)
 				await _openVessel(erc20, 3_000, carol)
 
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(2_000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(3_000, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(2_000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(3_000, 18), validCollateral, { from: carol })
 
 				// D opens a vessel
 				await _openVessel(erc20, 300, dennis)
@@ -383,9 +392,9 @@ contract("StabilityPool", async accounts => {
 				const bob_deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 				const carol_deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(carol)).toString()
 
-				const alice_gain_Before = (await stabilityPool.getDepositorGains(alice))[1].toString()
-				const bob_gain_Before = (await stabilityPool.getDepositorGains(bob))[1].toString()
-				const carol_gain_Before = (await stabilityPool.getDepositorGains(carol))[1].toString()
+				const alice_gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[1].toString()
+				const bob_gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[1].toString()
+				const carol_gain_Before = (await stabilityPool.getDepositorGains(carol, validCollateral))[1].toString()
 
 				// check non-zero debt token and collateral in the Stability Pool
 				const poolDebtBalance = await stabilityPool.getTotalDebtTokenDeposits()
@@ -394,16 +403,16 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(poolCollBalance.gt(mv._zeroBN))
 
 				// D makes an SP deposit
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: dennis })
 				assert.equal((await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString(), dec(1000, 18))
 
 				const alice_deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const bob_deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 				const carol_deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(carol)).toString()
 
-				const alice_gain_After = (await stabilityPool.getDepositorGains(alice))[1].toString()
-				const bob_gain_After = (await stabilityPool.getDepositorGains(bob))[1].toString()
-				const carol_gain_After = (await stabilityPool.getDepositorGains(carol))[1].toString()
+				const alice_gain_After = (await stabilityPool.getDepositorGains(alice, validCollateral))[1].toString()
+				const bob_gain_After = (await stabilityPool.getDepositorGains(bob, validCollateral))[1].toString()
+				const carol_gain_After = (await stabilityPool.getDepositorGains(carol, validCollateral))[1].toString()
 
 				// Check compounded deposits and collateral gains for A, B and C have not changed
 				assert.equal(alice_deposit_Before, alice_deposit_After)
@@ -423,9 +432,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 2_000, bob)
 				await _openVessel(erc20, 3_000, carol)
 
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(2_000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(3_000, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(2_000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(3_000, 18), validCollateral, { from: carol })
 
 				// D opens a vessel
 				await _openVessel(erc20, 3_000, dennis)
@@ -450,7 +459,7 @@ contract("StabilityPool", async accounts => {
 				const TCR_BeforeERC20 = (await th.getTCR(contracts.core, erc20.address)).toString()
 
 				// D makes an SP deposit
-				await stabilityPool.provideToSP(dec(1000, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(1000, 18), validCollateral, { from: dennis })
 				assert.equal((await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString(), dec(1000, 18))
 
 				const activeDebt_AfterERC20 = (await activePool.getDebtTokenBalance(erc20.address)).toString()
@@ -476,8 +485,8 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 3_000, carol)
 
 				// A and B provide to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(2_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(2_000, 18), validCollateral, { from: bob })
 
 				// D opens a vessel
 				await _openVessel(erc20, 1_000, dennis)
@@ -514,7 +523,7 @@ contract("StabilityPool", async accounts => {
 				const dennis_ICR_BeforeERC20 = (await vesselManager.getCurrentICR(erc20.address, dennis, price)).toString()
 
 				// D makes an SP deposit
-				await stabilityPool.provideToSP(dec(1000, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(1000, 18), validCollateral, { from: dennis })
 				assert.equal((await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString(), dec(1000, 18))
 
 				const whale_Debt_AfterERC20 = (await vesselManager.Vessels(whale, erc20.address))[0].toString()
@@ -569,8 +578,8 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 3_000, carol)
 
 				// A, B provide to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: bob })
 
 				// Confirm Bob has an active vessel in the system
 				assert.isTrue(await sortedVessels.contains(erc20.address, bob))
@@ -598,15 +607,15 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 3_000, carol)
 
 				// A, B, C provide 100, 50, 30 to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(50, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
 				const poolBalance = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 				assert.equal(poolBalance, dec(180, 18))
 
 				// Bob attempts to provide 0
-				const txPromise_B = stabilityPool.provideToSP(0, { from: bob })
+				const txPromise_B = stabilityPool.provideToSP(0, validCollateral, { from: bob })
 				await th.assertRevert(txPromise_B)
 			})
 
@@ -617,7 +626,7 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 3_000, carol)
 
 				// A provides to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
 
 				let currentEpoch = await stabilityPool.currentEpoch()
 				let currentScale = await stabilityPool.currentScale()
@@ -626,7 +635,7 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// B provides to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: bob })
 
 				currentEpoch = await stabilityPool.currentEpoch()
 				currentScale = await stabilityPool.currentScale()
@@ -642,12 +651,12 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 3_000, carol)
 
 				// A provides to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// A withdraws
-				await stabilityPool.withdrawFromSP(dec(1_000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(1_000, 18), validCollateral, { from: alice })
 
 				// Check SP is empty
 				assert.equal(await stabilityPool.getTotalDebtTokenDeposits(), "0")
@@ -662,7 +671,7 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// B provides to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: bob })
 
 				currentEpoch = await stabilityPool.currentEpoch()
 				currentScale = await stabilityPool.currentScale()
@@ -686,8 +695,8 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// A, B provide to SP
-				await stabilityPool.provideToSP(dec(1_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(2_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(2_000, 18), validCollateral, { from: bob })
 
 				// Get GRVT balances after, and confirm they're still zero
 				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
@@ -709,14 +718,14 @@ contract("StabilityPool", async accounts => {
 
 				const initialDeposit_A = (await debtToken.balanceOf(alice)).div(toBN(2))
 				const initialDeposit_B = (await debtToken.balanceOf(bob)).div(toBN(2))
-				await stabilityPool.provideToSP(initialDeposit_A, { from: alice })
-				await stabilityPool.provideToSP(initialDeposit_B, { from: bob })
+				await stabilityPool.provideToSP(initialDeposit_A, validCollateral, { from: alice })
+				await stabilityPool.provideToSP(initialDeposit_B, validCollateral, { from: bob })
 
 				// time passes
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// C deposits. A, and B earn GRVT
-				await stabilityPool.provideToSP(dec(5, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(5, 18), validCollateral, { from: carol })
 
 				// Price drops, defaulter is liquidated, A, B and C earn collateral
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -728,8 +737,8 @@ contract("StabilityPool", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
 				// A and B fully withdraw from the pool
-				await stabilityPool.withdrawFromSP(initialDeposit_A, { from: alice })
-				await stabilityPool.withdrawFromSP(initialDeposit_B, { from: bob })
+				await stabilityPool.withdrawFromSP(initialDeposit_A, validCollateral, { from: alice })
+				await stabilityPool.withdrawFromSP(initialDeposit_B, validCollateral, { from: bob })
 
 				// Get A, B, C GRVT balances before and confirm they're non-zero
 				const A_GRVTBalance_Before = await grvtToken.balanceOf(alice)
@@ -740,8 +749,8 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// A, B provide to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(200, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(200, 18), validCollateral, { from: bob })
 
 				// Get A, B, C GRVT balances after, and confirm they have not changed
 				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
@@ -768,10 +777,10 @@ contract("StabilityPool", async accounts => {
 				const D_Balance_BeforeERC20 = await erc20.balanceOf(dennis)
 
 				// A, B, C, D provide to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(200, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(300, 18), { from: carol })
-				await stabilityPool.provideToSP(dec(400, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(200, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(300, 18), validCollateral, { from: carol })
+				await stabilityPool.provideToSP(dec(400, 18), validCollateral, { from: dennis })
 
 				const A_ETHBalance_AfterERC20 = await erc20.balanceOf(alice)
 				const B_ETHBalance_AfterERC20 = await erc20.balanceOf(bob)
@@ -798,16 +807,16 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 0, defaulter_1)
 
 				// A, B, C, D provide to SP
-				await stabilityPool.provideToSP(dec(105, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(105, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(105, 18), { from: carol })
-				await stabilityPool.provideToSP(dec(105, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(105, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(105, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(105, 18), validCollateral, { from: carol })
+				await stabilityPool.provideToSP(dec(105, 18), validCollateral, { from: dennis })
 
 				// time passes
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// B deposits. A,B,C,D earn GRVT
-				await stabilityPool.provideToSP(dec(5, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(5, 18), validCollateral, { from: bob })
 
 				// Price drops, defaulter is liquidated, A, B, C, D earn collaterals
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -819,10 +828,10 @@ contract("StabilityPool", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
 				// A B,C, D fully withdraw from the pool
-				await stabilityPool.withdrawFromSP(dec(105, 18), { from: alice })
-				await stabilityPool.withdrawFromSP(dec(105, 18), { from: bob })
-				await stabilityPool.withdrawFromSP(dec(105, 18), { from: carol })
-				await stabilityPool.withdrawFromSP(dec(105, 18), { from: dennis })
+				await stabilityPool.withdrawFromSP(dec(105, 18), validCollateral, { from: alice })
+				await stabilityPool.withdrawFromSP(dec(105, 18), validCollateral, { from: bob })
+				await stabilityPool.withdrawFromSP(dec(105, 18), validCollateral, { from: carol })
+				await stabilityPool.withdrawFromSP(dec(105, 18), validCollateral, { from: dennis })
 
 				// --- TEST ---
 
@@ -832,10 +841,10 @@ contract("StabilityPool", async accounts => {
 				const D_Balance_BeforeERC20 = await erc20.balanceOf(dennis)
 
 				// A, B, C, D provide to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(200, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(300, 18), { from: carol })
-				await stabilityPool.provideToSP(dec(400, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(200, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(300, 18), validCollateral, { from: carol })
+				await stabilityPool.provideToSP(dec(400, 18), validCollateral, { from: dennis })
 
 				const A_Balance_AfterERC20 = await erc20.balanceOf(alice)
 				const B_Balance_AfterERC20 = await erc20.balanceOf(bob)
@@ -855,9 +864,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 3_000, carol)
 
 				// A, B, C provide to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(50, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(50, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: carol })
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -866,7 +875,7 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// B tops up
-				await stabilityPool.provideToSP(dec(100, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: bob })
 
 				const G_After = await stabilityPool.epochToScaleToG(0, 0)
 
@@ -881,9 +890,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 300, carol)
 
 				// A, B, C, provide to SP
-				await stabilityPool.provideToSP(dec(10, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -893,9 +902,9 @@ contract("StabilityPool", async accounts => {
 				const C_GRVTBalance_Before = await grvtToken.balanceOf(carol)
 
 				// A, B, C top up
-				await stabilityPool.provideToSP(dec(10, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
 				// Get GRVT balance after
 				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
@@ -908,6 +917,37 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(C_GRVTBalance_After.gt(C_GRVTBalance_Before))
 			})
 
+			it("provideToSP(): passing same asset twice will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// first call won't revert as there is no initial deposit
+				await stabilityPool.provideToSP(dec(199_000, 18), [erc20.address, erc20.address], { from: whale })
+				// second call should revert
+				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), [erc20.address, erc20B.address, erc20.address], {
+					from: whale,
+				})
+				await assertRevert(txPromise, "StabilityPool__ArrayNotInAscendingOrder")
+			})
+
+			it("provideToSP(): passing asset array in non-ascending order will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// correct order
+				await stabilityPool.provideToSP(dec(199_000, 18), validCollateral, { from: whale })
+				// incorrect order - should revert
+				const validCollateralReverse = validCollateral.slice(0).reverse()
+				const txPromise = stabilityPool.provideToSP(dec(1_000, 18), validCollateralReverse, {
+					from: whale,
+				})
+				await assertRevert(txPromise, "StabilityPool__ArrayNotInAscendingOrder")
+			})
+
+			it("provideToSP(): passing wrong address to asset list has no impact", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				// first call won't revert as there is no initial deposit
+				await stabilityPool.provideToSP(dec(199_000, 18), [alice], { from: whale })
+				await stabilityPool.provideToSP(dec(1_000, 18), [alice], { from: whale })
+				await stabilityPool.withdrawFromSP(dec(1_000, 18), [alice], { from: whale })
+			})
+
 			it("provideToSP(): reverts when amount is zero", async () => {
 				await openWhaleVessel(erc20, (icr = 10))
 
@@ -917,10 +957,10 @@ contract("StabilityPool", async accounts => {
 				await debtToken.transfer(carol, dec(200, 18), { from: whale })
 				await debtToken.transfer(dennis, dec(200, 18), { from: whale })
 
-				txPromise_A = stabilityPool.provideToSP(0, { from: alice })
-				txPromise_B = stabilityPool.provideToSP(0, { from: bob })
-				txPromise_C = stabilityPool.provideToSP(0, { from: carol })
-				txPromise_D = stabilityPool.provideToSP(0, { from: dennis })
+				txPromise_A = stabilityPool.provideToSP(0, validCollateral, { from: alice })
+				txPromise_B = stabilityPool.provideToSP(0, validCollateral, { from: bob })
+				txPromise_C = stabilityPool.provideToSP(0, validCollateral, { from: carol })
+				txPromise_D = stabilityPool.provideToSP(0, validCollateral, { from: dennis })
 
 				await th.assertRevert(txPromise_A, "StabilityPool: Amount must be non-zero")
 				await th.assertRevert(txPromise_B, "StabilityPool: Amount must be non-zero")
@@ -934,7 +974,7 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 100, alice)
 				await _openVessel(erc20, 100, bob)
 
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 				const alice_initialDeposit = (await stabilityPool.deposits(alice)).toString()
 				const bob_initialDeposit = (await stabilityPool.deposits(bob)).toString()
@@ -943,32 +983,16 @@ contract("StabilityPool", async accounts => {
 				assert.equal(bob_initialDeposit, "0")
 
 				try {
-					const txBob = await stabilityPool.withdrawFromSP(dec(100, 18), { from: bob })
+					const txBob = await stabilityPool.withdrawFromSP(dec(100, 18), validCollateral, { from: bob })
 					assert.isFalse(txBob.receipt.status)
 				} catch (err) {
 					assert.include(err.message, "revert")
 				}
 			})
 
-			it("withdrawFromSP(): reverts when amount > 0 and system has an undercollateralized vessel", async () => {
-				await _openVessel(erc20, 100, alice)
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-
-				const alice_initialDeposit = (await stabilityPool.deposits(alice)).toString()
-				assert.equal(alice_initialDeposit, dec(100, 18))
-
-				// defaulter opens vessel
-				await _openVessel(erc20, 0, defaulter_1)
-
-				// price drops, defaulter is in liquidation range (but not liquidated yet)
-				await priceFeed.setPrice(erc20.address, dec(100, 18))
-
-				await th.assertRevert(stabilityPool.withdrawFromSP(dec(100, 18), { from: alice }))
-			})
-
 			it("withdrawFromSP(): partial retrieval - retrieves correct debt token amount and the entire collateral gain, and updates deposit", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
-				await stabilityPool.provideToSP(dec(185_000, 18), { from: whale })
+				await stabilityPool.provideToSP(dec(185_000, 18), [], { from: whale })
 
 				// 2 Vessels opened
 				await _openVessel(erc20, 0, defaulter_1)
@@ -976,7 +1000,7 @@ contract("StabilityPool", async accounts => {
 
 				// Alice makes deposit #1: 15_000
 				await _openVesselWithICR(erc20, 15_000, (icr = 10), alice)
-				await stabilityPool.provideToSP(dec(15_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(15_000, 18), validCollateral, { from: alice })
 
 				// price drops: defaulters' Vessels fall below MCR, alice and whale Vessel remain active
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1004,7 +1028,7 @@ contract("StabilityPool", async accounts => {
 				assert.isAtMost(th.getDifference(expectedCompoundedDeposit_A, compoundedDeposit_A), 100_000)
 
 				// Alice retrieves part of her entitled gains: 9_000 debt tokens
-				await stabilityPool.withdrawFromSP(dec(9_000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(9_000, 18), [erc20.address], { from: alice })
 
 				const expectedNewDeposit_A = compoundedDeposit_A.sub(toBN(dec(9_000, 18)))
 
@@ -1013,13 +1037,13 @@ contract("StabilityPool", async accounts => {
 				assert.isAtMost(th.getDifference(newDeposit, expectedNewDeposit_A), 100_000)
 
 				// Expect Alice has withdrawn all gains
-				const alice_pendingAssetGain = (await stabilityPool.getDepositorGains(alice))[1][1]
+				const alice_pendingAssetGain = (await stabilityPool.getDepositorGains(alice, [erc20.address]))[1][0]
 				assert.equal(alice_pendingAssetGain, 0)
 			})
 
 			it("withdrawFromSP(): partial retrieval - leaves the correct amount of debt tokens in the Stability Pool", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
-				await stabilityPool.provideToSP(dec(185_000, 18), { from: whale })
+				await stabilityPool.provideToSP(dec(185_000, 18), validCollateral, { from: whale })
 
 				// 2 Vessels opened
 				await _openVessel(erc20, 0, defaulter_1)
@@ -1027,7 +1051,7 @@ contract("StabilityPool", async accounts => {
 
 				// Alice makes deposit #1: 15_000
 				await _openVesselWithICR(erc20, 15_000, (icr = 10), alice)
-				await stabilityPool.provideToSP(dec(15_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(15_000, 18), validCollateral, { from: alice })
 
 				const poolDepositsBefore = await stabilityPool.getTotalDebtTokenDeposits()
 				assert.equal(poolDepositsBefore, dec(200_000, 18))
@@ -1043,7 +1067,7 @@ contract("StabilityPool", async accounts => {
 				const [liquidatedDebt2] = th.getEmittedLiquidationValues(liquidationTx2)
 
 				// Alice retrieves part of her entitled debt tokens: 9_000
-				await stabilityPool.withdrawFromSP(dec(9_000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(9_000, 18), validCollateral, { from: alice })
 
 				// Check SP has reduced from 2 liquidations and Alice's withdrawal
 				// Expected tokens in SP = (200_000 - liquidatedDebt1 - liquidatedDebt2 - 9_000)
@@ -1058,7 +1082,7 @@ contract("StabilityPool", async accounts => {
 
 			it("withdrawFromSP(): full retrieval - leaves the correct amount of debt tokens in the Stability Pool", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
-				await stabilityPool.provideToSP(dec(185_000, 18), { from: whale })
+				await stabilityPool.provideToSP(dec(185_000, 18), validCollateral, { from: whale })
 
 				await _openVessel(erc20, 0, defaulter_1)
 				await _openVessel(erc20, 0, defaulter_2)
@@ -1067,7 +1091,7 @@ contract("StabilityPool", async accounts => {
 
 				// Alice makes deposit #1
 				await _openVesselWithICR(erc20, 15_000, (icr = 10), alice)
-				await stabilityPool.provideToSP(dec(15_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(15_000, 18), validCollateral, { from: alice })
 
 				const poolDepositsBefore = await stabilityPool.getTotalDebtTokenDeposits()
 				assert.equal(poolDepositsBefore, dec(200_000, 18))
@@ -1096,7 +1120,7 @@ contract("StabilityPool", async accounts => {
 				const poolDeposits = await stabilityPool.getTotalDebtTokenDeposits()
 
 				// Alice retrieves all of her entitled tokens
-				await stabilityPool.withdrawFromSP(dec(15_000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(15_000, 18), validCollateral, { from: alice })
 
 				const expectedPoolDeposits = poolDeposits.sub(compoundedDeposit)
 				const poolDepositsAfter = await stabilityPool.getTotalDebtTokenDeposits()
@@ -1106,7 +1130,7 @@ contract("StabilityPool", async accounts => {
 			it("withdrawFromSP(): Subsequent deposit and withdrawal attempt from same account, with no intermediate liquidations, withdraws zero collateral", async () => {
 				// --- SETUP ---
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
-				await stabilityPool.provideToSP(dec(18_500, 18), { from: whale })
+				await stabilityPool.provideToSP(dec(18_500, 18), validCollateral, { from: whale })
 
 				// 2 defaulters open
 				await openVessel({
@@ -1121,14 +1145,14 @@ contract("StabilityPool", async accounts => {
 				})
 				// --- TEST ---
 
-				// Alice makes deposit #1: 15000 VUSD
+				// Alice makes deposit #1: 15000 GRAI
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(15000, 18)),
+					extraGRAIAmount: toBN(dec(15000, 18)),
 					ICR: toBN(dec(10, 18)),
 					extraParams: { from: alice },
 				})
-				await stabilityPool.provideToSP(dec(15000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(15000, 18), validCollateral, { from: alice })
 
 				// price drops: defaulters' Vessels fall below MCR, alice and whale Vessel remain active
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1137,30 +1161,31 @@ contract("StabilityPool", async accounts => {
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1, { from: owner })
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_2, { from: owner })
 
-				// Alice retrieves all of her entitled VUSD:
-				await stabilityPool.withdrawFromSP(dec(15000, 18), { from: alice })
-				assert.equal((await stabilityPool.getDepositorGains(alice))[1].length, 0)
+				// Alice retrieves all of her entitled GRAI:
+				await stabilityPool.withdrawFromSP(dec(15000, 18), validCollateral, { from: alice })
+				assert.equal((await stabilityPool.getDepositorGains(alice, validCollateral))[1].length, 0)
 
 				// Alice makes second deposit
-				await stabilityPool.provideToSP(dec(10000, 18), { from: alice })
-				assert.equal((await stabilityPool.getDepositorGains(alice))[1][1], "0")
+				await stabilityPool.provideToSP(dec(10000, 18), validCollateral, { from: alice })
+				const idx = validCollateral.indexOf(erc20.address)
+				assert.equal((await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx], "0")
 
 				const ERC20inSP_Before = (await stabilityPool.getCollateral(erc20.address)).toString()
 
 				// Alice attempts second withdrawal
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: alice })
-				assert.equal((await stabilityPool.getDepositorGains(alice))[1].length, 0)
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: alice })
+				assert.equal((await stabilityPool.getDepositorGains(alice, validCollateral))[1].length, 0)
 
 				// Check collateral in pool does not change
 				const ERC20inSP_1 = (await stabilityPool.getCollateral(erc20.address)).toString()
 				assert.equal(ERC20inSP_Before, ERC20inSP_1)
 			})
 
-			it("withdrawFromSP(): it correctly updates the user's VUSD and collateral snapshots of entitled reward per unit staked", async () => {
+			it("withdrawFromSP(): it correctly updates the user's GRAI and collateral snapshots of entitled reward per unit staked", async () => {
 				// --- SETUP ---
-				// Whale deposits 185000 VUSD in StabilityPool
+				// Whale deposits 185000 GRAI in StabilityPool
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
-				await stabilityPool.provideToSP(dec(185_000, 18), { from: whale })
+				await stabilityPool.provideToSP(dec(185_000, 18), validCollateral, { from: whale })
 
 				// 2 defaulters open
 				await openVessel({
@@ -1176,14 +1201,14 @@ contract("StabilityPool", async accounts => {
 
 				// --- TEST ---
 
-				// Alice makes deposit #1: 15000 VUSD
+				// Alice makes deposit #1: 15000 GRAI
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(15000, 18)),
+					extraGRAIAmount: toBN(dec(15000, 18)),
 					ICR: toBN(dec(10, 18)),
 					extraParams: { from: alice },
 				})
-				await stabilityPool.provideToSP(dec(15000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(15000, 18), validCollateral, { from: alice })
 
 				// check 'Before' snapshots
 				const alice_snapshot_Before = await stabilityPool.depositSnapshots(alice)
@@ -1199,8 +1224,8 @@ contract("StabilityPool", async accounts => {
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1, { from: owner })
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_2, { from: owner })
 
-				// Alice retrieves part of her entitled VUSD: 9000 VUSD
-				await stabilityPool.withdrawFromSP(dec(9000, 18), { from: alice })
+				// Alice retrieves part of her entitled GRAI: 9000 GRAI
+				await stabilityPool.withdrawFromSP(dec(9000, 18), validCollateral, { from: alice })
 
 				const P = (await stabilityPool.P()).toString()
 				const S = (await stabilityPool.epochToScaleToSum(erc20.address, 0, 0)).toString()
@@ -1214,7 +1239,7 @@ contract("StabilityPool", async accounts => {
 
 			it("withdrawFromSP(): decreases StabilityPool ERC20", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
-				await stabilityPool.provideToSP(dec(185_000, 18), { from: whale })
+				await stabilityPool.provideToSP(dec(185_000, 18), validCollateral, { from: whale })
 
 				// 1 defaulter opens
 				await openVessel({
@@ -1225,14 +1250,14 @@ contract("StabilityPool", async accounts => {
 
 				// --- TEST ---
 
-				// Alice makes deposit #1: 15,000 VUSD
+				// Alice makes deposit #1: 15,000 GRAI
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(15_000, 18)),
+					extraGRAIAmount: toBN(dec(15_000, 18)),
 					ICR: toBN(dec(10, 18)),
 					extraParams: { from: alice },
 				})
-				await stabilityPool.provideToSP(dec(15_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(15_000, 18), validCollateral, { from: alice })
 
 				// price drops: defaulter's Vessel falls below MCR, alice and whale Vessel remain active
 				await priceFeed.setPrice(erc20.address, dec("100", 18))
@@ -1240,7 +1265,7 @@ contract("StabilityPool", async accounts => {
 				// defaulter's Vessel is closed.
 				const liquidationTx_1ERC20 = await vesselManagerOperations.liquidate(erc20.address, defaulter_1, {
 					from: owner,
-				}) // 180 VUSD closed
+				}) // 180 GRAI closed
 				const [, liquidatedCollERC20] = th.getEmittedLiquidationValues(liquidationTx_1ERC20)
 
 				// Get ActivePool and StabilityPool collateral before retrieval:
@@ -1250,11 +1275,12 @@ contract("StabilityPool", async accounts => {
 				// Expect alice to be entitled to 15000/200000 of the liquidated coll
 
 				const aliceExpectedGainERC20 = liquidatedCollERC20.mul(toBN(dec(15_000, 18))).div(toBN(dec(200_000, 18)))
-				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx]
 				assert.isTrue(aliceExpectedGainERC20.eq(aliceGainERC20))
 
 				// Alice retrieves all of her deposit
-				await stabilityPool.withdrawFromSP(dec(15000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(15000, 18), validCollateral, { from: alice })
 
 				const active_col_AfterERC20 = await activePool.getAssetBalance(erc20.address)
 				const stability_col_AfterERC20 = await stabilityPool.getCollateral(erc20.address)
@@ -1266,6 +1292,75 @@ contract("StabilityPool", async accounts => {
 
 				// Expect StabilityPool to have decreased by Alice's AssetGain
 				assert.isAtMost(th.getDifference(stability_col_DifferenceERC20, aliceGainERC20), 10000)
+			})
+
+			it("withdrawFromSP(): withdraw from SP forfeiting gains", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				await stabilityPool.provideToSP(dec(199_000, 18), validCollateral, { from: whale })
+
+				// 2 defaulter opens
+				await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(2, 18)),
+					extraParams: { from: defaulter_1 },
+				})
+				await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(2, 18)),
+					extraParams: { from: defaulter_2 },
+				})
+				// --- TEST ---
+
+				// Alice makes deposit #1: 1,000 GRAI
+				await openVessel({
+					asset: erc20.address,
+					extraGRAIAmount: toBN(dec(1000, 18)),
+					ICR: toBN(dec(10, 18)),
+					extraParams: { from: alice },
+				})
+				await stabilityPool.provideToSP(dec(1000, 18), validCollateral, { from: alice })
+
+				// price drops: defaulter's Vessel falls below MCR, alice and whale Vessel remain active
+				await priceFeed.setPrice(erc20.address, dec("100", 18))
+
+				// defaulter's Vessel is closed.
+				const liquidationTx_1ERC20 = await vesselManagerOperations.liquidate(erc20.address, defaulter_1, {
+					from: owner,
+				}) // 180 GRAI closed
+				const [, liquidatedCollERC20] = th.getEmittedLiquidationValues(liquidationTx_1ERC20)
+
+				// Get ActivePool and StabilityPool collateral before retrieval:
+				const active_col_BeforeERC20 = await activePool.getAssetBalance(erc20.address)
+				const stability_col_BeforeERC20 = await stabilityPool.getCollateral(erc20.address)
+
+				// Expect alice to be entitled to 1000/200000 of the liquidated coll
+
+				const aliceExpectedGainERC20 = liquidatedCollERC20.mul(toBN(dec(1000, 18))).div(toBN(dec(200_000, 18)))
+				const idx = validCollateral.indexOf(erc20.address)
+				const aliceGainERC20 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx]
+				assert.isTrue(aliceExpectedGainERC20.eq(aliceGainERC20))
+
+				// Alice withdraws from SP, chooses not to receive gains to avoid transfer/swap costs
+				await stabilityPool.withdrawFromSP(dec(1000, 18), [], { from: alice })
+
+				const active_col_AfterERC20 = await activePool.getAssetBalance(erc20.address)
+				const stability_col_AfterERC20 = await stabilityPool.getCollateral(erc20.address)
+
+				assert.isTrue(active_col_AfterERC20.eq(active_col_BeforeERC20))
+				assert.isTrue(stability_col_AfterERC20.eq(stability_col_BeforeERC20))
+				const liquidationTx_2ERC20 = await vesselManagerOperations.liquidate(erc20.address, defaulter_2, {
+					from: owner,
+				}) // 180 GRAI closed
+				await stabilityPool.withdrawFromSP(dec(199_000, 18), validCollateral, { from: whale })
+				const stability_col_AfterWhaleERC20 = await stabilityPool.getCollateral(erc20.address)
+				assert.isAtMost(stability_col_AfterWhaleERC20.sub(aliceExpectedGainERC20), 10000)
+			})
+
+			it("withdrawFromSP(): withdraw from SP, passing same asset twice will revert", async () => {
+				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
+				await stabilityPool.provideToSP(dec(199_000, 18), validCollateral, { from: whale })
+				const txPromise = stabilityPool.withdrawFromSP(dec(1000, 18), [erc20.address, erc20.address], { from: whale })
+				await assertRevert(txPromise, "StabilityPool__DuplicateElementOnArray")
 			})
 
 			it("withdrawFromSP(): All depositors are able to withdraw from the SP to their account", async () => {
@@ -1283,11 +1378,11 @@ contract("StabilityPool", async accounts => {
 				for (account of depositors) {
 					await openVessel({
 						asset: erc20.address,
-						extraVUSDAmount: toBN(dec(10000, 18)),
+						extraGRAIAmount: toBN(dec(10000, 18)),
 						ICR: toBN(dec(2, 18)),
 						extraParams: { from: account },
 					})
-					await stabilityPool.provideToSP(dec(10000, 18), { from: account })
+					await stabilityPool.provideToSP(dec(10000, 18), validCollateral, { from: account })
 				}
 
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1295,31 +1390,31 @@ contract("StabilityPool", async accounts => {
 
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 				// All depositors attempt to withdraw
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: alice })
 				assert.equal((await stabilityPool.deposits(alice)).toString(), "0")
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: bob })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: bob })
 				assert.equal((await stabilityPool.deposits(alice)).toString(), "0")
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: carol })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: carol })
 				assert.equal((await stabilityPool.deposits(alice)).toString(), "0")
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: dennis })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: dennis })
 				assert.equal((await stabilityPool.deposits(alice)).toString(), "0")
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: erin })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: erin })
 				assert.equal((await stabilityPool.deposits(alice)).toString(), "0")
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: flyn })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: flyn })
 				assert.equal((await stabilityPool.deposits(alice)).toString(), "0")
 
 				const totalDeposits = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 				assert.isAtMost(th.getDifference(totalDeposits, "0"), 100000)
 			})
 
-			it("withdrawFromSP(): increases depositor's VUSD token balance by the expected amount", async () => {
+			it("withdrawFromSP(): increases depositor's GRAI token balance by the expected amount", async () => {
 				await openWhaleVessel(erc20, (icr = 10))
 
 				// 1 defaulter opens vessel
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(100, "ether"),
-					await getOpenVesselVUSDAmount(dec(10000, 18), erc20.address),
+					await getOpenVesselGRAIAmount(dec(10000, 18), erc20.address),
 					defaulter_1,
 					defaulter_1,
 					{ from: defaulter_1 }
@@ -1333,11 +1428,11 @@ contract("StabilityPool", async accounts => {
 				for (account of depositors) {
 					await openVessel({
 						asset: erc20.address,
-						extraVUSDAmount: toBN(dec(10000, 18)),
+						extraGRAIAmount: toBN(dec(10000, 18)),
 						ICR: toBN(dec(2, 18)),
 						extraParams: { from: account },
 					})
-					await stabilityPool.provideToSP(dec(10000, 18), { from: account })
+					await stabilityPool.provideToSP(dec(10000, 18), validCollateral, { from: account })
 				}
 
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1346,10 +1441,10 @@ contract("StabilityPool", async accounts => {
 				const aliceBalBefore = await debtToken.balanceOf(alice)
 				const bobBalBefore = await debtToken.balanceOf(bob)
 
-				/* From an offset of 10000 VUSD, each depositor receives
-	  VUSDLoss = 1666.6666666666666666 VUSD
+				/* From an offset of 10000 GRAI, each depositor receives
+	  GRAILoss = 1666.6666666666666666 GRAI
 
-	  and thus with a deposit of 10000 VUSD, each should withdraw 8333.3333333333333333 VUSD (in practice, slightly less due to rounding error)
+	  and thus with a deposit of 10000 GRAI, each should withdraw 8333.3333333333333333 GRAI (in practice, slightly less due to rounding error)
 	  */
 
 				// Price bounces back to $200 per ETH
@@ -1358,13 +1453,13 @@ contract("StabilityPool", async accounts => {
 				// Bob issues a further $5000 debt from his vessel
 				await borrowerOperations.withdrawDebtTokens(erc20.address, dec(5000, 18), bob, bob, { from: bob })
 
-				// Expect Alice's debt token balance increase be very close to 8333.3333333333333333 VUSD
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: alice })
+				// Expect Alice's debt token balance increase be very close to 8333.3333333333333333 GRAI
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: alice })
 				const aliceBalance = await debtToken.balanceOf(alice)
 				assert.isAtMost(th.getDifference(aliceBalance.sub(aliceBalBefore), toBN("8333333333333333333333")), 100000)
 
-				// expect Bob's debt token balance increase to be very close to  13333.33333333333333333 VUSD
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: bob })
+				// expect Bob's debt token balance increase to be very close to  13333.33333333333333333 GRAI
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: bob })
 				const bobBalance = await debtToken.balanceOf(bob)
 				assert.isAtMost(th.getDifference(bobBalance.sub(bobBalBefore), toBN("13333333333333333333333")), 100000)
 			})
@@ -1377,9 +1472,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 20_000, bob)
 				await _openVessel(erc20, 30_000, carol)
 
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20_000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30_000, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20_000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30_000, 18), validCollateral, { from: carol })
 
 				// Would-be defaulters open vessels
 				await _openVessel(erc20, 0, defaulter_1)
@@ -1397,8 +1492,9 @@ contract("StabilityPool", async accounts => {
 				const alice_Deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const bob_Deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 
-				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx].toString()
+				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
 
 				// Check non-zero balance and AssetGain in the Stability Pool
 				const debtInPool = await stabilityPool.getTotalDebtTokenDeposits()
@@ -1411,13 +1507,13 @@ contract("StabilityPool", async accounts => {
 
 				// Carol withdraws her Stability deposit
 				assert.equal((await stabilityPool.deposits(carol)).toString(), dec(30_000, 18))
-				await stabilityPool.withdrawFromSP(dec(30_000, 18), { from: carol })
+				await stabilityPool.withdrawFromSP(dec(30_000, 18), validCollateral, { from: carol })
 				assert.equal((await stabilityPool.deposits(carol)).toString(), "0")
 
 				const alice_Deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const bob_Deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
-				const alice_Gain_After = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-				const bob_Gain_After = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+				const alice_Gain_After = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx].toString()
+				const bob_Gain_After = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
 
 				// Check compounded deposits and Collateral gains for A and B have not changed
 				assert.equal(alice_Deposit_Before, alice_Deposit_After)
@@ -1434,9 +1530,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 20_000, bob)
 				await _openVessel(erc20, 30_000, carol)
 
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20_000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30_000, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20_000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30_000, 18), validCollateral, { from: carol })
 
 				// Would-be defaulters open vessels
 				await _openVessel(erc20, 0, defaulter_1)
@@ -1462,7 +1558,7 @@ contract("StabilityPool", async accounts => {
 
 				// Carol withdraws her Stability deposit
 				assert.equal((await stabilityPool.deposits(carol)).toString(), dec(30000, 18))
-				await stabilityPool.withdrawFromSP(dec(30000, 18), { from: carol })
+				await stabilityPool.withdrawFromSP(dec(30000, 18), validCollateral, { from: carol })
 				assert.equal((await stabilityPool.deposits(carol)).toString(), "0")
 
 				const activeDebt_AfterERC20 = (await activePool.getDebtTokenBalance(erc20.address)).toString()
@@ -1488,9 +1584,9 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 30_000, carol)
 
 				// A, B and C provide to SP
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20_000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30_000, 18), { from: carol })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20_000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30_000, 18), validCollateral, { from: carol })
 
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1523,7 +1619,7 @@ contract("StabilityPool", async accounts => {
 
 				// Carol withdraws her Stability deposit
 				assert.equal((await stabilityPool.deposits(carol)).toString(), dec(30000, 18))
-				await stabilityPool.withdrawFromSP(dec(30000, 18), { from: carol })
+				await stabilityPool.withdrawFromSP(dec(30000, 18), validCollateral, { from: carol })
 				assert.equal((await stabilityPool.deposits(carol)).toString(), "0")
 
 				const whale_Debt_AfterERC20 = (await vesselManager.Vessels(whale, erc20.address))[0].toString()
@@ -1566,7 +1662,7 @@ contract("StabilityPool", async accounts => {
 
 			it("withdrawFromSP(): succeeds when amount is 0 and system has an undercollateralized vessel", async () => {
 				await _openVessel(erc20, 100, alice)
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 				const A_initialDeposit = (await stabilityPool.deposits(alice)).toString()
 				assert.equal(A_initialDeposit, dec(100, 18))
@@ -1594,13 +1690,14 @@ contract("StabilityPool", async accounts => {
 				const A_GRVTBalBefore = await grvtToken.balanceOf(alice)
 
 				// Check Alice has gains to withdraw
-				const A_pendingColGain = (await stabilityPool.getDepositorGains(alice))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const A_pendingColGain = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx]
 				const A_pendingGRVTGain = await stabilityPool.getDepositorGRVTGain(alice)
 				assert.isTrue(A_pendingColGain.gt(toBN("0")))
 				assert.isTrue(A_pendingGRVTGain.gt(toBN("0")))
 
 				// Check withdrawal of 0 succeeds
-				const tx = await stabilityPool.withdrawFromSP(0, { from: alice })
+				const tx = await stabilityPool.withdrawFromSP(0, validCollateral, { from: alice })
 				assert.isTrue(tx.receipt.status)
 
 				const A_BalAfterERC20 = toBN(await erc20.balanceOf(alice))
@@ -1613,49 +1710,49 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(A_GRVTBalDiff.sub(A_pendingGRVTGain).eq(toBN("0")))
 			})
 
-			it("withdrawFromSP(): withdrawing 0 VUSD doesn't alter the caller's deposit or the total VUSD in the Stability Pool", async () => {
+			it("withdrawFromSP(): withdrawing 0 GRAI doesn't alter the caller's deposit or the total GRAI in the Stability Pool", async () => {
 				// --- SETUP ---
 				await openWhaleVessel(erc20, (icr = 10))
 
 				// A, B, C open vessels and make Stability Pool deposits
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: alice },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(20000, 18)),
+					extraGRAIAmount: toBN(dec(20000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(30000, 18)),
+					extraGRAIAmount: toBN(dec(30000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: carol },
 				})
 
-				// A, B, C provides 100, 50, 30 VUSD to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(50, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
+				// A, B, C provides 100, 50, 30 GRAI to SP
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
 				const bob_Deposit_Before = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
-				const VUSDinSP_Before = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+				const GRAIinSP_Before = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 
-				assert.equal(VUSDinSP_Before, dec(180, 18))
+				assert.equal(GRAIinSP_Before, dec(180, 18))
 
-				// Bob withdraws 0 VUSD from the Stability Pool
-				await stabilityPool.withdrawFromSP(0, { from: bob })
+				// Bob withdraws 0 GRAI from the Stability Pool
+				await stabilityPool.withdrawFromSP(0, validCollateral, { from: bob })
 
-				// check Bob's deposit and total VUSD in Stability Pool has not changed
+				// check Bob's deposit and total GRAI in Stability Pool has not changed
 				const bob_Deposit_After = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
-				const VUSDinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+				const GRAIinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 
 				assert.equal(bob_Deposit_Before, bob_Deposit_After)
-				assert.equal(VUSDinSP_Before, VUSDinSP_After)
+				assert.equal(GRAIinSP_Before, GRAIinSP_After)
 			})
 
 			it("withdrawFromSP(): withdrawing 0 Collateral Gain does not alter the caller's Collateral balance, their vessel collateral, or the collateral in the Stability Pool", async () => {
@@ -1664,19 +1761,19 @@ contract("StabilityPool", async accounts => {
 				// A, B, C open vessels and make Stability Pool deposits
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: alice },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(20000, 18)),
+					extraGRAIAmount: toBN(dec(20000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(30000, 18)),
+					extraGRAIAmount: toBN(dec(30000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: carol },
 				})
@@ -1684,7 +1781,7 @@ contract("StabilityPool", async accounts => {
 				// Would-be defaulter open vessel
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: defaulter_1 },
 				})
@@ -1700,14 +1797,15 @@ contract("StabilityPool", async accounts => {
 				// Dennis opens vessel and deposits to Stability Pool
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: dennis },
 				})
-				await stabilityPool.provideToSP(dec(100, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: dennis })
 
 				// Check Dennis has 0 collateral gains
-				const dennis_ETHGain = (await stabilityPool.getDepositorGains(dennis))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const dennis_ETHGain = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][idx].toString()
 				assert.equal(dennis_ETHGain, "0")
 
 				const dennis_Balance_BeforeERC20 = (await erc20.balanceOf(dennis)).toString()
@@ -1719,7 +1817,7 @@ contract("StabilityPool", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
 				// Dennis withdraws his full deposit and collateral gains to his account
-				await stabilityPool.withdrawFromSP(dec(100, 18), { from: dennis })
+				await stabilityPool.withdrawFromSP(dec(100, 18), validCollateral, { from: dennis })
 
 				// Check withdrawal does not alter Dennis' collateral balance or his vessel's collateral
 				const dennis_Balance_AfterERC20 = (await erc20.balanceOf(dennis)).toString()
@@ -1742,34 +1840,34 @@ contract("StabilityPool", async accounts => {
 				// A, B, C open vessels and make Stability Pool deposits
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: alice },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(20000, 18)),
+					extraGRAIAmount: toBN(dec(20000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(30000, 18)),
+					extraGRAIAmount: toBN(dec(30000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: carol },
 				})
 
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: defaulter_1 },
 				})
 
-				// A, B, C provide VUSD to SP
-				await stabilityPool.provideToSP(dec(10000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30000, 18), { from: carol })
+				// A, B, C provide GRAI to SP
+				await stabilityPool.provideToSP(dec(10000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30000, 18), validCollateral, { from: carol })
 
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1777,57 +1875,57 @@ contract("StabilityPool", async accounts => {
 				// Liquidate defaulter 1
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
-				const alice_VUSD_Balance_Before = await debtToken.balanceOf(alice)
-				const bob_VUSD_Balance_Before = await debtToken.balanceOf(bob)
+				const alice_GRAI_Balance_Before = await debtToken.balanceOf(alice)
+				const bob_GRAI_Balance_Before = await debtToken.balanceOf(bob)
 
 				const alice_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
 				const bob_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
 
-				const VUSDinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
+				const GRAIinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
 
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
 				// Bob attempts to withdraws 1 wei more than his compounded deposit from the Stability Pool
-				await stabilityPool.withdrawFromSP(bob_Deposit_Before.add(toBN(1)), { from: bob })
+				await stabilityPool.withdrawFromSP(bob_Deposit_Before.add(toBN(1)), validCollateral, { from: bob })
 
-				// Check Bob's VUSD balance has risen by only the value of his compounded deposit
-				const bob_expectedVUSDBalance = bob_VUSD_Balance_Before.add(bob_Deposit_Before).toString()
-				const bob_VUSD_Balance_After = (await debtToken.balanceOf(bob)).toString()
-				assert.equal(bob_VUSD_Balance_After, bob_expectedVUSDBalance)
+				// Check Bob's GRAI balance has risen by only the value of his compounded deposit
+				const bob_expectedGRAIBalance = bob_GRAI_Balance_Before.add(bob_Deposit_Before).toString()
+				const bob_GRAI_Balance_After = (await debtToken.balanceOf(bob)).toString()
+				assert.equal(bob_GRAI_Balance_After, bob_expectedGRAIBalance)
 
-				// Alice attempts to withdraws 2309842309.000000000000000000 VUSD from the Stability Pool
-				await stabilityPool.withdrawFromSP("2309842309000000000000000000", { from: alice })
+				// Alice attempts to withdraws 2309842309.000000000000000000 GRAI from the Stability Pool
+				await stabilityPool.withdrawFromSP("2309842309000000000000000000", validCollateral, { from: alice })
 
-				// Check Alice's VUSD balance has risen by only the value of her compounded deposit
-				const alice_expectedVUSDBalance = alice_VUSD_Balance_Before.add(alice_Deposit_Before).toString()
-				const alice_VUSD_Balance_After = (await debtToken.balanceOf(alice)).toString()
-				assert.equal(alice_VUSD_Balance_After, alice_expectedVUSDBalance)
+				// Check Alice's GRAI balance has risen by only the value of her compounded deposit
+				const alice_expectedGRAIBalance = alice_GRAI_Balance_Before.add(alice_Deposit_Before).toString()
+				const alice_GRAI_Balance_After = (await debtToken.balanceOf(alice)).toString()
+				assert.equal(alice_GRAI_Balance_After, alice_expectedGRAIBalance)
 
-				// Check VUSD in Stability Pool has been reduced by only Alice's compounded deposit and Bob's compounded deposit
-				const expectedVUSDinSP = VUSDinSP_Before.sub(alice_Deposit_Before).sub(bob_Deposit_Before).toString()
-				const VUSDinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
-				assert.equal(VUSDinSP_After, expectedVUSDinSP)
+				// Check GRAI in Stability Pool has been reduced by only Alice's compounded deposit and Bob's compounded deposit
+				const expectedGRAIinSP = GRAIinSP_Before.sub(alice_Deposit_Before).sub(bob_Deposit_Before).toString()
+				const GRAIinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+				assert.equal(GRAIinSP_After, expectedGRAIinSP)
 			})
 
-			it("withdrawFromSP(): Request to withdraw 2^256-1 VUSD only withdraws the caller's compounded deposit", async () => {
+			it("withdrawFromSP(): Request to withdraw 2^256-1 GRAI only withdraws the caller's compounded deposit", async () => {
 				// --- SETUP ---
 				await openWhaleVessel(erc20, (icr = 10))
 
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: alice },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(20000, 18)),
+					extraGRAIAmount: toBN(dec(20000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(30000, 18)),
+					extraGRAIAmount: toBN(dec(30000, 18)),
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: carol },
 				})
@@ -1838,10 +1936,10 @@ contract("StabilityPool", async accounts => {
 					extraParams: { from: defaulter_1 },
 				})
 
-				// A, B, C provides 100, 50, 30 VUSD to SP
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(50, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
+				// A, B, C provides 100, 50, 30 GRAI to SP
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(50, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
@@ -1849,29 +1947,29 @@ contract("StabilityPool", async accounts => {
 				// Liquidate defaulter 1
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
-				const bob_VUSD_Balance_Before = await debtToken.balanceOf(bob)
+				const bob_GRAI_Balance_Before = await debtToken.balanceOf(bob)
 
 				const bob_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
 
-				const VUSDinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
+				const GRAIinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
 
 				const maxBytes32 = web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
-				// Bob attempts to withdraws maxBytes32 VUSD from the Stability Pool
-				await stabilityPool.withdrawFromSP(maxBytes32, { from: bob })
+				// Bob attempts to withdraws maxBytes32 GRAI from the Stability Pool
+				await stabilityPool.withdrawFromSP(maxBytes32, validCollateral, { from: bob })
 
-				// Check Bob's VUSD balance has risen by only the value of his compounded deposit
-				const bob_expectedVUSDBalance = bob_VUSD_Balance_Before.add(bob_Deposit_Before).toString()
-				const bob_VUSD_Balance_After = (await debtToken.balanceOf(bob)).toString()
-				assert.equal(bob_VUSD_Balance_After, bob_expectedVUSDBalance)
+				// Check Bob's GRAI balance has risen by only the value of his compounded deposit
+				const bob_expectedGRAIBalance = bob_GRAI_Balance_Before.add(bob_Deposit_Before).toString()
+				const bob_GRAI_Balance_After = (await debtToken.balanceOf(bob)).toString()
+				assert.equal(bob_GRAI_Balance_After, bob_expectedGRAIBalance)
 
-				// Check VUSD in Stability Pool has been reduced by only  Bob's compounded deposit
-				const expectedVUSDinSP = VUSDinSP_Before.sub(bob_Deposit_Before).toString()
-				const VUSDinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
-				assert.equal(VUSDinSP_After, expectedVUSDinSP)
+				// Check GRAI in Stability Pool has been reduced by only  Bob's compounded deposit
+				const expectedGRAIinSP = GRAIinSP_Before.sub(bob_Deposit_Before).toString()
+				const GRAIinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+				assert.equal(GRAIinSP_After, expectedGRAIinSP)
 			})
 
 			it("withdrawFromSP(): caller can withdraw full deposit and collateral gain during Recovery Mode", async () => {
@@ -1885,19 +1983,19 @@ contract("StabilityPool", async accounts => {
 				// A, B, C open vessels and make Stability Pool deposits
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(10000, 18)),
+					extraGRAIAmount: toBN(dec(10000, 18)),
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: alice },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(20000, 18)),
+					extraGRAIAmount: toBN(dec(20000, 18)),
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
-					extraVUSDAmount: toBN(dec(30000, 18)),
+					extraGRAIAmount: toBN(dec(30000, 18)),
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: carol },
 				})
@@ -1905,16 +2003,16 @@ contract("StabilityPool", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(100, "ether"),
-					await getOpenVesselVUSDAmount(dec(10000, 18), erc20.address),
+					await getOpenVesselGRAIAmount(dec(10000, 18), erc20.address),
 					defaulter_1,
 					defaulter_1,
 					{ from: defaulter_1 }
 				)
 
-				// A, B, C provides 10000, 5000, 3000 VUSD to SP
-				await stabilityPool.provideToSP(dec(10000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(5000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(3000, 18), { from: carol })
+				// A, B, C provides 10000, 5000, 3000 GRAI to SP
+				await stabilityPool.provideToSP(dec(10000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(5000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(3000, 18), validCollateral, { from: carol })
 
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -1926,9 +2024,9 @@ contract("StabilityPool", async accounts => {
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_1))
 
-				const alice_VUSD_Balance_Before = await debtToken.balanceOf(alice)
-				const bob_VUSD_Balance_Before = await debtToken.balanceOf(bob)
-				const carol_VUSD_Balance_Before = await debtToken.balanceOf(carol)
+				const alice_GRAI_Balance_Before = await debtToken.balanceOf(alice)
+				const bob_GRAI_Balance_Before = await debtToken.balanceOf(bob)
+				const carol_GRAI_Balance_Before = await debtToken.balanceOf(carol)
 
 				const alice_Balance_BeforeERC20 = web3.utils.toBN(await erc20.balanceOf(alice))
 				const bob_Balance_BeforeERC20 = web3.utils.toBN(await erc20.balanceOf(bob))
@@ -1938,12 +2036,13 @@ contract("StabilityPool", async accounts => {
 				const bob_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(bob)
 				const carol_Deposit_Before = await stabilityPool.getCompoundedDebtTokenDeposits(carol)
 
-				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice))[1][1]
-				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob))[1][1]
-				const carol_Gain_Before = (await stabilityPool.getDepositorGains(carol))[1][1]
+				const idx = validCollateral.indexOf(erc20.address)
+				const alice_Gain_Before = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx]
+				const bob_Gain_Before = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx]
+				const carol_Gain_Before = (await stabilityPool.getDepositorGains(carol, validCollateral))[1][idx]
 
-				const VUSDinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
-				const VUSDinSP_BeforeERC20 = await stabilityPool.getTotalDebtTokenDeposits()
+				const GRAIinSP_Before = await stabilityPool.getTotalDebtTokenDeposits()
+				const GRAIinSP_BeforeERC20 = await stabilityPool.getTotalDebtTokenDeposits()
 
 				// Price rises
 				await priceFeed.setPrice(erc20.address, dec(220, 18))
@@ -1951,22 +2050,22 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 				// A, B, C withdraw their full deposits from the Stability Pool
-				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: alice })
-				await stabilityPool.withdrawFromSP(dec(5000, 18), { from: bob })
-				await stabilityPool.withdrawFromSP(dec(3000, 18), { from: carol })
+				await stabilityPool.withdrawFromSP(dec(10000, 18), validCollateral, { from: alice })
+				await stabilityPool.withdrawFromSP(dec(5000, 18), validCollateral, { from: bob })
+				await stabilityPool.withdrawFromSP(dec(3000, 18), validCollateral, { from: carol })
 
-				// Check VUSD balances of A, B, C have risen by the value of their compounded deposits, respectively
-				const alice_expectedVUSDBalance = alice_VUSD_Balance_Before.add(alice_Deposit_Before).toString()
-				const bob_expectedVUSDBalance = bob_VUSD_Balance_Before.add(bob_Deposit_Before).toString()
-				const carol_expectedVUSDBalance = carol_VUSD_Balance_Before.add(carol_Deposit_Before).toString()
+				// Check GRAI balances of A, B, C have risen by the value of their compounded deposits, respectively
+				const alice_expectedGRAIBalance = alice_GRAI_Balance_Before.add(alice_Deposit_Before).toString()
+				const bob_expectedGRAIBalance = bob_GRAI_Balance_Before.add(bob_Deposit_Before).toString()
+				const carol_expectedGRAIBalance = carol_GRAI_Balance_Before.add(carol_Deposit_Before).toString()
 
-				const alice_VUSD_Balance_After = (await debtToken.balanceOf(alice)).toString()
-				const bob_VUSD_Balance_After = (await debtToken.balanceOf(bob)).toString()
-				const carol_VUSD_Balance_After = (await debtToken.balanceOf(carol)).toString()
+				const alice_GRAI_Balance_After = (await debtToken.balanceOf(alice)).toString()
+				const bob_GRAI_Balance_After = (await debtToken.balanceOf(bob)).toString()
+				const carol_GRAI_Balance_After = (await debtToken.balanceOf(carol)).toString()
 
-				assert.equal(alice_VUSD_Balance_After, alice_expectedVUSDBalance)
-				assert.equal(bob_VUSD_Balance_After, bob_expectedVUSDBalance)
-				assert.equal(carol_VUSD_Balance_After, carol_expectedVUSDBalance)
+				assert.equal(alice_GRAI_Balance_After, alice_expectedGRAIBalance)
+				assert.equal(bob_GRAI_Balance_After, bob_expectedGRAIBalance)
+				assert.equal(carol_GRAI_Balance_After, carol_expectedGRAIBalance)
 
 				// Check collateral balances of A, B, C have increased by the value of their collateral gain from liquidations, respectively
 				const alice_expectedColBalance = alice_Balance_BeforeERC20.add(alice_Gain_Before).toString()
@@ -1981,13 +2080,13 @@ contract("StabilityPool", async accounts => {
 				assert.equal(bob_expectedETHBalance, bob_Balance_AfterERC20)
 				assert.equal(carol_expectedETHBalance, carol_Balance_AfterERC20)
 
-				// Check VUSD in Stability Pool has been reduced by A, B and C's compounded deposit
-				const expectedVUSDinSP = VUSDinSP_Before.sub(alice_Deposit_Before)
+				// Check GRAI in Stability Pool has been reduced by A, B and C's compounded deposit
+				const expectedGRAIinSP = GRAIinSP_Before.sub(alice_Deposit_Before)
 					.sub(bob_Deposit_Before)
 					.sub(carol_Deposit_Before)
 					.toString()
-				const VUSDinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
-				assert.equal(VUSDinSP_After, expectedVUSDinSP)
+				const GRAIinSP_After = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+				assert.equal(GRAIinSP_After, expectedGRAIinSP)
 
 				// Check ETH in SP has reduced to zero
 				const ColinSP_After = (await stabilityPool.getCollateral(erc20.address)).toString()
@@ -2003,15 +2102,15 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 20_000, carol)
 
 				// A and B provide to SP
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: bob })
 
 				const G_Before = await stabilityPool.epochToScaleToG(0, 0)
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// A withdraws from SP
-				await stabilityPool.withdrawFromSP(dec(5_000, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(5_000, 18), validCollateral, { from: alice })
 				const G_1 = await stabilityPool.epochToScaleToG(0, 0)
 
 				// Expect G has increased from the GRVT reward event triggered
@@ -2020,7 +2119,7 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// B withdraws from SP
-				await stabilityPool.withdrawFromSP(dec(5_000, 18), { from: bob })
+				await stabilityPool.withdrawFromSP(dec(5_000, 18), validCollateral, { from: bob })
 				const G_2 = await stabilityPool.epochToScaleToG(0, 0)
 
 				// Expect G has increased from the GRVT reward event triggered
@@ -2037,10 +2136,10 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20B, 500, dennis)
 
 				// A, B, C, D provide to SP
-				await stabilityPool.provideToSP(dec(10, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30, 18), { from: carol })
-				await stabilityPool.provideToSP(dec(40, 18), { from: dennis })
+				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
+				await stabilityPool.provideToSP(dec(40, 18), validCollateral, { from: dennis })
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -2051,10 +2150,10 @@ contract("StabilityPool", async accounts => {
 				const D_GRVTBalance_Before = await grvtToken.balanceOf(dennis)
 
 				// A, B, C withdraw
-				await stabilityPool.withdrawFromSP(dec(1, 18), { from: alice })
-				await stabilityPool.withdrawFromSP(dec(2, 18), { from: bob })
-				await stabilityPool.withdrawFromSP(dec(3, 18), { from: carol })
-				await stabilityPool.withdrawFromSP(dec(4, 18), { from: dennis })
+				await stabilityPool.withdrawFromSP(dec(1, 18), validCollateral, { from: alice })
+				await stabilityPool.withdrawFromSP(dec(2, 18), validCollateral, { from: bob })
+				await stabilityPool.withdrawFromSP(dec(3, 18), validCollateral, { from: carol })
+				await stabilityPool.withdrawFromSP(dec(4, 18), validCollateral, { from: dennis })
 
 				// Get GRVT balance after
 				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
@@ -2081,11 +2180,11 @@ contract("StabilityPool", async accounts => {
 				// Graham opens vessels and make deposits
 				await _openVesselWithICR(erc20, 20_000, (icr = 10), graham)
 				await _openVesselWithICR(erc20B, 20_000, (icr = 10), graham)
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: graham })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: graham })
 
 				// Fast-forward time and make a second deposit, to trigger GRVT reward and make G > 0
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: graham })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: graham })
 
 				// perform a liquidation to make 0 < P < 1, and S > 0
 				await dropPriceByPercent(erc20, 50)
@@ -2127,11 +2226,11 @@ contract("StabilityPool", async accounts => {
 				await _openVesselWithICR(erc20B, 30_000, (icr = 10), erin)
 
 				// A, B, C, D make their initial deposits
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(20_000, 18), { from: bob })
-				await stabilityPool.provideToSP(dec(30_000, 18), { from: carol })
-				await stabilityPool.provideToSP(dec(40_000, 18), { from: dennis })
-				await stabilityPool.provideToSP(dec(30_000, 18), { from: erin })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(20_000, 18), validCollateral, { from: bob })
+				await stabilityPool.provideToSP(dec(30_000, 18), validCollateral, { from: carol })
+				await stabilityPool.provideToSP(dec(40_000, 18), validCollateral, { from: dennis })
+				await stabilityPool.provideToSP(dec(30_000, 18), validCollateral, { from: erin })
 
 				const ZERO = toBN("0")
 				// Check ERC20 "a" deposits snapshots are non-zero
@@ -2158,11 +2257,11 @@ contract("StabilityPool", async accounts => {
 				}
 
 				// All depositors make full withdrawal
-				await stabilityPool.withdrawFromSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.withdrawFromSP(dec(20_000, 18), { from: bob })
-				await stabilityPool.withdrawFromSP(dec(30_000, 18), { from: carol })
-				await stabilityPool.withdrawFromSP(dec(40_000, 18), { from: dennis })
-				await stabilityPool.withdrawFromSP(dec(30_000, 18), { from: erin })
+				await stabilityPool.withdrawFromSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.withdrawFromSP(dec(20_000, 18), validCollateral, { from: bob })
+				await stabilityPool.withdrawFromSP(dec(30_000, 18), validCollateral, { from: carol })
+				await stabilityPool.withdrawFromSP(dec(40_000, 18), validCollateral, { from: dennis })
+				await stabilityPool.withdrawFromSP(dec(30_000, 18), validCollateral, { from: erin })
 
 				async function checkSnapshotIsZeroed(depositor, erc20Address) {
 					const S = await stabilityPool.S(depositor, erc20Address)
@@ -2188,7 +2287,7 @@ contract("StabilityPool", async accounts => {
 
 				// Alice opens vessel and joins the Stability Pool
 				await _openVessel(erc20, 10_100, alice)
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
 
 				await _openVessel(erc20, 0, defaulter_1)
 
@@ -2196,7 +2295,7 @@ contract("StabilityPool", async accounts => {
 
 				// Fast-forward time and make a second deposit, to trigger GRVT reward and make G > 0
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
-				await stabilityPool.provideToSP(dec(100, 18), { from: alice })
+				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
 				// perform a liquidation to make 0 < P < 1, and S > 0
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -2208,16 +2307,22 @@ contract("StabilityPool", async accounts => {
 				await priceFeed.setPrice(erc20.address, dec(200, 18))
 
 				// Alice successfully withdraws deposit and all gains
-				await stabilityPool.withdrawFromSP(dec(10_100, 18), { from: alice })
+				await stabilityPool.withdrawFromSP(dec(10_100, 18), validCollateral, { from: alice })
 				assert.equal(await stabilityPool.deposits(alice), "0")
 
 				const expectedRevertMessage = "StabilityPool: User must have a non-zero deposit"
 
 				// Further withdrawal attempt from Alice
-				await th.assertRevert(stabilityPool.withdrawFromSP(dec(10_000, 18), { from: alice }), expectedRevertMessage)
+				await th.assertRevert(
+					stabilityPool.withdrawFromSP(dec(10_000, 18), validCollateral, { from: alice }),
+					expectedRevertMessage
+				)
 
 				// Withdrawal attempt of a non-existent deposit, from Carol
-				await th.assertRevert(stabilityPool.withdrawFromSP(dec(10_000, 18), { from: carol }), expectedRevertMessage)
+				await th.assertRevert(
+					stabilityPool.withdrawFromSP(dec(10_000, 18), validCollateral, { from: carol }),
+					expectedRevertMessage
+				)
 			})
 		})
 
@@ -2236,8 +2341,8 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 0, defaulter_3)
 
 				// A, B, provide 10_000, 5_000 tokens to SP
-				await stabilityPool.provideToSP(dec(10_000, 18), { from: alice })
-				await stabilityPool.provideToSP(dec(5_000, 18), { from: bob })
+				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: alice })
+				await stabilityPool.provideToSP(dec(5_000, 18), validCollateral, { from: bob })
 
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(105, 18))
@@ -2257,19 +2362,20 @@ contract("StabilityPool", async accounts => {
 				assert.equal(bob_Deposit, "0")
 
 				// Get collateral gain for A and B
-				const alice_Gain_1 = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-				const bob_Gain_1 = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+				const idx = validCollateral.indexOf(erc20.address)
+				const alice_Gain_1 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx].toString()
+				const bob_Gain_1 = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
 
 				// Whale deposits 10_000 tokens to Stability Pool
-				await stabilityPool.provideToSP(dec(1, 24), { from: whale })
+				await stabilityPool.provideToSP(dec(1, 24), validCollateral, { from: whale })
 
 				// Liquidation 2
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_2)
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_2))
 
 				// Check Alice and Bob have not received collateral gains from liquidation 2 while their deposit was 0
-				const alice_Gain_2 = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-				const bob_Gain_2 = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+				const alice_Gain_2 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx].toString()
+				const bob_Gain_2 = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
 
 				assert.equal(alice_Gain_1, alice_Gain_2)
 				assert.equal(bob_Gain_1, bob_Gain_2)
@@ -2279,8 +2385,8 @@ contract("StabilityPool", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, defaulter_3))
 
 				// Check Alice and Bob have not received collateral gains from liquidation 3 while their deposit was 0
-				const alice_Gain_3 = (await stabilityPool.getDepositorGains(alice))[1][1].toString()
-				const bob_Gain_3 = (await stabilityPool.getDepositorGains(bob))[1][1].toString()
+				const alice_Gain_3 = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx].toString()
+				const bob_Gain_3 = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
 
 				assert.equal(alice_Gain_1, alice_Gain_3)
 				assert.equal(bob_Gain_1, bob_Gain_3)
@@ -2290,3 +2396,4 @@ contract("StabilityPool", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
+

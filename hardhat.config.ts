@@ -1,26 +1,28 @@
-require("@nomicfoundation/hardhat-toolbox")
-require("@nomiclabs/hardhat-truffle5")
-require("@nomiclabs/hardhat-ethers")
-require("@nomiclabs/hardhat-etherscan")
-require("@openzeppelin/hardhat-upgrades")
-// require("hardhat-gas-reporter")
-// require("hardhat-contract-sizer")
-// require("hardhat-interface-generator")
-require("@openzeppelin/hardhat-defender")
-require("solidity-coverage")
+import "@nomicfoundation/hardhat-toolbox"
+import "@nomiclabs/hardhat-truffle5"
+import "@nomiclabs/hardhat-ethers"
+import "@nomiclabs/hardhat-etherscan"
+import "@openzeppelin/hardhat-upgrades"
+import "@openzeppelin/hardhat-defender"
+import "solidity-coverage"
+
+import { task } from "hardhat/config"
+
 require("dotenv").config()
 
 const accounts = require("./hardhatAccountsList2k.js")
 const accountsList = accounts.accountsList
 
-const CoreDeployer = require("./scripts/deployment/deployer-core.js")
-const { DeploymentTarget } = require("./scripts/deployment/deployer-common.js")
+import { CoreDeployer, DeploymentTarget } from "./scripts/deployment/deploy-core"
 
 task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Localhost).run()
 )
 task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.GoerliTestnet).run()
+)
+task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testnet").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.ArbitrumGoerliTestnet).run()
 )
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
@@ -40,7 +42,7 @@ module.exports = {
 	solidity: {
 		compilers: [
 			{
-				version: "0.8.20",
+				version: "0.8.19",
 				settings: {
 					optimizer: {
 						enabled: true,
@@ -58,7 +60,8 @@ module.exports = {
 	networks: {
 		hardhat: {
 			allowUnlimitedContractSize: true,
-			accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
+			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
+			accounts: accountsList,
 		},
 		localhost: {
 			url: "http://localhost:8545",
@@ -66,6 +69,10 @@ module.exports = {
 		},
 		goerli: {
 			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+    arbitrum_goerli: {
+			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
@@ -82,9 +89,8 @@ module.exports = {
 		port: 8545,
 	},
 	gasReporter: {
-		enabled: `${process.env.REPORT_GAS}`,
+		enabled: false, // `${process.env.REPORT_GAS}`,
 		currency: "USD",
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
-

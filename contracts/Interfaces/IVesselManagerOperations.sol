@@ -32,6 +32,10 @@ interface IVesselManagerOperations is IGravitaBase {
 		IVesselManager.VesselManagerOperation _operation
 	);
 
+	event RedemptionSoftenParamChanged(
+		uint256 _redemptionSofteningParam
+	);
+
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
 	error VesselManagerOperations__InvalidArraySize();
@@ -44,6 +48,8 @@ interface IVesselManagerOperations is IGravitaBase {
 	error VesselManagerOperations__TCRMustBeAboveMCR(uint256 tcr, uint256 mcr);
 	error VesselManagerOperations__UnableToRedeemAnyAmount();
 	error VesselManagerOperations__VesselNotActive();
+	error VesselManagerOperations__InvalidParam();
+	error VesselManagerOperations__NotTimelock();
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -135,26 +141,14 @@ interface IVesselManagerOperations is IGravitaBase {
 		uint256 _debtTokenAmount,
 		uint256 _price,
 		uint256 _maxIterations
-	)
-		external
-		returns (
-			address firstRedemptionHint,
-			uint256 partialRedemptionHintNICR,
-			uint256 truncatedDebtTokenAmount
-		);
+	) external returns (address firstRedemptionHint, uint256 partialRedemptionHintNICR, uint256 truncatedDebtTokenAmount);
 
 	function getApproxHint(
 		address _asset,
 		uint256 _CR,
 		uint256 _numTrials,
 		uint256 _inputRandomSeed
-	)
-		external
-		returns (
-			address hintAddress,
-			uint256 diff,
-			uint256 latestRandomSeed
-		);
+	) external returns (address hintAddress, uint256 diff, uint256 latestRandomSeed);
 
 	function computeNominalCR(uint256 _coll, uint256 _debt) external returns (uint256);
 }

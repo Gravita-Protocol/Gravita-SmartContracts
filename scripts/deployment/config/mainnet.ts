@@ -1,5 +1,5 @@
-const { utils } = require("ethers")
-const toEther = val => utils.parseEther(String(val))
+import { BigNumber, utils } from "ethers"
+const toEther = (val: any): BigNumber => utils.parseEther(String(val))
 
 const OUTPUT_FILE = "./scripts/deployment/output/mainnet.json"
 const TX_CONFIRMATIONS = 2
@@ -8,8 +8,6 @@ const ETHERSCAN_BASE_URL = "https://etherscan.io/address"
 const CONTRACT_UPGRADES_ADMIN = "0xE9Ac7a720C3511fD048a47f148066B0479102234"
 const SYSTEM_PARAMS_ADMIN = "0x48c66D21f7204ACe7dE43965Fe28da6a8FB96B80"
 const TREASURY_WALLET = "0x6F8Fe995422c5efE6487A7B07f67E84aaD9D4eC8"
-
-// Core Contracts Config ----------------------------------------------------------------------------------------------
 
 const COLLATERAL = [
 	{
@@ -62,17 +60,10 @@ const COLLATERAL = [
 	},
 ]
 
-// Grvt Contracts Config ----------------------------------------------------------------------------------------------
-
-const GRVT_BENEFICIARIES = {
-	// "0x19596e1D6cd97916514B5DBaA4730781eFE49975": 1_000_000,
-}
-
 module.exports = {
 	COLLATERAL,
 	CONTRACT_UPGRADES_ADMIN,
 	ETHERSCAN_BASE_URL,
-	GRVT_BENEFICIARIES,
 	OUTPUT_FILE,
 	SYSTEM_PARAMS_ADMIN,
 	TREASURY_WALLET,

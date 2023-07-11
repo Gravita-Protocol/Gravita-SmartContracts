@@ -41,19 +41,19 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 
 	let numAccounts
 
-	/* Open a Vessel for each account. VUSD debt is 200 VUSD each, with collateral beginning at
+	/* Open a Vessel for each account. GRAI debt is 200 GRAI each, with collateral beginning at
   1.5 ether, and rising by 0.01 ether per Vessel.  Hence, the ICR of account (i + 1) is always 1% greater than the ICR of account i. 
  */
 
-	// Open Vessels in parallel, then withdraw VUSD in parallel
+	// Open Vessels in parallel, then withdraw GRAI in parallel
 	const makeVesselsInParallel = async (accounts, n) => {
 		activeAccounts = accounts.slice(0, n)
 		// console.log(`number of accounts used is: ${activeAccounts.length}`)
 		// console.time("makeVesselsInParallel")
 		const openVesselpromises = activeAccounts.map((account, index) => openVessel(account, index))
 		await Promise.all(openVesselpromises)
-		const withdrawVUSDpromises = activeAccounts.map(account => withdrawVUSDfromVessel(account))
-		await Promise.all(withdrawVUSDpromises)
+		const withdrawGRAIpromises = activeAccounts.map(account => withdrawGRAIfromVessel(account))
+		await Promise.all(withdrawGRAIpromises)
 		// console.timeEnd("makeVesselsInParallel")
 	}
 
@@ -66,11 +66,11 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		})
 	}
 
-	const withdrawVUSDfromVessel = async account => {
+	const withdrawGRAIfromVessel = async account => {
 		await borrowerOperations.withdrawDebtTokens(th._100pct, "100000000000000000000", account, account, { from: account })
 	}
 
-	// Sequentially add coll and withdraw VUSD, 1 account at a time
+	// Sequentially add coll and withdraw GRAI, 1 account at a time
 	const makeVesselsInSequence = async (accounts, n) => {
 		activeAccounts = accounts.slice(0, n)
 		// console.log(`number of accounts used is: ${activeAccounts.length}`)
@@ -82,7 +82,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 			const ICR_BN = toBN(ICR.toString().concat("0".repeat(16)))
 			await th.openVessel(contracts.core, {
 				asset: erc20.address,
-				extraVUSDAmount: toBN(dec(10000, 18)),
+				extraGRAIAmount: toBN(dec(10000, 18)),
 				ICR: ICR_BN,
 				extraParams: { from: account },
 			})
