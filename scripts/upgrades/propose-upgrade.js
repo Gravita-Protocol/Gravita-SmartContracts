@@ -1,8 +1,8 @@
 const { defender } = require("hardhat")
 
-const targetUpgrade = "StabilityPool"
-const targetAddress = "0x49387C88Fb723499a9A40DFbb266FAB8028c7e57"
-const multisig = "0x30638E3318F2DF6f83A6ffb237ad66F11Ae9FC53"
+const targetUpgrade = "VesselManagerOperations"
+const targetAddress = "0xc49B737fa56f9142974a54F6C66055468eC631d0"
+const multisig = "0xE9Ac7a720C3511fD048a47f148066B0479102234"
 
 async function main() {
 	const newContractVersion = await ethers.getContractFactory(targetUpgrade)
@@ -17,3 +17,4 @@ main()
 		console.error(error)
 		process.exit(1)
 	})
+
