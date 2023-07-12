@@ -1,6 +1,6 @@
 const { time } = require("@openzeppelin/test-helpers")
 var jsonfile = require("jsonfile")
-var contractList = jsonfile.readFileSync("./test/gravita-ganache/contracts.json")
+var contractList = jsonfile.readFileSync("./test/gravita-fork/contracts.json")
 
 const Booster = artifacts.require("Booster")
 const ConvexToken = artifacts.require("ConvexToken")
@@ -34,23 +34,6 @@ const unlockAccount = async address => {
 const f = v => ethers.utils.formatEther(v.toString())
 
 contract("StakeWrapperCvx", async accounts => {
-
-	before(async () => {
-		initialSnapshotId = await network.provider.send("evm_snapshot")
-	})
-
-	beforeEach(async () => {
-		snapshotId = await network.provider.send("evm_snapshot")
-	})
-
-	afterEach(async () => {
-		await network.provider.send("evm_revert", [snapshotId])
-	})
-
-	after(async () => {
-		await network.provider.send("evm_revert", [initialSnapshotId])
-	})
-
 	it("should deposit lp tokens and earn rewards while being transferable", async () => {
 		let deployer = "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277"
 		let addressZero = "0x0000000000000000000000000000000000000000"
@@ -62,10 +45,14 @@ contract("StakeWrapperCvx", async accounts => {
 
 		let userA = accounts[0]
 		let userB = accounts[1]
-		let userF = accounts[9]
+		let userF = "0x648aA14e4424e0825A5cE739C8C68610e143FB79" // accounts[9]
 		console.log(`send from userF to deployer`)
 		console.log(`userF balance = ${f(await web3.eth.getBalance(userF))}`)
+
+		const userF_signer = hre.ethers.provider.getSigner(userF)
+		await unlockAccount(userF)
 		await web3.eth.sendTransaction({ from: userF, to: deployer, value: web3.utils.toWei("8.0", "ether") })
+		await userF_signer.sendTransaction({ to: deployer, value: ethers.utils.parseEther("8.0") })
 
 		let gauge = "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1"
 		console.log(`unlock gauge account`)
