@@ -3,7 +3,6 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "./Addresses.sol";
-import "./Interfaces/CvxMining.sol";
 import "./Interfaces/IBooster.sol";
 import "./Interfaces/IConvexDeposits.sol";
 import "./Interfaces/IRewardHook.sol";
@@ -241,9 +240,9 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		}
 		//get balance from vesselManager
 		uint256 collateral;
-        if(vesselManager != address(0)){
-           // collateral = IVesselManager(vesselManager).getVesselColl(address(this), _borrower);
-        }
+		if (vesselManager != address(0)) {
+			// collateral = IVesselManager(vesselManager).getVesselColl(address(this), _borrower);
+		}
 		return balanceOf(_account).add(collateral);
 	}
 
@@ -401,6 +400,13 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		return _earned(_account);
 	}
 
+	/**
+	 * @dev View version of the earned() function that does not run a checkpoint before computing the response.
+	 */
+	function earnedPeek(address _account) external view returns (EarnedData[] memory claimable) {
+		return _earned(_account);
+	}
+
 	function _earned(address _account) internal view returns (EarnedData[] memory claimable) {
 		uint256 rewardCount = rewards.length;
 		claimable = new EarnedData[](rewardCount);
@@ -434,7 +440,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		}
 	}
 
-	function getReward(address _account, address _forwardTo) external {
+	function getRewardAndForward(address _account, address _forwardTo) external {
 		require(msg.sender == _account, "!self");
 		//claim directly in checkpoint logic to save a bit of gas
 		//pack forwardTo into account array to save gas so that a proxy etc doesnt have to double transfer
@@ -520,4 +526,3 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		_;
 	}
 }
-

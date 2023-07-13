@@ -74,22 +74,24 @@ module.exports = {
 		],
 	},
 	networks: {
+		// hardhat: {
+		// 	allowUnlimitedContractSize: true,
+		// 	// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
+		// 	accounts: accountsList,
+		// },
 		hardhat: {
-			allowUnlimitedContractSize: true,
-			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
-			accounts: accountsList,
-		},
-		hardhat_mainnet_fork: {
-			url: 'https://mainnet.infura.io/v3/f8516b04d1bc493482953af799e3ee26',
-			chainId: 1,
-      forking: {
+			// url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+			// chainId: 1,
+			// accounts: { 
+			// 	mnemonic: "test test test test test test test test test test test junk",
+			// 	count: 20
+			// },
+			forking: {
 				// enabled: true,
-				// url: 'https://mainnet.infura.io/v3/f8516b04d1bc493482953af799e3ee26',
-        // url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
-        // url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
-        blockNumber: 14075742,
-      },
-    },
+				url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+				blockNumber: 14075742,
+			},
+		},
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
