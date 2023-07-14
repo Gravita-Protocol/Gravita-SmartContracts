@@ -1,18 +1,16 @@
 const { ethers } = require("hardhat")
 
-const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
-const TIMELOCK_ADDRESS = "0xD202c6617525B9f6559F84da9BA52f57F810678f" // Goerli.ShortTimelock
+// Mainnet Timelock URL:
+// https://etherscan.io/address/0x57a1953bf194a1ef73396e442ac7dc761dcd23cc#writeContract#F4
 
-const TARGET_ADDRESS = "0xe5B8E3caC86A3F943FEb5470AB1241606d93C202" // Goerli.PriceFeed
-const METHOD_SIGNATURE = "setOracle(address, address, uint256, bool)"
-const METHOD_ARG_TYPES = ["address", "address", "uint256", "bool"]
-const METHOD_ARG_VALUES = [
-	"0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6", // rETH
-	"0xbC204BDA3420D15AD526ec3B9dFaE88aBF267Aa9", // ChainlinkAggregator
-	ethers.utils.parseUnits("0.5").toString(),
-]
-const QUEUED_TX_ETA = "1682466840"
-const QUEUED_TX_HASH = "0x53f40fcb67abf5b57d5640d4dc82fd92cdfa6c75f86d053c0c95bb7644e12ba9"
+const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
+
+// Setup:
+const TIMELOCK_ADDRESS = "0x57a1953bf194a1ef73396e442ac7dc761dcd23cc" // Mainnet::Timelock
+const TARGET_ADDRESS = "0xc49B737fa56f9142974a54F6C66055468eC631d0" // Mainnet::VesselManagerOperations
+const METHOD_SIGNATURE = "setRedemptionSofteningParam(uint256)"
+const METHOD_ARG_TYPES = ["uint256"]
+const METHOD_ARG_VALUES = ["9800"]
 
 main()
 	.then(() => process.exit(0))
@@ -22,21 +20,35 @@ main()
 	})
 
 async function main() {
+	await previewParameters()
 	// await queueTransaction(TARGET_ADDRESS, METHOD_SIGNATURE, METHOD_ARG_TYPES, METHOD_ARG_VALUES)
 	// await cancelTransaction(TARGET_ADDRESS, METHOD_SIGNATURE, METHOD_ARG_TYPES, METHOD_ARG_VALUES, QUEUED_TX_ETA)
-	await executeTransaction(
-		"0xe5B8E3caC86A3F943FEb5470AB1241606d93C202", // Goerli.PriceFeed
-		"setOracle(address, address, uint256, bool)",
-		["address", "address", "uint256", "bool"],
-		[
-			"0x62bc478ffc429161115a6e4090f819ce5c50a5d9", // rETH
-			"0xbC204BDA3420D15AD526ec3B9dFaE88aBF267Aa9", // ChainlinkAggregator
-			ethers.utils.parseUnits("0.5").toString(),
-			"false",
-		],
-		"1682466840",
-		"0x53f40fcb67abf5b57d5640d4dc82fd92cdfa6c75f86d053c0c95bb7644e12ba9"
-	)
+	// await executeTransaction(
+	// 	"0xe5B8E3caC86A3F943FEb5470AB1241606d93C202", // Goerli.PriceFeed
+	// 	"setOracle(address, address, uint256, bool)",
+	// 	["address", "address", "uint256", "bool"],
+	// 	[
+	// 		"0x62bc478ffc429161115a6e4090f819ce5c50a5d9", // rETH
+	// 		"0xbC204BDA3420D15AD526ec3B9dFaE88aBF267Aa9", // ChainlinkAggregator
+	// 		ethers.utils.parseUnits("0.5").toString(),
+	// 		"false",
+	// 	],
+	// 	"1682466840",
+	// 	"0x53f40fcb67abf5b57d5640d4dc82fd92cdfa6c75f86d053c0c95bb7644e12ba9"
+	// )
+}
+
+async function previewParameters() {
+	const timelockContract = await getTimelockContract()
+	const eta = await calcETA(timelockContract)
+	const data = encodeParameters(METHOD_ARG_TYPES, METHOD_ARG_VALUES)
+	console.log(`----------------------------------------------------------------------------------`)
+	console.log(`   target: ${TARGET_ADDRESS}`)
+	console.log(`    value: 0`)
+	console.log(`signature: ${METHOD_SIGNATURE}`)
+	console.log(`     data: ${data}`)
+	console.log(`      eta: ${eta}`)
+	console.log(`----------------------------------------------------------------------------------`)
 }
 
 async function queueTransaction(targetAddress, methodSignature, argTypes, argValues) {
