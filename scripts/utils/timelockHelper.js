@@ -116,7 +116,7 @@ async function getTimelockContract() {
 
 async function calcETA(timelockContract) {
 	const delay = Number(await timelockContract.delay())
-	return (await getBlockTimestamp()) + delay
+	return (await getBlockTimestamp()) + delay + 3_600 // add 1h for multisigning
 }
 
 async function getBlockTimestamp() {
