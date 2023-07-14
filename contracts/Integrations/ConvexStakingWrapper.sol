@@ -14,11 +14,7 @@ import "@openzeppelin/contracts-3.4.0/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-3.4.0/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-3.4.0/utils/ReentrancyGuard.sol";
 
-//Example of a tokenized convex staked position.
-//if used as collateral some modifications will be needed to fit the specific platform
-// from https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
-
-//Based on Curve.fi's gauge wrapper implementations at https://github.com/curvefi/curve-dao-contracts/tree/master/contracts/gauges/wrappers
+/// @dev Based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
 contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	using SafeERC20 for IERC20;
 	using SafeMath for uint256;
@@ -29,10 +25,10 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	}
 
 	struct RewardType {
-		address reward_token;
-		address reward_pool;
-		uint256 reward_integral;
-		uint256 reward_remaining;
+		address rewardToken;
+		address rewardPool;
+		uint256 rewardIntegral;
+		uint256 rewardRemaining;
 		mapping(address => uint256) reward_integral_for;
 		mapping(address => uint256) claimable_reward;
 	}
@@ -65,6 +61,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	string internal _tokensymbol;
 
 	// Events -----------------------------------------------------------------------------------------------------------
+
 	event Deposited(address indexed _user, address indexed _account, uint256 _amount, bool _wrapped);
 	event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -76,6 +73,8 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 	event UserCheckpoint(address _userA, address _userB);
 	event ProtocolFeeChanged(uint256 oldProtocolFee, uint256 newProtocolFee);
 
+	// Constructor/Initializer ------------------------------------------------------------------------------------------
+	
 	constructor() public ERC20("StakedConvexToken", "stkCvx") {}
 
 	function initialize(uint256 _poolId) external virtual {
@@ -508,7 +507,6 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		_checkpoint([_from, _to]);
 	}
 
-	//helper function
 	function earmarkRewards() external returns (bool) {
 		return IBooster(convexBooster).earmarkRewards(convexPoolId);
 	}
@@ -518,6 +516,8 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Addresses {
 		protocolFee = _newfee;
 		emit ProtocolFeeChanged(oldFee, _newfee);
 	}
+
+	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	modifier onlyTimelock() {
 		if (msg.sender != timelockAddress) {
