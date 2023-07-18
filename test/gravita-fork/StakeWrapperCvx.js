@@ -17,13 +17,13 @@ const toEther = v => ethers.utils.parseEther(v.toString())
 contract("StakeWrapperCvx", async accounts => {
 	it("should deposit lp tokens and earn rewards while being transferable", async () => {
 		const printBalances = async () => {
-			await wrapper.earned(userA)
-			console.log(`Wrapper.earned(UserA): ${formatEarnedData(await wrapper.earnedPeek(userA))}`)
+			await wrapper.userCheckpoint(userA)
+			console.log(`Wrapper.earned(UserA): ${formatEarnedData(await wrapper.getEarnedRewards(userA))}`)
 			console.log(`CRV.balanceOf(UserA): ${f(await crv.balanceOf(userA))}`)
 			console.log(`CVX.balanceOf(UserA): ${f(await crv.balanceOf(userA))}`)
 
-			await wrapper.earned(userB)
-			console.log(`Wrapper.earned(UserB): ${formatEarnedData(await wrapper.earnedPeek(userB))}`)
+			await wrapper.userCheckpoint(userB)
+			console.log(`Wrapper.earned(UserB): ${formatEarnedData(await wrapper.getEarnedRewards(userB))}`)
 			console.log(`CRV.balanceOf(UserB): ${f(await crv.balanceOf(userB))}`)
 			console.log(`CVX.balanceOf(UserB): ${f(await crv.balanceOf(userB))}`)
 
@@ -32,7 +32,7 @@ contract("StakeWrapperCvx", async accounts => {
 		}
 
 		const printRewards = async () => {
-			let rewardCount = await wrapper.rewardLength()
+			let rewardCount = await wrapper.rewardsLength()
 			for (var i = 0; i < rewardCount; i++) {
 				var r = await wrapper.rewards(i)
 				console.log(`Reward #${i}: ${formatRewardType(r)}`)
@@ -40,8 +40,8 @@ contract("StakeWrapperCvx", async accounts => {
 		}
 
 		const formatRewardType = r => {
-			const token = r.reward_token == crv.address ? "CRV" : r.reward_token == cvx.address ? "CVX" : r.reward_token
-			return `[${token}] integral: ${f(r.reward_integral)} remaining: ${f(r.reward_remaining)}`
+			const token = r.token == crv.address ? "CRV" : r.token == cvx.address ? "CVX" : r.token
+			return `[${token}] integral: ${f(r.integral)} remaining: ${f(r.remaining)}`
 		}
 
 		const formatEarnedData = earnedDataArray => {
@@ -85,14 +85,15 @@ contract("StakeWrapperCvx", async accounts => {
 		console.log(`curveLP.balanceOf(userB): ${f(userB_balance)}`)
 
 		await impersonateAccount(deployer)
-		let wrapper = await ConvexStakingWrapper.new()
+		let wrapper = await ConvexStakingWrapper.new({ from: deployer })
 		await wrapper.initialize(poolId, { from: deployer })
+		await wrapper.setApprovals({ from: deployer })
+		await wrapper.addRewards({ from: deployer })
+		await stopImpersonatingAccount(deployer)
+
 		console.log(`ConvexStakingWrapper.address: ${wrapper.address}`)
 		console.log(`ConvexStakingWrapper.name: ${await wrapper.name()}`)
 		console.log(`ConvexStakingWrapper.symbol: ${await wrapper.symbol()}`)
-		await wrapper.setApprovals()
-		await wrapper.addRewards({ from: deployer })
-		await stopImpersonatingAccount(deployer)
 
 		await printRewards()
 
@@ -107,9 +108,9 @@ contract("StakeWrapperCvx", async accounts => {
 		console.log(`ConvexLP.balanceOf(UserB): ${f(await convexLP.balanceOf(userB))}`)
 
 		console.log("UserA depositing into wrapper")
-		await wrapper.deposit(userA_balance, userA, { from: userA })
+		await wrapper.depositCurveTokens(userA_balance, userA, { from: userA })
 		console.log("UserB staking into wrapper")
-		await wrapper.stake(userB_balance, userB, { from: userB })
+		await wrapper.stakeConvexTokens(userB_balance, userB, { from: userB })
 		console.log(`Wrapper supply: ${f(await wrapper.totalSupply())}`)
 
 		await printBalances()
@@ -120,8 +121,8 @@ contract("StakeWrapperCvx", async accounts => {
 		await printBalances()
 
 		console.log("Triggering user checkpoints")
-		await wrapper.user_checkpoint(userA)
-		await wrapper.user_checkpoint(userB)
+		await wrapper.userCheckpoint(userA)
+		await wrapper.userCheckpoint(userB)
 
 		await printBalances()
 
@@ -145,8 +146,8 @@ contract("StakeWrapperCvx", async accounts => {
 		await printBalances()
 
 		console.log("Claiming rewards...")
-		await wrapper.getReward(userA, { from: userA })
-		await wrapper.getReward(userB, { from: userB })
+		await wrapper.claimEarnedRewards(userA, { from: userA })
+		await wrapper.claimEarnedRewards(userB, { from: userB })
 
 		await printBalances()
 		await printRewards()
@@ -162,8 +163,8 @@ contract("StakeWrapperCvx", async accounts => {
 		await printBalances()
 
 		console.log("Claiming rewards...")
-		await wrapper.getReward(userA, { from: userA })
-		await wrapper.getReward(userB, { from: userB })
+		await wrapper.claimEarnedRewards(userA, { from: userA })
+		await wrapper.claimEarnedRewards(userB, { from: userB })
 
 		await printBalances()
 		await printRewards()
@@ -179,8 +180,8 @@ contract("StakeWrapperCvx", async accounts => {
 		await printBalances()
 
 		console.log("Claiming rewards...")
-		await wrapper.getReward(userA, { from: userA })
-		await wrapper.getReward(userB, { from: userB })
+		await wrapper.claimEarnedRewards(userA, { from: userA })
+		await wrapper.claimEarnedRewards(userB, { from: userB })
 
 		await printBalances()
 		await printRewards()
@@ -193,8 +194,8 @@ contract("StakeWrapperCvx", async accounts => {
 		console.log("Withdraw complete")
 
 		console.log("Claiming rewards...")
-		await wrapper.getReward(userA, { from: userA })
-		await wrapper.getReward(userB, { from: userB })
+		await wrapper.claimEarnedRewards(userA, { from: userA })
+		await wrapper.claimEarnedRewards(userB, { from: userB })
 
 		await printBalances()
 

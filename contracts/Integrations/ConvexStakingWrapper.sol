@@ -17,7 +17,7 @@ import "./Interfaces/IRewardStaking.sol";
 import "./Interfaces/ITokenWrapper.sol";
 
 /**
- * @dev Based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
+ * @dev Wrapper based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
  */
 contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addresses {
 	using SafeERC20 for IERC20;
@@ -36,7 +36,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		uint256 integral;
 		uint256 remaining;
 		mapping(address => uint256) integralFor;
-		mapping(address => uint256) claimableReward;
+		mapping(address => uint256) claimableAmount;
 	}
 
 	// Events -----------------------------------------------------------------------------------------------------------
@@ -93,55 +93,61 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 	// Admin (Owner) functions ------------------------------------------------------------------------------------------
 
 	function addRewards() public onlyOwner {
-		address mainPool = convexPool;
+		address _convexPool = convexPool;
 
 		if (rewards.length == 0) {
-			rewards.push(RewardType({ token: crv, pool: mainPool, integral: 0, remaining: 0 }));
+			rewards.push(RewardType({ token: crv, pool: _convexPool, integral: 0, remaining: 0 }));
 			rewards.push(RewardType({ token: cvx, pool: address(0), integral: 0, remaining: 0 }));
 			registeredRewards[crv] = CRV_INDEX + 1;
 			registeredRewards[cvx] = CVX_INDEX + 1;
+			/// @dev commented the transfer below until understanding its value
+			// send to self to warmup state
+			// IERC20(crv).transfer(address(this), 0);
+			// send to self to warmup state
+			// IERC20(cvx).transfer(address(this), 0);
 			emit RewardAdded(crv);
 			emit RewardAdded(cvx);
 		}
 
-		uint256 extraCount = IRewardStaking(mainPool).extraRewardsLength();
-		for (uint256 i = 0; i < extraCount; i++) {
-			address extraPool = IRewardStaking(mainPool).extraRewards(i);
-			address extraToken = IRewardStaking(extraPool).rewardToken();
+		uint256 _extraCount = IRewardStaking(_convexPool).extraRewardsLength();
+		for (uint256 _i; _i < _extraCount; _i++) {
+			address _extraPool = IRewardStaking(_convexPool).extraRewards(_i);
+			address _extraToken = IRewardStaking(_extraPool).rewardToken();
 			// from pool 151, extra reward tokens are wrapped
 			if (convexPoolId >= 151) {
-				extraToken = ITokenWrapper(extraToken).token();
+				_extraToken = ITokenWrapper(_extraToken).token();
 			}
-			if (extraToken == cvx) {
+			if (_extraToken == cvx) {
 				// update cvx reward pool address
-				rewards[CVX_INDEX].pool = extraPool;
-			} else if (registeredRewards[extraToken] == 0) {
+				rewards[CVX_INDEX].pool = _extraPool;
+			} else if (registeredRewards[_extraToken] == 0) {
 				// add new token to list
-				rewards.push(RewardType({ token: extraToken, pool: extraPool, integral: 0, remaining: 0 }));
-				registeredRewards[extraToken] = rewards.length;
-				emit RewardAdded(extraToken);
+				rewards.push(RewardType({ token: _extraToken, pool: _extraPool, integral: 0, remaining: 0 }));
+				registeredRewards[_extraToken] = rewards.length;
+				emit RewardAdded(_extraToken);
 			}
 		}
 	}
 
 	function addTokenReward(address _token) public virtual onlyOwner {
-		//check if not registered yet
+		// check if not registered yet
 		if (registeredRewards[_token] == 0) {
-			//add new token to list
 			rewards.push(RewardType({ token: _token, pool: address(0), integral: 0, remaining: 0 }));
-			//add to registered map
 			registeredRewards[_token] = rewards.length; //mark registered at index+1
+			/// @dev commented the transfer below until understanding its value
+			// send to self to warmup state
+			// IERC20(_token).transfer(address(this), 0);
 			emit RewardAdded(_token);
 		} else {
-			//get previous used index of given token
-			//this ensures that reviving can only be done on the previous used slot
-			uint256 index = registeredRewards[_token];
-			if (index > 0) {
-				//index is registeredRewards minus one
-				RewardType storage reward = rewards[index - 1];
-				//check if it was invalidated
+			// get previous used index of given token
+			// this ensures that reviving can only be done on the previous used slot
+			uint256 _index = registeredRewards[_token];
+			if (_index != 0) {
+				// index is registeredRewards minus one
+				RewardType storage reward = rewards[_index - 1];
+				// check if it was invalidated
 				if (reward.token == address(0)) {
-					//revive
+					// revive
 					reward.token = _token;
 					emit RewardAdded(_token);
 				}
@@ -149,12 +155,14 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		}
 	}
 
-	//allow invalidating a reward if the token causes trouble in calcRewardIntegral
+	/**
+	 * @dev Allows for reward invalidation, in case the token has issues during calcRewardIntegral.
+	 */
 	function invalidateReward(address _token) public onlyOwner {
-		uint256 index = registeredRewards[_token];
-		if (index > 0) {
+		uint256 _index = registeredRewards[_token];
+		if (_index != 0) {
 			// index is registered rewards minus one
-			RewardType storage reward = rewards[index - 1];
+			RewardType storage reward = rewards[_index - 1];
 			require(reward.token == _token, "!mismatch");
 			// set reward token address to 0, integral calc will now skip
 			reward.token = address(0);
@@ -179,76 +187,12 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 	// Public functions -------------------------------------------------------------------------------------------------
 
-	function rewardLength() external view returns (uint256) {
-		return rewards.length;
-	}
-
-	function claimRewards(address _account) external {
-		address redirect = rewardRedirect[_account];
-		address destination = redirect != address(0) ? redirect : _account;
-		_checkpointAndClaim([_account, destination]);
-	}
-
-	function claimAndForwardRewards(address _account, address _forwardTo) external {
-		require(msg.sender == _account, "!self");
-		_checkpointAndClaim([_account, _forwardTo]);
-	}
-
-	/**
-	 * Claim function to be called by the treasury that collects its rewards.
-	 */
-	function claimTreasuryRewards(uint256 _index) external {
-		require(treasuryAddress == msg.sender, "Treasury Only");
-		RewardType storage reward = rewards[_index];
-		if (reward.token == address(0)) {
-			return;
-		}
-		uint256 receiveable = reward.claimableReward[treasuryAddress];
-		reward.claimableReward[treasuryAddress] = 0;
-		_transferReward(reward.token, treasuryAddress, receiveable);
-	}
-
-	/**
-	 * @notice Set any claimed rewards to automatically go to a different address
-	 * @dev Set to zero to disable redirect
-	 */
-	function setRewardRedirect(address _to) external nonReentrant {
-		rewardRedirect[msg.sender] = _to;
-		emit RewardRedirected(msg.sender, _to);
-	}
-
-	function totalBalanceOf(address _account) external view returns (uint256) {
-		return _getDepositedBalance(_account);
-	}
-
-	function userCheckpoint(address _account) external returns (bool) {
-		_checkpoint([_account, address(0)]);
-		return true;
-	}
-
-	//run earned as a mutable function to claim everything before calculating earned rewards
-	function earned(address _account) external returns (RewardEarned[] memory claimable) {
-		//checkpoint to pull in and tally new rewards
-		_checkpoint([_account, address(0)]);
-		return _earned(_account);
-	}
-
-	/**
-	 * @dev View version of the earned() function that does not run a checkpoint before computing the response.
-	 */
-	function earnedPeek(address _account) external view returns (RewardEarned[] memory claimable) {
-		return _earned(_account);
-	}
-
-	function earmarkRewards() external returns (bool) {
-		return IBooster(convexBooster).earmarkRewards(convexPoolId);
-	}
-
 	function depositCurveTokens(uint256 _amount, address _to) external whenNotPaused {
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _mint() will
 			_mint(_to, _amount);
 			IERC20(curveToken).safeTransferFrom(msg.sender, address(this), _amount);
+			/// @dev the `true` argument below means the Booster contract will immediately stake into the rewards contract
 			IConvexDeposits(convexBooster).deposit(convexPoolId, _amount, true);
 			emit Deposited(msg.sender, _to, _amount, true);
 		}
@@ -262,6 +206,75 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 			IRewardStaking(convexPool).stake(_amount);
 			emit Deposited(msg.sender, _to, _amount, false);
 		}
+	}
+
+	/**
+	 * @notice Function that returns all claimable rewards for a specific user.
+	 * @dev One should call the mutable userCheckpoint() function beforehand for updating the state before this view.
+	 */
+	function getEarnedRewards(address _account) external view returns (RewardEarned[] memory _claimable) {
+		uint256 _rewardCount = rewards.length;
+		_claimable = new RewardEarned[](_rewardCount);
+		for (uint256 _i; _i < _rewardCount; _i++) {
+			RewardType storage reward = rewards[_i];
+			if (reward.token != address(0)) {
+				_claimable[_i].amount = reward.claimableAmount[_account];
+				_claimable[_i].token = reward.token;
+			}
+		}
+	}
+
+	/**
+	 * from https://github.com/convex-eth/platform/blob/main/contracts/contracts/Booster.sol
+	 * "Claim crv and extra rewards and disperse to reward contracts"
+	 */
+	function earmarkRewards() external returns (bool) {
+		return IBooster(convexBooster).earmarkRewards(convexPoolId);
+	}
+
+	function userCheckpoint(address _account) external {
+		_checkpoint([_account, address(0)]);
+	}
+
+	function claimEarnedRewards(address _account) external {
+		address _redirect = rewardRedirect[_account];
+		address _destination = _redirect != address(0) ? _redirect : _account;
+		_checkpointAndClaim([_account, _destination]);
+	}
+
+	function claimAndForwardEarnedRewards(address _account, address _forwardTo) external {
+		require(msg.sender == _account, "!self");
+		_checkpointAndClaim([_account, _forwardTo]);
+	}
+
+	function claimTreasuryEarnedRewards(uint256 _index) external {
+		// TODO evaluate if there's need to restrict this call
+		// require(treasuryAddress == msg.sender, "Treasury Only");
+		RewardType storage reward = rewards[_index];
+		if (reward.token != address(0)) {
+			uint256 _amount = reward.claimableAmount[treasuryAddress];
+			if (_amount != 0) {
+				reward.claimableAmount[treasuryAddress] = 0;
+				IERC20(reward.token).safeTransfer(treasuryAddress, _amount);
+			}
+		}
+	}
+
+	function rewardsLength() external view returns (uint256) {
+		return rewards.length;
+	}
+
+	/**
+	 * @notice Set any claimed rewards to automatically go to a different address.
+	 * @dev Set to zero to disable redirect.
+	 */
+	function setRewardRedirect(address _to) external nonReentrant {
+		rewardRedirect[msg.sender] = _to;
+		emit RewardRedirected(msg.sender, _to);
+	}
+
+	function totalBalanceOf(address _account) external view returns (uint256) {
+		return _getDepositedBalance(_account);
 	}
 
 	// withdraw to convex deposit token
@@ -288,27 +301,70 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
 
+	/**
+	 * @dev Override function from ERC20: "Hook that is called before any transfer of tokens. This includes
+	 *     minting and burning."
+	 */
+	function _beforeTokenTransfer(address _from, address _to, uint256 /* _amount */) internal override {
+		_checkpoint([_from, _to]);
+	}
+
+	/// @param _accounts[0] from address
+	/// @param _accounts[1] to address
+	function _checkpoint(address[2] memory _accounts) internal nonReentrant {
+		uint256 _supply = _getTotalSupply();
+		uint256[2] memory _depositedBalances;
+		_depositedBalances[0] = _getDepositedBalance(_accounts[0]);
+		_depositedBalances[1] = _getDepositedBalance(_accounts[1]);
+
+		// just in case, dont claim rewards directly if paused -- can still technically claim via unguarded calls
+		// but skipping here protects against outside calls reverting
+		if (!paused()) {
+			IRewardStaking(convexPool).getReward(address(this), true);
+		}
+
+		uint256 _rewardCount = rewards.length;
+		for (uint256 _i; _i < _rewardCount; _i++) {
+			_calcRewardIntegral(_i, _accounts, _depositedBalances, _supply, false);
+		}
+		emit UserCheckpoint(_accounts[0], _accounts[1]);
+	}
+
+	/// @param _accounts[0] from address
+	/// @param _accounts[1] to address
+	// TODO refactor this and previous function -- DRY
+	function _checkpointAndClaim(address[2] memory _accounts) internal nonReentrant {
+		uint256 _supply = _getTotalSupply();
+		uint256[2] memory _depositedBalances;
+		_depositedBalances[0] = _getDepositedBalance(_accounts[0]); // only do first slot
+
+		// just in case, dont claim rewards directly if paused -- can still technically claim via unguarded calls
+		// but skipping here protects against outside calls reverting
+		if (!paused()) {
+			IRewardStaking(convexPool).getReward(address(this), true);
+		}
+
+		uint256 _rewardCount = rewards.length;
+		for (uint256 _i; _i < _rewardCount; _i++) {
+			_calcRewardIntegral(_i, _accounts, _depositedBalances, _supply, true);
+		}
+		emit UserCheckpoint(_accounts[0], _accounts[1]);
+	}
+
 	function _getDepositedBalance(address _account) internal view virtual returns (uint256) {
 		if (_account == address(0) || _account == vesselManager) {
 			return 0;
 		}
-		//get balance from vesselManager
-		uint256 collateral;
+		uint256 _collateral;
 		if (vesselManager != address(0)) {
-			// collateral = IVesselManager(vesselManager).getVesselColl(address(this), _borrower);
+			// _collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
 		}
-		return balanceOf(_account).add(collateral);
+		return balanceOf(_account).add(_collateral);
 	}
 
 	function _getTotalSupply() internal view virtual returns (uint256) {
-		//override and add any supply needed (interest based growth)
-
+		// override and add any supply needed (interest based growth)
 		return totalSupply();
-	}
-
-	//internal transfer function to transfer rewards out on claim
-	function _transferReward(address _token, address _to, uint256 _amount) internal virtual {
-		IERC20(_token).safeTransfer(_to, _amount);
 	}
 
 	function _calcRewardIntegral(
@@ -341,27 +397,27 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 			uint userI = reward.integralFor[_accounts[u]];
 			if (_isClaim || userI < reward.integral) {
-				//reward.claimableReward[_accounts[u]] current claimable amopunt
+				//reward.claimableAmount[_accounts[u]] current claimable amopunt
 				// add(_balances[u].mul(reward.integral.sub(userI)) => token_balance *(general_reward/token - user_claimed_reward/token)
-				uint256 receiveable = reward.claimableReward[_accounts[u]].add(
+				uint256 receiveable = reward.claimableAmount[_accounts[u]].add(
 					_balances[u].mul(reward.integral.sub(userI)).div(1e20)
 				);
 				uint256 receivable_user = (receiveable * (1 ether - protocolFee)) / 1 ether; //90% of reward
 				if (_isClaim) {
 					if (receiveable > 0) {
-						reward.claimableReward[_accounts[u]] = 0;
+						reward.claimableAmount[_accounts[u]] = 0;
 						//cheat for gas savings by transfering to the second index in accounts list
 						//if claiming only the 0 index will update so 1 index can hold forwarding info
 						//guaranteed to have an address in u+1 so no need to check
 						//Deduct protocol fee
-						_transferReward(reward.token, _accounts[u + 1], receivable_user);
+						IERC20(reward.token).safeTransfer(_accounts[u + 1], receivable_user);
 						//Add protocol rewards as claimable, to be claimed at a later date
-						reward.claimableReward[treasuryAddress] += receiveable - receivable_user;
+						reward.claimableAmount[treasuryAddress] += receiveable - receivable_user;
 						bal = bal.sub(receiveable);
 					}
 				} else {
-					reward.claimableReward[_accounts[u]] = receivable_user;
-					reward.claimableReward[treasuryAddress] += receiveable - receivable_user;
+					reward.claimableAmount[_accounts[u]] = receivable_user;
+					reward.claimableAmount[treasuryAddress] += receiveable - receivable_user;
 				}
 				reward.integralFor[_accounts[u]] = reward.integral;
 			}
@@ -373,78 +429,12 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		}
 	}
 
-	/// usually:
-	/// @param  _accounts[0] from address
-	/// @param  _accounts[1] to address
-	function _checkpoint(address[2] memory _accounts) internal nonReentrant {
-		uint256 supply = _getTotalSupply();
-		uint256[2] memory depositedBalance;
-		depositedBalance[0] = _getDepositedBalance(_accounts[0]);
-		depositedBalance[1] = _getDepositedBalance(_accounts[1]);
-
-		//just in case, dont claim rewards directly if paused
-		//can still technically claim via unguarded calls but skipping here
-		//protects against outside calls reverting
-		if (!paused()) {
-			IRewardStaking(convexPool).getReward(address(this), true);
-		}
-
-		uint256 rewardCount = rewards.length;
-		for (uint256 i = 0; i < rewardCount; i++) {
-			_calcRewardIntegral(i, _accounts, depositedBalance, supply, false);
-		}
-		emit UserCheckpoint(_accounts[0], _accounts[1]);
-	}
-
-	function _checkpointAndClaim(address[2] memory _accounts) internal nonReentrant {
-		uint256 supply = _getTotalSupply();
-		uint256[2] memory depositedBalance;
-		depositedBalance[0] = _getDepositedBalance(_accounts[0]); //only do first slot
-
-		//just in case, dont claim rewards directly if paused
-		//can still technically claim via unguarded calls but skipping here
-		//protects against outside calls reverting
-		if (!paused()) {
-			IRewardStaking(convexPool).getReward(address(this), true);
-		}
-
-		uint256 rewardCount = rewards.length;
-		for (uint256 i = 0; i < rewardCount; i++) {
-			_calcRewardIntegral(i, _accounts, depositedBalance, supply, true);
-		}
-		emit UserCheckpoint(_accounts[0], _accounts[1]);
-	}
-
-	function _earned(address _account) internal view returns (RewardEarned[] memory claimable) {
-		uint256 rewardCount = rewards.length;
-		claimable = new RewardEarned[](rewardCount);
-
-		for (uint256 i = 0; i < rewardCount; i++) {
-			RewardType storage reward = rewards[i];
-			if (reward.token == address(0)) {
-				continue;
-			}
-
-			claimable[i].amount = reward.claimableReward[_account];
-			claimable[i].token = reward.token;
-		}
-		return claimable;
-	}
-
-	/**
-	 * @dev Override function from ERC20: "Hook that is called before any transfer of tokens. This includes
-	 *     minting and burning."
-	 */
-	function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal override {
-		_checkpoint([_from, _to]);
-	}
-
 	// Timelock functions -----------------------------------------------------------------------------------------------
 
 	function setProtocolFee(uint256 _newfee) external onlyTimelock {
-		uint256 oldFee = protocolFee;
+		uint256 _oldFee = protocolFee;
 		protocolFee = _newfee;
-		emit ProtocolFeeChanged(oldFee, _newfee);
+		emit ProtocolFeeChanged(_oldFee, _newfee);
 	}
 
 	// Modifiers --------------------------------------------------------------------------------------------------------
