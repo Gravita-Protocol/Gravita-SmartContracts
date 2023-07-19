@@ -19,15 +19,15 @@ contract("StakeWrapperCvx", async accounts => {
 			await wrapper.userCheckpoint(userA)
 			console.log(`Wrapper.earned(UserA): ${formatEarnedData(await wrapper.getEarnedRewards(userA))}`)
 			console.log(`CRV.balanceOf(UserA): ${f(await crv.balanceOf(userA))}`)
-			console.log(`CVX.balanceOf(UserA): ${f(await crv.balanceOf(userA))}`)
+			console.log(`CVX.balanceOf(UserA): ${f(await cvx.balanceOf(userA))}`)
 
 			await wrapper.userCheckpoint(userB)
 			console.log(`Wrapper.earned(UserB): ${formatEarnedData(await wrapper.getEarnedRewards(userB))}`)
 			console.log(`CRV.balanceOf(UserB): ${f(await crv.balanceOf(userB))}`)
-			console.log(`CVX.balanceOf(UserB): ${f(await crv.balanceOf(userB))}`)
+			console.log(`CVX.balanceOf(UserB): ${f(await cvx.balanceOf(userB))}`)
 
 			console.log(`CRV.balanceOf(Wrapper): ${f(await crv.balanceOf(wrapper.address))}`)
-			console.log(`CVX.balanceOf(Wrapper): ${f(await crv.balanceOf(wrapper.address))}`)
+			console.log(`CVX.balanceOf(Wrapper): ${f(await cvx.balanceOf(wrapper.address))}`)
 		}
 
 		const printRewards = async () => {
@@ -137,12 +137,6 @@ contract("StakeWrapperCvx", async accounts => {
 
 		await printBalances()
 
-		console.log("Triggering user checkpoints")
-		await wrapper.userCheckpoint(userA)
-		await wrapper.userCheckpoint(userB)
-
-		await printBalances()
-
 		console.log(" --- Advancing 1 more day --- ")
 		await time.increase(86_400)
 
@@ -162,7 +156,7 @@ contract("StakeWrapperCvx", async accounts => {
 
 		await printBalances()
 
-		console.log("Claiming rewards...")
+		console.log(" ---> Claiming rewards...")
 		await wrapper.claimEarnedRewards(userA, { from: userA })
 		await wrapper.claimEarnedRewards(userB, { from: userB })
 
@@ -179,7 +173,7 @@ contract("StakeWrapperCvx", async accounts => {
 
 		await printBalances()
 
-		console.log("Claiming rewards...")
+		console.log(" ---> Claiming rewards...")
 		await wrapper.claimEarnedRewards(userA, { from: userA })
 		await wrapper.claimEarnedRewards(userB, { from: userB })
 
@@ -196,7 +190,7 @@ contract("StakeWrapperCvx", async accounts => {
 
 		await printBalances()
 
-		console.log("Claiming rewards...")
+		console.log(" ---> Claiming rewards...")
 		await wrapper.claimEarnedRewards(userA, { from: userA })
 		await wrapper.claimEarnedRewards(userB, { from: userB })
 
@@ -210,14 +204,14 @@ contract("StakeWrapperCvx", async accounts => {
 		await wrapper.withdraw(userB_balance, { from: userB })
 		console.log("Withdraw complete")
 
-		console.log("Claiming rewards...")
+		console.log(" ---> Claiming rewards...")
 		await wrapper.claimEarnedRewards(userA, { from: userA })
 		await wrapper.claimEarnedRewards(userB, { from: userB })
 
 		await printBalances()
 
 		// check what is left on the wrapper
-		console.log(">>> remaining check <<<<")
+		console.log(" >>> remaining check <<<< ")
 
 		console.log(`Wrapper supply: ${f(await wrapper.totalSupply())}`)
 
@@ -225,6 +219,6 @@ contract("StakeWrapperCvx", async accounts => {
 		console.log(`Wrapper.balanceOf(UserB): ${f(await wrapper.balanceOf(userB))}`)
 
 		console.log(`CRV.balanceOf(Wrapper): ${f(await crv.balanceOf(wrapper.address))}`)
-		console.log(`CVX.balanceOf(Wrapper): ${f(await crv.balanceOf(wrapper.address))}`)
+		console.log(`CVX.balanceOf(Wrapper): ${f(await cvx.balanceOf(wrapper.address))}`)
 	})
 })
