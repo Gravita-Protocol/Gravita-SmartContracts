@@ -26,7 +26,7 @@ interface IPriceFeed {
 	struct OracleRecordV2 {
 		address oracleAddress;
 		ProviderType providerType;
-		uint256 timeoutMinutes;
+		uint256 timeoutSeconds;
 		uint256 decimals;
 		bool isEthIndexed;
 	}
@@ -75,7 +75,7 @@ interface IPriceFeed {
 		address _token,
 		address _oracle,
 		ProviderType _type,
-		uint256 _timeoutMinutes,
+		uint256 _timeoutSeconds,
 		bool _isEthIndexed,
 		bool _isFallback
 	) external;

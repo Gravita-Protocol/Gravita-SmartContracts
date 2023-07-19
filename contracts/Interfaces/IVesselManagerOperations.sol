@@ -32,6 +32,10 @@ interface IVesselManagerOperations is IGravitaBase {
 		IVesselManager.VesselManagerOperation _operation
 	);
 
+	event RedemptionSoftenParamChanged(
+		uint256 _redemptionSofteningParam
+	);
+
 	// Custom Errors ----------------------------------------------------------------------------------------------------
 
 	error VesselManagerOperations__InvalidArraySize();

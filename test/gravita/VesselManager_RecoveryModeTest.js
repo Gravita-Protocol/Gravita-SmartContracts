@@ -42,6 +42,9 @@ const deploy = async (treasury, mintingAccounts) => {
 	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
+
+	// getDepositorGains() expects a sorted collateral array
+	validCollateral = validCollateral.slice(0).sort((a, b) => toBN(a.toLowerCase()).sub(toBN(b.toLowerCase())))
 }
 
 contract("VesselManager - in Recovery Mode", async accounts => {
