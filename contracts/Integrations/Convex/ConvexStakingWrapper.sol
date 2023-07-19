@@ -179,11 +179,14 @@ contract ConvexStakingWrapper is
 	function getEarnedRewards(address _account) external view returns (RewardEarned[] memory _claimable) {
 		uint256 _rewardCount = rewards.length;
 		_claimable = new RewardEarned[](_rewardCount);
-		for (uint256 _i; _i < _rewardCount; _i++) {
+		for (uint256 _i; _i < _rewardCount; ) {
 			RewardType storage reward = rewards[_i];
 			if (reward.token != address(0)) {
 				_claimable[_i].amount = reward.claimableAmount[_account];
 				_claimable[_i].token = reward.token;
+			}
+			unchecked {
+				++_i;
 			}
 		}
 	}
@@ -240,7 +243,9 @@ contract ConvexStakingWrapper is
 		address[] memory spAssets = new address[](1);
 		spAssets[0] = address(this);
 		(, uint256[] memory depositorGains) = IStabilityPool(stabilityPool).getDepositorGains(_account, spAssets);
-		_collateral += depositorGains[0];
+		if (depositorGains.length != 0) {
+			_collateral += depositorGains[0];
+		}
 	}
 
 	function rewardsLength() external view returns (uint256) {
@@ -318,7 +323,7 @@ contract ConvexStakingWrapper is
 			emit RewardAdded(cvx);
 		}
 		uint256 _extraCount = IRewardStaking(_convexPool).extraRewardsLength();
-		for (uint256 _i; _i < _extraCount; _i++) {
+		for (uint256 _i; _i < _extraCount; ) {
 			address _extraPool = IRewardStaking(_convexPool).extraRewards(_i);
 			address _extraToken = IRewardStaking(_extraPool).rewardToken();
 			// from pool 151, extra reward tokens are wrapped
@@ -335,6 +340,9 @@ contract ConvexStakingWrapper is
 				newReward.pool = _extraPool;
 				registeredRewards[_extraToken] = rewards.length;
 				emit RewardAdded(_extraToken);
+			}
+			unchecked {
+				++_i;
 			}
 		}
 	}
@@ -371,8 +379,11 @@ contract ConvexStakingWrapper is
 		}
 		uint256 _supply = totalSupply();
 		uint256 _rewardCount = rewards.length;
-		for (uint256 _i; _i < _rewardCount; _i++) {
+		for (uint256 _i; _i < _rewardCount; ) {
 			_calcRewardsIntegrals(_i, _accounts, _depositedBalances, _supply, _claim);
+			unchecked {
+				++_i;
+			}
 		}
 		emit UserCheckpoint(_accounts[0], _accounts[1]);
 	}
@@ -401,36 +412,38 @@ contract ConvexStakingWrapper is
 		}
 
 		// update user (and treasury) integrals
-		for (uint256 _i = 0; _i < _accounts.length; _i++) {
+		for (uint256 _i; _i < _accounts.length; ) {
 			address _account = _accounts[_i];
-			if (!_isValidAccount(_account)) {
-				continue; // do not give rewards to invalid addresses
-			}
-			uint _accountIntegral = reward.integralFor[_account];
-			if (_isClaim || _accountIntegral < reward.integral) {
-				// reward.claimableAmount[_accounts[_i]] contains the current claimable amount, to that we add
-				// add(_balances[_i].mul(reward.integral.sub(_accountIntegral)) => token_balance * (general_reward/token - user_claimed_reward/token)
+			if (_isValidAccount(_account)) {
+				uint _accountIntegral = reward.integralFor[_account];
+				if (_isClaim || _accountIntegral < reward.integral) {
+					// reward.claimableAmount[_accounts[_i]] contains the current claimable amount, to that we add
+					// add(_balances[_i].mul(reward.integral.sub(_accountIntegral)) => token_balance * (general_reward/token - user_claimed_reward/token)
 
-				uint256 _newClaimableAmount = (_balances[_i] * (reward.integral - _accountIntegral)) / 1e20;
-				uint256 _rewardAmount = reward.claimableAmount[_account] + _newClaimableAmount;
+					uint256 _newClaimableAmount = (_balances[_i] * (reward.integral - _accountIntegral)) / 1e20;
+					uint256 _rewardAmount = reward.claimableAmount[_account] + _newClaimableAmount;
 
-				if (_rewardAmount != 0) {
-					uint256 _userRewardAmount = (_rewardAmount * (1 ether - protocolFee)) / 1 ether;
-					uint256 _treasuryRewardAmount = _rewardAmount - _userRewardAmount;
+					if (_rewardAmount != 0) {
+						uint256 _userRewardAmount = (_rewardAmount * (1 ether - protocolFee)) / 1 ether;
+						uint256 _treasuryRewardAmount = _rewardAmount - _userRewardAmount;
 
-					if (_isClaim) {
-						reward.claimableAmount[_account] = 0;
-						IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
-						_contractBalance -= _rewardAmount;
-					} else {
-						reward.claimableAmount[_account] = _userRewardAmount;
+						if (_isClaim) {
+							reward.claimableAmount[_account] = 0;
+							IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
+							_contractBalance -= _rewardAmount;
+						} else {
+							reward.claimableAmount[_account] = _userRewardAmount;
+						}
+						reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
 					}
-					reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
+					reward.integralFor[_account] = reward.integral;
 				}
-				reward.integralFor[_account] = reward.integral;
+				if (_isClaim) {
+					break; // only update/claim for first address (second address is the forwarding address)
+				}
 			}
-			if (_isClaim) {
-				break; // only update/claim for first address (second address is the forwarding address)
+			unchecked {
+				++_i;
 			}
 		}
 
