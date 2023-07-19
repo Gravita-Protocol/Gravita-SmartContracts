@@ -86,8 +86,6 @@ contract("StakeWrapperCvx", async accounts => {
 		await impersonateAccount(deployer)
 		let wrapper = await ConvexStakingWrapper.new({ from: deployer })
 		await wrapper.initialize(poolId, { from: deployer })
-		await wrapper.setApprovals({ from: deployer })
-		await wrapper.addRewards({ from: deployer })
 		await stopImpersonatingAccount(deployer)
 
 		console.log(`ConvexStakingWrapper.address: ${wrapper.address}`)

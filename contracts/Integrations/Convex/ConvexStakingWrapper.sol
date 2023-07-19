@@ -16,6 +16,10 @@ import "./Interfaces/IBooster.sol";
 import "./Interfaces/IConvexDeposits.sol";
 import "./Interfaces/IRewardStaking.sol";
 import "./Interfaces/ITokenWrapper.sol";
+
+import "../../Interfaces/ICollSurplusPool.sol";
+import "../../Interfaces/IStabilityPool.sol";
+import "../../Interfaces/IVesselManager.sol";
 import "../../Addresses.sol";
 
 /**
@@ -89,55 +93,13 @@ contract ConvexStakingWrapper is
 		convexPool = _rewards;
 		convexPoolId = _poolId;
 
-		addRewards();
-		setApprovals();
+		_addRewards();
+		_setApprovals();
 	}
 
 	// Admin (Owner) functions ------------------------------------------------------------------------------------------
 
-	function addRewards() public onlyOwner {
-		address _convexPool = convexPool;
-
-		if (rewards.length == 0) {
-			RewardType storage newCrvReward = rewards.push();
-			newCrvReward.token = crv;
-			newCrvReward.pool = _convexPool;
-			RewardType storage newCvxReward = rewards.push();
-			newCvxReward.token = cvx;
-			registeredRewards[crv] = CRV_INDEX + 1;
-			registeredRewards[cvx] = CVX_INDEX + 1;
-			/// @dev commented the transfer below until understanding its value
-			// send to self to warmup state
-			// IERC20(crv).transfer(address(this), 0);
-			// send to self to warmup state
-			// IERC20(cvx).transfer(address(this), 0);
-			emit RewardAdded(crv);
-			emit RewardAdded(cvx);
-		}
-
-		uint256 _extraCount = IRewardStaking(_convexPool).extraRewardsLength();
-		for (uint256 _i; _i < _extraCount; _i++) {
-			address _extraPool = IRewardStaking(_convexPool).extraRewards(_i);
-			address _extraToken = IRewardStaking(_extraPool).rewardToken();
-			// from pool 151, extra reward tokens are wrapped
-			if (convexPoolId >= 151) {
-				_extraToken = ITokenWrapper(_extraToken).token();
-			}
-			if (_extraToken == cvx) {
-				// update cvx reward pool address
-				rewards[CVX_INDEX].pool = _extraPool;
-			} else if (registeredRewards[_extraToken] == 0) {
-				// add new token to list
-				RewardType storage newReward = rewards.push();
-				newReward.token = _extraToken;
-				newReward.pool = _extraPool;
-				registeredRewards[_extraToken] = rewards.length;
-				emit RewardAdded(_extraToken);
-			}
-		}
-	}
-
-	function addTokenReward(address _token) public virtual onlyOwner {
+	function addTokenReward(address _token) public onlyOwner {
 		// check if not registered yet
 		if (registeredRewards[_token] == 0) {
 			RewardType storage newReward = rewards.push();
@@ -165,7 +127,7 @@ contract ConvexStakingWrapper is
 	}
 
 	/**
-	 * @dev Allows for reward invalidation, in case the token has issues during calcRewardIntegral.
+	 * @dev Allows for reward invalidation, in case the token has issues during calcRewardsIntegrals.
 	 */
 	function invalidateReward(address _token) public onlyOwner {
 		uint256 _index = registeredRewards[_token];
@@ -177,13 +139,6 @@ contract ConvexStakingWrapper is
 			reward.token = address(0);
 			emit RewardInvalidated(_token);
 		}
-	}
-
-	function setApprovals() public onlyOwner {
-		IERC20(curveToken).safeApprove(convexBooster, 0);
-		IERC20(curveToken).safeApprove(convexBooster, type(uint256).max);
-		IERC20(convexToken).safeApprove(convexPool, 0);
-		IERC20(convexToken).safeApprove(convexPool, type(uint256).max);
 	}
 
 	function pause() external onlyOwner {
@@ -269,6 +224,25 @@ contract ConvexStakingWrapper is
 		}
 	}
 
+	/**
+	 * @notice Collateral on the Gravita Protocol is stored in different pools based on its lifecycle status.
+	 *    - Active collateral is in the ActivePool (queried via VesselManager).
+	 *    - Collateral redistributed during liquidations goes to the DefaultPool.
+	 *    - Leftover collateral from redemptions and liquidations is kept in the CollSurplusPool.
+	 *    - Gains credited to depositors after liquidations are stored in the StabilityPool.
+	 *
+	 * @dev View https://docs.google.com/document/d/1j6mcK4iB3aWfPSH3l8UdYL_G3sqY3k0k1G4jt81OsRE/edit?usp=sharing
+	 */
+	function gravitaBalanceOf(address _account) public view returns (uint256 _collateral) {
+		_collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
+		_collateral += IVesselManager(vesselManager).getPendingAssetReward(address(this), _account);
+		_collateral += ICollSurplusPool(collSurplusPool).getCollateral(address(this), _account);
+		address[] memory spAssets = new address[](1);
+		spAssets[0] = address(this);
+		(, uint256[] memory depositorGains) = IStabilityPool(stabilityPool).getDepositorGains(_account, spAssets);
+		_collateral += depositorGains[0];
+	}
+
 	function rewardsLength() external view returns (uint256) {
 		return rewards.length;
 	}
@@ -282,8 +256,23 @@ contract ConvexStakingWrapper is
 		emit RewardRedirected(msg.sender, _to);
 	}
 
-	function totalBalanceOf(address _account) external view returns (uint256) {
-		return _getDepositedBalance(_account);
+	function totalBalanceOf(address _account) public view returns (uint256) {
+		if (_isValidAccount(_account)) {
+			return balanceOf(_account) + gravitaBalanceOf(_account);
+		}
+		return 0;
+	}
+
+	/**
+	 * @dev While in Gravita pools, collateral is accounted to the respective borrower/depositor.
+	 */
+	function _isValidAccount(address _account) internal view returns (bool) {
+		return
+			!(_account == address(0) ||
+				_account == activePool ||
+				_account == collSurplusPool ||
+				_account == defaultPool ||
+				_account == stabilityPool);
 	}
 
 	// withdraw to convex deposit token
@@ -310,6 +299,53 @@ contract ConvexStakingWrapper is
 
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
 
+	function _addRewards() internal {
+		address _convexPool = convexPool;
+		if (rewards.length == 0) {
+			RewardType storage newCrvReward = rewards.push();
+			newCrvReward.token = crv;
+			newCrvReward.pool = _convexPool;
+			RewardType storage newCvxReward = rewards.push();
+			newCvxReward.token = cvx;
+			registeredRewards[crv] = CRV_INDEX + 1;
+			registeredRewards[cvx] = CVX_INDEX + 1;
+			/// @dev commented the transfer below until understanding its value
+			// send to self to warmup state
+			// IERC20(crv).transfer(address(this), 0);
+			// send to self to warmup state
+			// IERC20(cvx).transfer(address(this), 0);
+			emit RewardAdded(crv);
+			emit RewardAdded(cvx);
+		}
+		uint256 _extraCount = IRewardStaking(_convexPool).extraRewardsLength();
+		for (uint256 _i; _i < _extraCount; _i++) {
+			address _extraPool = IRewardStaking(_convexPool).extraRewards(_i);
+			address _extraToken = IRewardStaking(_extraPool).rewardToken();
+			// from pool 151, extra reward tokens are wrapped
+			if (convexPoolId >= 151) {
+				_extraToken = ITokenWrapper(_extraToken).token();
+			}
+			if (_extraToken == cvx) {
+				// update cvx reward pool address
+				rewards[CVX_INDEX].pool = _extraPool;
+			} else if (registeredRewards[_extraToken] == 0) {
+				// add new token to list
+				RewardType storage newReward = rewards.push();
+				newReward.token = _extraToken;
+				newReward.pool = _extraPool;
+				registeredRewards[_extraToken] = rewards.length;
+				emit RewardAdded(_extraToken);
+			}
+		}
+	}
+
+	function _setApprovals() internal {
+		IERC20(curveToken).safeApprove(convexBooster, 0);
+		IERC20(curveToken).safeApprove(convexBooster, type(uint256).max);
+		IERC20(convexToken).safeApprove(convexPool, 0);
+		IERC20(convexToken).safeApprove(convexPool, type(uint256).max);
+	}
+
 	/**
 	 * @dev Override function from ERC20: "Hook that is called before any transfer of tokens. This includes
 	 *     minting and burning."
@@ -322,44 +358,23 @@ contract ConvexStakingWrapper is
 	/// @param _accounts[1] to address
 	/// @param _claim flag to perform rewards claiming
 	function _checkpoint(address[2] memory _accounts, bool _claim) internal nonReentrant {
-		uint256 _supply = _getTotalSupply();
 		uint256[2] memory _depositedBalances;
-		_depositedBalances[0] = _getDepositedBalance(_accounts[0]);
+		_depositedBalances[0] = totalBalanceOf(_accounts[0]);
 		if (!_claim) {
 			// on a claim call, only do the first slot
-			_depositedBalances[1] = _getDepositedBalance(_accounts[1]);
+			_depositedBalances[1] = totalBalanceOf(_accounts[1]);
 		}
-
 		// don't claim rewards directly if paused -- can still technically claim via unguarded calls
 		// but skipping here protects against outside calls reverting
 		if (!paused()) {
 			IRewardStaking(convexPool).getReward(address(this), true);
 		}
-
+		uint256 _supply = totalSupply();
 		uint256 _rewardCount = rewards.length;
 		for (uint256 _i; _i < _rewardCount; _i++) {
 			_calcRewardsIntegrals(_i, _accounts, _depositedBalances, _supply, _claim);
 		}
 		emit UserCheckpoint(_accounts[0], _accounts[1]);
-	}
-
-	function _getDepositedBalance(address _account) internal view virtual returns (uint256) {
-		if (_account == address(0) || _account == vesselManager) {
-			return 0;
-		}
-		uint256 _collateral;
-		if (vesselManager != address(0)) {
-			// _collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
-			// VesselManager.getPendingAssetReward(address _asset, address _borrower)
-			// CollSurplus.getCollateral(address _asset, address _account)
-			// StabilityPool.getDepositorGains(address _depositor, address[] calldata _assets) external view returns (address[] memory, uint256[] memory)
-		}
-		return balanceOf(_account) + _collateral;
-	}
-
-	function _getTotalSupply() internal view virtual returns (uint256) {
-		// override and add any supply needed (interest based growth)
-		return totalSupply();
 	}
 
 	function _calcRewardsIntegrals(
@@ -385,12 +400,12 @@ contract ConvexStakingWrapper is
 			reward.integral += _diff;
 		}
 
-		// update user integrals
+		// update user (and treasury) integrals
 		for (uint256 _i = 0; _i < _accounts.length; _i++) {
 			address _account = _accounts[_i];
-			if (_account == address(0)) continue; // do not give rewards to address 0
-			if (_account == vesselManager) continue;
-
+			if (!_isValidAccount(_account)) {
+				continue; // do not give rewards to invalid addresses
+			}
 			uint _accountIntegral = reward.integralFor[_account];
 			if (_isClaim || _accountIntegral < reward.integral) {
 				// reward.claimableAmount[_accounts[_i]] contains the current claimable amount, to that we add
