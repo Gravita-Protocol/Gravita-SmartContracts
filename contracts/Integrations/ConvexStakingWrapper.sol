@@ -69,7 +69,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 	bool public isInitiliazed;
 
-	uint256 public protocolFee = 0.1 ether;
+	uint256 public protocolFee = 0.15 ether;
 
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
@@ -233,18 +233,18 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 	}
 
 	function userCheckpoint(address _account) external {
-		_checkpoint([_account, address(0)]);
+		_checkpoint([_account, address(0)], false);
 	}
 
 	function claimEarnedRewards(address _account) external {
 		address _redirect = rewardRedirect[_account];
 		address _destination = _redirect != address(0) ? _redirect : _account;
-		_checkpointAndClaim([_account, _destination]);
+		_checkpoint([_account, _destination], true);
 	}
 
 	function claimAndForwardEarnedRewards(address _account, address _forwardTo) external {
 		require(msg.sender == _account, "!self");
-		_checkpointAndClaim([_account, _forwardTo]);
+		_checkpoint([_account, _forwardTo], true);
 	}
 
 	function claimTreasuryEarnedRewards(uint256 _index) external {
@@ -306,18 +306,22 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 	 *     minting and burning."
 	 */
 	function _beforeTokenTransfer(address _from, address _to, uint256 /* _amount */) internal override {
-		_checkpoint([_from, _to]);
+		_checkpoint([_from, _to], false);
 	}
 
 	/// @param _accounts[0] from address
 	/// @param _accounts[1] to address
-	function _checkpoint(address[2] memory _accounts) internal nonReentrant {
+	/// @param _claim flag to perform rewards claiming
+	function _checkpoint(address[2] memory _accounts, bool _claim) internal nonReentrant {
 		uint256 _supply = _getTotalSupply();
 		uint256[2] memory _depositedBalances;
 		_depositedBalances[0] = _getDepositedBalance(_accounts[0]);
-		_depositedBalances[1] = _getDepositedBalance(_accounts[1]);
+		if (!_claim) {
+			// on a claim call, only do the first slot
+			_depositedBalances[1] = _getDepositedBalance(_accounts[1]);
+		}
 
-		// just in case, dont claim rewards directly if paused -- can still technically claim via unguarded calls
+		// don't claim rewards directly if paused -- can still technically claim via unguarded calls
 		// but skipping here protects against outside calls reverting
 		if (!paused()) {
 			IRewardStaking(convexPool).getReward(address(this), true);
@@ -325,28 +329,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 		uint256 _rewardCount = rewards.length;
 		for (uint256 _i; _i < _rewardCount; _i++) {
-			_calcRewardIntegral(_i, _accounts, _depositedBalances, _supply, false);
-		}
-		emit UserCheckpoint(_accounts[0], _accounts[1]);
-	}
-
-	/// @param _accounts[0] from address
-	/// @param _accounts[1] to address
-	// TODO refactor this and previous function -- DRY
-	function _checkpointAndClaim(address[2] memory _accounts) internal nonReentrant {
-		uint256 _supply = _getTotalSupply();
-		uint256[2] memory _depositedBalances;
-		_depositedBalances[0] = _getDepositedBalance(_accounts[0]); // only do first slot
-
-		// just in case, dont claim rewards directly if paused -- can still technically claim via unguarded calls
-		// but skipping here protects against outside calls reverting
-		if (!paused()) {
-			IRewardStaking(convexPool).getReward(address(this), true);
-		}
-
-		uint256 _rewardCount = rewards.length;
-		for (uint256 _i; _i < _rewardCount; _i++) {
-			_calcRewardIntegral(_i, _accounts, _depositedBalances, _supply, true);
+			_calcRewardsIntegrals(_i, _accounts, _depositedBalances, _supply, _claim);
 		}
 		emit UserCheckpoint(_accounts[0], _accounts[1]);
 	}
@@ -358,8 +341,11 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		uint256 _collateral;
 		if (vesselManager != address(0)) {
 			// _collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
+			// VesselManager.getPendingAssetReward(address _asset, address _borrower)
+			// CollSurplus.getCollateral(address _asset, address _account)
+			// StabilityPool.getDepositorGains(address _depositor, address[] calldata _assets) external view returns (address[] memory, uint256[] memory)
 		}
-		return balanceOf(_account).add(_collateral);
+		return balanceOf(_account) + _collateral;
 	}
 
 	function _getTotalSupply() internal view virtual returns (uint256) {
@@ -367,7 +353,7 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		return totalSupply();
 	}
 
-	function _calcRewardIntegral(
+	function _calcRewardsIntegrals(
 		uint256 _index,
 		address[2] memory _accounts,
 		uint256[2] memory _balances,
@@ -376,56 +362,57 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 	) internal {
 		RewardType storage reward = rewards[_index];
 		if (reward.token == address(0)) {
+			// token address could have been reset by invalidateReward()
 			return;
 		}
 
-		// get difference in balance and remaining rewards
+		// get difference in contract balance and remaining rewards
 		// getReward is unguarded so we use reward.remaining to keep track of how much was actually claimed
-		uint256 bal = IERC20(reward.token).balanceOf(address(this));
+		uint256 _contractBalance = IERC20(reward.token).balanceOf(address(this));
 
-		//check that balance increased and update integral
-		if (_supply > 0 && bal > reward.remaining) {
-			reward.integral = reward.integral + (bal.sub(reward.remaining).mul(1e20).div(_supply));
+		// check whether balance increased, and update integral if needed
+		if (_supply > 0 && _contractBalance > reward.remaining) {
+			uint256 _diff = ((_contractBalance - reward.remaining) * 1e20) / _supply;
+			reward.integral += _diff;
 		}
 
-		//update user integrals
-		for (uint256 u = 0; u < _accounts.length; u++) {
-			//do not give rewards to address 0
-			if (_accounts[u] == address(0)) continue;
-			if (_accounts[u] == vesselManager) continue;
-			if (_isClaim && u != 0) continue; //only update/claim for first address and use second as forwarding
+		// update user integrals
+		for (uint256 _i = 0; _i < _accounts.length; _i++) {
+			address _account = _accounts[_i];
+			if (_account == address(0)) continue; // do not give rewards to address 0
+			if (_account == vesselManager) continue;
 
-			uint userI = reward.integralFor[_accounts[u]];
-			if (_isClaim || userI < reward.integral) {
-				//reward.claimableAmount[_accounts[u]] current claimable amopunt
-				// add(_balances[u].mul(reward.integral.sub(userI)) => token_balance *(general_reward/token - user_claimed_reward/token)
-				uint256 receiveable = reward.claimableAmount[_accounts[u]].add(
-					_balances[u].mul(reward.integral.sub(userI)).div(1e20)
-				);
-				uint256 receivable_user = (receiveable * (1 ether - protocolFee)) / 1 ether; //90% of reward
-				if (_isClaim) {
-					if (receiveable > 0) {
-						reward.claimableAmount[_accounts[u]] = 0;
-						//cheat for gas savings by transfering to the second index in accounts list
-						//if claiming only the 0 index will update so 1 index can hold forwarding info
-						//guaranteed to have an address in u+1 so no need to check
-						//Deduct protocol fee
-						IERC20(reward.token).safeTransfer(_accounts[u + 1], receivable_user);
-						//Add protocol rewards as claimable, to be claimed at a later date
-						reward.claimableAmount[treasuryAddress] += receiveable - receivable_user;
-						bal = bal.sub(receiveable);
+			uint _accountIntegral = reward.integralFor[_account];
+			if (_isClaim || _accountIntegral < reward.integral) {
+				// reward.claimableAmount[_accounts[_i]] contains the current claimable amount, to that we add
+				// add(_balances[_i].mul(reward.integral.sub(_accountIntegral)) => token_balance * (general_reward/token - user_claimed_reward/token)
+
+				uint256 _newClaimableAmount = (_balances[_i] * (reward.integral - _accountIntegral)) / 1e20;
+				uint256 _rewardAmount = reward.claimableAmount[_account] + _newClaimableAmount;
+
+				if (_rewardAmount != 0) {
+					uint256 _userRewardAmount = (_rewardAmount * (1 ether - protocolFee)) / 1 ether;
+					uint256 _treasuryRewardAmount = _rewardAmount - _userRewardAmount;
+
+					if (_isClaim) {
+						reward.claimableAmount[_account] = 0;
+						IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
+						_contractBalance -= _rewardAmount;
+					} else {
+						reward.claimableAmount[_account] = _userRewardAmount;
 					}
-				} else {
-					reward.claimableAmount[_accounts[u]] = receivable_user;
-					reward.claimableAmount[treasuryAddress] += receiveable - receivable_user;
+					reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
 				}
-				reward.integralFor[_accounts[u]] = reward.integral;
+				reward.integralFor[_account] = reward.integral;
+			}
+			if (_isClaim) {
+				break; // only update/claim for first address (second address is the forwarding address)
 			}
 		}
 
-		// update remaining reward here since balance could have changed if claiming
-		if (bal != reward.remaining) {
-			reward.remaining = bal;
+		// update remaining reward here since balance could have changed (on a claim)
+		if (_contractBalance != reward.remaining) {
+			reward.remaining = _contractBalance;
 		}
 	}
 
