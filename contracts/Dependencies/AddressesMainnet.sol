@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity ^0.8.19;
 
 abstract contract AddressesMainnet {
 	address public constant activePool = 0x2b0024ecee0626E9cFB5F0195F69DCaC5b759Dc9;

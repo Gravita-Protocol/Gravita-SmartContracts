@@ -20,13 +20,10 @@
 	"license": "ISC",
 	"dependencies": {
 		"@chainlink/contracts": "^0.2.3",
-		"@openzeppelin/contracts-3.4.0": "npm:@openzeppelin/contracts@^3.4.0",
 		"@openzeppelin/contracts-upgradeable": "^4.8.3",
-		"dotenv": "^16.0.3",
-		"solc": "^0.6.12"
+		"dotenv": "^16.0.3"
 	},
 	"devDependencies": {
-		"@defi-wonderland/smock": "^2.3.4",
 		"@enzoferey/ethers-error-parser": "^0.2.3",
 		"@ethersproject/abi": "^5.7.0",
 		"@ethersproject/providers": "^5.7.2",

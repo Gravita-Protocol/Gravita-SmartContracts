@@ -1,27 +1,35 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-3.4.0/access/Ownable.sol";
-import "@openzeppelin/contracts-3.4.0/math/SafeMath.sol";
-import "@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-3.4.0/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts-3.4.0/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts-3.4.0/utils/Pausable.sol";
-import "@openzeppelin/contracts-3.4.0/utils/ReentrancyGuard.sol";
+pragma solidity ^0.8.19;
 
-import "./Addresses.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "./Interfaces/IBooster.sol";
 import "./Interfaces/IConvexDeposits.sol";
 import "./Interfaces/IRewardStaking.sol";
 import "./Interfaces/ITokenWrapper.sol";
+import "../../Addresses.sol";
 
 /**
  * @dev Wrapper based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
  */
-contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addresses {
+contract ConvexStakingWrapper is
+	OwnableUpgradeable,
+	UUPSUpgradeable,
+	ReentrancyGuardUpgradeable,
+	PausableUpgradeable,
+	ERC20Upgradeable,
+	Addresses
+{
 	using SafeERC20 for IERC20;
-	using SafeMath for uint256;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -64,19 +72,16 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 	// State ------------------------------------------------------------------------------------------------------------
 
 	RewardType[] public rewards;
-	mapping(address => uint256) public registeredRewards;
-	mapping(address => address) public rewardRedirect;
-
-	bool public isInitiliazed;
-
+	mapping(address => uint256) public registeredRewards; // rewardToken -> index in rewards[] + 1
+	mapping(address => address) public rewardRedirect; // account -> redirectTo
 	uint256 public protocolFee = 0.15 ether;
 
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
-	constructor() public ERC20("GravitaCurveToken", "grCRV") {}
-
-	function initialize(uint256 _poolId) external virtual onlyOwner {
-		require(!isInitiliazed, "Already initialized");
+	function initialize(uint256 _poolId) external initializer {
+		__ERC20_init("GravitaCurveToken", "grCRV");
+		__Ownable_init();
+		__UUPSUpgradeable_init();
 
 		(address _lptoken, address _token, , address _rewards, , ) = IBooster(convexBooster).poolInfo(_poolId);
 		curveToken = _lptoken;
@@ -86,8 +91,6 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 		addRewards();
 		setApprovals();
-
-		isInitiliazed = true;
 	}
 
 	// Admin (Owner) functions ------------------------------------------------------------------------------------------
@@ -96,8 +99,11 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		address _convexPool = convexPool;
 
 		if (rewards.length == 0) {
-			rewards.push(RewardType({ token: crv, pool: _convexPool, integral: 0, remaining: 0 }));
-			rewards.push(RewardType({ token: cvx, pool: address(0), integral: 0, remaining: 0 }));
+			RewardType storage newCrvReward = rewards.push();
+			newCrvReward.token = crv;
+			newCrvReward.pool = _convexPool;
+			RewardType storage newCvxReward = rewards.push();
+			newCvxReward.token = cvx;
 			registeredRewards[crv] = CRV_INDEX + 1;
 			registeredRewards[cvx] = CVX_INDEX + 1;
 			/// @dev commented the transfer below until understanding its value
@@ -122,7 +128,9 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 				rewards[CVX_INDEX].pool = _extraPool;
 			} else if (registeredRewards[_extraToken] == 0) {
 				// add new token to list
-				rewards.push(RewardType({ token: _extraToken, pool: _extraPool, integral: 0, remaining: 0 }));
+				RewardType storage newReward = rewards.push();
+				newReward.token = _extraToken;
+				newReward.pool = _extraPool;
 				registeredRewards[_extraToken] = rewards.length;
 				emit RewardAdded(_extraToken);
 			}
@@ -132,7 +140,8 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 	function addTokenReward(address _token) public virtual onlyOwner {
 		// check if not registered yet
 		if (registeredRewards[_token] == 0) {
-			rewards.push(RewardType({ token: _token, pool: address(0), integral: 0, remaining: 0 }));
+			RewardType storage newReward = rewards.push();
+			newReward.token = _token;
 			registeredRewards[_token] = rewards.length; //mark registered at index+1
 			/// @dev commented the transfer below until understanding its value
 			// send to self to warmup state
@@ -172,9 +181,9 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 
 	function setApprovals() public onlyOwner {
 		IERC20(curveToken).safeApprove(convexBooster, 0);
-		IERC20(curveToken).safeApprove(convexBooster, uint256(-1));
+		IERC20(curveToken).safeApprove(convexBooster, type(uint256).max);
 		IERC20(convexToken).safeApprove(convexPool, 0);
-		IERC20(convexToken).safeApprove(convexPool, uint256(-1));
+		IERC20(convexToken).safeApprove(convexPool, type(uint256).max);
 	}
 
 	function pause() external onlyOwner {
@@ -430,4 +439,12 @@ contract ConvexStakingWrapper is ERC20, ReentrancyGuard, Ownable, Pausable, Addr
 		require(timelockAddress == msg.sender, "Only Timelock");
 		_;
 	}
+
+	// Upgrades ---------------------------------------------------------------------------------------------------------
+
+	function authorizeUpgrade(address newImplementation) public {
+		_authorizeUpgrade(newImplementation);
+	}
+
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

@@ -5,11 +5,10 @@ const {
 	time,
 } = require("@nomicfoundation/hardhat-network-helpers")
 
-const Booster = artifacts.require("Booster")
-const ConvexToken = artifacts.require("ConvexToken")
-const BaseRewardPool = artifacts.require("BaseRewardPool")
+const Booster = artifacts.require("IBooster")
+const BaseRewardPool = artifacts.require("IBaseRewardPool")
 const ConvexStakingWrapper = artifacts.require("ConvexStakingWrapper")
-const IERC20 = artifacts.require("@openzeppelin/contracts-3.4.0/token/ERC20/IERC20.sol:IERC20")
+const IERC20 = artifacts.require("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20")
 
 const f = v => ethers.utils.formatEther(v.toString())
 const toEther = v => ethers.utils.parseEther(v.toString())
@@ -54,7 +53,7 @@ contract("StakeWrapperCvx", async accounts => {
 		let deployer = "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277"
 
 		let booster = await Booster.at("0xF403C135812408BFbE8713b5A23a04b3D48AAE31")
-		let cvx = await ConvexToken.at("0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B")
+		let cvx = await IERC20.at("0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B")
 		let crv = await IERC20.at("0xD533a949740bb3306d119CC777fa900bA034cd52")
 
 		let userA = accounts[0]

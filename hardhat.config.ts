@@ -56,21 +56,6 @@ module.exports = {
 					},
 				},
 			},
-			{
-				// version 0.6.12 is used by integrations (StakeWrapper)
-				version: "0.6.12",
-				settings: {
-					optimizer: {
-						enabled: true,
-						runs: 200,
-					},
-					outputSelection: {
-						"*": {
-							"*": ["storageLayout"],
-						},
-					},
-				},
-			},
 		],
 	},
 	networks: {
@@ -82,7 +67,7 @@ module.exports = {
 		hardhat: {
 			// url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
 			// chainId: 1,
-			// accounts: { 
+			// accounts: {
 			// 	mnemonic: "test test test test test test test test test test test junk",
 			// 	count: 20
 			// },
