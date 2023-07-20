@@ -9,7 +9,7 @@
 	"scripts": {
 		"hardhat": "hardhat",
 		"test": "hardhat test --max-memory 4096 --show-stack-traces",
-		"test-fork": "npx hardhat test ./test/gravita-fork/ConvexStakingWrapper.js --show-stack-traces",
+		"test-fork": "npx hardhat test ./test/gravita-fork/ConvexStakingWrapper.ts --show-stack-traces",
 		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
 		"deploy-core-goerli": "npx hardhat deploy-core-goerli --network goerli --show-stack-traces",
 		"deploy-core-arbitrum-goerli": "npx hardhat deploy-core-arbitrum-goerli --network arbitrum_goerli --show-stack-traces",
@@ -40,6 +40,7 @@
 		"@openzeppelin/test-helpers": "^0.5.16",
 		"@typechain/ethers-v5": "^10.2.1",
 		"@typechain/hardhat": "^6.1.6",
+		"@types/mocha": "^10.0.1",
 		"chai": "^4.3.7",
 		"decimal.js": "^10.4.3",
 		"eth-gas-reporter": "^0.2.25",
