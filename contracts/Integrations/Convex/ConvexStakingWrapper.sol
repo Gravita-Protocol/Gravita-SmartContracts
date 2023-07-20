@@ -195,8 +195,12 @@ contract ConvexStakingWrapper is
 	 * from https://github.com/convex-eth/platform/blob/main/contracts/contracts/Booster.sol
 	 * "Claim crv and extra rewards and disperse to reward contracts"
 	 */
-	function earmarkRewards() external returns (bool) {
+	function earmarkBoosterRewards() external returns (bool) {
 		return IBooster(convexBooster).earmarkRewards(convexPoolId);
+	}
+
+	function userCheckpoint() external {
+		_checkpoint([msg.sender, address(0)], false);
 	}
 
 	function userCheckpoint(address _account) external {
@@ -266,18 +270,6 @@ contract ConvexStakingWrapper is
 			return balanceOf(_account) + gravitaBalanceOf(_account);
 		}
 		return 0;
-	}
-
-	/**
-	 * @dev While in Gravita pools, collateral is accounted to the respective borrower/depositor.
-	 */
-	function _isValidAccount(address _account) internal view returns (bool) {
-		return
-			!(_account == address(0) ||
-				_account == activePool ||
-				_account == collSurplusPool ||
-				_account == defaultPool ||
-				_account == stabilityPool);
 	}
 
 	// withdraw to convex deposit token
@@ -352,6 +344,18 @@ contract ConvexStakingWrapper is
 		IERC20(curveToken).safeApprove(convexBooster, type(uint256).max);
 		IERC20(convexToken).safeApprove(convexPool, 0);
 		IERC20(convexToken).safeApprove(convexPool, type(uint256).max);
+	}
+
+	/**
+	 * @dev While in Gravita pools, collateral is accounted to the respective borrower/depositor.
+	 */
+	function _isValidAccount(address _account) internal view returns (bool) {
+		return
+			!(_account == address(0) ||
+				_account == activePool ||
+				_account == collSurplusPool ||
+				_account == defaultPool ||
+				_account == stabilityPool);
 	}
 
 	/**

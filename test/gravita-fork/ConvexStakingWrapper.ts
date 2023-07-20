@@ -72,7 +72,6 @@ const formatEarnedData = (earnedDataArray: any) => {
 
 const deployWrapper = async (poolId: number) => {
 	await setBalance(deployer, 10e18)
-	await impersonateAccount(deployer)
 	wrapper = await ConvexStakingWrapper.new({ from: deployer })
 	await wrapper.initialize(poolId, { from: deployer })
 	await wrapper.setAddresses(
@@ -95,24 +94,22 @@ const deployWrapper = async (poolId: number) => {
 		],
 		{ from: deployer }
 	)
-	await stopImpersonatingAccount(deployer)
 }
 
 const setupWrapperAsCollateral = async () => {
 	// Setup a mock price feed (as owner)
-	wrapperPriceFeed = await MockAggregator.new({ from: deployer })
-
 	const gravitaOwner = await adminContract.owner()
-	await impersonateAccount(gravitaOwner)
 	await setBalance(gravitaOwner, 10e18)
+	await impersonateAccount(gravitaOwner)
+	wrapperPriceFeed = await MockAggregator.new({ from: gravitaOwner })
 	const priceFeed = await PriceFeed.at(await adminContract.priceFeed())
 	await priceFeed.setOracle(wrapper.address, wrapperPriceFeed.address, 0, 3_600, false, false, { from: gravitaOwner })
 	await stopImpersonatingAccount(gravitaOwner)
 
 	// Setup collateral (as timelock)
 	const timelockAddress = await adminContract.timelockAddress()
-	await impersonateAccount(timelockAddress)
 	await setBalance(timelockAddress, 10e18)
+	await impersonateAccount(timelockAddress)
 	await adminContract.addNewCollateral(wrapper.address, toEther("200"), 18, { from: timelockAddress })
 	await adminContract.setCollateralParameters(
 		wrapper.address,
@@ -162,12 +159,33 @@ describe("ConvextStakingWrapper", async () => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
-	it("should deposit lp tokens and earn rewards while being transferable", async () => {
-		console.log(`curveLP.transfer from gauge to alice`)
-		await impersonateAccount(gaugeAddress)
+	it.only("simple metrics check", async () => {
+		const aliceBalance = toEther("100")
+		// give alice 100 curveLP from gauge
 		await setBalance(gaugeAddress, 20e18)
+		await impersonateAccount(gaugeAddress)
+		await curveLP.transfer(alice, aliceBalance, { from: gaugeAddress })
+		await stopImpersonatingAccount(gaugeAddress)
+		// alice deposits into wrapper
+		await curveLP.approve(wrapper.address, aliceBalance, { from: alice })
+		await wrapper.depositCurveTokens(aliceBalance, alice, { from: alice })
+		// fast forward 10 days
+		await time.increase(10 * 24 * 60 * 60)
+		// sync wrapper contract rewards
+		await wrapper.userCheckpoint({ from: alice })
+		// await convexRewards.getReward(wrapper.address, true) --> should yield the same effect as the previous line
+		await wrapper.earmarkBoosterRewards()
+		// await booster.earmarkRewards(poolId, { from: wrapper.address }) --> should yield the same effect as the previous line
+
+		await printBalances([alice])
+		await printRewards()
+
+	})
+
+	it("original test: should deposit lp tokens and earn rewards while being transferable", async () => {
+		await setBalance(gaugeAddress, 20e18)
+		await impersonateAccount(gaugeAddress)
 		await curveLP.transfer(alice, toEther("10"), { from: gaugeAddress })
-		console.log(`curveLP.transfer from gauge to bob`)
 		await curveLP.transfer(bob, toEther("5"), { from: gaugeAddress })
 		await stopImpersonatingAccount(gaugeAddress)
 
@@ -179,19 +197,21 @@ describe("ConvextStakingWrapper", async () => {
 		await printRewards()
 
 		// alice will deposit curve tokens and bob, convex
-		console.log("Approving Booster and wrapper for alice and bob")
+		console.log("Approve Booster and wrapper for alice and bob")
 		await curveLP.approve(wrapper.address, aliceBalance, { from: alice })
 		await curveLP.approve(booster.address, bobBalance, { from: bob })
 		await convexLP.approve(wrapper.address, bobBalance, { from: bob })
 
-		console.log("bob depositing into Booster")
+		console.log("alice deposits into wrapper")
+		await wrapper.depositCurveTokens(aliceBalance, alice, { from: alice })
+
+		console.log("bob deposits into Booster")
 		await booster.depositAll(poolId, false, { from: bob })
 		console.log(`ConvexLP.balanceOf(bob): ${f(await convexLP.balanceOf(bob))}`)
 
-		console.log("alice depositing into wrapper")
-		await wrapper.depositCurveTokens(aliceBalance, alice, { from: alice })
-		console.log("bob staking into wrapper")
+		console.log("bob stakes into wrapper")
 		await wrapper.stakeConvexTokens(bobBalance, bob, { from: bob })
+
 		console.log(`Wrapper supply: ${f(await wrapper.totalSupply())}`)
 
 		await printBalances([alice, bob])
@@ -207,10 +227,8 @@ describe("ConvextStakingWrapper", async () => {
 		console.log("ConvexRewards.getReward()")
 		await convexRewards.getReward(wrapper.address, true)
 
-		await impersonateAccount(deployer)
 		console.log("Booster.earmarkRewards()")
 		await booster.earmarkRewards(poolId, { from: deployer })
-		await stopImpersonatingAccount(deployer)
 
 		await printBalances([alice, bob])
 		await printRewards()
@@ -227,10 +245,8 @@ describe("ConvextStakingWrapper", async () => {
 		await printBalances([alice, bob])
 		await printRewards()
 
-		await impersonateAccount(deployer)
 		console.log("Booster.earmarkRewards()")
 		await booster.earmarkRewards(poolId, { from: deployer })
-		await stopImpersonatingAccount(deployer)
 
 		console.log(" --- Advancing 5 more days --- ")
 		await time.increase(86_400 * 5)
@@ -244,10 +260,8 @@ describe("ConvextStakingWrapper", async () => {
 		await printBalances([alice, bob])
 		await printRewards()
 
-		await impersonateAccount(deployer)
 		console.log("Booster.earmarkRewards()")
 		await booster.earmarkRewards(poolId, { from: deployer })
-		await stopImpersonatingAccount(deployer)
 
 		console.log(" --- Advancing 10 more days --- ")
 		await time.increase(86_400 * 5)
