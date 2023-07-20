@@ -37,6 +37,7 @@ const toEther = (v: any) => ethers.utils.parseEther(v.toString())
 const addrToName = (v: string) => (v == alice ? `alice` : v == bob ? `bob` : `${v.substring(0, 6)}...`)
 
 const printBalances = async (accounts: string[]) => {
+	await wrapper.earmarkBoosterRewards()
 	for (const account of accounts) {
 		await wrapper.userCheckpoint(account)
 		console.log(`Wrapper.earned(${addrToName(account)}): ${formatEarnedData(await wrapper.getEarnedRewards(account))}`)
@@ -125,7 +126,7 @@ const setupWrapperAsCollateral = async () => {
 	await stopImpersonatingAccount(timelockAddress)
 }
 
-describe("ConvextStakingWrapper", async () => {
+describe("ConvexStakingWrapper", async () => {
 	before(async () => {
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 
@@ -170,15 +171,12 @@ describe("ConvextStakingWrapper", async () => {
 		await curveLP.approve(wrapper.address, aliceBalance, { from: alice })
 		await wrapper.depositCurveTokens(aliceBalance, alice, { from: alice })
 		// fast forward 10 days
-		await time.increase(10 * 24 * 60 * 60)
-		// sync wrapper contract rewards
-		await wrapper.userCheckpoint({ from: alice })
-		// await convexRewards.getReward(wrapper.address, true) --> should yield the same effect as the previous line
-		await wrapper.earmarkBoosterRewards()
-		// await booster.earmarkRewards(poolId, { from: wrapper.address }) --> should yield the same effect as the previous line
-
+		await time.increase(10 * 86_400)
 		await printBalances([alice])
 		await printRewards()
+	})
+
+	it("happy path: openVessel, closeVessel", async () => {
 
 	})
 
