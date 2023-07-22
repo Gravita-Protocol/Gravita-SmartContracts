@@ -22,6 +22,9 @@ import "../../Interfaces/IStabilityPool.sol";
 import "../../Interfaces/IVesselManager.sol";
 import "../../Addresses.sol";
 
+import "@openzeppelin/contracts/utils/Strings.sol"; //debug
+import "hardhat/console.sol"; //debug
+
 /**
  * @dev Wrapper based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
  */
@@ -252,6 +255,13 @@ contract ConvexStakingWrapper is
 		}
 	}
 
+	function totalBalanceOf(address _account) public view returns (uint256) {
+		if (_account == address(0) || _isGravitaPool(_account)) {
+			return 0;
+		}
+		return balanceOf(_account) + gravitaBalanceOf(_account);
+	}
+
 	function rewardsLength() external view returns (uint256) {
 		return rewards.length;
 	}
@@ -263,13 +273,6 @@ contract ConvexStakingWrapper is
 	function setRewardRedirect(address _to) external nonReentrant {
 		rewardRedirect[msg.sender] = _to;
 		emit RewardRedirected(msg.sender, _to);
-	}
-
-	function totalBalanceOf(address _account) public view returns (uint256) {
-		if (_isValidAccount(_account)) {
-			return balanceOf(_account) + gravitaBalanceOf(_account);
-		}
-		return 0;
 	}
 
 	// withdraw to convex deposit token
@@ -346,16 +349,9 @@ contract ConvexStakingWrapper is
 		IERC20(convexToken).safeApprove(convexPool, type(uint256).max);
 	}
 
-	/**
-	 * @dev While in Gravita pools, collateral is accounted to the respective borrower/depositor.
-	 */
-	function _isValidAccount(address _account) internal view returns (bool) {
+	function _isGravitaPool(address _address) internal view returns (bool) {
 		return
-			!(_account == address(0) ||
-				_account == activePool ||
-				_account == collSurplusPool ||
-				_account == defaultPool ||
-				_account == stabilityPool);
+			_address == activePool || _address == collSurplusPool || _address == defaultPool || _address == stabilityPool;
 	}
 
 	/**
@@ -370,6 +366,7 @@ contract ConvexStakingWrapper is
 	/// @param _accounts[1] to address
 	/// @param _claim flag to perform rewards claiming
 	function _checkpoint(address[2] memory _accounts, bool _claim) internal nonReentrant {
+		console.log("checkpoint(%s, %s)", addrToName(_accounts[0]), addrToName(_accounts[1]));
 		uint256[2] memory _depositedBalances;
 		_depositedBalances[0] = totalBalanceOf(_accounts[0]);
 		if (!_claim) {
@@ -418,7 +415,7 @@ contract ConvexStakingWrapper is
 		// update user (and treasury) integrals
 		for (uint256 _i; _i < _accounts.length; ) {
 			address _account = _accounts[_i];
-			if (_isValidAccount(_account)) {
+			if (_account != address(0) && !_isGravitaPool(_account)) {
 				uint _accountIntegral = reward.integralFor[_account];
 				if (_isClaim || _accountIntegral < reward.integral) {
 					// reward.claimableAmount[_accounts[_i]] contains the current claimable amount, to that we add
@@ -435,7 +432,9 @@ contract ConvexStakingWrapper is
 							reward.claimableAmount[_account] = 0;
 							IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
 							_contractBalance -= _rewardAmount;
+							console.log("transferring to %s: %s", addrToName(_account), f(_userRewardAmount));
 						} else {
+							console.log("reward.claimableAmount[%s] = %s", addrToName(_account), f(_userRewardAmount));
 							reward.claimableAmount[_account] = _userRewardAmount;
 						}
 						reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
@@ -479,4 +478,54 @@ contract ConvexStakingWrapper is
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
+
+	// TEMP/DEBUG -------------------------------------------------------------------------------------------------------
+
+	/**
+	 * TEMPORARY formatting/debug/helper functions
+	 * TODO remove for production deployment
+	 */
+
+	function addrToName(address anAddress) internal view returns (string memory) {
+		if (anAddress == activePool) return "ActivePool";
+		if (anAddress == collSurplusPool) return "CollSurplusPool";
+		if (anAddress == defaultPool) return "DefaultPool";
+		if (anAddress == stabilityPool) return "StabilityPool";
+		return addrToStr(anAddress);
+	}
+
+	function addrToStr(address _addr) public pure returns (string memory) {
+		bytes32 value = bytes32(uint256(uint160(_addr)));
+		bytes memory alphabet = "0123456789abcdef";
+		bytes memory str = new bytes(51);
+		str[0] = "0";
+		str[1] = "x";
+		for (uint256 i = 0; i < 2; i++) {
+			str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
+			str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
+		}
+		return string(str);
+	}
+
+	function f(uint256 value) internal pure returns (string memory) {
+		string memory sInput = Strings.toString(value);
+		bytes memory bInput = bytes(sInput);
+		uint256 len = bInput.length > 18 ? bInput.length + 1 : 20;
+		string memory sResult = new string(len);
+		bytes memory bResult = bytes(sResult);
+		if (bInput.length <= 18) {
+			bResult[0] = "0";
+			bResult[1] = ".";
+			for (uint256 i = 1; i <= 18 - bInput.length; i++) bResult[i + 1] = "0";
+			for (uint256 i = bInput.length; i > 0; i--) bResult[--len] = bInput[i - 1];
+		} else {
+			uint256 c = 0;
+			uint256 i = bInput.length;
+			while (i > 0) {
+				bResult[--len] = bInput[--i];
+				if (++c == 18) bResult[--len] = ".";
+			}
+		}
+		return string(bResult);
+	}
 }

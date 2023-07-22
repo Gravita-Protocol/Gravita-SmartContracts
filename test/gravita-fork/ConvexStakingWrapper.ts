@@ -5,8 +5,11 @@ import {
 	impersonateAccount,
 	stopImpersonatingAccount,
 } from "@nomicfoundation/hardhat-network-helpers"
+import { AddressZero, MaxUint256 } from "@ethersproject/constants"
 
 const AdminContract = artifacts.require("AdminContract")
+const BorrowerOperations = artifacts.require("BorrowerOperations")
+const DebtToken = artifacts.require("DebtToken")
 const MockAggregator = artifacts.require("MockAggregator")
 const PriceFeed = artifacts.require("PriceFeed")
 
@@ -16,6 +19,7 @@ const ConvexStakingWrapper = artifacts.require("ConvexStakingWrapper")
 const IERC20 = artifacts.require("IERC20")
 
 let adminContract: any
+let borrowerOperations: any
 let wrapper: any
 let wrapperPriceFeed: any
 
@@ -30,7 +34,7 @@ let gaugeAddress = "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1"
 let poolId = 64
 
 let snapshotId: number, initialSnapshotId: number
-let alice: string, bob: string, deployer: string
+let alice: string, bob: string, whale: string, deployer: string
 
 const f = (v: any) => ethers.utils.formatEther(v.toString())
 const toEther = (v: any) => ethers.utils.parseEther(v.toString())
@@ -40,12 +44,12 @@ const printBalances = async (accounts: string[]) => {
 	await wrapper.earmarkBoosterRewards()
 	for (const account of accounts) {
 		await wrapper.userCheckpoint(account)
-		console.log(`Wrapper.earned(${addrToName(account)}): ${formatEarnedData(await wrapper.getEarnedRewards(account))}`)
+		console.log(`Wrapper.getEarnedRewards(${addrToName(account)}): ${formatEarnedData(await wrapper.getEarnedRewards(account))}`)
 		console.log(`CRV.balanceOf(${addrToName(account)}): ${f(await crv.balanceOf(account))}`)
 		console.log(`CVX.balanceOf(${addrToName(account)}): ${f(await cvx.balanceOf(account))}`)
 	}
 	console.log(
-		`Wrapper.earned(treasury): ${formatEarnedData(await wrapper.getEarnedRewards(await wrapper.treasuryAddress()))}`
+		`Wrapper.getEarnedRewards(treasury): ${formatEarnedData(await wrapper.getEarnedRewards(await wrapper.treasuryAddress()))}`
 	)
 	console.log(`CRV.balanceOf(wrapper): ${f(await crv.balanceOf(wrapper.address))}`)
 	console.log(`CVX.balanceOf(wrapper): ${f(await cvx.balanceOf(wrapper.address))}`)
@@ -71,7 +75,7 @@ const formatEarnedData = (earnedDataArray: any) => {
 	})
 }
 
-const deployWrapper = async (poolId: number) => {
+const deployWrapperContract = async (poolId: number) => {
 	await setBalance(deployer, 10e18)
 	wrapper = await ConvexStakingWrapper.new({ from: deployer })
 	await wrapper.initialize(poolId, { from: deployer })
@@ -98,7 +102,7 @@ const deployWrapper = async (poolId: number) => {
 }
 
 const setupWrapperAsCollateral = async () => {
-	// Setup a mock price feed (as owner)
+	// setup a mock price feed (as owner)
 	const gravitaOwner = await adminContract.owner()
 	await setBalance(gravitaOwner, 10e18)
 	await impersonateAccount(gravitaOwner)
@@ -107,7 +111,7 @@ const setupWrapperAsCollateral = async () => {
 	await priceFeed.setOracle(wrapper.address, wrapperPriceFeed.address, 0, 3_600, false, false, { from: gravitaOwner })
 	await stopImpersonatingAccount(gravitaOwner)
 
-	// Setup collateral (as timelock)
+	// setup collateral (as timelock)
 	const timelockAddress = await adminContract.timelockAddress()
 	await setBalance(timelockAddress, 10e18)
 	await impersonateAccount(timelockAddress)
@@ -126,11 +130,40 @@ const setupWrapperAsCollateral = async () => {
 	await stopImpersonatingAccount(timelockAddress)
 }
 
+const initGravitaCurveSetup = async () => {
+	await deployWrapperContract(poolId)
+	await setupWrapperAsCollateral()
+	// assign CurveLP tokens to whale, alice and bob
+	await setBalance(gaugeAddress, 20e18)
+	await impersonateAccount(gaugeAddress)
+	await curveLP.transfer(alice, toEther(100), { from: gaugeAddress })
+	await curveLP.transfer(bob, toEther(100), { from: gaugeAddress })
+	await curveLP.transfer(whale, toEther(10_000), { from: gaugeAddress })
+	await stopImpersonatingAccount(gaugeAddress)
+	// issue token transfer approvals
+	await curveLP.approve(wrapper.address, MaxUint256, { from: alice })
+	await curveLP.approve(wrapper.address, MaxUint256, { from: bob })
+	await curveLP.approve(wrapper.address, MaxUint256, { from: whale })
+	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: alice })
+	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: bob })
+	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: whale })
+	// whale opens a vessel
+	await wrapper.depositCurveTokens(await curveLP.balanceOf(whale), whale, { from: whale })
+	await borrowerOperations.openVessel(wrapper.address, toEther(5_000), toEther(5_000), AddressZero, AddressZero, {
+		from: whale,
+	})
+	// give alice & bob some grai for fees
+	const debtToken = await DebtToken.at(await adminContract.debtToken())
+	await debtToken.transfer(alice, toEther(100), { from: whale })
+	await debtToken.transfer(bob, toEther(100), { from: whale })
+}
+
 describe("ConvexStakingWrapper", async () => {
 	before(async () => {
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 
 		adminContract = await AdminContract.at("0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53")
+		borrowerOperations = await BorrowerOperations.at(await adminContract.borrowerOperations())
 
 		booster = await Booster.at("0xF403C135812408BFbE8713b5A23a04b3D48AAE31")
 		cvx = await IERC20.at("0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B")
@@ -143,9 +176,9 @@ describe("ConvexStakingWrapper", async () => {
 		deployer = await accounts[0].getAddress()
 		alice = await accounts[1].getAddress()
 		bob = await accounts[2].getAddress()
+		whale = await accounts[3].getAddress()
 
-		await deployWrapper(poolId)
-		await setupWrapperAsCollateral()
+		await initGravitaCurveSetup()
 	})
 
 	beforeEach(async () => {
@@ -160,24 +193,44 @@ describe("ConvexStakingWrapper", async () => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
-	it.only("simple metrics check", async () => {
-		const aliceBalance = toEther("100")
-		// give alice 100 curveLP from gauge
-		await setBalance(gaugeAddress, 20e18)
-		await impersonateAccount(gaugeAddress)
-		await curveLP.transfer(alice, aliceBalance, { from: gaugeAddress })
-		await stopImpersonatingAccount(gaugeAddress)
-		// alice deposits into wrapper
-		await curveLP.approve(wrapper.address, aliceBalance, { from: alice })
-		await wrapper.depositCurveTokens(aliceBalance, alice, { from: alice })
-		// fast forward 10 days
-		await time.increase(10 * 86_400)
-		await printBalances([alice])
+	it.only("happy path: openVessel, closeVessel", async () => {
+		// alice & bob deposit into wrapper
+		console.log(` --> depositCurveTokens()`)
+		await wrapper.depositCurveTokens(await curveLP.balanceOf(alice), alice, { from: alice })
+		console.log(` --> depositCurveTokens()`)
+		await wrapper.depositCurveTokens(await curveLP.balanceOf(bob), bob, { from: bob })
+		// only alice opens a vessel
+		console.log(`wrapper.balanceOf(alice): ${f(await wrapper.balanceOf(alice))}`)
+		console.log(`wrapper.gravitaBalanceOf(alice): ${f(await wrapper.gravitaBalanceOf(alice))}`)
+		console.log(`wrapper.totalBalanceOf(alice): ${f(await wrapper.totalBalanceOf(alice))}`)
+		console.log(`--> openVessel()`)
+		await borrowerOperations.openVessel(wrapper.address, toEther(100), toEther(2_000), AddressZero, AddressZero, {
+			from: alice,
+		})
+		console.log(`wrapper.balanceOf(alice): ${f(await wrapper.balanceOf(alice))}`)
+		console.log(`wrapper.gravitaBalanceOf(alice): ${f(await wrapper.gravitaBalanceOf(alice))}`)
+		console.log(`wrapper.totalBalanceOf(alice): ${f(await wrapper.totalBalanceOf(alice))}`)
+		// fast forward 90 days
+		await time.increase(90 * 86_400)
+		// alice closes vessel
+		console.log(`--> closeVessel()`)
+		await borrowerOperations.closeVessel(wrapper.address, { from: alice })
+		// both claim rewards & unwrap
+		console.log(`--> claimEarnedRewards()`)
+		//await wrapper.earmarkBoosterRewards()
+		await wrapper.claimEarnedRewards(alice)
+		await wrapper.claimEarnedRewards(bob)
+		console.log(`--> withdrawAndUnwrap()`)
+		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(alice), { from: alice })
+		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
+
+		console.log(`wrapper.balanceOf(ActivePool): ${f(await wrapper.balanceOf(await adminContract.activePool()))}`)
+		console.log(`curveLP.balanceOf(alice): ${f(await curveLP.balanceOf(alice))}`)
+		console.log(`curveLP.balanceOf(bob): ${f(await curveLP.balanceOf(alice))}`)
+
+		// TODO at this point, both alice and bob should have the same rewards; investigate why it is not the case
+		await printBalances([alice, bob])
 		await printRewards()
-	})
-
-	it("happy path: openVessel, closeVessel", async () => {
-
 	})
 
 	it("original test: should deposit lp tokens and earn rewards while being transferable", async () => {
