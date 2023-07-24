@@ -31,7 +31,7 @@ const COLLATERAL = [
     {
         name: "wstETH",
         address: "0x5979D7b546E38E414F7E9822514be443A4800529",
-        oracleAddress: "0x07C5b924399cc23c24a95c8743DE4006a32b7f2a",
+        oracleAddress: "", // TODO deploy
         oracleTimeoutMinutes: 4500, // TODO: CHECK
         oracleIsEthIndexed: false,
         MCR: toEther(1.176),
@@ -45,7 +45,7 @@ const COLLATERAL = [
         address: "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
         oracleAddress: "0xF3272CAfe65b190e76caAF483db13424a3e23dD2",
         oracleTimeoutMinutes: 90000, // TODO: CHECK
-        oracleIsEthIndexed: false,
+        oracleIsEthIndexed: true,
         MCR: toEther(1.176),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
