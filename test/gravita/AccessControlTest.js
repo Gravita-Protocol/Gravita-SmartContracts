@@ -42,7 +42,7 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 		for (account of accounts.slice(0, 10)) {
 			await openVessel({
 				asset: erc20.address,
-				extraVUSDAmount: toBN(dec(20000, 18)),
+				extraGRAIAmount: toBN(dec(20000, 18)),
 				ICR: toBN(dec(2, 18)),
 				extraParams: { from: account },
 			})

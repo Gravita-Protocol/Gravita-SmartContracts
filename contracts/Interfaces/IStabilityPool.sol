@@ -40,6 +40,7 @@ interface IStabilityPool is IDeposit {
 	error StabilityPool__ActivePoolOnly(address sender, address expected);
 	error StabilityPool__AdminContractOnly(address sender, address expected);
 	error StabilityPool__VesselManagerOnly(address sender, address expected);
+	error StabilityPool__ArrayNotInAscendingOrder();
 
 	// --- Functions ---
 
@@ -52,7 +53,7 @@ interface IStabilityPool is IDeposit {
 	 * - Triggers a GRVT issuance, based on time passed since the last issuance. The GRVT issuance is shared between *all* depositors.
 	 * - Sends depositor's accumulated gains (GRVT, assets) to depositor
 	 */
-	function provideToSP(uint256 _amount) external;
+	function provideToSP(uint256 _amount, address[] calldata _assets) external;
 
 	/*
 	 * Initial checks:
@@ -65,7 +66,7 @@ interface IStabilityPool is IDeposit {
 	 *
 	 * If _amount > userDeposit, the user withdraws all of their compounded deposit.
 	 */
-	function withdrawFromSP(uint256 _amount) external;
+	function withdrawFromSP(uint256 _amount, address[] calldata _assets) external;
 
 	/*
 	Initial checks:
@@ -85,7 +86,10 @@ interface IStabilityPool is IDeposit {
 	/*
 	 * Calculates the asset gains earned by the deposit since its last snapshots were taken.
 	 */
-	function getDepositorGains(address _depositor) external view returns (address[] memory, uint256[] memory);
+	function getDepositorGains(
+		address _depositor,
+		address[] calldata _assets
+	) external view returns (address[] memory, uint256[] memory);
 
 	/*
 	 * Calculate the GRVT gain earned by a deposit since its last snapshots were taken.

@@ -58,7 +58,8 @@ module.exports = {
 	networks: {
 		hardhat: {
 			allowUnlimitedContractSize: true,
-			accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
+			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
+			accounts: accountsList,
 		},
 		localhost: {
 			url: "http://localhost:8545",
@@ -82,7 +83,7 @@ module.exports = {
 		port: 8545,
 	},
 	gasReporter: {
-		enabled: `${process.env.REPORT_GAS}`,
+		enabled: false, // `${process.env.REPORT_GAS}`,
 		currency: "USD",
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},

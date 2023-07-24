@@ -64,11 +64,7 @@ class DeploymentHelper {
 		const vesselManagerOperations = await VesselManagerOperations.new()
 		const shortTimelock = await Timelock.new(TIMELOCK_SHORT_DELAY, treasuryAddress)
 		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)
-		const debtToken = await DebtTokenTester.new(
-			borrowerOperations.address,
-			stabilityPool.address,
-			vesselManager.address
-		)
+		const debtToken = await DebtTokenTester.new()
 		const debtTokenWhitelistedTester = await DebtTokenWhitelistedTester.new(debtToken.address)
 
 		await erc20.setDecimals(18)
@@ -126,122 +122,48 @@ class DeploymentHelper {
 	 * Connects contracts to their dependencies.
 	 */
 	static async _connectCoreContracts(core, grvt, treasuryAddress) {
-		const setAddresses = async (contract) => {
-			await contract.setAdminContract(core.adminContract.address)
-			await contract.setBorrowerOperations(core.borrowerOperations.address)
-			await contract.setVesselManager(core.vesselManager.address)
-			await contract.setVesselManagerOperations(core.vesselManagerOperations.address)
-			await contract.setTimelock(core.shortTimelock.address)
-			await contract.setActivePool(core.activePool.address)
-			await contract.setDefaultPool(core.defaultPool.address)
-			await contract.setStabilityPool(core.stabilityPool.address)
-			await contract.setCollSurplusPool(core.collSurplusPool.address)
-			await contract.setPriceFeed(core.priceFeedTestnet.address)
-			await contract.setDebtToken(core.debtToken.address)
-			await contract.setVesselManager(core.vesselManager.address)
-			await contract.setFeeCollector(core.feeCollector.address)
-			await contract.setSortedVessels(core.sortedVessels.address)
-			await contract.setTreasury(treasuryAddress)
-			await contract.setGasPool(core.gasPool.address)
-			await contract.setGRVTStaking(grvt.grvtStaking.address)
-			await contract.setCommunityIssuance(grvt.communityIssuance.address)
+		const setAddresses = async contract => {
+			const addresses = [
+				core.activePool.address,
+				core.adminContract.address,
+				core.borrowerOperations.address,
+				core.collSurplusPool.address,
+				core.debtToken.address,
+				core.defaultPool.address,
+				core.feeCollector.address,
+				core.gasPool.address,
+				core.priceFeedTestnet.address,
+				core.sortedVessels.address,
+				core.stabilityPool.address,
+				core.shortTimelock.address,
+				treasuryAddress,
+				core.vesselManager.address,
+				core.vesselManagerOperations.address,
+			]
+			for (const [i, addr] of addresses.entries()) {
+				if (!addr || addr == EMPTY_ADDRESS) {
+					throw new Error(`setAddresses :: Invalid address for index ${i}`)
+				}
+			}
+			await contract.setAddresses(addresses)
 		}
 		for (const key in core) {
 			const contract = core[key]
-			if (contract.setGasPool) {
+			if (contract.setAddresses && contract.isAddressSetupInitialized) {
 				await setAddresses(contract)
+				await contract.setCommunityIssuance(grvt.communityIssuance.address)
+				await contract.setGRVTStaking(grvt.grvtStaking.address)
 			}
 		}
-		for (const key in grvt) {
-			const contract = grvt[key]
-			if (contract.setGasPool) {
-				await setAddresses(contract)
-			}
-		}
-
-		// await core.activePool.setAddresses(
-		// 	core.borrowerOperations.address,
-		// 	core.collSurplusPool.address,
-		// 	core.defaultPool.address,
-		// 	core.stabilityPool.address,
-		// 	core.vesselManager.address,
-		// 	core.vesselManagerOperations.address
-		// )
-
-		// await core.adminContract.setAddresses(
-		// 	grvt.communityIssuance?.address || EMPTY_ADDRESS,
-		// 	core.activePool.address,
-		// 	core.defaultPool.address,
-		// 	core.stabilityPool.address,
-		// 	core.collSurplusPool.address,
-		// 	core.priceFeedTestnet.address,
-		// 	core.shortTimelock.address
-		// )
-
-		// await core.borrowerOperations.setAddresses(
-		// 	core.vesselManager.address,
-		// 	core.stabilityPool.address,
-		// 	core.gasPool.address,
-		// 	core.collSurplusPool.address,
-		// 	core.sortedVessels.address,
-		// 	core.debtToken.address,
-		// 	core.feeCollector.address,
-		// 	core.adminContract.address
-		// )
-
-		// await core.collSurplusPool.setAddresses(
-		// 	core.activePool.address,
-		// 	core.borrowerOperations.address,
-		// 	core.vesselManager.address,
-		// 	core.vesselManagerOperations.address
-		// )
-
-		// await core.defaultPool.setAddresses(core.vesselManager.address, core.activePool.address)
-
-		// await core.feeCollector.setAddresses(
-		// 	core.borrowerOperations.address,
-		// 	core.vesselManager.address,
-		// 	grvt.grvtStaking?.address || EMPTY_ADDRESS,
-		// 	core.debtToken.address,
-		// 	treasuryAddress,
-		// 	false
-		// )
+		await core.debtToken.setAddresses(
+			core.borrowerOperations.address,
+			core.stabilityPool.address,
+			core.vesselManager.address
+		)
+		await core.debtToken.addWhitelist(core.feeCollector.address)
 
 		await core.priceFeedTestnet.setPrice(core.erc20.address, dec(200, "ether"))
 		await core.priceFeedTestnet.setPrice(core.erc20B.address, dec(100, "ether"))
-
-		// await core.sortedVessels.setAddresses(core.vesselManager.address, core.borrowerOperations.address)
-
-		// await core.stabilityPool.setAddresses(
-		// 	core.borrowerOperations.address,
-		// 	core.vesselManager.address,
-		// 	core.activePool.address,
-		// 	core.debtToken.address,
-		// 	core.sortedVessels.address,
-		// 	grvt.communityIssuance?.address || EMPTY_ADDRESS,
-		// 	core.adminContract.address
-		// )
-
-		// await core.vesselManager.setAddresses(
-		// 	core.borrowerOperations.address,
-		// 	core.stabilityPool.address,
-		// 	core.gasPool.address,
-		// 	core.collSurplusPool.address,
-		// 	core.debtToken.address,
-		// 	core.feeCollector.address,
-		// 	core.sortedVessels.address,
-		// 	core.vesselManagerOperations.address,
-		// 	core.adminContract.address
-		// )
-
-		// await core.vesselManagerOperations.setAddresses(
-		// 	core.vesselManager.address,
-		// 	core.sortedVessels.address,
-		// 	core.stabilityPool.address,
-		// 	core.collSurplusPool.address,
-		// 	core.debtToken.address,
-		// 	core.adminContract.address
-		// )
 
 		await core.adminContract.addNewCollateral(EMPTY_ADDRESS, dec(30, 18), 18)
 		await core.adminContract.addNewCollateral(core.erc20.address, dec(200, 18), 18)
@@ -263,13 +185,13 @@ class DeploymentHelper {
 	static async _connectGrvtContracts(grvt, core) {
 		const treasuryAddress = await grvt.grvtToken.treasury()
 
-		// await grvt.grvtStaking.setAddresses(
-		// 	grvt.grvtToken.address,
-		// 	core.debtToken.address,
-		// 	core.feeCollector.address,
-		// 	core.vesselManager.address,
-		// 	treasuryAddress
-		// )
+		await grvt.grvtStaking.setAddresses(
+			core.debtToken.address,
+			core.feeCollector.address,
+			grvt.grvtToken.address,
+			treasuryAddress,
+			core.vesselManager.address
+		)
 
 		await grvt.grvtStaking.unpause()
 
@@ -330,4 +252,3 @@ class DeploymentHelper {
 }
 
 module.exports = DeploymentHelper
-

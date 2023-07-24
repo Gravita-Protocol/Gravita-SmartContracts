@@ -139,7 +139,7 @@ contract("SortedVessels", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(1000, 18)),
-				extraVUSDAmount: toBN(dec(3000, 18)),
+				extraGRAIAmount: toBN(dec(3000, 18)),
 				extraParams: { from: whale },
 			})
 
@@ -185,7 +185,7 @@ contract("SortedVessels", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(1000, 18)),
-				extraVUSDAmount: toBN(dec(3000, 18)),
+				extraGRAIAmount: toBN(dec(3000, 18)),
 				extraParams: { from: whale },
 			})
 
@@ -414,8 +414,10 @@ contract("SortedVessels", async accounts => {
 			sortedVessels = await SortedVessels.new()
 			sortedVesselsTester = await SortedVesselsTester.new()
 			await sortedVessels.initialize()
-			await sortedVessels.setBorrowerOperations(sortedVesselsTester.address)
-			await sortedVessels.setVesselManager(sortedVesselsTester.address)
+
+			const addresses = new Array(15).fill(sortedVesselsTester.address, 0)
+			await sortedVessels.setAddresses(addresses)
+	
 			await sortedVesselsTester.setSortedVessels(sortedVessels.address)
 		})
 

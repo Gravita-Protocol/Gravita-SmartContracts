@@ -9,16 +9,40 @@ import "./Interfaces/IDebtToken.sol";
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	string public constant NAME = "GRAI";
 
-	address public constant borrowerOperationsAddress = 0x2bCA0300c2aa65de6F19c2d241B54a445C9990E2;
-	address public constant stabilityPoolAddress = 0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6;
-	address public constant vesselManagerAddress = 0xdB5DAcB1DFbe16326C3656a88017f0cB4ece0977;
+	// MAINNET-ONLY SECTION START -------------------------------------------------------------------------------------
+
+	// address public constant borrowerOperationsAddress = 0x2bCA0300c2aa65de6F19c2d241B54a445C9990E2;
+	// address public constant stabilityPoolAddress = 0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6;
+	// address public constant vesselManagerAddress = 0xdB5DAcB1DFbe16326C3656a88017f0cB4ece0977;
+
+	// MAINNET-ONLY SECTION END ---------------------------------------------------------------------------------------
+
+	// TESTNET-ONLY SECTION START -------------------------------------------------------------------------------------
+
+	address public borrowerOperationsAddress;
+	address public stabilityPoolAddress;
+	address public vesselManagerAddress;
+
+	function setAddresses(
+		address _borrowerOperationsAddress,
+		address _stabilityPoolAddress,
+		address _vesselManagerAddress
+	) public onlyOwner() {
+		require(_borrowerOperationsAddress != address(0) && _stabilityPoolAddress != address(0) && _vesselManagerAddress != address(0), "Invalid address");
+		borrowerOperationsAddress = _borrowerOperationsAddress;
+		stabilityPoolAddress = _stabilityPoolAddress;
+		vesselManagerAddress = _vesselManagerAddress;
+	}
+
+	// TESTNET-ONLY SECTION END ---------------------------------------------------------------------------------------
+
+	constructor() ERC20("Gravita Debt Token", "GRAI") {}
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
 	// stores SC addresses that are allowed to mint/burn the token (AMO strategies, L2 suppliers)
 	mapping(address => bool) public whitelistedContracts;
 
-	constructor() ERC20("Gravita Debt Token", "GRAI") {}
 
 	function emergencyStopMinting(address _asset, bool status) external override onlyOwner {
 		emergencyStopMintingCollateral[_asset] = status;
