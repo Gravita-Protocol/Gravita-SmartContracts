@@ -4,7 +4,6 @@ import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-etherscan"
 import "@openzeppelin/hardhat-upgrades"
 import "@openzeppelin/hardhat-defender"
-import "@nomicfoundation/hardhat-ledger";
 import "solidity-coverage"
 
 import { task } from "hardhat/config"
@@ -78,11 +77,11 @@ module.exports = {
 		},
 		arbitrum: {
 			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
-			ledgerAccounts: [`${process.env.DEPLOYER_ADDRESS}`],
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-			ledgerAccounts: [`${process.env.DEPLOYER_ADDRESS}`],
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 	},
 	etherscan: {

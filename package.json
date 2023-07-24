@@ -19,7 +19,6 @@
 	"license": "ISC",
 	"dependencies": {
 		"@chainlink/contracts": "^0.2.3",
-		"@nomicfoundation/hardhat-ledger": "^1.0.0",
 		"@openzeppelin/contracts-upgradeable": "^4.8.3",
 		"dotenv": "^16.0.3",
 		"solc": "^0.6.12"
