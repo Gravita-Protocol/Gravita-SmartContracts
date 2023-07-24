@@ -1,7 +1,7 @@
 import { BigNumber, utils } from "ethers"
 const toEther = (val: any): BigNumber => utils.parseEther(String(val))
 
-const OUTPUT_FILE = "./scripts/deployment/output/arbitrum-goerli.json"
+const OUTPUT_FILE = "./scripts/deployment/output/arbitrum.json"
 const TX_CONFIRMATIONS = 1
 const ETHERSCAN_BASE_URL = "https://arbiscan.io/address"
 
@@ -9,7 +9,7 @@ const CONTRACT_UPGRADES_ADMIN = "0xfB0214D7Ac08ed0D2D9cA920EA6D4f4be2654EA5"
 const SYSTEM_PARAMS_ADMIN = "0xfB0214D7Ac08ed0D2D9cA920EA6D4f4be2654EA5"
 const TREASURY_WALLET = "0xfB0214D7Ac08ed0D2D9cA920EA6D4f4be2654EA5"
 
-// Updated 06/20/2023 from Gravita-Protocol/layer-zero branch gravita-proxy file deployments/arbitrum-goerli/GravitaDebtToken.json commit 1564b4d
+// Updated 06/20/2023 from Gravita-Protocol/layer-zero branch gravita-proxy file deployments/arbitrum/GravitaDebtToken.json commit 1564b4d
 const GRAI_TOKEN_ADDRESS = "0x894134a25a5faC1c2C26F1d8fBf05111a3CB9487"
 
 // from https://docs.chain.link/data-feeds/l2-sequencer-feeds
