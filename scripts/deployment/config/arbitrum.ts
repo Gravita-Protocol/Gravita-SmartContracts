@@ -26,7 +26,7 @@ const COLLATERAL = [
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
-        mintCap: toEther(1_000_000),
+        mintCap: toEther(500_000),
     },
     {
         name: "wstETH",
@@ -38,7 +38,7 @@ const COLLATERAL = [
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
-        mintCap: toEther(1_000_000),
+        mintCap: toEther(500_000),
     },
     {
         name: "rETH",
@@ -50,7 +50,7 @@ const COLLATERAL = [
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
-        mintCap: toEther(1_000_000),
+        mintCap: toEther(500_000),
     },
     {
         name: "aLUSD",
@@ -62,7 +62,7 @@ const COLLATERAL = [
         CCR: toEther(1),
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
-        mintCap: toEther(1_000_000),
+        mintCap: toEther(500_000),
     },
 ]
 
