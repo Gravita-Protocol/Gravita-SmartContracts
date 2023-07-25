@@ -18,6 +18,7 @@ import "./Interfaces/IRewardStaking.sol";
 import "./Interfaces/ITokenWrapper.sol";
 
 import "../../Interfaces/ICollSurplusPool.sol";
+import "../../Interfaces/IRewardAccruing.sol";
 import "../../Interfaces/IStabilityPool.sol";
 import "../../Interfaces/IVesselManager.sol";
 import "../../Addresses.sol";
@@ -34,9 +35,14 @@ contract ConvexStakingWrapper is
 	ReentrancyGuardUpgradeable,
 	PausableUpgradeable,
 	ERC20Upgradeable,
+	IRewardAccruing,
 	Addresses
 {
 	using SafeERC20 for IERC20;
+
+	// Events -----------------------------------------------------------------------------------------------------------
+
+  event RewardAccruingRightsTransferred(address _from, address _to, uint256 _amount);
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -275,6 +281,13 @@ contract ConvexStakingWrapper is
 		emit RewardRedirected(msg.sender, _to);
 	}
 
+	// TODO modifier for callerIsGravitaContract
+	function transferRewardAccruingRights(address _from, address _to, uint256 _amount) external override {
+		console.log("transferRewardAccruingRights(%s, %s)", addrToName(_from), addrToName(_to));
+		_checkpoint([_from, _to], false);
+		emit RewardAccruingRightsTransferred(_from, _to, _amount);
+	}
+
 	// withdraw to convex deposit token
 	function withdraw(uint256 _amount) external {
 		if (_amount != 0) {
@@ -366,12 +379,18 @@ contract ConvexStakingWrapper is
 	/// @param _accounts[1] to address
 	/// @param _claim flag to perform rewards claiming
 	function _checkpoint(address[2] memory _accounts, bool _claim) internal nonReentrant {
-		console.log("checkpoint(%s, %s)", addrToName(_accounts[0]), addrToName(_accounts[1]));
+		if (_isGravitaPool(_accounts[0]) || _isGravitaPool(_accounts[1])) {
+			// ignore checkpoints that involve Gravita pool contracts
+			return;
+		}
+		console.log("checkpoint(%s, %s, %s)", addrToName(_accounts[0]), addrToName(_accounts[1]), _claim);
 		uint256[2] memory _depositedBalances;
 		_depositedBalances[0] = totalBalanceOf(_accounts[0]);
+		console.log(" - totalBalanceOf_0: %s", f(_depositedBalances[0]));
 		if (!_claim) {
 			// on a claim call, only do the first slot
 			_depositedBalances[1] = totalBalanceOf(_accounts[1]);
+			console.log(" - totalBalanceOf_1: %s", f(_depositedBalances[1]));
 		}
 		// don't claim rewards directly if paused -- can still technically claim via unguarded calls
 		// but skipping here protects against outside calls reverting
@@ -432,9 +451,9 @@ contract ConvexStakingWrapper is
 							reward.claimableAmount[_account] = 0;
 							IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
 							_contractBalance -= _rewardAmount;
-							console.log("transferring to %s: %s", addrToName(_account), f(_userRewardAmount));
+							console.log(" - reward[%s].transferTo(%s): %s", addrToName(reward.token), addrToName(_account), f(_userRewardAmount));
 						} else {
-							console.log("reward.claimableAmount[%s] = %s", addrToName(_account), f(_userRewardAmount));
+							console.log(" - reward[%s].claimableAmount[%s]: %s", addrToName(reward.token), addrToName(_account), f(_userRewardAmount));
 							reward.claimableAmount[_account] = _userRewardAmount;
 						}
 						reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
@@ -491,6 +510,8 @@ contract ConvexStakingWrapper is
 		if (anAddress == collSurplusPool) return "CollSurplusPool";
 		if (anAddress == defaultPool) return "DefaultPool";
 		if (anAddress == stabilityPool) return "StabilityPool";
+		if (anAddress == crv) return "CRV";
+		if (anAddress == cvx) return "CVX";
 		return addrToStr(anAddress);
 	}
 

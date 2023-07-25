@@ -7,7 +7,5 @@ pragma solidity ^0.8.19;
  */
 interface IRewardAccruing {
 
-  event RewardAccruingRightsTransferred(address _from, address _to, uint256 _amount);
-
   function transferRewardAccruingRights(address _from, address _to, uint256 _amount) external;
 }

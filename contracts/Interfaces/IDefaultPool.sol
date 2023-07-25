@@ -9,5 +9,5 @@ interface IDefaultPool is IPool {
 	event DefaultPoolAssetBalanceUpdated(address _asset, uint256 _balance);
 
 	// --- Functions ---
-	function sendAssetToActivePool(address _asset, uint256 _amount) external;
+	function sendAssetToActivePool(address _asset, uint256 _amount, address _beneficiary) external;
 }

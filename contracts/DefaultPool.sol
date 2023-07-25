@@ -7,7 +7,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
+import "./Interfaces/IAdminContract.sol";
 import "./Interfaces/IDefaultPool.sol";
+import "./Interfaces/IRewardAccruing.sol";
 import "./Addresses.sol";
 
 /*
@@ -56,7 +58,7 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addre
 
 	// --- Pool functionality ---
 
-	function sendAssetToActivePool(address _asset, uint256 _amount) external override callerIsVesselManager {
+	function sendAssetToActivePool(address _asset, uint256 _amount, address _beneficiary) external override callerIsVesselManager {
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
 		if (safetyTransferAmount == 0) {
 			return;
@@ -67,6 +69,11 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addre
 
 		IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
 		IDeposit(activePool).receivedERC20(_asset, _amount);
+
+		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			/// @dev reward accruing rights shift from the treasury to the borrower, due to an applyPendingRewards() call
+			IRewardAccruing(_asset).transferRewardAccruingRights(treasuryAddress, _beneficiary, _amount);
+		}
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
 		emit AssetSent(activePool, _asset, safetyTransferAmount);

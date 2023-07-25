@@ -7,6 +7,8 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers"
 import { AddressZero, MaxUint256 } from "@ethersproject/constants"
 
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+
 const AdminContract = artifacts.require("AdminContract")
 const BorrowerOperations = artifacts.require("BorrowerOperations")
 const DebtToken = artifacts.require("DebtToken")
@@ -34,7 +36,7 @@ let gaugeAddress = "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1"
 let poolId = 64
 
 let snapshotId: number, initialSnapshotId: number
-let alice: string, bob: string, whale: string, deployer: string
+let alice: string, bob: string, whale: string, deployer: string, treasury: string
 
 const f = (v: any) => ethers.utils.formatEther(v.toString())
 const toEther = (v: any) => ethers.utils.parseEther(v.toString())
@@ -59,7 +61,7 @@ const printRewards = async () => {
 	let rewardCount = await wrapper.rewardsLength()
 	for (var i = 0; i < rewardCount; i++) {
 		var r = await wrapper.rewards(i)
-		console.log(`Reward #${i}: ${formatRewardType(r)}`)
+		console.log(` - reward #${i}: ${formatRewardType(r)}`)
 	}
 }
 
@@ -73,6 +75,12 @@ const formatEarnedData = (earnedDataArray: any) => {
 		const token = d[0] == crv.address ? "CRV" : d[0] == cvx.address ? "CVX" : d[0]
 		return `[${token}] = ${f(d[1])}`
 	})
+}
+
+const deploy = async (treasury: string, mintingAccounts: string[]) => {
+	const contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+	adminContract = contracts.core.adminContract
+	borrowerOperations = contracts.core.borrowerOperations
 }
 
 const deployWrapperContract = async (poolId: number) => {
@@ -127,6 +135,7 @@ const setupWrapperAsCollateral = async () => {
 		await adminContract.REDEMPTION_FEE_FLOOR_DEFAULT(),
 		{ from: timelockAddress }
 	)
+	await adminContract.setRewardAccruingCollateral(wrapper.address, true, { from: timelockAddress })
 	await stopImpersonatingAccount(timelockAddress)
 }
 
@@ -160,10 +169,19 @@ const initGravitaCurveSetup = async () => {
 
 describe("ConvexStakingWrapper", async () => {
 	before(async () => {
+		
+		const accounts = await ethers.getSigners()
+		deployer = await accounts[0].getAddress()
+		alice = await accounts[1].getAddress()
+		bob = await accounts[2].getAddress()
+		whale = await accounts[3].getAddress()
+		treasury = await accounts[4].getAddress()
+
+		await deploy(treasury, [])
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 
-		adminContract = await AdminContract.at("0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53")
-		borrowerOperations = await BorrowerOperations.at(await adminContract.borrowerOperations())
+		//adminContract = await AdminContract.at("0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53")
+		//borrowerOperations = await BorrowerOperations.at(await adminContract.borrowerOperations())
 
 		booster = await Booster.at("0xF403C135812408BFbE8713b5A23a04b3D48AAE31")
 		cvx = await IERC20.at("0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B")
@@ -171,12 +189,6 @@ describe("ConvexStakingWrapper", async () => {
 		curveLP = await IERC20.at("0x3A283D9c08E8b55966afb64C515f5143cf907611")
 		convexLP = await IERC20.at("0x0bC857f97c0554d1d0D602b56F2EEcE682016fBA")
 		convexRewards = await BaseRewardPool.at("0xb1Fb0BA0676A1fFA83882c7F4805408bA232C1fA")
-
-		const accounts = await ethers.getSigners()
-		deployer = await accounts[0].getAddress()
-		alice = await accounts[1].getAddress()
-		bob = await accounts[2].getAddress()
-		whale = await accounts[3].getAddress()
 
 		await initGravitaCurveSetup()
 	})
@@ -195,15 +207,12 @@ describe("ConvexStakingWrapper", async () => {
 
 	it.only("happy path: openVessel, closeVessel", async () => {
 		// alice & bob deposit into wrapper
-		console.log(` --> depositCurveTokens()`)
+		console.log(`\n --> depositCurveTokens()\n`)
 		await wrapper.depositCurveTokens(await curveLP.balanceOf(alice), alice, { from: alice })
-		console.log(` --> depositCurveTokens()`)
+		console.log(`\n --> depositCurveTokens()\n`)
 		await wrapper.depositCurveTokens(await curveLP.balanceOf(bob), bob, { from: bob })
 		// only alice opens a vessel
-		console.log(`wrapper.balanceOf(alice): ${f(await wrapper.balanceOf(alice))}`)
-		console.log(`wrapper.gravitaBalanceOf(alice): ${f(await wrapper.gravitaBalanceOf(alice))}`)
-		console.log(`wrapper.totalBalanceOf(alice): ${f(await wrapper.totalBalanceOf(alice))}`)
-		console.log(`--> openVessel()`)
+		console.log(`\n--> openVessel()\n`)
 		await borrowerOperations.openVessel(wrapper.address, toEther(100), toEther(2_000), AddressZero, AddressZero, {
 			from: alice,
 		})
@@ -213,22 +222,22 @@ describe("ConvexStakingWrapper", async () => {
 		// fast forward 90 days
 		await time.increase(90 * 86_400)
 		// alice closes vessel
-		console.log(`--> closeVessel()`)
+		console.log(`\n--> closeVessel()\n`)
 		await borrowerOperations.closeVessel(wrapper.address, { from: alice })
 		// both claim rewards & unwrap
-		console.log(`--> claimEarnedRewards()`)
-		//await wrapper.earmarkBoosterRewards()
+		console.log(`\n--> claimEarnedRewards()\n`)
+		await wrapper.earmarkBoosterRewards()
 		await wrapper.claimEarnedRewards(alice)
 		await wrapper.claimEarnedRewards(bob)
-		console.log(`--> withdrawAndUnwrap()`)
+		console.log(`\n--> withdrawAndUnwrap()\n`)
 		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(alice), { from: alice })
 		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
 
-		console.log(`wrapper.balanceOf(ActivePool): ${f(await wrapper.balanceOf(await adminContract.activePool()))}`)
-		console.log(`curveLP.balanceOf(alice): ${f(await curveLP.balanceOf(alice))}`)
-		console.log(`curveLP.balanceOf(bob): ${f(await curveLP.balanceOf(alice))}`)
+		//console.log(`wrapper.balanceOf(ActivePool): ${f(await wrapper.balanceOf(await adminContract.activePool()))}`)
+		//console.log(`curveLP.balanceOf(alice): ${f(await curveLP.balanceOf(alice))}`)
+		//console.log(`curveLP.balanceOf(bob): ${f(await curveLP.balanceOf(alice))}`)
 
-		// TODO at this point, both alice and bob should have the same rewards; investigate why it is not the case
+		// TODO at this point, both alice and bob should have the same rewards; investigate why this is not the case
 		await printBalances([alice, bob])
 		await printRewards()
 	})

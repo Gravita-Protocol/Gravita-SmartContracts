@@ -7,10 +7,11 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
-import "./Interfaces/IStabilityPool.sol";
-import "./Interfaces/IDebtToken.sol";
-import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/ICommunityIssuance.sol";
+import "./Interfaces/IDebtToken.sol";
+import "./Interfaces/IRewardAccruing.sol";
+import "./Interfaces/IStabilityPool.sol";
+import "./Interfaces/IVesselManager.sol";
 
 /**
  * @title The Stability Pool holds debt tokens deposited by Stability Pool depositors.
@@ -266,7 +267,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * - Sends depositor's accumulated gains (GRVT, collateral assets) to depositor
 	 * - Increases deposit stake, and takes new snapshots for each.
 	 * @param _amount amount of debtToken provided
-	 * @param _assets an array of collaterals to be claimed. 
+	 * @param _assets an array of collaterals to be claimed.
 	 * Skipping a collateral forfeits the available rewards (can be useful for gas optimizations)
 	 */
 	function provideToSP(uint256 _amount, address[] calldata _assets) external override nonReentrant {
@@ -295,10 +296,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		// send any collateral gains accrued to the depositor
 		_sendGainsToDepositor(msg.sender, gainAssets, gainAmounts);
 	}
-	/** 
-	* @param _amount amount of debtToken to withdraw
-	* @param _assets an array of collaterals to be claimed. 
-	*/
+
+	/**
+	 * @param _amount amount of debtToken to withdraw
+	 * @param _assets an array of collaterals to be claimed.
+	 */
 
 	function withdrawFromSP(uint256 _amount, address[] calldata _assets) external {
 		(address[] memory assets, uint256[] memory amounts) = _withdrawFromSP(_amount, _assets);
@@ -308,7 +310,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	/**
 	 * @notice withdraw from the stability pool
 	 * @param _amount debtToken amount to withdraw
-	 * @param _assets an array of collaterals to be claimed. 
+	 * @param _assets an array of collaterals to be claimed.
 	 * @return assets address of assets withdrawn, amount of asset withdrawn
 	 */
 	function _withdrawFromSP(
@@ -580,7 +582,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		// asset list must be on ascending order - used to avoid any repeated elements
 		unchecked {
 			for (uint256 i = 1; i < assetsLen; i++) {
-				if (_assets[i] <= _assets[i-1]) {
+				if (_assets[i] <= _assets[i - 1]) {
 					revert StabilityPool__ArrayNotInAscendingOrder();
 				}
 			}
@@ -754,6 +756,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 			address asset = assets[i];
 			// Assumes we're internally working only with the wrapped version of ERC20 tokens
 			IERC20Upgradeable(asset).safeTransfer(_to, amount);
+			if (IAdminContract(adminContract).isRewardAccruingCollateral(asset)) {
+				IRewardAccruing(asset).transferRewardAccruingRights(treasuryAddress, msg.sender, amount);
+			}
 			unchecked {
 				i++;
 			}

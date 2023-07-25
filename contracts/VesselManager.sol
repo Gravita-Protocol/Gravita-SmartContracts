@@ -126,6 +126,51 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 			getCurrentICR(_asset, nextVessel, _price) < IAdminContract(adminContract).getMcr(_asset);
 	}
 
+	/* getApproxHint() - return address of a Vessel that is, on average, (length / numTrials) positions away in the 
+    sortedVessels list from the correct insert position of the Vessel to be inserted. 
+    
+    Note: The output address is worst-case O(n) positions away from the correct insert position, however, the function 
+    is probabilistic. Input can be tuned to guarantee results to a high degree of confidence, e.g:
+
+    Submitting numTrials = k * sqrt(length), with k = 15 makes it very, very likely that the ouput address will 
+    be <= sqrt(length) positions away from the correct insert position.
+    */
+	function getApproxHint(
+		address _asset,
+		uint256 _CR,
+		uint256 _numTrials,
+		uint256 _inputRandomSeed
+	) external view override returns (address hintAddress, uint256 diff, uint256 latestRandomSeed) {
+		uint256 arrayLength = IVesselManager(vesselManager).getVesselOwnersCount(_asset);
+
+		if (arrayLength == 0) {
+			return (address(0), 0, _inputRandomSeed);
+		}
+
+		hintAddress = ISortedVessels(sortedVessels).getLast(_asset);
+		diff = GravitaMath._getAbsoluteDifference(_CR, IVesselManager(vesselManager).getNominalICR(_asset, hintAddress));
+		latestRandomSeed = _inputRandomSeed;
+
+		uint256 i = 1;
+
+		while (i < _numTrials) {
+			latestRandomSeed = uint256(keccak256(abi.encodePacked(latestRandomSeed)));
+
+			uint256 arrayIndex = latestRandomSeed % arrayLength;
+			address currentAddress = IVesselManager(vesselManager).getVesselFromVesselOwnersArray(_asset, arrayIndex);
+			uint256 currentNICR = IVesselManager(vesselManager).getNominalICR(_asset, currentAddress);
+
+			// check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
+			uint256 currentDiff = GravitaMath._getAbsoluteDifference(currentNICR, _CR);
+
+			if (currentDiff < diff) {
+				diff = currentDiff;
+				hintAddress = currentAddress;
+			}
+			i++;
+		}
+	}
+
 	// Return the nominal collateral ratio (ICR) of a given Vessel, without the price. Takes a vessel's pending coll and debt rewards from redistributions into account.
 	function getNominalICR(address _asset, address _borrower) external view override returns (uint256) {
 		(uint256 currentAsset, uint256 currentDebt) = _getCurrentVesselAmounts(_asset, _borrower);
@@ -322,9 +367,10 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	function movePendingVesselRewardsToActivePool(
 		address _asset,
 		uint256 _debt,
-		uint256 _assetAmount
+		uint256 _assetAmount,
+		address _borrower
 	) external override onlyVesselManagerOperations {
-		_movePendingVesselRewardsToActivePool(_asset, _debt, _assetAmount);
+		_movePendingVesselRewardsToActivePool(_asset, _debt, _assetAmount, _borrower);
 	}
 
 	// Update borrower's snapshots of L_Colls and L_Debts to reflect the current values
@@ -451,11 +497,12 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	function _movePendingVesselRewardsToActivePool(
 		address _asset,
 		uint256 _debtTokenAmount,
-		uint256 _assetAmount
+		uint256 _assetAmount,
+		address _borrower
 	) internal {
 		IDefaultPool(defaultPool).decreaseDebt(_asset, _debtTokenAmount);
 		IActivePool(activePool).increaseDebt(_asset, _debtTokenAmount);
-		IDefaultPool(defaultPool).sendAssetToActivePool(_asset, _assetAmount);
+		IDefaultPool(defaultPool).sendAssetToActivePool(_asset, _assetAmount, _borrower);
 	}
 
 	function _getCurrentVesselAmounts(
@@ -487,7 +534,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		_updateVesselRewardSnapshots(_asset, _borrower);
 
 		// Transfer from DefaultPool to ActivePool
-		_movePendingVesselRewardsToActivePool(_asset, pendingDebtReward, pendingCollReward);
+		_movePendingVesselRewardsToActivePool(_asset, pendingDebtReward, pendingCollReward, _borrower);
 
 		emit VesselUpdated(
 			_asset,

@@ -43,6 +43,8 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 
 	bool public isSetupInitialized;
 
+	mapping (address => bool) rewardAccruingCollateral;
+
 	// Modifiers --------------------------------------------------------------------------------------------------------
 
 	// Require that the collateral exists in the controller. If it is not the 0th index, and the
@@ -145,6 +147,14 @@ contract AdminContract is IAdminContract, UUPSUpgradeable, OwnableUpgradeable, A
 		setMintCap(_collateral, mintCap);
 		setPercentDivisor(_collateral, percentDivisor);
 		setRedemptionFeeFloor(_collateral, redemptionFeeFloor);
+	}
+
+	function setRewardAccruingCollateral(address _asset, bool _isRewardAccruing) external override onlyTimelock {
+		rewardAccruingCollateral[_asset] = _isRewardAccruing;
+	}
+
+	function isRewardAccruingCollateral(address _asset) external view returns (bool) {
+		return rewardAccruingCollateral[_asset];
 	}
 
 	function setIsActive(address _collateral, bool _active) external onlyTimelock {
