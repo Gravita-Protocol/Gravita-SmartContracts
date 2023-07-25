@@ -27,6 +27,9 @@ task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testne
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
+task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
+)
 
 module.exports = {
 	paths: {
