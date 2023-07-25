@@ -9,11 +9,8 @@ import { AddressZero, MaxUint256 } from "@ethersproject/constants"
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 
-const AdminContract = artifacts.require("AdminContract")
-const BorrowerOperations = artifacts.require("BorrowerOperations")
 const DebtToken = artifacts.require("DebtToken")
-const MockAggregator = artifacts.require("MockAggregator")
-const PriceFeed = artifacts.require("PriceFeed")
+const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 
 const BaseRewardPool = artifacts.require("IBaseRewardPool")
 const Booster = artifacts.require("IBooster")
@@ -23,7 +20,6 @@ const IERC20 = artifacts.require("IERC20")
 let adminContract: any
 let borrowerOperations: any
 let wrapper: any
-let wrapperPriceFeed: any
 
 let booster: any
 let crv: any
@@ -77,13 +73,15 @@ const formatEarnedData = (earnedDataArray: any) => {
 	})
 }
 
-const deploy = async (treasury: string, mintingAccounts: string[]) => {
+const deployGravitaContracts = async (treasury: string, mintingAccounts: string[]) => {
+	console.log(`Deploying Gravita contracts...`)
 	const contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
 	adminContract = contracts.core.adminContract
 	borrowerOperations = contracts.core.borrowerOperations
 }
 
 const deployWrapperContract = async (poolId: number) => {
+	console.log(`Deploying ConvexStakingWrapper contract...`)
 	await setBalance(deployer, 10e18)
 	wrapper = await ConvexStakingWrapper.new({ from: deployer })
 	await wrapper.initialize(poolId, { from: deployer })
@@ -107,23 +105,13 @@ const deployWrapperContract = async (poolId: number) => {
 		],
 		{ from: deployer }
 	)
+	const priceFeed = await PriceFeedTestnet.at(await adminContract.priceFeed())
+	await priceFeed.setPrice(wrapper.address, toEther(2_000))
 }
 
 const setupWrapperAsCollateral = async () => {
-	// setup a mock price feed (as owner)
-	const gravitaOwner = await adminContract.owner()
-	await setBalance(gravitaOwner, 10e18)
-	await impersonateAccount(gravitaOwner)
-	wrapperPriceFeed = await MockAggregator.new({ from: gravitaOwner })
-	const priceFeed = await PriceFeed.at(await adminContract.priceFeed())
-	await priceFeed.setOracle(wrapper.address, wrapperPriceFeed.address, 0, 3_600, false, false, { from: gravitaOwner })
-	await stopImpersonatingAccount(gravitaOwner)
-
-	// setup collateral (as timelock)
-	const timelockAddress = await adminContract.timelockAddress()
-	await setBalance(timelockAddress, 10e18)
-	await impersonateAccount(timelockAddress)
-	await adminContract.addNewCollateral(wrapper.address, toEther("200"), 18, { from: timelockAddress })
+	console.log(`Configuring ConvexStakingWrapper as collateral...`)
+	await adminContract.addNewCollateral(wrapper.address, toEther("200"), 18)
 	await adminContract.setCollateralParameters(
 		wrapper.address,
 		await adminContract.BORROWING_FEE_DEFAULT(),
@@ -132,11 +120,9 @@ const setupWrapperAsCollateral = async () => {
 		toEther(2_000),
 		toEther(1_500_000),
 		await adminContract.PERCENT_DIVISOR_DEFAULT(),
-		await adminContract.REDEMPTION_FEE_FLOOR_DEFAULT(),
-		{ from: timelockAddress }
+		await adminContract.REDEMPTION_FEE_FLOOR_DEFAULT()
 	)
-	await adminContract.setRewardAccruingCollateral(wrapper.address, true, { from: timelockAddress })
-	await stopImpersonatingAccount(timelockAddress)
+	await adminContract.setRewardAccruingCollateral(wrapper.address, true)
 }
 
 const initGravitaCurveSetup = async () => {
@@ -158,6 +144,11 @@ const initGravitaCurveSetup = async () => {
 	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: whale })
 	// whale opens a vessel
 	await wrapper.depositCurveTokens(await curveLP.balanceOf(whale), whale, { from: whale })
+
+	const priceFeed = await PriceFeedTestnet.at(await adminContract.priceFeed())
+	const price = await priceFeed.fetchPrice(wrapper.address)
+	console.log(`Wrapper Price = ${price}`)
+
 	await borrowerOperations.openVessel(wrapper.address, toEther(5_000), toEther(5_000), AddressZero, AddressZero, {
 		from: whale,
 	})
@@ -177,7 +168,7 @@ describe("ConvexStakingWrapper", async () => {
 		whale = await accounts[3].getAddress()
 		treasury = await accounts[4].getAddress()
 
-		await deploy(treasury, [])
+		await deployGravitaContracts(treasury, [])
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 
 		//adminContract = await AdminContract.at("0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53")
@@ -237,7 +228,7 @@ describe("ConvexStakingWrapper", async () => {
 		//console.log(`curveLP.balanceOf(alice): ${f(await curveLP.balanceOf(alice))}`)
 		//console.log(`curveLP.balanceOf(bob): ${f(await curveLP.balanceOf(alice))}`)
 
-		// TODO at this point, both alice and bob should have the same rewards; investigate why this is not the case
+		// TODO at this point, both alice and bob should have the same rewards
 		await printBalances([alice, bob])
 		await printRewards()
 	})

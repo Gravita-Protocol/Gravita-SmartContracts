@@ -924,54 +924,58 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		address _lowerPartialRedemptionHint,
 		uint256 _partialRedemptionHintNICR
 	) internal returns (SingleRedemptionValues memory singleRedemption) {
-		uint256 vesselDebt = IVesselManager(vesselManager).getVesselDebt(_asset, _borrower);
-		uint256 vesselColl = IVesselManager(vesselManager).getVesselColl(_asset, _borrower);
 
-		// Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the vessel minus the liquidation reserve
-		singleRedemption.debtLot = GravitaMath._min(
-			_maxDebtTokenAmount,
-			vesselDebt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)
-		);
+		require(false, "Redemptions Temporarily Disabled for Testing");
+		// TODO uncomment and fix contract size issues
 
-		// Get the debtToken lot of equivalent value in USD
-		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
-		// Apply redemption softening
-		singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
+		// uint256 vesselDebt = IVesselManager(vesselManager).getVesselDebt(_asset, _borrower);
+		// uint256 vesselColl = IVesselManager(vesselManager).getVesselColl(_asset, _borrower);
 
-		// Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
+		// // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the vessel minus the liquidation reserve
+		// singleRedemption.debtLot = GravitaMath._min(
+		// 	_maxDebtTokenAmount,
+		// 	vesselDebt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)
+		// );
 
-		uint256 newDebt = vesselDebt - singleRedemption.debtLot;
-		uint256 newColl = vesselColl - singleRedemption.collLot;
+		// // Get the debtToken lot of equivalent value in USD
+		// singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
+		// // Apply redemption softening
+		// singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
-		if (newDebt == IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)) {
-			IVesselManager(vesselManager).executeFullRedemption(_asset, _borrower, newColl);
-		} else {
-			uint256 newNICR = GravitaMath._computeNominalCR(newColl, newDebt);
+		// // Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
 
-			/*
-			 * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
-			 * certainly result in running out of gas.
-			 *
-			 * If the resultant net debt of the partial is less than the minimum, net debt we bail.
-			 */
-			if (
-				newNICR != _partialRedemptionHintNICR ||
-				_getNetDebt(_asset, newDebt) < IAdminContract(adminContract).getMinNetDebt(_asset)
-			) {
-				singleRedemption.cancelledPartial = true;
-				return singleRedemption;
-			}
+		// uint256 newDebt = vesselDebt - singleRedemption.debtLot;
+		// uint256 newColl = vesselColl - singleRedemption.collLot;
 
-			IVesselManager(vesselManager).executePartialRedemption(
-				_asset,
-				_borrower,
-				newDebt,
-				newColl,
-				newNICR,
-				_upperPartialRedemptionHint,
-				_lowerPartialRedemptionHint
-			);
-		}
+		// if (newDebt == IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)) {
+		// 	IVesselManager(vesselManager).executeFullRedemption(_asset, _borrower, newColl);
+		// } else {
+		// 	uint256 newNICR = GravitaMath._computeNominalCR(newColl, newDebt);
+
+		// 	/*
+		// 	 * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
+		// 	 * certainly result in running out of gas.
+		// 	 *
+		// 	 * If the resultant net debt of the partial is less than the minimum, net debt we bail.
+		// 	 */
+		// 	if (
+		// 		newNICR != _partialRedemptionHintNICR ||
+		// 		_getNetDebt(_asset, newDebt) < IAdminContract(adminContract).getMinNetDebt(_asset)
+		// 	) {
+		// 		singleRedemption.cancelledPartial = true;
+		// 		return singleRedemption;
+		// 	}
+
+		// 	IVesselManager(vesselManager).executePartialRedemption(
+		// 		_asset,
+		// 		_borrower,
+		// 		newDebt,
+		// 		newColl,
+		// 		newNICR,
+		// 		_upperPartialRedemptionHint,
+		// 		_lowerPartialRedemptionHint
+		// 	);
+		// }
 
 		// if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
 		// 	uint256 collLotRedemptionFee = IVesselManager(vesselManager).getRedemptionFee(_asset, singleRedemption.collLot);
@@ -982,7 +986,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		// 	IRewardAccruing(_asset).transferRewardAccruingRights(_borrower, treasuryAddress, collLotRedemptionFee);
 		// }
 
-		return singleRedemption;
+		// return singleRedemption;
 	}
 
 	function setRedemptionSofteningParam(uint256 _redemptionSofteningParam) public {
