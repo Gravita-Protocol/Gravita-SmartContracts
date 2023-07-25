@@ -233,7 +233,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @param _collateral address of the collateral to get amount of
 	 * @return amount of this specific collateral
 	 */
-	function getCollateral(address _collateral) external view returns (uint256) {
+	function getCollateral(address _collateral) external view override returns (uint256) {
 		uint256 collateralIndex = IAdminContract(adminContract).getIndex(_collateral);
 		return totalColl.amounts[collateralIndex];
 	}

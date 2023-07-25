@@ -78,6 +78,8 @@ interface IStabilityPool is IDeposit {
 	 */
 	function offset(uint256 _debt, address _asset, uint256 _coll) external;
 
+	function getCollateral(address _collateral) external view returns (uint256);
+	
 	/*
 	 * Returns debt tokens held in the pool. Changes when users deposit/withdraw, and when Vessel debt is offset.
 	 */

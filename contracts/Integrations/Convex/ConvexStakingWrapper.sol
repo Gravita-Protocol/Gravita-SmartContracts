@@ -42,7 +42,7 @@ contract ConvexStakingWrapper is
 
 	// Events -----------------------------------------------------------------------------------------------------------
 
-  event RewardAccruingRightsTransferred(address _from, address _to, uint256 _amount);
+	event RewardAccruingRightsTransferred(address _from, address _to, uint256 _amount);
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -183,7 +183,8 @@ contract ConvexStakingWrapper is
 
 	/**
 	 * @notice Function that returns all claimable rewards for a specific user.
-	 * @dev One should call the mutable userCheckpoint() function beforehand for updating the state before this view.
+	 * @dev One should call the mutable userCheckpoint() function beforehand for updating the state for
+	 *     the most up-to-date results.
 	 */
 	function getEarnedRewards(address _account) external view returns (RewardEarned[] memory _claimable) {
 		uint256 _rewardCount = rewards.length;
@@ -228,8 +229,6 @@ contract ConvexStakingWrapper is
 	}
 
 	function claimTreasuryEarnedRewards(uint256 _index) external {
-		// TODO evaluate if there's need to restrict this call
-		// require(treasuryAddress == msg.sender, "Treasury Only");
 		RewardType storage reward = rewards[_index];
 		if (reward.token != address(0)) {
 			uint256 _amount = reward.claimableAmount[treasuryAddress];
@@ -242,22 +241,22 @@ contract ConvexStakingWrapper is
 
 	/**
 	 * @notice Collateral on the Gravita Protocol is stored in different pools based on its lifecycle status.
-	 *    - Active collateral is in the ActivePool (queried via VesselManager).
-	 *    - Collateral redistributed during liquidations goes to the DefaultPool.
-	 *    - Leftover collateral from redemptions and liquidations is kept in the CollSurplusPool.
-	 *    - Gains credited to depositors after liquidations are stored in the StabilityPool.
+	 *     Borrowers will accrue rewards while their collateral is in:
+	 *         - ActivePool (queried via VesselManager), meaning their vessel is active
+	 *         - CollSurplusPool, meaning their vessel was liquidated/redeemed against and there was a surplus
+	 *     Gravita will accrue rewards while collateral is in:
+	 *         - DefaultPool, meaning collateral got redistributed during a liquidation
+	 *         - StabilityPool, meaning collateral got offset against deposits and turned into gains waiting for claiming
 	 *
 	 * @dev View https://docs.google.com/document/d/1j6mcK4iB3aWfPSH3l8UdYL_G3sqY3k0k1G4jt81OsRE/edit?usp=sharing
 	 */
 	function gravitaBalanceOf(address _account) public view returns (uint256 _collateral) {
-		_collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
-		_collateral += IVesselManager(vesselManager).getPendingAssetReward(address(this), _account);
-		_collateral += ICollSurplusPool(collSurplusPool).getCollateral(address(this), _account);
-		address[] memory spAssets = new address[](1);
-		spAssets[0] = address(this);
-		(, uint256[] memory depositorGains) = IStabilityPool(stabilityPool).getDepositorGains(_account, spAssets);
-		if (depositorGains.length != 0) {
-			_collateral += depositorGains[0];
+		if (_account == treasuryAddress) {
+			_collateral = IPool(defaultPool).getAssetBalance(address(this));
+			_collateral += IStabilityPool(stabilityPool).getCollateral(address(this));
+		} else {
+			_collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
+			_collateral += ICollSurplusPool(collSurplusPool).getCollateral(address(this), _account);
 		}
 	}
 
@@ -281,8 +280,11 @@ contract ConvexStakingWrapper is
 		emit RewardRedirected(msg.sender, _to);
 	}
 
-	// TODO modifier for callerIsGravitaContract
-	function transferRewardAccruingRights(address _from, address _to, uint256 _amount) external override {
+	function transferRewardAccruingRights(
+		address _from,
+		address _to,
+		uint256 _amount
+	) external override onlyDefaultPoolOrStabilityPoolOrVesselManagerOperations {
 		console.log("transferRewardAccruingRights(%s, %s)", addrToName(_from), addrToName(_to));
 		_checkpoint([_from, _to], false);
 		emit RewardAccruingRightsTransferred(_from, _to, _amount);
@@ -451,9 +453,19 @@ contract ConvexStakingWrapper is
 							reward.claimableAmount[_account] = 0;
 							IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
 							_contractBalance -= _rewardAmount;
-							console.log(" - reward[%s].transferTo(%s): %s", addrToName(reward.token), addrToName(_account), f(_userRewardAmount));
+							console.log(
+								" - reward[%s].transferTo(%s): %s",
+								addrToName(reward.token),
+								addrToName(_account),
+								f(_userRewardAmount)
+							);
 						} else {
-							console.log(" - reward[%s].claimableAmount[%s]: %s", addrToName(reward.token), addrToName(_account), f(_userRewardAmount));
+							console.log(
+								" - reward[%s].claimableAmount[%s]: %s",
+								addrToName(reward.token),
+								addrToName(_account),
+								f(_userRewardAmount)
+							);
 							reward.claimableAmount[_account] = _userRewardAmount;
 						}
 						reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
@@ -487,6 +499,14 @@ contract ConvexStakingWrapper is
 
 	modifier onlyTimelock() {
 		require(timelockAddress == msg.sender, "Only Timelock");
+		_;
+	}
+
+	modifier onlyDefaultPoolOrStabilityPoolOrVesselManagerOperations() {
+		require(
+			msg.sender == defaultPool || msg.sender == stabilityPool || msg.sender == vesselManagerOperations,
+			"ConvexStakingWrapper: Caller is not an authorized Gravita contract"
+		);
 		_;
 	}
 
