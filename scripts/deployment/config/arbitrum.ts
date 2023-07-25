@@ -31,9 +31,9 @@ const COLLATERAL = [
     {
         name: "wstETH",
         address: "0x5979D7b546E38E414F7E9822514be443A4800529",
-        oracleAddress: "0x8Bbf5C949B05E185c470553ADD43f15118CA3e44",
-        oracleTimeoutSeconds: 4500, 
-        oracleIsEthIndexed: false,
+        oracleAddress: "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+        oracleTimeoutSeconds: 90000, 
+        oracleIsEthIndexed: true,
         MCR: toEther(1.176),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
