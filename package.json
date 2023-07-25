@@ -12,7 +12,8 @@
 		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
 		"deploy-core-goerli": "npx hardhat deploy-core-goerli --network goerli --show-stack-traces",
 		"deploy-core-arbitrum-goerli": "npx hardhat deploy-core-arbitrum-goerli --network arbitrum_goerli --show-stack-traces",
-		"deploy-core-mainnet": "npx hardhat deploy-core-mainnet --network mainnet --show-stack-traces"
+		"deploy-core-mainnet": "npx hardhat deploy-core-mainnet --network mainnet --show-stack-traces",
+		"deploy-core-arbitrum": "npx hardhat deploy-core-arbitrum --network arbitrum --show-stack-traces"
 	},
 	"keywords": [],
 	"author": "",
