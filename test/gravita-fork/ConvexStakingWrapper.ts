@@ -5,7 +5,7 @@ import {
 	impersonateAccount,
 	stopImpersonatingAccount,
 } from "@nomicfoundation/hardhat-network-helpers"
-import { AddressZero, MaxUint256, WeiPerEther } from "@ethersproject/constants"
+import { AddressZero, MaxUint256 } from "@ethersproject/constants"
 import { BigNumber } from "ethers"
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
@@ -68,7 +68,7 @@ describe("ConvexStakingWrapper", async () => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
-	it.only("happy path: openVessel, closeVessel", async () => {
+	it("happy path: openVessel, closeVessel", async () => {
 		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
 
@@ -143,7 +143,96 @@ describe("ConvexStakingWrapper", async () => {
 		assertIsApproximatelyEqual(treasuryCrvBalance, expectedTreasuryCrvBalance)
 		assertIsApproximatelyEqual(treasuryCvxBalance, expectedTreasuryCvxBalance)
 
-		// remaining rewards on wrapper should belong to whale (and corresponding treasury share)
+		// remaining rewards on wrapper should belong to whale - and corresponding treasury share (.5% deviation accepted)
+		const wrapperCrvBalance = await crv.balanceOf(wrapper.address)
+		const wrapperCvxBalance = await cvx.balanceOf(wrapper.address)
+
+		await wrapper.userCheckpoint(whale)
+		const whaleRewards = await wrapper.getEarnedRewards(whale)
+		const treasuryRewards = await wrapper.getEarnedRewards(treasury)
+		const claimableCrvRewards = BigNumber.from(whaleRewards[0].amount).add(BigNumber.from(treasuryRewards[0].amount))
+		const claimableCvxRewards = BigNumber.from(whaleRewards[1].amount).add(BigNumber.from(treasuryRewards[1].amount))
+
+		assertIsApproximatelyEqual(wrapperCrvBalance, claimableCrvRewards, Number(wrapperCrvBalance) / 200)
+		assertIsApproximatelyEqual(wrapperCvxBalance, claimableCvxRewards, Number(wrapperCvxBalance) / 200)
+	})
+
+	it.only("liquidation using stability pool deposits", async () => {
+		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
+		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
+
+		// alice & bob deposit into wrapper
+		console.log(`\n --> depositCurveTokens(alice)\n`)
+		await wrapper.depositCurveTokens(aliceInitialCurveBalance, alice, { from: alice })
+		console.log(`\n --> depositCurveTokens(bob)\n`)
+		await wrapper.depositCurveTokens(bobInitialCurveBalance, bob, { from: bob })
+
+		// only alice opens a vessel
+		console.log(`\n--> openVessel(alice)\n`)
+		await borrowerOperations.openVessel(wrapper.address, toEther(100), toEther(2_000), AddressZero, AddressZero, {
+			from: alice,
+		})
+		console.log(`wrapper.balanceOf(alice): ${f(await wrapper.balanceOf(alice))}`)
+		console.log(`wrapper.gravitaBalanceOf(alice): ${f(await wrapper.gravitaBalanceOf(alice))}`)
+		console.log(`wrapper.totalBalanceOf(alice): ${f(await wrapper.totalBalanceOf(alice))}`)
+
+		// fast forward 90 days
+		await time.increase(90 * 86_400)
+
+		// alice closes vessel
+		console.log(`\n--> closeVessel(alice)\n`)
+		await borrowerOperations.closeVessel(wrapper.address, { from: alice })
+
+		// alice, bob and treasury claim rewards & unwrap
+		console.log(`\n--> claimEarnedRewards(alice, bob, treasury)\n`)
+		await wrapper.earmarkBoosterRewards()
+		await wrapper.claimEarnedRewards(alice)
+		await wrapper.claimEarnedRewards(bob)
+		await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(crv.address)) - 1)
+		await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(cvx.address)) - 1)
+
+		console.log(`\n--> withdrawAndUnwrap(alice, bob)\n`)
+		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(alice), { from: alice })
+		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
+
+		// checks
+		const aliceCurveBalance = await curveLP.balanceOf(alice)
+		const aliceCrvBalance = await crv.balanceOf(alice)
+		const aliceCvxBalance = await cvx.balanceOf(alice)
+		const aliceWrapperBalance = await wrapper.totalBalanceOf(alice)
+
+		const bobCurveBalance = await curveLP.balanceOf(bob)
+		const bobCrvBalance = await crv.balanceOf(bob)
+		const bobCvxBalance = await cvx.balanceOf(bob)
+		const bobWrapperBalance = await wrapper.totalBalanceOf(bob)
+
+		const treasuryCurveBalance = await curveLP.balanceOf(treasury)
+		const treasuryCrvBalance = await crv.balanceOf(treasury)
+		const treasuryCvxBalance = await cvx.balanceOf(treasury)
+		const treasuryWrapperBalance = await wrapper.totalBalanceOf(treasury)
+
+		assert.equal(aliceCurveBalance.toString(), aliceInitialCurveBalance.toString())
+		assert.equal(bobCurveBalance.toString(), bobInitialCurveBalance.toString())
+		assert.equal(aliceWrapperBalance.toString(), "0")
+		assert.equal(bobWrapperBalance.toString(), "0")
+		assert.equal(treasuryWrapperBalance.toString(), "0")
+		assert.equal(treasuryCurveBalance.toString(), "0")
+
+		const crvSum = aliceCrvBalance.add(bobCrvBalance).add(treasuryCrvBalance)
+		const cvxSum = aliceCvxBalance.add(bobCvxBalance).add(treasuryCvxBalance)
+
+		// alice & bob should have similar rewards (.5% deviation accepted)
+		assertIsApproximatelyEqual(aliceCrvBalance, bobCrvBalance, Number(crvSum) / 200)
+		assertIsApproximatelyEqual(aliceCvxBalance, bobCvxBalance, Number(cvxSum) / 200)
+
+		// treasury should have `protocolFee` (15%) of total
+		const protocolFee = await wrapper.protocolFee()
+		const expectedTreasuryCrvBalance = Number(crvSum) * (Number(protocolFee) / 1e18)
+		const expectedTreasuryCvxBalance = Number(cvxSum) * (Number(protocolFee) / 1e18)
+		assertIsApproximatelyEqual(treasuryCrvBalance, expectedTreasuryCrvBalance)
+		assertIsApproximatelyEqual(treasuryCvxBalance, expectedTreasuryCvxBalance)
+
+		// remaining rewards on wrapper should belong to whale - and corresponding treasury share (.5% deviation accepted)
 		const wrapperCrvBalance = await crv.balanceOf(wrapper.address)
 		const wrapperCvxBalance = await cvx.balanceOf(wrapper.address)
 
