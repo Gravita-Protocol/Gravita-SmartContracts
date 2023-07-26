@@ -132,9 +132,9 @@ describe("ConvexStakingWrapper", async () => {
 		const crvSum = aliceCrvBalance.add(bobCrvBalance).add(treasuryCrvBalance)
 		const cvxSum = aliceCvxBalance.add(bobCvxBalance).add(treasuryCvxBalance)
 
-		// alice & bob should have similar rewards (1% deviation accepted)
-		assertIsApproximatelyEqual(aliceCrvBalance, bobCrvBalance, Number(crvSum) / 100)
-		assertIsApproximatelyEqual(aliceCvxBalance, bobCvxBalance, Number(cvxSum) / 100)
+		// alice & bob should have similar rewards (.5% deviation accepted)
+		assertIsApproximatelyEqual(aliceCrvBalance, bobCrvBalance, Number(crvSum) / 200)
+		assertIsApproximatelyEqual(aliceCvxBalance, bobCvxBalance, Number(cvxSum) / 200)
 
 		// treasury should have `protocolFee` (15%) of total
 		const protocolFee = await wrapper.protocolFee()
@@ -143,9 +143,18 @@ describe("ConvexStakingWrapper", async () => {
 		assertIsApproximatelyEqual(treasuryCrvBalance, expectedTreasuryCrvBalance)
 		assertIsApproximatelyEqual(treasuryCvxBalance, expectedTreasuryCvxBalance)
 
-		console.log(`\n--> final standings\n`)
-		await printBalances([alice, bob, treasury, whale])
-		await printRewards()
+		// remaining rewards on wrapper should belong to whale (and corresponding treasury share)
+		const wrapperCrvBalance = await crv.balanceOf(wrapper.address)
+		const wrapperCvxBalance = await cvx.balanceOf(wrapper.address)
+
+		await wrapper.userCheckpoint(whale)
+		const whaleRewards = await wrapper.getEarnedRewards(whale)
+		const treasuryRewards = await wrapper.getEarnedRewards(treasury)
+		const claimableCrvRewards = BigNumber.from(whaleRewards[0].amount).add(BigNumber.from(treasuryRewards[0].amount))
+		const claimableCvxRewards = BigNumber.from(whaleRewards[1].amount).add(BigNumber.from(treasuryRewards[1].amount))
+
+		assertIsApproximatelyEqual(wrapperCrvBalance, claimableCrvRewards, Number(wrapperCrvBalance) / 200)
+		assertIsApproximatelyEqual(wrapperCvxBalance, claimableCvxRewards, Number(wrapperCvxBalance) / 200)
 	})
 
 	it("original test: should deposit lp tokens and earn rewards while being transferable", async () => {
