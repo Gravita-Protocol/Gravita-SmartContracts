@@ -5,14 +5,15 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
-import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/IFeeCollector.sol";
+import "./Interfaces/IVesselManager.sol";
+import "./Interfaces/IVesselManagerOperations.sol";
 
 contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	// Constants ------------------------------------------------------------------------------------------------------
 
 	string public constant NAME = "VesselManager";
-
+	uint256 public constant PERCENTAGE_PRECISION = 100_00;
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
 	/*
 	 * Half-life of 12h. 12h = 720 min
@@ -106,7 +107,98 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		__ReentrancyGuard_init();
 	}
 
-	// External/public functions --------------------------------------------------------------------------------------
+	// Hint helper functions --------------------------------------------------------------------------------------------
+
+	/* getRedemptionHints() - Helper function for finding the right hints to pass to redeemCollateral().
+	 *
+	 * It simulates a redemption of `_debtTokenAmount` to figure out where the redemption sequence will start and what state the final Vessel
+	 * of the sequence will end up in.
+	 *
+	 * Returns three hints:
+	 *  - `firstRedemptionHint` is the address of the first Vessel with ICR >= MCR (i.e. the first Vessel that will be redeemed).
+	 *  - `partialRedemptionHintNICR` is the final nominal ICR of the last Vessel of the sequence after being hit by partial redemption,
+	 *     or zero in case of no partial redemption.
+	 *  - `truncatedDebtTokenAmount` is the maximum amount that can be redeemed out of the the provided `_debtTokenAmount`. This can be lower than
+	 *    `_debtTokenAmount` when redeeming the full amount would leave the last Vessel of the redemption sequence with less net debt than the
+	 *    minimum allowed value (i.e. IAdminContract(adminContract).MIN_NET_DEBT()).
+	 *
+	 * The number of Vessels to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
+	 * will leave it uncapped.
+	 */
+	function getRedemptionHints(
+		address _asset,
+		uint256 _debtTokenAmount,
+		uint256 _price,
+		uint256 _maxIterations
+	)
+		external
+		view
+		override
+		returns (address firstRedemptionHint, uint256 partialRedemptionHintNewICR, uint256 truncatedDebtTokenAmount)
+	{
+		HintHelperLocalVars memory vars = HintHelperLocalVars({
+			asset: _asset,
+			debtTokenAmount: _debtTokenAmount,
+			price: _price,
+			maxIterations: _maxIterations
+		});
+
+		uint256 remainingDebt = _debtTokenAmount;
+		address currentVesselBorrower = ISortedVessels(sortedVessels).getLast(vars.asset);
+
+		while (
+			currentVesselBorrower != address(0) &&
+			IVesselManager(vesselManager).getCurrentICR(vars.asset, currentVesselBorrower, vars.price) <
+			IAdminContract(adminContract).getMcr(vars.asset)
+		) {
+			currentVesselBorrower = ISortedVessels(sortedVessels).getPrev(vars.asset, currentVesselBorrower);
+		}
+
+		firstRedemptionHint = currentVesselBorrower;
+
+		if (vars.maxIterations == 0) {
+			vars.maxIterations = type(uint256).max;
+		}
+
+		while (currentVesselBorrower != address(0) && remainingDebt != 0 && vars.maxIterations-- != 0) {
+			uint256 currentVesselNetDebt = _getNetDebt(
+				vars.asset,
+				IVesselManager(vesselManager).getVesselDebt(vars.asset, currentVesselBorrower) +
+					IVesselManager(vesselManager).getPendingDebtTokenReward(vars.asset, currentVesselBorrower)
+			);
+
+			if (currentVesselNetDebt <= remainingDebt) {
+				remainingDebt = remainingDebt - currentVesselNetDebt;
+			} else {
+				if (currentVesselNetDebt > IAdminContract(adminContract).getMinNetDebt(vars.asset)) {
+					uint256 maxRedeemableDebt = GravitaMath._min(
+						remainingDebt,
+						currentVesselNetDebt - IAdminContract(adminContract).getMinNetDebt(vars.asset)
+					);
+
+					uint256 currentVesselColl = IVesselManager(vesselManager).getVesselColl(vars.asset, currentVesselBorrower) +
+						IVesselManager(vesselManager).getPendingAssetReward(vars.asset, currentVesselBorrower);
+
+					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
+					// Apply redemption softening
+					uint256 redemptionSofteningParam = IVesselManagerOperations(vesselManagerOperations).getRedemptionSofteningParam();
+					collLot = (collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
+
+					uint256 newColl = currentVesselColl - collLot;
+					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
+					uint256 compositeDebt = _getCompositeDebt(vars.asset, newDebt);
+
+					partialRedemptionHintNewICR = GravitaMath._computeNominalCR(newColl, compositeDebt);
+					remainingDebt = remainingDebt - maxRedeemableDebt;
+				}
+				break;
+			}
+
+			currentVesselBorrower = ISortedVessels(sortedVessels).getPrev(vars.asset, currentVesselBorrower);
+		}
+
+		truncatedDebtTokenAmount = _debtTokenAmount - remainingDebt;
+	}
 
 	function isValidFirstRedemptionHint(
 		address _asset,

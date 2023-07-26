@@ -66,6 +66,13 @@ interface IVesselManager is IGravitaBase {
 		uint128 arrayIndex;
 	}
 
+	struct HintHelperLocalVars {
+		address asset;
+		uint256 debtTokenAmount;
+		uint256 price;
+		uint256 maxIterations;
+	}
+
 	// Functions --------------------------------------------------------------------------------------------------------
 
 	function executeFullRedemption(address _asset, address _borrower, uint256 _newColl) external;
@@ -86,6 +93,13 @@ interface IVesselManager is IGravitaBase {
 		uint256 _numTrials,
 		uint256 _inputRandomSeed
 	) external view returns (address hintAddress, uint256 diff, uint256 latestRandomSeed);
+
+	function getRedemptionHints(
+		address _asset,
+		uint256 _debtTokenAmount,
+		uint256 _price,
+		uint256 _maxIterations
+	) external returns (address firstRedemptionHint, uint256 partialRedemptionHintNICR, uint256 truncatedDebtTokenAmount);
 
 	function getVesselOwnersCount(address _asset) external view returns (uint256);
 

@@ -60,24 +60,17 @@ module.exports = {
 		],
 	},
 	networks: {
-		// hardhat: {
-		// 	allowUnlimitedContractSize: true,
-		// 	// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
-		// 	accounts: accountsList,
-		// },
 		hardhat: {
-			// url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-			// chainId: 1,
-			// accounts: {
-			// 	mnemonic: "test test test test test test test test test test test junk",
-			// 	count: 20
-			// },
-			forking: {
-				// enabled: true,
-				url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-				blockNumber: 17729732 //14075742,
-			},
+			allowUnlimitedContractSize: true,
+			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
+			accounts: accountsList,
 		},
+		// hardhat: {
+		// 	forking: {
+		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+		// 		blockNumber: 17729732 //14075742,
+		// 	},
+		// },
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,

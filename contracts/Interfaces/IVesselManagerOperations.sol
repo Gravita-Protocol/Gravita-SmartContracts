@@ -100,14 +100,6 @@ interface IVesselManagerOperations is IGravitaBase {
 		uint256 pendingCollReward;
 	}
 
-	struct LocalVariables_OuterLiquidationFunction {
-		uint256 price;
-		uint256 debtTokenInStabPool;
-		bool recoveryModeAtStart;
-		uint256 liquidatedDebt;
-		uint256 liquidatedColl;
-	}
-
 	struct LocalVariables_LiquidationSequence {
 		uint256 remainingDebtTokenInStabPool;
 		uint256 ICR;
@@ -118,6 +110,10 @@ interface IVesselManagerOperations is IGravitaBase {
 	}
 
 	// Functions --------------------------------------------------------------------------------------------------------
+
+	function computeNominalCR(uint256 _coll, uint256 _debt) external view returns (uint256);
+
+	function getRedemptionSofteningParam() external view returns (uint256);
 
 	function liquidate(address _asset, address _borrower) external;
 
@@ -135,20 +131,4 @@ interface IVesselManagerOperations is IGravitaBase {
 		uint256 _maxIterations,
 		uint256 _maxFeePercentage
 	) external;
-
-	function getRedemptionHints(
-		address _asset,
-		uint256 _debtTokenAmount,
-		uint256 _price,
-		uint256 _maxIterations
-	) external returns (address firstRedemptionHint, uint256 partialRedemptionHintNICR, uint256 truncatedDebtTokenAmount);
-
-	function getApproxHint(
-		address _asset,
-		uint256 _CR,
-		uint256 _numTrials,
-		uint256 _inputRandomSeed
-	) external returns (address hintAddress, uint256 diff, uint256 latestRandomSeed);
-
-	function computeNominalCR(uint256 _coll, uint256 _debt) external returns (uint256);
 }
