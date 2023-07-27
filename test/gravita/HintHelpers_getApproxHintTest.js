@@ -155,7 +155,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		let hintAddress
 
 			// const hintAddress_250 = await functionCaller.vesselManager_getApproxHint(CR_250, sqrtLength * 10)
-		;({ hintAddress, latestRandomSeed } = await vesselManagerOperations.getApproxHint(
+		;({ hintAddress, latestRandomSeed } = await vesselManager.getApproxHint(
 			erc20.address,
 			CR_250,
 			sqrtLength * 10,
@@ -173,7 +173,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		const CRPercent_287 = Number(web3.utils.fromWei(CR_287, "ether")) * 100
 
 		// const hintAddress_287 = await functionCaller.vesselManager_getApproxHint(CR_287, sqrtLength * 10)
-		;({ hintAddress, latestRandomSeed } = await vesselManagerOperations.getApproxHint(
+		;({ hintAddress, latestRandomSeed } = await vesselManager.getApproxHint(
 			erc20.address,
 			CR_287,
 			sqrtLength * 10,
@@ -191,7 +191,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		const CRPercent_213 = Number(web3.utils.fromWei(CR_213, "ether")) * 100
 
 		// const hintAddress_213 = await functionCaller.vesselManager_getApproxHint(CR_213, sqrtLength * 10)
-		;({ hintAddress, latestRandomSeed } = await vesselManagerOperations.getApproxHint(
+		;({ hintAddress, latestRandomSeed } = await vesselManager.getApproxHint(
 			erc20.address,
 			CR_213,
 			sqrtLength * 10,
@@ -209,7 +209,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		const CRPercent_201 = Number(web3.utils.fromWei(CR_201, "ether")) * 100
 
 		//  const hintAddress_201 = await functionCaller.vesselManager_getApproxHint(CR_201, sqrtLength * 10)
-		;({ hintAddress, latestRandomSeed } = await vesselManagerOperations.getApproxHint(
+		;({ hintAddress, latestRandomSeed } = await vesselManager.getApproxHint(
 			erc20.address,
 			CR_201,
 			sqrtLength * 10,
@@ -237,7 +237,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 	//     // Convert ICR to a duint
 	//     const ICR = web3.utils.toWei((ICR_Percent * 10).toString(), 'finney')
 
-	//     const hintAddress = await vesselManagerOperations.getApproxHint(erc20.address,ICR, sqrtLength * 10)
+	//     const hintAddress = await vesselManager.getApproxHint(erc20.address,ICR, sqrtLength * 10)
 	//     const ICR_hintAddress = await vesselManager.getNominalICR(erc20.address,hintAddress)
 	//     const ICRPercent_hintAddress = Number(web3.utils.fromWei(ICR_hintAddress, 'ether')) * 100
 
@@ -256,7 +256,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		let hintAddress
 
 			// const hintAddress_Max = await functionCaller.vesselManager_getApproxHint(CR_Max, sqrtLength * 10)
-		;({ hintAddress, latestRandomSeed } = await vesselManagerOperations.getApproxHint(
+		;({ hintAddress, latestRandomSeed } = await vesselManager.getApproxHint(
 			erc20.address,
 			CR_Max,
 			sqrtLength * 10,
@@ -284,7 +284,7 @@ contract("VesselManagerOperations-HintHelpers", async accounts => {
 		let hintAddress
 
 			//  const hintAddress_Min = await functionCaller.vesselManager_getApproxHint(CR_Min, sqrtLength * 10)
-		;({ hintAddress, latestRandomSeed } = await vesselManagerOperations.getApproxHint(
+		;({ hintAddress, latestRandomSeed } = await vesselManager.getApproxHint(
 			erc20.address,
 			CR_Min,
 			sqrtLength * 10,

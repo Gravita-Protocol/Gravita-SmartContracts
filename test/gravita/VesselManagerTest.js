@@ -3493,7 +3493,7 @@ contract("VesselManager", async accounts => {
 				const redemptionAmount = C_debt.add(B_debt).add(partialRedemptionAmount)
 
 				const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
 
 				assert.equal(firstRedemptionHint, carol)
 				const expectedICR = A_coll.mul(price)
@@ -3533,7 +3533,7 @@ contract("VesselManager", async accounts => {
 				// Get hints for a redemption of 170 + 30 + some extra GRAI. At least 3 iterations are needed
 				// for total redemption of the given amount.
 
-				const { 1: partialRedemptionHintNICR_Asset } = await vesselManagerOperations.getRedemptionHints(
+				const { 1: partialRedemptionHintNICR_Asset } = await vesselManager.getRedemptionHints(
 					erc20.address,
 					"210" + _18_zeros,
 					price,
@@ -3579,7 +3579,7 @@ contract("VesselManager", async accounts => {
 
 					const price = await priceFeed.getPrice(erc20.address)
 
-					const { 1: hintNICR } = await vesselManagerOperations.getRedemptionHints(
+					const { 1: hintNICR } = await vesselManager.getRedemptionHints(
 						erc20.address,
 						redemptionAmount,
 						price,
@@ -3660,7 +3660,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
 
 				// We don't need to use getApproxHint for this test, since it's not the subject of this
 				// test case, and the list is very small, so the correct position is quickly found
@@ -3758,7 +3758,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Find hints for redeeming 20 debt tokens
-				const { 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
+				const { 1: partialRedemptionHintNewICR } = await vesselManager.getRedemptionHints(
 					erc20.address,
 					redemptionAmount,
 					price,
@@ -3858,7 +3858,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				// Find hints for redeeming 20 debt tokens
-				const { 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
+				const { 1: partialRedemptionHintNewICR } = await vesselManager.getRedemptionHints(
 					erc20.address,
 					redemptionAmount,
 					price,
@@ -3967,7 +3967,7 @@ contract("VesselManager", async accounts => {
 				await priceFeed.setPrice(erc20.address, price)
 
 				// Find hints for redeeming 20 debt tokens
-				const { 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
+				const { 1: partialRedemptionHintNewICR } = await vesselManager.getRedemptionHints(
 					erc20.address,
 					redemptionAmount,
 					price,
@@ -4355,7 +4355,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, redemptionAmount, price, 0)
 				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
 					erc20.address,
 					partialRedemptionHintNewICR,
@@ -4368,7 +4368,7 @@ contract("VesselManager", async accounts => {
 				// Oops, another transaction gets in the way
 				{
 					const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, dec(1, 18), price, 0)
+						await vesselManager.getRedemptionHints(erc20.address, dec(1, 18), price, 0)
 					const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, dennis, dennis)
 
@@ -5171,7 +5171,7 @@ contract("VesselManager", async accounts => {
 
 				// Erin attempts to redeem 400 debt tokens
 				const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, dec(400, 18), price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, dec(400, 18), price, 0)
 
 				const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
 					erc20.address,
@@ -5273,7 +5273,7 @@ contract("VesselManager", async accounts => {
 				// Erin tries to redeem 1000 GRAI
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, dec(1000, 18), price, 0))
+						await vesselManager.getRedemptionHints(erc20.address, dec(1000, 18), price, 0))
 
 					const { 0: upperPartialRedemptionHint_1_Asset, 1: lowerPartialRedemptionHint_1_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5299,7 +5299,7 @@ contract("VesselManager", async accounts => {
 				// Erin tries to redeem 801 GRAI
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, "801000000000000000000", price, 0))
+						await vesselManager.getRedemptionHints(erc20.address, "801000000000000000000", price, 0))
 
 					const { 0: upperPartialRedemptionHint_2_Asset, 1: lowerPartialRedemptionHint_2_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5326,7 +5326,7 @@ contract("VesselManager", async accounts => {
 
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, "239482309000000000000000000", price, 0))
+						await vesselManager.getRedemptionHints(erc20.address, "239482309000000000000000000", price, 0))
 
 					const { 0: upperPartialRedemptionHint_3_Asset, 1: lowerPartialRedemptionHint_3_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5354,7 +5354,7 @@ contract("VesselManager", async accounts => {
 
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, "239482309000000000000000000", price, 0))
+						await vesselManager.getRedemptionHints(erc20.address, "239482309000000000000000000", price, 0))
 
 					const { 0: upperPartialRedemptionHint_4_Asset, 1: lowerPartialRedemptionHint_4_Asset } =
 						await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, erin, erin)
@@ -5432,7 +5432,7 @@ contract("VesselManager", async accounts => {
 
 				// Erin redeems 120 debt tokens
 				await ({ 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, _120_, price, 0))
+					await vesselManager.getRedemptionHints(erc20.address, _120_, price, 0))
 				const { 0: upperPartialRedemptionHint_1, 1: lowerPartialRedemptionHint_1 } =
 					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNewICR, erin, erin)
 				const redemption_1 = await vesselManagerOperations.redeemCollateral(
@@ -5458,7 +5458,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(activePoolBalance1.toString(), expectedActivePoolBalance1.toString())
 
 				// Flyn redeems 373 debt tokens
-				;({ 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
+				;({ 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManager.getRedemptionHints(
 					erc20.address,
 					_373_,
 					price,
@@ -5488,7 +5488,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(activePoolBalance2.toString(), expectedActivePoolBalance2.toString())
 
 				// Graham redeems 950 debt tokens
-				;({ 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
+				;({ 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManager.getRedemptionHints(
 					erc20.address,
 					_950_,
 					price,
@@ -5530,7 +5530,7 @@ contract("VesselManager", async accounts => {
 				// Bob tries to redeem his illegally obtained GRAI
 
 				const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, dec(100, 18), price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, dec(100, 18), price, 0)
 
 				const { 0: upperPartialRedemptionHint_Asset, 1: lowerPartialRedemptionHint_Asset } =
 					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, bob, bob)
@@ -5578,7 +5578,7 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, "101000000000000000000", price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, "101000000000000000000", price, 0)
 
 				const { 0: upperPartialRedemptionHint_Asset, 1: lowerPartialRedemptionHint_Asset } =
 					await sortedVessels.findInsertPosition(erc20.address, partialRedemptionHintNICR_Asset, bob, bob)
@@ -6499,7 +6499,7 @@ contract("VesselManager", async accounts => {
 				for (let i = 0; i < 2; i++) {
 					// Find hints for redeeming
 					const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, GRAIAmount_Asset, price, 0)
+						await vesselManager.getRedemptionHints(erc20.address, GRAIAmount_Asset, price, 0)
 
 					// Don't pay for gas, as it makes it easier to calculate the received Ether
 					const redemptionTx_Asset = await vesselManagerOperations.redeemCollateral(
@@ -6535,7 +6535,7 @@ contract("VesselManager", async accounts => {
 				}
 
 				const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, GRAIAmount_Asset, price, 0)
+					await vesselManager.getRedemptionHints(erc20.address, GRAIAmount_Asset, price, 0)
 
 				await assertRevert(
 					vesselManagerOperations.redeemCollateral(

@@ -160,7 +160,7 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 		it("sendAssetToActivePool(): reverts when called by an account that is not VesselManager", async () => {
 			// Attempt call from alice
 			try {
-				await defaultPool.sendAssetToActivePool(erc20.address, 100, { from: alice })
+				await defaultPool.sendAssetToActivePool(erc20.address, 100, alice, { from: alice })
 			} catch (err) {
 				assert.include(err.message, "revert")
 				assert.include(err.message, "Caller is not the VesselManager")

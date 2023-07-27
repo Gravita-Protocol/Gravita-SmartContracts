@@ -1341,7 +1341,7 @@ class TestHelper {
 	static async performRedemptionTx(redeemer, price, contracts, GRAIAmount, asset, maxFee = 0) {
 		if (!asset) asset = this.ZERO_ADDRESS
 
-		const redemptionhint = await contracts.vesselManagerOperations.getRedemptionHints(
+		const redemptionhint = await contracts.vesselManager.getRedemptionHints(
 			asset,
 			GRAIAmount,
 			price,
@@ -1352,7 +1352,7 @@ class TestHelper {
 		const partialRedemptionNewICR = redemptionhint[1]
 
 		const { hintAddress: approxPartialRedemptionHint, latestRandomSeed } =
-			await contracts.vesselManagerOperations.getApproxHint(
+			await contracts.vesselManager.getApproxHint(
 				asset,
 				partialRedemptionNewICR,
 				50,
