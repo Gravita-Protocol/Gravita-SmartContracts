@@ -213,21 +213,21 @@ contract("Gas compensation tests", async accounts => {
     debt = 10 GRAI
     0.5% of coll = 0.04995 ETH. USD value: $9.99
     -> Expect composite debt = 10 + 200  = 2100 GRAI*/
-		assert.equal(await vesselManager.getCompositeDebt(erc20.address, dec(10, 18)), dec(210, 18))
+		assert.equal(await borrowerOperations.getCompositeDebt(erc20.address, dec(10, 18)), dec(210, 18))
 
 		/* ETH:USD price = 200
      coll = 0.055 ETH  
      debt = 0 GRAI
      0.5% of coll = 0.000275 ETH. USD value: $0.055
      -> Expect composite debt = 0 + 200 = 200 GRAI*/
-		assert.equal(await vesselManager.getCompositeDebt(erc20.address, 0), dec(200, 18))
+		assert.equal(await borrowerOperations.getCompositeDebt(erc20.address, 0), dec(200, 18))
 
 		// /* ETH:USD price = 200
 		// coll = 6.09232408808723580 ETH
 		// debt = 200 GRAI
 		// 0.5% of coll = 0.004995 ETH. USD value: $6.09
 		// -> Expect  composite debt =  200 + 200 = 400  GRAI */
-		assert.equal(await vesselManager.getCompositeDebt(erc20.address, dec(200, 18)), "400000000000000000000")
+		assert.equal(await borrowerOperations.getCompositeDebt(erc20.address, dec(200, 18)), "400000000000000000000")
 	})
 
 	// returns $10 worth of ETH when 0.5% of coll == $10
@@ -241,7 +241,7 @@ contract("Gas compensation tests", async accounts => {
     debt = 123.45 GRAI
     0.5% of coll = 0.5 ETH. USD value: $10
     -> Expect composite debt = (123.45 + 200) = 323.45 GRAI  */
-		assert.equal(await vesselManager.getCompositeDebt(erc20.address, "123450000000000000000"), "323450000000000000000")
+		assert.equal(await borrowerOperations.getCompositeDebt(erc20.address, "123450000000000000000"), "323450000000000000000")
 	})
 
 	/// ***
@@ -257,7 +257,7 @@ contract("Gas compensation tests", async accounts => {
     debt = 2000 GRAI
     -> Expect composite debt = (2000 + 200) = 2200 GRAI  */
 		assert.equal(
-			(await vesselManager.getCompositeDebt(erc20.address, dec(2000, 18))).toString(),
+			(await borrowerOperations.getCompositeDebt(erc20.address, dec(2000, 18))).toString(),
 			"2200000000000000000000"
 		)
 
@@ -267,7 +267,7 @@ contract("Gas compensation tests", async accounts => {
     debt = 200 GRAI
     -> Expect composite debt = (200 + 200) = 400 GRAI  */
 		assert.equal(
-			(await vesselManager.getCompositeDebt(erc20.address, dec(200, 18))).toString(),
+			(await borrowerOperations.getCompositeDebt(erc20.address, dec(200, 18))).toString(),
 			"400000000000000000000"
 		)
 
@@ -277,7 +277,7 @@ contract("Gas compensation tests", async accounts => {
     debt = 500 GRAI
     -> Expect composite debt = (500 + 200) = 700 GRAI  */
 		assert.equal(
-			(await vesselManager.getCompositeDebt(erc20.address, dec(500, 18))).toString(),
+			(await borrowerOperations.getCompositeDebt(erc20.address, dec(500, 18))).toString(),
 			"700000000000000000000"
 		)
 
@@ -289,7 +289,7 @@ contract("Gas compensation tests", async accounts => {
 		await priceFeed.setPrice(erc20.address, "45323545420000000000000")
 		assert.isAtMost(
 			th.getDifference(
-				(await vesselManager.getCompositeDebt(erc20.address, dec(1, 27))).toString(),
+				(await borrowerOperations.getCompositeDebt(erc20.address, dec(1, 27))).toString(),
 				"1000000200000000000000000000"
 			),
 			100000000000
@@ -302,7 +302,7 @@ contract("Gas compensation tests", async accounts => {
    -> Expect composite debt = (54321.123456789 + 200) = 54521.123456789 GRAI */
 		await priceFeed.setPrice(erc20.address, dec(1, 24))
 		assert.equal(
-			(await vesselManager.getCompositeDebt(erc20.address, "54321123456789000000000")).toString(),
+			(await borrowerOperations.getCompositeDebt(erc20.address, "54321123456789000000000")).toString(),
 			"54521123456789000000000"
 		)
 	})

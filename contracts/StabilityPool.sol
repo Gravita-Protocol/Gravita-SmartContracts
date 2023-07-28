@@ -747,20 +747,16 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		require(assetsLen == amounts.length, "StabilityPool: Length mismatch");
 		for (uint256 i = 0; i < assetsLen; ) {
 			uint256 amount = amounts[i];
-			if (amount == 0) {
-				unchecked {
-					i++;
+			if (amount != 0) {
+				address asset = assets[i];
+				if (IAdminContract(adminContract).isRewardAccruingCollateral(asset)) {
+					/// @dev rewards accruing shift from the treasury to the depositor
+					IRewardAccruing(asset).transferRewardAccruingRights(treasuryAddress, msg.sender, amount);
 				}
-				continue;
-			}
-			address asset = assets[i];
-			// Assumes we're internally working only with the wrapped version of ERC20 tokens
-			IERC20Upgradeable(asset).safeTransfer(_to, amount);
-			if (IAdminContract(adminContract).isRewardAccruingCollateral(asset)) {
-				IRewardAccruing(asset).transferRewardAccruingRights(treasuryAddress, msg.sender, amount);
+				IERC20Upgradeable(asset).safeTransfer(_to, amount);
 			}
 			unchecked {
-				i++;
+				++i;
 			}
 		}
 		totalColl.amounts = _leftSubColls(totalColl, assets, amounts);

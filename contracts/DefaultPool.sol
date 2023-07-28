@@ -11,6 +11,7 @@ import "./Interfaces/IAdminContract.sol";
 import "./Interfaces/IDefaultPool.sol";
 import "./Interfaces/IRewardAccruing.sol";
 import "./Addresses.sol";
+import "hardhat/console.sol";
 
 /*
  * The Default Pool holds the collateral and debt token amounts from liquidations that have been redistributed
@@ -64,16 +65,17 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addre
 			return;
 		}
 
+		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			/// @dev reward accruing rights shift from the treasury to the borrower, due to an applyPendingRewards() call
+			console.log("DefaultPool.sendAssetToActivePool");
+			IRewardAccruing(_asset).transferRewardAccruingRights(treasuryAddress, _beneficiary, _amount);
+		}
+
 		uint256 newBalance = assetsBalances[_asset] - _amount;
 		assetsBalances[_asset] = newBalance;
 
 		IERC20Upgradeable(_asset).safeTransfer(activePool, safetyTransferAmount);
 		IDeposit(activePool).receivedERC20(_asset, _amount);
-
-		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
-			/// @dev reward accruing rights shift from the treasury to the borrower, due to an applyPendingRewards() call
-			IRewardAccruing(_asset).transferRewardAccruingRights(treasuryAddress, _beneficiary, _amount);
-		}
 
 		emit DefaultPoolAssetBalanceUpdated(_asset, newBalance);
 		emit AssetSent(activePool, _asset, safetyTransferAmount);

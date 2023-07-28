@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "./Dependencies/GravitaBase.sol";
 import "./Interfaces/IRewardAccruing.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
+import "hardhat/console.sol";
 
 contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
@@ -395,9 +396,14 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			singleLiquidation.collToRedistribute
 		) = _getOffsetAndRedistributionVals(singleLiquidation.entireVesselDebt, collToLiquidate, _debtTokenInStabPool);
 
-		IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
-
 		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			console.log("_liquidateNormalMode");
+			/// @dev on a liquidation, collToSendToSP + collToRedistribute rewards shift from the borrower to the treasury
+			IRewardAccruing(_asset).transferRewardAccruingRights(
+				_borrower,
+				treasuryAddress,
+				singleLiquidation.collToSendToSP + singleLiquidation.collToRedistribute
+			);
 			/// @dev on a liquidation, collGasCompensation rewards shift from the borrower to the liquidator
 			IRewardAccruing(_asset).transferRewardAccruingRights(
 				_borrower,
@@ -405,6 +411,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				singleLiquidation.collGasCompensation
 			);
 		}
+
+		IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
 
 		emit VesselLiquidated(
 			_asset,
@@ -452,9 +460,14 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			singleLiquidation.debtToRedistribute = singleLiquidation.entireVesselDebt;
 			singleLiquidation.collToRedistribute = vars.collToLiquidate;
 
-			IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
-
 			if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+				console.log("_liquidateRecoveryMode :: ICR < 100%");
+				/// @dev on a liquidation, collToRedistribute rewards shift from the borrower to the treasury
+				IRewardAccruing(_asset).transferRewardAccruingRights(
+					_borrower,
+					treasuryAddress,
+					singleLiquidation.collToRedistribute
+				);
 				/// @dev on a liquidation, collGasCompensation rewards shift from the borrower to the liquidator
 				IRewardAccruing(_asset).transferRewardAccruingRights(
 					_borrower,
@@ -462,6 +475,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 					singleLiquidation.collGasCompensation
 				);
 			}
+
+			IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
 
 			emit VesselLiquidated(
 				_asset,
@@ -494,14 +509,13 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_debtTokenInStabPool
 			);
 
-			IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
-
 			if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
-				/// @dev on a liquidation, collToSendToSP rewards shift from the borrower to the treasury
+				/// @dev on a liquidation, collToSendToSP + collToRedistribute rewards shift from the borrower to the treasury
+				console.log("_liquidateRecoveryMode :: MCR > ICR > 100%");
 				IRewardAccruing(_asset).transferRewardAccruingRights(
 					_borrower,
 					treasuryAddress,
-					singleLiquidation.collToSendToSP
+					singleLiquidation.collToSendToSP + singleLiquidation.collToRedistribute
 				);
 				/// @dev on a liquidation, collGasCompensation rewards shift from the borrower to the liquidator
 				IRewardAccruing(_asset).transferRewardAccruingRights(
@@ -510,6 +524,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 					singleLiquidation.collGasCompensation
 				);
 			}
+
+			IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
 
 			emit VesselLiquidated(
 				_asset,
@@ -546,13 +562,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_price
 			);
 
-			IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
-
-			if (singleLiquidation.collSurplus != 0) {
-				ICollSurplusPool(collSurplusPool).accountSurplus(_asset, _borrower, singleLiquidation.collSurplus);
-			}
-
 			if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+				console.log("_liquidateRecoveryMode :: 110% < ICR < TCR");
 				/// @dev on a liquidation, collToSendToSP rewards shift from the borrower to the treasury
 				IRewardAccruing(_asset).transferRewardAccruingRights(
 					_borrower,
@@ -565,6 +576,12 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 					msg.sender,
 					singleLiquidation.collGasCompensation
 				);
+			}
+
+			IVesselManager(vesselManager).closeVesselLiquidation(_asset, _borrower);
+
+			if (singleLiquidation.collSurplus != 0) {
+				ICollSurplusPool(collSurplusPool).accountSurplus(_asset, _borrower, singleLiquidation.collSurplus);
 			}
 
 			emit VesselLiquidated(
@@ -782,6 +799,16 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 newDebt = vesselDebt - singleRedemption.debtLot;
 		uint256 newColl = vesselColl - singleRedemption.collLot;
 
+		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			uint256 collLotRedemptionFee = IVesselManager(vesselManager).getRedemptionFee(_asset, singleRedemption.collLot);
+			uint256 netCollLot = singleRedemption.collLot - collLotRedemptionFee;
+			/// @dev on a redemption, reward accruing rights on the collateral shift from the borrower to the redeemer
+			console.log("_redeemCollateralFromVessel");
+			IRewardAccruing(_asset).transferRewardAccruingRights(_borrower, msg.sender, netCollLot);
+			/// @dev on a redemption, reward accruing rights on the collateral gas compensation fee shift from the borrower to the treasury
+			IRewardAccruing(_asset).transferRewardAccruingRights(_borrower, treasuryAddress, collLotRedemptionFee);
+		}
+
 		if (newDebt == IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)) {
 			IVesselManager(vesselManager).executeFullRedemption(_asset, _borrower, newColl);
 		} else {
@@ -810,15 +837,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_upperPartialRedemptionHint,
 				_lowerPartialRedemptionHint
 			);
-		}
-
-		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
-			uint256 collLotRedemptionFee = IVesselManager(vesselManager).getRedemptionFee(_asset, singleRedemption.collLot);
-			uint256 netCollLot = singleRedemption.collLot - collLotRedemptionFee;
-			/// @dev on a redemption, reward accruing rights on the collateral shift from the borrower to the redeemer
-			IRewardAccruing(_asset).transferRewardAccruingRights(_borrower, msg.sender, netCollLot);
-			/// @dev on a redemption, reward accruing rights on the collateral gas compensation fee shift from the borrower to the treasury
-			IRewardAccruing(_asset).transferRewardAccruingRights(_borrower, treasuryAddress, collLotRedemptionFee);
 		}
 
 		return singleRedemption;

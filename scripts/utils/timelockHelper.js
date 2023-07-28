@@ -8,9 +8,9 @@ const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 // Setup:
 const TIMELOCK_ADDRESS = "0x57a1953bf194a1ef73396e442ac7dc761dcd23cc" // Mainnet::Timelock
 const TARGET_ADDRESS = "0xc49B737fa56f9142974a54F6C66055468eC631d0" // Mainnet::VesselManagerOperations
-const METHOD_SIGNATURE = "setRedemptionSofteningParam(uint256)"
-const METHOD_ARG_TYPES = ["uint256"]
-const METHOD_ARG_VALUES = ["9800"]
+const METHOD_SIGNATURE = "setMintCap(address,uint256)"
+const METHOD_ARG_TYPES = ["address","uint256"]
+const METHOD_ARG_VALUES = ["0x8ffDf2DE812095b1D19CB146E4c004587C0A0692","100000000000000000000000"]
 
 main()
 	.then(() => process.exit(0))

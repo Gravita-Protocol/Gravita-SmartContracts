@@ -16,8 +16,9 @@ const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const SortedVessels = artifacts.require("SortedVessels")
 const StabilityPoolTester = artifacts.require("StabilityPoolTester")
 const Timelock = artifacts.require("Timelock")
-const VesselManagerOperations = artifacts.require("VesselManagerOperations")
+const VesselManager = artifacts.require("VesselManager")
 const VesselManagerTester = artifacts.require("VesselManagerTester")
+const VesselManagerOperations = artifacts.require("VesselManagerOperations")
 
 const testHelpers = require("./testHelpers.js")
 const th = testHelpers.TestHelper
@@ -48,6 +49,7 @@ class DeploymentHelper {
 	}
 
 	static async _deployCoreContracts(treasuryAddress) {
+		const isFork = Boolean(network.config.forking?.enabled)
 		const activePool = await ActivePool.new()
 		const adminContract = await AdminContract.new()
 		const borrowerOperations = await BorrowerOperationsTester.new()
@@ -60,7 +62,7 @@ class DeploymentHelper {
 		const priceFeedTestnet = await PriceFeedTestnet.new()
 		const sortedVessels = await SortedVessels.new()
 		const stabilityPool = await StabilityPoolTester.new()
-		const vesselManager = await VesselManagerTester.new()
+		const vesselManager = isFork ? await VesselManager.new() : await VesselManagerTester.new()
 		const vesselManagerOperations = await VesselManagerOperations.new()
 		const shortTimelock = await Timelock.new(TIMELOCK_SHORT_DELAY, treasuryAddress)
 		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)

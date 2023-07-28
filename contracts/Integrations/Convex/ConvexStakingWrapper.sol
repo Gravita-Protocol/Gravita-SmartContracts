@@ -285,7 +285,7 @@ contract ConvexStakingWrapper is
 		address _to,
 		uint256 _amount
 	) external override onlyDefaultPoolOrStabilityPoolOrVesselManagerOperations {
-		console.log("transferRewardAccruingRights(%s, %s)", addrToName(_from), addrToName(_to));
+		console.log("transferRewardAccruingRights(%s, %s, %s)", addrToName(_from), addrToName(_to), f(_amount));
 		_checkpoint([_from, _to], false);
 		emit RewardAccruingRightsTransferred(_from, _to, _amount);
 	}
@@ -469,7 +469,7 @@ contract ConvexStakingWrapper is
 							reward.claimableAmount[_account] = _userRewardAmount;
 						}
 						reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
-					}
+					} else console.log(" - rewardAmount[%s] for account %s is zero", addrToName(reward.token), _i);
 					reward.integralFor[_account] = reward.integral;
 				}
 				if (_isClaim) {
