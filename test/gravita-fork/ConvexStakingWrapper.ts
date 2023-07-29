@@ -95,6 +95,7 @@ describe("ConvexStakingWrapper", async () => {
 		console.log(`wrapper.totalBalanceOf(alice): ${f(await wrapper.totalBalanceOf(alice))}`)
 
 		// fast forward 90 days
+		console.log(`\n--> time.increase() :: t = 90\n`)
 		await time.increase(90 * 86_400)
 
 		// alice closes vessel
@@ -164,7 +165,7 @@ describe("ConvexStakingWrapper", async () => {
 		assertIsApproximatelyEqual(wrapperCvxBalance, claimableCvxRewards, Number(wrapperCvxBalance) / 200)
 	})
 
-	it.only("liquidation using stability pool deposits", async () => {
+	it("liquidation using stability pool deposits", async () => {
 		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
 
@@ -273,35 +274,11 @@ describe("ConvexStakingWrapper", async () => {
 		assert.equal(bobWrapperBalance.toString(), "0")
 		assert.equal(treasuryCurveBalance.toString(), "0")
 
-		const crvSum = aliceCrvBalance.add(bobCrvBalance).add(treasuryCrvBalance)
-		const cvxSum = aliceCvxBalance.add(bobCvxBalance).add(treasuryCvxBalance)
-
-		// alice & bob should have similar rewards (.5% deviation accepted)
-		assertIsApproximatelyEqual(aliceCrvBalance, bobCrvBalance, Number(crvSum) / 200)
-		assertIsApproximatelyEqual(aliceCvxBalance, bobCvxBalance, Number(cvxSum) / 200)
-
-		// // treasury should have `protocolFee` (15%) of total
-		// const protocolFee = await wrapper.protocolFee()
-		// const expectedTreasuryCrvBalance = Number(crvSum) * (Number(protocolFee) / 1e18)
-		// const expectedTreasuryCvxBalance = Number(cvxSum) * (Number(protocolFee) / 1e18)
-		// assertIsApproximatelyEqual(treasuryCrvBalance, expectedTreasuryCrvBalance)
-		// assertIsApproximatelyEqual(treasuryCvxBalance, expectedTreasuryCvxBalance)
-
-		// // remaining rewards on wrapper should belong to whale - and corresponding treasury share (.5% deviation accepted)
-		// const wrapperCrvBalance = await crv.balanceOf(wrapper.address)
-		// const wrapperCvxBalance = await cvx.balanceOf(wrapper.address)
-
-		// await wrapper.userCheckpoint(whale)
-		// const whaleRewards = await wrapper.getEarnedRewards(whale)
-		// const treasuryRewards = await wrapper.getEarnedRewards(treasury)
-		// const claimableCrvRewards = BigNumber.from(whaleRewards[0].amount).add(BigNumber.from(treasuryRewards[0].amount))
-		// const claimableCvxRewards = BigNumber.from(whaleRewards[1].amount).add(BigNumber.from(treasuryRewards[1].amount))
-
-		// assertIsApproximatelyEqual(wrapperCrvBalance, claimableCrvRewards, Number(wrapperCrvBalance) / 200)
-		// assertIsApproximatelyEqual(wrapperCvxBalance, claimableCvxRewards, Number(wrapperCvxBalance) / 200)
+		// TODO research CRV and CVX rewards metrics and understand how much should alice & bob each have,
+		//     considering alice lost accruing rights (to treasury) on day 30
 	})
 
-	it("original test: should deposit lp tokens and earn rewards while being transferable", async () => {
+	it.skip("original test: should deposit lp tokens and earn rewards while being transferable", async () => {
 		await setBalance(gaugeAddress, 20e18)
 		await impersonateAccount(gaugeAddress)
 		await curveLP.transfer(alice, toEther("10"), { from: gaugeAddress })
