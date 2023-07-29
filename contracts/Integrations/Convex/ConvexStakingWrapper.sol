@@ -233,6 +233,7 @@ contract ConvexStakingWrapper is
 		if (reward.token != address(0)) {
 			uint256 _amount = reward.claimableAmount[treasuryAddress];
 			if (_amount != 0) {
+				reward.remaining -= _amount;
 				reward.claimableAmount[treasuryAddress] = 0;
 				IERC20(reward.token).safeTransfer(treasuryAddress, _amount);
 			}
@@ -381,11 +382,11 @@ contract ConvexStakingWrapper is
 	/// @param _accounts[1] to address
 	/// @param _claim flag to perform rewards claiming
 	function _checkpoint(address[2] memory _accounts, bool _claim) internal nonReentrant {
+		console.log("checkpoint(%s, %s, %s)", addrToName(_accounts[0]), addrToName(_accounts[1]), _claim);
 		if (_isGravitaPool(_accounts[0]) || _isGravitaPool(_accounts[1])) {
-			// ignore checkpoints that involve Gravita pool contracts
+			// ignore checkpoints that involve Gravita pool contracts, as they hold collateral on behalf of others
 			return;
 		}
-		console.log("checkpoint(%s, %s, %s)", addrToName(_accounts[0]), addrToName(_accounts[1]), _claim);
 		uint256[2] memory _depositedBalances;
 		_depositedBalances[0] = totalBalanceOf(_accounts[0]);
 		console.log(" - totalBalanceOf_0: %s", f(_depositedBalances[0]));
@@ -419,7 +420,7 @@ contract ConvexStakingWrapper is
 	) internal {
 		RewardType storage reward = rewards[_index];
 		if (reward.token == address(0)) {
-			// token address could have been reset by invalidateReward()
+			/// @dev token address could have been reset by invalidateReward()
 			return;
 		}
 
@@ -430,46 +431,57 @@ contract ConvexStakingWrapper is
 		// check whether balance increased, and update integral if needed
 		if (_supply > 0 && _contractBalance > reward.remaining) {
 			uint256 _diff = ((_contractBalance - reward.remaining) * 1e20) / _supply;
+			console.log("Wrapper.diff: %s", f(_diff));
 			reward.integral += _diff;
 		}
 
-		// update user (and treasury) integrals
+		// update account (and treasury) integrals
 		for (uint256 _i; _i < _accounts.length; ) {
 			address _account = _accounts[_i];
-			if (_account != address(0) && !_isGravitaPool(_account)) {
+
+			if (_account != address(0)) {
 				uint _accountIntegral = reward.integralFor[_account];
+
 				if (_isClaim || _accountIntegral < reward.integral) {
-					// reward.claimableAmount[_accounts[_i]] contains the current claimable amount, to that we add
-					// add(_balances[_i].mul(reward.integral.sub(_accountIntegral)) => token_balance * (general_reward/token - user_claimed_reward/token)
+					uint256 _claimableAmountIncrease = (_balances[_i] * (reward.integral - _accountIntegral)) / 1e20;
 
-					uint256 _newClaimableAmount = (_balances[_i] * (reward.integral - _accountIntegral)) / 1e20;
-					uint256 _rewardAmount = reward.claimableAmount[_account] + _newClaimableAmount;
+					(uint256 _accountShare, uint256 _treasuryShare) = _splitReward(_claimableAmountIncrease);
 
-					if (_rewardAmount != 0) {
-						uint256 _userRewardAmount = (_rewardAmount * (1 ether - protocolFee)) / 1 ether;
-						uint256 _treasuryRewardAmount = _rewardAmount - _userRewardAmount;
+					if (_treasuryShare != 0) {
+						console.log(
+							" - treasury earned share of %s %s from %s",
+							f(_treasuryShare),
+							addrToName(reward.token),
+							addrToName(_account)
+						);
+						reward.claimableAmount[treasuryAddress] += _treasuryShare;
+					}
 
+					uint256 _accountRewardAmount = reward.claimableAmount[_account] + _accountShare;
+
+					if (_accountRewardAmount != 0) {
 						if (_isClaim) {
 							reward.claimableAmount[_account] = 0;
-							IERC20(reward.token).safeTransfer(_accounts[_i + 1], _userRewardAmount); // on a claim, the second address is the forwarding address
-							_contractBalance -= _rewardAmount;
+							IERC20(reward.token).safeTransfer(_accounts[_i + 1], _accountRewardAmount); // on a claim, the second address is the forwarding address
+							_contractBalance -= _accountRewardAmount;
 							console.log(
 								" - reward[%s].transferTo(%s): %s",
 								addrToName(reward.token),
 								addrToName(_account),
-								f(_userRewardAmount)
+								f(_accountRewardAmount)
 							);
 						} else {
 							console.log(
-								" - reward[%s].claimableAmount[%s]: %s",
+								" - reward[%s].claimableAmt[%s]: %s",
 								addrToName(reward.token),
 								addrToName(_account),
-								f(_userRewardAmount)
+								f(_accountRewardAmount)
 							);
-							reward.claimableAmount[_account] = _userRewardAmount;
+							reward.claimableAmount[_account] = _accountRewardAmount;
 						}
-						reward.claimableAmount[treasuryAddress] += _treasuryRewardAmount;
-					} else console.log(" - rewardAmount[%s] for account %s is zero", addrToName(reward.token), _i);
+					} else {
+						console.log(" - rewardAmount[%s] for account %s is zero", addrToName(reward.token), _i);
+					}
 					reward.integralFor[_account] = reward.integral;
 				}
 				if (_isClaim) {
@@ -484,6 +496,13 @@ contract ConvexStakingWrapper is
 		// update remaining reward here since balance could have changed (on a claim)
 		if (_contractBalance != reward.remaining) {
 			reward.remaining = _contractBalance;
+		}
+	}
+
+	function _splitReward(uint256 _amount) internal view returns (uint256 _accountShare, uint256 _treasuryShare) {
+		if (_amount != 0) {
+			_accountShare = (_amount * (1 ether - protocolFee)) / 1 ether;
+			_treasuryShare = _amount - _accountShare;
 		}
 	}
 
