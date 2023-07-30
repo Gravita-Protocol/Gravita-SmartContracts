@@ -99,7 +99,7 @@ interface IVesselManager is IGravitaBase {
 		uint256 _debtTokenAmount,
 		uint256 _price,
 		uint256 _maxIterations
-	) external returns (address firstRedemptionHint, uint256 partialRedemptionHintNICR, uint256 truncatedDebtTokenAmount);
+	) external view returns (address firstRedemptionHint, uint256 partialRedemptionHintNICR, uint256 truncatedDebtTokenAmount);
 
 	function getVesselOwnersCount(address _asset) external view returns (uint256);
 

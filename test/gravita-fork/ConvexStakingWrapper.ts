@@ -10,6 +10,9 @@ import { BigNumber } from "ethers"
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 
+const ISortedVessels = artifacts.require("ISortedVessels")
+const IVesselManager = artifacts.require("IVesselManager")
+
 const BaseRewardPool = artifacts.require("IBaseRewardPool")
 const Booster = artifacts.require("IBooster")
 const ConvexStakingWrapper = artifacts.require("ConvexStakingWrapper")
@@ -75,7 +78,7 @@ describe("ConvexStakingWrapper", async () => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
-	it("happy path: openVessel, closeVessel", async () => {
+	it("Happy path: openVessel & closeVessel should not transfer reward rights", async () => {
 		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
 
@@ -165,7 +168,7 @@ describe("ConvexStakingWrapper", async () => {
 		assertIsApproximatelyEqual(wrapperCvxBalance, claimableCvxRewards, Number(wrapperCvxBalance) / 200)
 	})
 
-	it("liquidation using stability pool deposits", async () => {
+	it("Liquidation using stability pool deposits should transfer reward rights to treasury", async () => {
 		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
 
@@ -274,7 +277,127 @@ describe("ConvexStakingWrapper", async () => {
 		assert.equal(bobWrapperBalance.toString(), "0")
 		assert.equal(treasuryCurveBalance.toString(), "0")
 
-		// TODO research CRV and CVX rewards metrics and understand how much should alice & bob each have,
+		// TODO research CRV and CVX rewards metrics and understand how much should alice & bob each have on day 60,
+		//     considering alice lost accruing rights (to treasury) on day 30
+	})
+
+	it.only("Redemption should transfer rewards rights", async () => {
+		// enable & setup redemptions
+		const timelockAddress = await adminContract.timelockAddress()
+		await impersonateAccount(timelockAddress)
+		await setBalance(timelockAddress, 10e18)
+		await vesselManagerOperations.setRedemptionSofteningParam(98_00, { from: timelockAddress })
+		await stopImpersonatingAccount(timelockAddress)
+		const currentBlock = await ethers.provider.getBlockNumber()
+		const currentBlockTimestamp = Number((await ethers.provider.getBlock(currentBlock)).timestamp)
+		await adminContract.setRedemptionBlockTimestamp(wrapper.address, currentBlockTimestamp - 1)
+
+		// alice & bob deposit into wrapper
+		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
+		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
+		console.log(`\n--> depositCurveTokens(alice & bob)\n`)
+		await wrapper.depositCurveTokens(aliceInitialCurveBalance, alice, { from: alice })
+		await wrapper.depositCurveTokens(bobInitialCurveBalance, bob, { from: bob })
+
+		// alice & bob open vessels
+		const aliceMaxLoan = await calcMaxLoan(aliceInitialCurveBalance)
+		console.log(`\n--> openVessel(alice, ${f(aliceInitialCurveBalance)}) => ${f(aliceMaxLoan)} GRAI\n`)
+		await borrowerOperations.openVessel(
+			wrapper.address,
+			aliceInitialCurveBalance,
+			aliceMaxLoan,
+			AddressZero,
+			AddressZero,
+			{
+				from: alice,
+			}
+		)
+		const bobMaxLoan = await calcMaxLoan(bobInitialCurveBalance)
+		console.log(`\n--> openVessel(bob, ${f(bobInitialCurveBalance)}) => ${f(bobMaxLoan)} GRAI\n`)
+		await borrowerOperations.openVessel(wrapper.address, bobInitialCurveBalance, bobMaxLoan, AddressZero, AddressZero, {
+			from: bob,
+		})
+
+		// fast forward 30 days
+		console.log(`\n--> time.increase() :: t = 30\n`)
+		await time.increase(30 * 86_400)
+
+		// whale redeems some of his GRAI
+		const redemptionAmount = toEther(5_000)
+		console.log(`\n--> redeemCollateral(whale) :: ${f(redemptionAmount)} GRAI\n`)
+		const { firstRedemptionHint, partialRedemptionHintNewICR, upperPartialRedemptionHint, lowerPartialRedemptionHint } =
+			await getRedemptionHints(redemptionAmount)
+
+		await vesselManagerOperations.redeemCollateral(
+			wrapper.address,
+			redemptionAmount,
+			upperPartialRedemptionHint,
+			lowerPartialRedemptionHint,
+			firstRedemptionHint,
+			partialRedemptionHintNewICR,
+			5,
+			toEther(0.05),
+			{ from: whale }
+		)
+		
+		// TODO checks
+
+		await printBalances([alice, bob])
+
+		return
+		// bob closes vessel
+		console.log(`\n--> closeVessel(bob)\n`)
+		await borrowerOperations.closeVessel(wrapper.address, { from: bob })
+
+		// alice, bob and treasury claim rewards & unwrap
+		console.log(`\n--> claimEarnedRewards(alice, bob, treasury)\n`)
+		await wrapper.earmarkBoosterRewards()
+		await wrapper.claimEarnedRewards(alice)
+		await wrapper.claimEarnedRewards(bob)
+		await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(crv.address)) - 1)
+		await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(cvx.address)) - 1)
+
+		console.log(`\n--> withdrawAndUnwrap(bob)\n`)
+		await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
+
+		// checks
+		const aliceCurveBalance = await curveLP.balanceOf(alice)
+		const aliceCrvBalance = await crv.balanceOf(alice)
+		const aliceCvxBalance = await cvx.balanceOf(alice)
+		const aliceWrapperBalance = await wrapper.totalBalanceOf(alice)
+
+		const bobCurveBalance = await curveLP.balanceOf(bob)
+		const bobCrvBalance = await crv.balanceOf(bob)
+		const bobCvxBalance = await cvx.balanceOf(bob)
+		const bobWrapperBalance = await wrapper.totalBalanceOf(bob)
+
+		const treasuryCurveBalance = await curveLP.balanceOf(treasury)
+		const treasuryCrvBalance = await crv.balanceOf(treasury)
+		const treasuryCvxBalance = await cvx.balanceOf(treasury)
+		const treasuryWrapperBalance = await wrapper.totalBalanceOf(treasury)
+
+		console.log(`\naliceCurveBalance: ${f(aliceCurveBalance)}`)
+		console.log(`aliceCrvBalance: ${f(aliceCrvBalance)}`)
+		console.log(`aliceCvxBalance: ${f(aliceCvxBalance)}`)
+		console.log(`aliceWrapperBalance: ${f(aliceWrapperBalance)}`)
+
+		console.log(`\nbobCurveBalance: ${f(bobCurveBalance)}`)
+		console.log(`bobCrvBalance: ${f(bobCrvBalance)}`)
+		console.log(`bobCvxBalance: ${f(bobCvxBalance)}`)
+		console.log(`bobWrapperBalance: ${f(bobWrapperBalance)}`)
+
+		console.log(`\ntreasuryCurveBalance: ${f(treasuryCurveBalance)}`)
+		console.log(`treasuryCrvBalance: ${f(treasuryCrvBalance)}`)
+		console.log(`treasuryCvxBalance: ${f(treasuryCvxBalance)}`)
+		console.log(`treasuryWrapperBalance: ${f(treasuryWrapperBalance)}`)
+
+		assert.equal(aliceCurveBalance.toString(), "0") // alice lost her collateral on liquidation
+		assert.equal(bobCurveBalance.toString(), bobInitialCurveBalance.toString())
+		assert.equal(aliceWrapperBalance.toString(), "0")
+		assert.equal(bobWrapperBalance.toString(), "0")
+		assert.equal(treasuryCurveBalance.toString(), "0")
+
+		// TODO research CRV and CVX rewards metrics and understand how much should alice & bob each have on day 60,
 		//     considering alice lost accruing rights (to treasury) on day 30
 	})
 
@@ -520,7 +643,7 @@ async function initGravitaCurveSetup() {
 /**
  * Calculates a loan amount that is close to the maxLTV.
  */
-async function calcMaxLoan(collAmount: BigNumber) {
+async function calcMaxLoan(collAmount: BigNumber): Promise<BigInt> {
 	const collPrice = BigInt(String(await priceFeed.fetchPrice(wrapper.address)))
 	const collValue = (BigInt(collAmount.toString()) * collPrice) / BigInt(WeiPerEther.toString())
 	const gasCompensation = await adminContract.getDebtTokenGasCompensation(wrapper.address)
@@ -533,6 +656,25 @@ async function dropPriceByPercent(collAddress: string, pct: number) {
 	const price = await priceFeed.getPrice(collAddress)
 	const newPrice = (BigInt(price) * BigInt(100 - pct)) / BigInt(100)
 	await priceFeed.setPrice(collAddress, newPrice)
+}
+
+async function getRedemptionHints(redemptionAmount: BigNumber) {
+	const price = await priceFeed.fetchPrice(wrapper.address)
+	const vesselManager = await IVesselManager.at(await adminContract.vesselManager())
+	const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManager.getRedemptionHints(
+		wrapper.address,
+		redemptionAmount,
+		price,
+		0
+	)
+	const sortedVessels = await ISortedVessels.at(await adminContract.sortedVessels())
+	const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+		wrapper.address,
+		partialRedemptionHintNewICR,
+		alice,
+		alice
+	)
+	return { firstRedemptionHint, partialRedemptionHintNewICR, upperPartialRedemptionHint, lowerPartialRedemptionHint }
 }
 
 function assertIsApproximatelyEqual(x: any, y: any, error = 1_000) {
