@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../Integrations/Curve/ICurvePool.sol";
 
 /**
- * @title CurveLP price feed for 2 assets
+ * @title CurveLP price feed for pools that use 2 underlying assets
  * @dev Based on https://github.com/Gearbox-protocol/integrations-v2/blob/main/contracts/oracles/curve/CurveLP2PriceFeed.sol
  */
 contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
@@ -105,9 +105,10 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 		revert NotImplementedException();
 	}
 
-	/// @dev Returns the USD price of the pool's LP token
-	/// @notice Computes the LP token price as (min_t(price(coin_t)) * virtual_price())
-	///         See more at https://dev.gearbox.fi/docs/documentation/oracle/curve-pricefeed
+	/**
+	 * @notice Computes the LP token price as (min_t(price(coin_t)) * virtual_price())
+	 *     See more at https://dev.gearbox.fi/docs/documentation/oracle/curve-pricefeed
+	 */
 	function latestRoundData()
 		external
 		view
@@ -152,8 +153,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	// Admin functions ------------------------------------------------------------------------------------------------
 
 	/// @dev Updates the bounds for the exchange rate value
-	/// @param _lowerBound The new lower bound (the upper bound is computed dynamically)
-	///                    from the lower bound
+	/// @param _lowerBound The new lower bound (the upper bound is computed dynamically from the lower bound)
 	function setLimiter(uint256 _lowerBound) external onlyOwner {
 		_setLimiter(_lowerBound);
 	}
@@ -193,7 +193,9 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	}
 
 	function _checkAnswer(uint80 roundID, int256 price, uint256 updatedAt, uint80 answeredInRound) internal pure {
-		if (price <= 0) revert ZeroPriceException();
+		if (price == 0) {
+			revert ZeroPriceException();
+		}
 		if (answeredInRound < roundID || updatedAt == 0) revert ChainPriceStaleException();
 	}
 }
