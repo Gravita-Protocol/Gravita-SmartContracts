@@ -106,8 +106,8 @@ contract ConvexStakingWrapper is
 		convexPool = _rewards;
 		convexPoolId = _poolId;
 
-		wrapperName = string(abi.encodePacked("Staked ", ERC20(_token).name()));
-		wrapperSymbol = string(abi.encodePacked("stk", ERC20(_token).symbol()));
+		wrapperName = string(abi.encodePacked("Gravita ", ERC20(_token).name()));
+		wrapperSymbol = string(abi.encodePacked("gr", ERC20(_token).symbol()));
 
 		_addRewards();
 		_setApprovals();
