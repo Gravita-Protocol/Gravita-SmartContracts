@@ -7,15 +7,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../Integrations/Curve/ICurvePool.sol";
 
 /**
- * @title CurveLP price feed for pools that use 2 underlying assets
+ * @title CurveLP price feed aggregator for pools that use 2 underlying assets.
  * @dev Based on https://github.com/Gearbox-protocol/integrations-v2/blob/main/contracts/oracles/curve/CurveLP2PriceFeed.sol
  */
 contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
-	error ZeroAddressException();
-	error ZeroPriceException();
-	error ChainPriceStaleException();
+	error AddressZeroException();
+	error PriceZeroException();
+	error PriceStaleException();
 	error NotImplementedException();
 	/// @dev Thrown on returning a value that violates the current bounds
 	error ValueOutOfRangeException();
@@ -58,7 +58,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	/// @param _delta Pre-defined window in PERCENTAGE FORMAT which is allowed for SC value
 	constructor(uint256 _delta, address _curvePool, address _priceFeed1, address _priceFeed2) {
 		if (_curvePool == address(0) || _priceFeed1 == address(0) || _priceFeed2 == address(0)) {
-			revert ZeroAddressException();
+			revert AddressZeroException();
 		}
 
 		delta = _delta;
@@ -66,7 +66,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 		decimalsDivider = 10 ** 18;
 
 		uint256 virtualPrice = ICurvePool(_curvePool).get_virtual_price();
-		_setLimiter(virtualPrice);
+		_setVirtualPriceBoundaries(virtualPrice);
 
 		priceFeed1 = AggregatorV3Interface(_priceFeed1);
 		priceFeed2 = AggregatorV3Interface(_priceFeed2);
@@ -107,7 +107,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 	/**
 	 * @notice Computes the LP token price as (min_t(price(coin_t)) * virtual_price())
-	 *     See more at https://dev.gearbox.fi/docs/documentation/oracle/curve-pricefeed
+	 *     See more at https://dev.gearbox.fi/oracle/curve-pricefeed
 	 */
 	function latestRoundData()
 		external
@@ -135,11 +135,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 			answeredInRound = answeredInRound2;
 		}
 
-		uint256 virtualPrice = curvePool.get_virtual_price();
-
-		// Checks that virtual_price is in within bounds
-		virtualPrice = _checkAndUpperBoundValue(virtualPrice);
-
+		uint256 virtualPrice = _getVirtualPrice();
 		answer = (answer * int256(virtualPrice)) / decimalsDivider;
 	}
 
@@ -154,49 +150,54 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 	/// @dev Updates the bounds for the exchange rate value
 	/// @param _lowerBound The new lower bound (the upper bound is computed dynamically from the lower bound)
-	function setLimiter(uint256 _lowerBound) external onlyOwner {
-		_setLimiter(_lowerBound);
+	function setVirtualPriceBoundaries(uint256 _lowerBound) external onlyOwner {
+		_setVirtualPriceBoundaries(_lowerBound);
 	}
 
 	// Internal functions ---------------------------------------------------------------------------------------------
 
-	/// @dev Checks that value is in range [lowerBound; upperBound],
-	/// Reverts if below lowerBound and returns min(value, upperBound)
-	/// @param value Value to be checked and bounded
-	function _checkAndUpperBoundValue(uint256 value) internal view returns (uint256) {
-		uint256 lb = lowerBound;
-		if (value < lb) revert ValueOutOfRangeException();
-
-		uint256 uBound = _calcUpperBound(lb);
-
-		return (value > uBound) ? uBound : value;
+	/**
+	 * @notice Retrieves the LP Token virtual price from the Curve Pool; returns min(virtualPrice, upperBound);
+	 *     Reverts if the retrieved virtualPrice is below the lower bound.
+	 * @return min(virtualPrice, upperBound)
+	 */
+	function _getVirtualPrice() internal view returns (uint256) {
+		uint256 virtualPrice = curvePool.get_virtual_price();
+		uint256 _lowerBound = lowerBound;
+		if (virtualPrice < _lowerBound) {
+			revert ValueOutOfRangeException();
+		}
+		uint256 _upperBound = _calcUpperBound(_lowerBound);
+		return (virtualPrice > _upperBound) ? _upperBound : virtualPrice;
 	}
 
-	function _setLimiter(uint256 _lowerBound) internal {
-		if (_lowerBound == 0 || !_checkCurrentValueInBounds(_lowerBound, _calcUpperBound(_lowerBound)))
+	function _setVirtualPriceBoundaries(uint256 _lowerBound) internal {
+		if (_lowerBound == 0 || !_checkCurrentValueInBounds(_lowerBound, _calcUpperBound(_lowerBound))) {
 			revert IncorrectLimitsException();
-
+		}
 		lowerBound = _lowerBound;
 		emit NewLimiterParams(lowerBound, _calcUpperBound(_lowerBound));
 	}
 
-	function _calcUpperBound(uint256 lb) internal view returns (uint256) {
-		return (lb * (PERCENTAGE_FACTOR + delta)) / PERCENTAGE_FACTOR;
+	function _calcUpperBound(uint256 _lowerBound) internal view returns (uint256) {
+		return (_lowerBound * (PERCENTAGE_FACTOR + delta)) / PERCENTAGE_FACTOR;
 	}
 
 	function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _upperBound) internal view returns (bool) {
-		uint256 virtualPrice = curvePool.get_virtual_price();
-		if (virtualPrice < _lowerBound || virtualPrice > _upperBound) {
+		uint256 _virtualPrice = curvePool.get_virtual_price();
+		if (_virtualPrice < _lowerBound || _virtualPrice > _upperBound) {
 			return false;
 		}
 		return true;
 	}
 
-	function _checkAnswer(uint80 roundID, int256 price, uint256 updatedAt, uint80 answeredInRound) internal pure {
-		if (price == 0) {
-			revert ZeroPriceException();
+	function _checkAnswer(uint80 _roundId, int256 _price, uint256 _updatedAt, uint80 _answeredInRound) internal pure {
+		if (_price == 0) {
+			revert PriceZeroException();
 		}
-		if (answeredInRound < roundID || updatedAt == 0) revert ChainPriceStaleException();
+		if (_answeredInRound < _roundId || _updatedAt == 0) {
+			revert PriceStaleException();
+		}
 	}
 }
 
