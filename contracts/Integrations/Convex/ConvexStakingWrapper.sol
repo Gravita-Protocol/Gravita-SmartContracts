@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./Interfaces/IBooster.sol";
@@ -72,15 +73,18 @@ contract ConvexStakingWrapper is
 
 	// Constants/Immutables ---------------------------------------------------------------------------------------------
 
+	uint256 private constant CRV_INDEX = 0;
+	uint256 private constant CVX_INDEX = 1;
 	address public constant convexBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
 	address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
 	address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
-	address public curveToken;
+
+	string private wrapperName;
+	string private wrapperSymbol;
+	address public curveLPToken;
 	address public convexToken;
 	address public convexPool;
 	uint256 public convexPoolId;
-	uint256 private constant CRV_INDEX = 0;
-	uint256 private constant CVX_INDEX = 1;
 
 	// State ------------------------------------------------------------------------------------------------------------
 
@@ -92,15 +96,18 @@ contract ConvexStakingWrapper is
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
 	function initialize(uint256 _poolId) external initializer {
-		__ERC20_init("GravitaCurveToken", "grCRV");
+		__ERC20_init("StakedConvexToken", "stkCvx");
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 
 		(address _lptoken, address _token, , address _rewards, , ) = IBooster(convexBooster).poolInfo(_poolId);
-		curveToken = _lptoken;
+		curveLPToken = _lptoken;
 		convexToken = _token;
 		convexPool = _rewards;
 		convexPoolId = _poolId;
+
+		wrapperName = string(abi.encodePacked("Staked ", ERC20(_token).name()));
+		wrapperSymbol = string(abi.encodePacked("stk", ERC20(_token).symbol()));
 
 		_addRewards();
 		_setApprovals();
@@ -160,11 +167,19 @@ contract ConvexStakingWrapper is
 
 	// Public functions -------------------------------------------------------------------------------------------------
 
+	function name() public view override returns (string memory) {
+		return wrapperName;
+	}
+
+	function symbol() public view override returns (string memory) {
+		return wrapperSymbol;
+	}
+
 	function depositCurveTokens(uint256 _amount, address _to) external whenNotPaused {
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _mint() will
 			_mint(_to, _amount);
-			IERC20(curveToken).safeTransferFrom(msg.sender, address(this), _amount);
+			IERC20(curveLPToken).safeTransferFrom(msg.sender, address(this), _amount);
 			/// @dev the `true` argument below means the Booster contract will immediately stake into the rewards contract
 			IConvexDeposits(convexBooster).deposit(convexPoolId, _amount, true);
 			emit Deposited(msg.sender, _to, _amount, true);
@@ -308,7 +323,7 @@ contract ConvexStakingWrapper is
 			// no need to call _checkpoint() since _burn() will
 			_burn(msg.sender, _amount);
 			IRewardStaking(convexPool).withdrawAndUnwrap(_amount, false);
-			IERC20(curveToken).safeTransfer(msg.sender, _amount);
+			IERC20(curveLPToken).safeTransfer(msg.sender, _amount);
 			emit Withdrawn(msg.sender, _amount, true);
 		}
 	}
@@ -359,8 +374,8 @@ contract ConvexStakingWrapper is
 	}
 
 	function _setApprovals() internal {
-		IERC20(curveToken).safeApprove(convexBooster, 0);
-		IERC20(curveToken).safeApprove(convexBooster, type(uint256).max);
+		IERC20(curveLPToken).safeApprove(convexBooster, 0);
+		IERC20(curveLPToken).safeApprove(convexBooster, type(uint256).max);
 		IERC20(convexToken).safeApprove(convexPool, 0);
 		IERC20(convexToken).safeApprove(convexPool, type(uint256).max);
 	}
@@ -589,3 +604,4 @@ contract ConvexStakingWrapper is
 		return string(bResult);
 	}
 }
+
