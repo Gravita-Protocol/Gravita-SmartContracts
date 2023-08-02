@@ -14,22 +14,19 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
 	error AddressZeroException();
-	error PriceZeroException();
-	error PriceStaleException();
 	error NotImplementedException();
-	/// @dev Thrown on returning a value that violates the current bounds
+	error PriceStaleException();
+	error PriceZeroException();
 	error ValueOutOfRangeException();
-	/// @dev Thrown on failing sanity checks when setting new bounds
-	error IncorrectLimitsException();
+	error VirtualPriceBoundariesException();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
-	/// @dev Emits on updating the virtual price bounds
-	event NewLimiterParams(uint256 lowerBound, uint256 upperBound);
+	event VirtualPriceBoundariesUpdated(uint256 lowerBound, uint256 upperBound);
 
 	// Constants/Immutables -------------------------------------------------------------------------------------------
 
-	uint16 constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
+	uint16 constant PERCENTAGE_FACTOR = 1e4; // percentage plus two decimals (100_00)
 	uint8 public constant decimalsVal = 8;
 
 	/// @dev The Curve pool associated with the evaluated LP token
@@ -38,13 +35,13 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	/// @dev Format of pool's virtual_price
 	int256 public immutable decimalsDivider;
 
-	/// @dev Window size in PERCENTAGE format. Upper bound = lowerBound * (1 + delta)
+	/// @dev Window size in PERCENTAGE format (usually `2_00` which is 2%) for calculating virtual_price boundaries
 	uint256 public immutable delta;
 
-	/// @dev Price feed of coin 0 in the pool
+	/// @dev Price feed of coin A in the pool
 	AggregatorV3Interface public immutable priceFeed1;
 
-	/// @dev Price feed of coin 1 in the pool
+	/// @dev Price feed of coin B in the pool
 	AggregatorV3Interface public immutable priceFeed2;
 
 	// State ----------------------------------------------------------------------------------------------------------
@@ -55,7 +52,12 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 	// Constructor ----------------------------------------------------------------------------------------------------
 
-	/// @param _delta Pre-defined window in PERCENTAGE FORMAT which is allowed for SC value
+	/**
+	 * @param _delta Window in PERCENTAGE format which is allowed for virtual_price boundaries
+	 * @param _curvePool Address for the Curve Pool this aggregator provides pricing for
+	 * @param _priceFeed1 Price feed of coin A in the pool
+	 * @param _priceFeed2 Price feed of coin B in the pool
+	 */
 	constructor(uint256 _delta, address _curvePool, address _priceFeed1, address _priceFeed2) {
 		if (_curvePool == address(0) || _priceFeed1 == address(0) || _priceFeed2 == address(0)) {
 			revert AddressZeroException();
@@ -63,7 +65,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 		delta = _delta;
 		curvePool = ICurvePool(_curvePool);
-		decimalsDivider = 10 ** 18;
+		decimalsDivider = 1 ether;
 
 		uint256 virtualPrice = ICurvePool(_curvePool).get_virtual_price();
 		_setVirtualPriceBoundaries(virtualPrice);
@@ -118,21 +120,21 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	{
 		(roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed1.latestRoundData();
 
-		// Sanity check for the Chainlink pricefeed
+		// Sanity check for the Chainlink pricefeed 1
 		_checkAnswer(roundId, answer, updatedAt, answeredInRound);
 
 		(uint80 roundId2, int256 answer2, uint256 startedAt2, uint256 updatedAt2, uint80 answeredInRound2) = priceFeed2
 			.latestRoundData();
 
-		// Sanity check for the Chainlink pricefeed
+		// Sanity check for the Chainlink pricefeed 2
 		_checkAnswer(roundId2, answer2, updatedAt2, answeredInRound2);
 
 		if (answer2 < answer) {
-			roundId = roundId2;
 			answer = answer2;
+			answeredInRound = answeredInRound2;
+			roundId = roundId2;
 			startedAt = startedAt2;
 			updatedAt = updatedAt2;
-			answeredInRound = answeredInRound2;
 		}
 
 		uint256 virtualPrice = _getVirtualPrice();
@@ -148,7 +150,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 	// Admin functions ------------------------------------------------------------------------------------------------
 
-	/// @dev Updates the bounds for the exchange rate value
+	/// @dev Updates the bounds for the exchange rate (virtual_price) value
 	/// @param _lowerBound The new lower bound (the upper bound is computed dynamically from the lower bound)
 	function setVirtualPriceBoundaries(uint256 _lowerBound) external onlyOwner {
 		_setVirtualPriceBoundaries(_lowerBound);
@@ -165,7 +167,7 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 		uint256 virtualPrice = curvePool.get_virtual_price();
 		uint256 _lowerBound = lowerBound;
 		if (virtualPrice < _lowerBound) {
-			revert ValueOutOfRangeException();
+			revert VirtualPriceBoundariesException();
 		}
 		uint256 _upperBound = _calcUpperBound(_lowerBound);
 		return (virtualPrice > _upperBound) ? _upperBound : virtualPrice;
@@ -173,10 +175,10 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 	function _setVirtualPriceBoundaries(uint256 _lowerBound) internal {
 		if (_lowerBound == 0 || !_checkCurrentValueInBounds(_lowerBound, _calcUpperBound(_lowerBound))) {
-			revert IncorrectLimitsException();
+			revert VirtualPriceBoundariesException();
 		}
 		lowerBound = _lowerBound;
-		emit NewLimiterParams(lowerBound, _calcUpperBound(_lowerBound));
+		emit VirtualPriceBoundariesUpdated(lowerBound, _calcUpperBound(_lowerBound));
 	}
 
 	function _calcUpperBound(uint256 _lowerBound) internal view returns (uint256) {
@@ -200,4 +202,3 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 		}
 	}
 }
-

@@ -96,18 +96,18 @@ contract ConvexStakingWrapper is
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
 	function initialize(uint256 _poolId) external initializer {
-		__ERC20_init("StakedConvexToken", "stkCvx");
+		(address _lptoken, address _token, , address _rewards, , ) = IBooster(convexBooster).poolInfo(_poolId);
+		wrapperName = string(abi.encodePacked("Gravita ", ERC20(_token).name()));
+		wrapperSymbol = string(abi.encodePacked("gr", ERC20(_token).symbol()));
+
+		__ERC20_init(wrapperName, wrapperSymbol);
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 
-		(address _lptoken, address _token, , address _rewards, , ) = IBooster(convexBooster).poolInfo(_poolId);
 		curveLPToken = _lptoken;
 		convexToken = _token;
 		convexPool = _rewards;
 		convexPoolId = _poolId;
-
-		wrapperName = string(abi.encodePacked("Gravita ", ERC20(_token).name()));
-		wrapperSymbol = string(abi.encodePacked("gr", ERC20(_token).symbol()));
 
 		_addRewards();
 		_setApprovals();
@@ -604,4 +604,3 @@ contract ConvexStakingWrapper is
 		return string(bResult);
 	}
 }
-
