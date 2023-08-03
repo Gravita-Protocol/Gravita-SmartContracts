@@ -3,6 +3,8 @@
 pragma solidity ^0.8.19;
 
 interface ICurvePool {
+	function add_liquidity(uint256[2] memory amountCtx, uint256 minAmount) external;
+
 	function coins(uint256 i) external view returns (address);
 
 	function underlying_coins(uint256 i) external view returns (address);
@@ -81,3 +83,4 @@ interface ICurvePool {
 
 	function totalSupply() external view returns (uint256);
 }
+
