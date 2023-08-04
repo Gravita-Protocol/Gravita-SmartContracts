@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "../Integrations/Curve/ICurvePool.sol";
+import "../Integrations/Curve-Convex/Interfaces/ICurvePool.sol";
 
 /**
  * @title CurveLP price feed aggregator for pools that use 2 underlying assets.

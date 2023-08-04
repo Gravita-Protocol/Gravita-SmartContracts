@@ -24,13 +24,10 @@ import "../../Interfaces/IStabilityPool.sol";
 import "../../Interfaces/IVesselManager.sol";
 import "../../Addresses.sol";
 
-import "@openzeppelin/contracts/utils/Strings.sol"; //debug
-import "hardhat/console.sol"; //debug
+import "@openzeppelin/contracts/utils/Strings.sol"; // TODO remove debug
+import "hardhat/console.sol"; // TODO remove debug
 
-/**
- * @dev Wrapper based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
- */
-contract ConvexStakingWrapper is
+contract CurveConvexStakingWrapper is
 	OwnableUpgradeable,
 	UUPSUpgradeable,
 	ReentrancyGuardUpgradeable,
@@ -75,12 +72,17 @@ contract ConvexStakingWrapper is
 
 	uint256 private constant CRV_INDEX = 0;
 	uint256 private constant CVX_INDEX = 1;
-	address public constant convexBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
-	address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
-	address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
+
+	// address public constant convexBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
+	// address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
+	// address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
 
 	string private wrapperName;
 	string private wrapperSymbol;
+
+	address public convexBooster;
+	address public crv;
+	address public cvx;
 	address public curveLPToken;
 	address public convexToken;
 	address public convexPool;
@@ -95,19 +97,28 @@ contract ConvexStakingWrapper is
 
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
-	function initialize(uint256 _poolId) external initializer {
-		(address _lptoken, address _token, , address _rewards, , ) = IBooster(convexBooster).poolInfo(_poolId);
+	function initialize(
+		address _convexBooster,
+		address _crv,
+		address _cvx,
+		uint256 _poolId
+	) public initializer {
+		(address _lptoken, address _token, , address _rewards, , ) = IBooster(_convexBooster).poolInfo(_poolId);
+
+		convexBooster = _convexBooster;
+		crv = _crv;
+		cvx = _cvx;
+		curveLPToken = _lptoken;
+		convexToken = _token;
+		convexPool = _rewards;
+		convexPoolId = _poolId;
+
 		wrapperName = string(abi.encodePacked("Gravita ", ERC20(_token).name()));
 		wrapperSymbol = string(abi.encodePacked("gr", ERC20(_token).symbol()));
 
 		__ERC20_init(wrapperName, wrapperSymbol);
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-
-		curveLPToken = _lptoken;
-		convexToken = _token;
-		convexPool = _rewards;
-		convexPoolId = _poolId;
 
 		_addRewards();
 		_setApprovals();
@@ -175,7 +186,7 @@ contract ConvexStakingWrapper is
 		return wrapperSymbol;
 	}
 
-	function depositCurveTokens(uint256 _amount, address _to) external whenNotPaused {
+	function deposit(uint256 _amount, address _to) external whenNotPaused {
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _mint() will
 			_mint(_to, _amount);
@@ -183,16 +194,6 @@ contract ConvexStakingWrapper is
 			/// @dev the `true` argument below means the Booster contract will immediately stake into the rewards contract
 			IConvexDeposits(convexBooster).deposit(convexPoolId, _amount, true);
 			emit Deposited(msg.sender, _to, _amount, true);
-		}
-	}
-
-	function stakeConvexTokens(uint256 _amount, address _to) external whenNotPaused {
-		if (_amount != 0) {
-			// no need to call _checkpoint() since _mint() will
-			_mint(_to, _amount);
-			IERC20(convexToken).safeTransferFrom(msg.sender, address(this), _amount);
-			IRewardStaking(convexPool).stake(_amount);
-			emit Deposited(msg.sender, _to, _amount, false);
 		}
 	}
 
@@ -291,7 +292,7 @@ contract ConvexStakingWrapper is
 	 * @notice Set any claimed rewards to automatically go to a different address.
 	 * @dev Set to zero to disable redirect.
 	 */
-	function setRewardRedirect(address _to) external nonReentrant {
+	function setRewardRedirect(address _to) external {
 		rewardRedirect[msg.sender] = _to;
 		emit RewardRedirected(msg.sender, _to);
 	}
@@ -353,7 +354,9 @@ contract ConvexStakingWrapper is
 			address _extraPool = IRewardStaking(_convexPool).extraRewards(_i);
 			address _extraToken = IRewardStaking(_extraPool).rewardToken();
 			// from pool 151, extra reward tokens are wrapped
-			if (convexPoolId >= 151) {
+			if (convexPoolId >= _getExtraRewardWrappedTokenStartingPoolId()) {
+				// TODO use __stashTokenUnderlyingSelector
+
 				_extraToken = ITokenWrapper(_extraToken).token();
 			}
 			if (_extraToken == cvx) {
@@ -371,6 +374,11 @@ contract ConvexStakingWrapper is
 				++_i;
 			}
 		}
+	}
+
+	// See https://github.com/convex-eth/platform/blob/25d5eafb75fe497c2aee6ce99f3f4f465209c886/contracts/contracts/wrappers/ConvexStakingWrapper.sol#L187-L190
+	function _getExtraRewardWrappedTokenStartingPoolId() internal pure virtual returns (uint256) {
+		return 151;
 	}
 
 	function _setApprovals() internal {

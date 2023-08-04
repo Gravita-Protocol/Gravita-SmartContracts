@@ -15,7 +15,7 @@ const IVesselManager = artifacts.require("IVesselManager")
 
 const BaseRewardPool = artifacts.require("IBaseRewardPool")
 const Booster = artifacts.require("IBooster")
-const ConvexStakingWrapper = artifacts.require("ConvexStakingWrapper")
+const CurveConvexStakingWrapper = artifacts.require("CurveConvexStakingWrapper")
 const IERC20 = artifacts.require("IERC20")
 
 let adminContract: any
@@ -39,7 +39,7 @@ let poolId = 64
 let snapshotId: number, initialSnapshotId: number
 let alice: string, bob: string, whale: string, deployer: string, treasury: string
 
-describe("ConvexStakingWrapper", async () => {
+describe("CurveConvexStakingWrapper", async () => {
 	before(async () => {
 		const accounts = await ethers.getSigners()
 		deployer = await accounts[0].getAddress()
@@ -83,10 +83,10 @@ describe("ConvexStakingWrapper", async () => {
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
 
 		// alice & bob deposit into wrapper
-		console.log(`\n --> depositCurveTokens(alice)\n`)
-		await wrapper.depositCurveTokens(aliceInitialCurveBalance, alice, { from: alice })
-		console.log(`\n --> depositCurveTokens(bob)\n`)
-		await wrapper.depositCurveTokens(bobInitialCurveBalance, bob, { from: bob })
+		console.log(`\n --> deposit(alice)\n`)
+		await wrapper.deposit(aliceInitialCurveBalance, alice, { from: alice })
+		console.log(`\n --> deposit(bob)\n`)
+		await wrapper.deposit(bobInitialCurveBalance, bob, { from: bob })
 
 		// only alice opens a vessel
 		console.log(`\n--> openVessel(alice)\n`)
@@ -173,9 +173,9 @@ describe("ConvexStakingWrapper", async () => {
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
 
 		// alice & bob deposit into wrapper
-		console.log(`\n--> depositCurveTokens(alice & bob)\n`)
-		await wrapper.depositCurveTokens(aliceInitialCurveBalance, alice, { from: alice })
-		await wrapper.depositCurveTokens(bobInitialCurveBalance, bob, { from: bob })
+		console.log(`\n--> deposit(alice & bob)\n`)
+		await wrapper.deposit(aliceInitialCurveBalance, alice, { from: alice })
+		await wrapper.deposit(bobInitialCurveBalance, bob, { from: bob })
 
 		// whale provides to SP
 		const whaleInitialDebtTokenBalance = await debtToken.balanceOf(whale)
@@ -295,9 +295,9 @@ describe("ConvexStakingWrapper", async () => {
 		// alice & bob deposit into wrapper
 		const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
 		const bobInitialCurveBalance = await curveLP.balanceOf(bob)
-		console.log(`\n--> depositCurveTokens(alice & bob)\n`)
-		await wrapper.depositCurveTokens(aliceInitialCurveBalance, alice, { from: alice })
-		await wrapper.depositCurveTokens(bobInitialCurveBalance, bob, { from: bob })
+		console.log(`\n--> deposit(alice & bob)\n`)
+		await wrapper.deposit(aliceInitialCurveBalance, alice, { from: alice })
+		await wrapper.deposit(bobInitialCurveBalance, bob, { from: bob })
 
 		// alice & bob open vessels
 		const aliceMaxLoan = await calcMaxLoan(aliceInitialCurveBalance)
@@ -339,7 +339,7 @@ describe("ConvexStakingWrapper", async () => {
 			toEther(0.05),
 			{ from: whale }
 		)
-		
+
 		// TODO checks
 
 		await printBalances([alice, bob])
@@ -422,7 +422,7 @@ describe("ConvexStakingWrapper", async () => {
 		await convexLP.approve(wrapper.address, bobBalance, { from: bob })
 
 		console.log("alice deposits into wrapper")
-		await wrapper.depositCurveTokens(aliceBalance, alice, { from: alice })
+		await wrapper.deposit(aliceBalance, alice, { from: alice })
 
 		console.log("bob deposits into Booster")
 		await booster.depositAll(poolId, false, { from: bob })
@@ -569,10 +569,10 @@ async function deployGravitaContracts(treasury: string, mintingAccounts: string[
 }
 
 async function deployWrapperContract(poolId: number) {
-	console.log(`Deploying ConvexStakingWrapper contract...`)
+	console.log(`Deploying CurveConvexStakingWrapper contract...`)
 	await setBalance(deployer, 10e18)
-	wrapper = await ConvexStakingWrapper.new({ from: deployer })
-	await wrapper.initialize(poolId, { from: deployer })
+	wrapper = await CurveConvexStakingWrapper.new({ from: deployer })
+	await wrapper.initialize(booster.address, crv.address, cvx.address, poolId, { from: deployer })
 	await wrapper.setAddresses(
 		[
 			await adminContract.activePool(),
@@ -631,7 +631,7 @@ async function initGravitaCurveSetup() {
 	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: whale })
 	// whale opens a vessel
 	const whaleCurveBalance = await curveLP.balanceOf(whale)
-	await wrapper.depositCurveTokens(whaleCurveBalance, whale, { from: whale })
+	await wrapper.deposit(whaleCurveBalance, whale, { from: whale })
 	await borrowerOperations.openVessel(wrapper.address, whaleCurveBalance, toEther(500_000), AddressZero, AddressZero, {
 		from: whale,
 	})
