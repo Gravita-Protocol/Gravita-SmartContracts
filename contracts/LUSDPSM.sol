@@ -17,10 +17,10 @@ contract LUSDPSM is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 
 	string public constant NAME = "LUSDPSM";
 
-	address public lusd;
 	uint256 public buyFee;
 	uint256 public sellFee;
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
+	address public immutable lusd;
 	IPool public immutable aavePool;
 
 	event BuyLUSD(address indexed user, uint256 amount, uint256 fee);
@@ -28,8 +28,9 @@ contract LUSDPSM is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 	event NewBuyFee(uint256 fee);
 	event NewSellFee(uint256 fee);
 
-	constructor(address pool) {
-		aavePool = IPool(pool);
+	constructor(address _lusd, address _pool) {
+		lusd = _lusd;
+		aavePool = IPool(_pool);
 	}
 
 	// --- Initializer ---
@@ -43,7 +44,7 @@ contract LUSDPSM is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 		uint256 fee = (_lusdAmount * sellFee) / DECIMAL_PRECISION;
 		uint256 graiAmount = _lusdAmount - fee;
 		IERC20Upgradeable(lusd).transferFrom(msg.sender, address(this), _lusdAmount);
-		aavePool.deposit(lusd, _lusdAmount, address(this), 0);
+		aavePool.supply(lusd, _lusdAmount, address(this), 0);
 
 		IDebtToken(debtToken).mintFromWhitelistedContract(graiAmount);
 		IERC20Upgradeable(debtToken).safeTransferFrom(address(this), msg.sender, graiAmount);
