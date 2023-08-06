@@ -70,12 +70,9 @@ contract CurveConvexStakingWrapper is
 
 	// Constants/Immutables ---------------------------------------------------------------------------------------------
 
+	uint256 private constant EXTRA_REWARD_WRAPPED_TOKEN_STARTING_POOL_ID = 151;
 	uint256 private constant CRV_INDEX = 0;
 	uint256 private constant CVX_INDEX = 1;
-
-	// address public constant convexBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
-	// address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
-	// address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
 
 	string private wrapperName;
 	string private wrapperSymbol;
@@ -97,12 +94,7 @@ contract CurveConvexStakingWrapper is
 
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
-	function initialize(
-		address _convexBooster,
-		address _crv,
-		address _cvx,
-		uint256 _poolId
-	) public initializer {
+	function initialize(address _convexBooster, address _crv, address _cvx, uint256 _poolId) public initializer {
 		(address _lptoken, address _token, , address _rewards, , ) = IBooster(_convexBooster).poolInfo(_poolId);
 
 		convexBooster = _convexBooster;
@@ -132,13 +124,9 @@ contract CurveConvexStakingWrapper is
 			RewardType storage newReward = rewards.push();
 			newReward.token = _token;
 			registeredRewards[_token] = rewards.length; //mark registered at index+1
-			/// @dev commented the transfer below until understanding its value
-			// send to self to warmup state
-			// IERC20(_token).transfer(address(this), 0);
 			emit RewardAdded(_token);
 		} else {
-			// get previous used index of given token
-			// this ensures that reviving can only be done on the previous used slot
+			// get previous index of given token, which ensures reviving can only be done on the previous used slot
 			uint256 _index = registeredRewards[_token];
 			if (_index != 0) {
 				// index is registeredRewards minus one
@@ -341,24 +329,13 @@ contract CurveConvexStakingWrapper is
 			newCvxReward.token = cvx;
 			registeredRewards[crv] = CRV_INDEX + 1;
 			registeredRewards[cvx] = CVX_INDEX + 1;
-			/// @dev commented the transfer below until understanding its value
-			// send to self to warmup state
-			// IERC20(crv).transfer(address(this), 0);
-			// send to self to warmup state
-			// IERC20(cvx).transfer(address(this), 0);
 			emit RewardAdded(crv);
 			emit RewardAdded(cvx);
 		}
 		uint256 _extraCount = IRewardStaking(_convexPool).extraRewardsLength();
 		for (uint256 _i; _i < _extraCount; ) {
 			address _extraPool = IRewardStaking(_convexPool).extraRewards(_i);
-			address _extraToken = IRewardStaking(_extraPool).rewardToken();
-			// from pool 151, extra reward tokens are wrapped
-			if (convexPoolId >= _getExtraRewardWrappedTokenStartingPoolId()) {
-				// TODO use __stashTokenUnderlyingSelector
-
-				_extraToken = ITokenWrapper(_extraToken).token();
-			}
+			address _extraToken = _getExtraRewardToken(_extraPool);
 			if (_extraToken == cvx) {
 				// update cvx reward pool address
 				rewards[CVX_INDEX].pool = _extraPool;
@@ -376,9 +353,15 @@ contract CurveConvexStakingWrapper is
 		}
 	}
 
-	// See https://github.com/convex-eth/platform/blob/25d5eafb75fe497c2aee6ce99f3f4f465209c886/contracts/contracts/wrappers/ConvexStakingWrapper.sol#L187-L190
-	function _getExtraRewardWrappedTokenStartingPoolId() internal pure virtual returns (uint256) {
-		return 151;
+	/**
+	 * @dev from pool 151, extra reward tokens are wrapped
+	 * See https://github.com/convex-eth/platform/blob/25d5eafb75fe497c2aee6ce99f3f4f465209c886/contracts/contracts/wrappers/ConvexStakingWrapper.sol#L187-L190
+	 */
+	function _getExtraRewardToken(address _extraPool) internal view virtual returns (address _extraToken) {
+		_extraToken = IRewardStaking(_extraPool).rewardToken();
+		if (convexPoolId >= EXTRA_REWARD_WRAPPED_TOKEN_STARTING_POOL_ID) {
+			_extraToken = ITokenWrapper(_extraToken).token();
+		}
 	}
 
 	function _setApprovals() internal {
