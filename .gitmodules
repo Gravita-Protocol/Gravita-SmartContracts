@@ -1,0 +1,3 @@
+[submodule "lib/aave-v3-core"]
+	path = lib/aave-v3-core
+	url = git@github.com:aave/aave-v3-core.git
