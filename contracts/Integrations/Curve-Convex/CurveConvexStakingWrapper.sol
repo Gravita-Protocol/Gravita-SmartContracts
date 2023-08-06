@@ -24,9 +24,12 @@ import "../../Interfaces/IStabilityPool.sol";
 import "../../Interfaces/IVesselManager.sol";
 import "../../Addresses.sol";
 
-import "@openzeppelin/contracts/utils/Strings.sol"; // TODO remove debug
-import "hardhat/console.sol"; // TODO remove debug
+import "@openzeppelin/contracts/utils/Strings.sol"; // TODO remove after done with debug/tests
+import "hardhat/console.sol"; // TODO remove after done with debug/tests
 
+/**
+ * Based upon https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol
+ */
 contract CurveConvexStakingWrapper is
 	OwnableUpgradeable,
 	UUPSUpgradeable,
@@ -44,11 +47,6 @@ contract CurveConvexStakingWrapper is
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
-	struct RewardEarned {
-		address token;
-		uint256 amount;
-	}
-
 	struct RewardType {
 		address token;
 		address pool;
@@ -58,19 +56,27 @@ contract CurveConvexStakingWrapper is
 		mapping(address => uint256) claimableAmount;
 	}
 
+	struct RewardEarned {
+		address token;
+		uint256 amount;
+	}
+
 	// Events -----------------------------------------------------------------------------------------------------------
 
 	event Deposited(address indexed _user, address indexed _account, uint256 _amount, bool _wrapped);
-	event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
+	event ProtocolFeeChanged(uint256 oldProtocolFee, uint256 newProtocolFee);
+	event RewardAdded(address _token);
 	event RewardInvalidated(address _rewardToken);
 	event RewardRedirected(address indexed _account, address _forward);
-	event RewardAdded(address _token);
 	event UserCheckpoint(address _userA, address _userB);
-	event ProtocolFeeChanged(uint256 oldProtocolFee, uint256 newProtocolFee);
+	event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
 
 	// Constants/Immutables ---------------------------------------------------------------------------------------------
 
+	// @dev from pool 151, extra reward tokens are wrapped
+	// See https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol#L187-L190
 	uint256 private constant EXTRA_REWARD_WRAPPED_TOKEN_STARTING_POOL_ID = 151;
+
 	uint256 private constant CRV_INDEX = 0;
 	uint256 private constant CVX_INDEX = 1;
 
@@ -90,7 +96,7 @@ contract CurveConvexStakingWrapper is
 	RewardType[] public rewards;
 	mapping(address => uint256) public registeredRewards; // rewardToken -> index in rewards[] + 1
 	mapping(address => address) public rewardRedirect; // account -> redirectTo
-	uint256 public protocolFee = 0.15 ether;
+	uint256 public protocolFee = 0.15 ether; // 15% share of rewards that are routed to protocol's treasury
 
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
@@ -253,7 +259,7 @@ contract CurveConvexStakingWrapper is
 	 *         - DefaultPool, meaning collateral got redistributed during a liquidation
 	 *         - StabilityPool, meaning collateral got offset against deposits and turned into gains waiting for claiming
 	 *
-	 * @dev View https://docs.google.com/document/d/1j6mcK4iB3aWfPSH3l8UdYL_G3sqY3k0k1G4jt81OsRE/edit?usp=sharing
+	 * @dev See https://docs.google.com/document/d/1j6mcK4iB3aWfPSH3l8UdYL_G3sqY3k0k1G4jt81OsRE/edit?usp=sharing
 	 */
 	function gravitaBalanceOf(address _account) public view returns (uint256 _collateral) {
 		if (_account == treasuryAddress) {
@@ -355,7 +361,7 @@ contract CurveConvexStakingWrapper is
 
 	/**
 	 * @dev from pool 151, extra reward tokens are wrapped
-	 * See https://github.com/convex-eth/platform/blob/25d5eafb75fe497c2aee6ce99f3f4f465209c886/contracts/contracts/wrappers/ConvexStakingWrapper.sol#L187-L190
+	 * See https://github.com/convex-eth/platform/blob/main/contracts/contracts/wrappers/ConvexStakingWrapper.sol#L187-L190
 	 */
 	function _getExtraRewardToken(address _extraPool) internal view virtual returns (address _extraToken) {
 		_extraToken = IRewardStaking(_extraPool).rewardToken();
@@ -386,7 +392,7 @@ contract CurveConvexStakingWrapper is
 
 	/// @param _accounts[0] from address
 	/// @param _accounts[1] to address
-	/// @param _claim flag to perform rewards claiming
+	/// @param _claim flag to perform rewards claiming (or not)
 	function _checkpoint(address[2] memory _accounts, bool _claim) internal nonReentrant {
 		console.log("checkpoint(%s, %s, %s)", addrToName(_accounts[0]), addrToName(_accounts[1]), _claim);
 		if (_isGravitaPool(_accounts[0]) || _isGravitaPool(_accounts[1])) {
