@@ -191,9 +191,9 @@ async function itHappyPath() {
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(crv.address)) - 1)
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(cvx.address)) - 1)
 
-	console.log(`\n--> withdrawAndUnwrap(alice, bob)\n`)
-	await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(alice), { from: alice })
-	await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
+	console.log(`\n--> withdraw(alice, bob)\n`)
+	await wrapper.withdraw(await wrapper.balanceOf(alice), { from: alice })
+	await wrapper.withdraw(await wrapper.balanceOf(bob), { from: bob })
 
 	// checks
 	const aliceCurveBalance = await curveLP.balanceOf(alice)
@@ -315,8 +315,8 @@ async function itLiquidation() {
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(crv.address)) - 1)
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(cvx.address)) - 1)
 
-	console.log(`\n--> withdrawAndUnwrap(bob)\n`)
-	await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
+	console.log(`\n--> withdraw(bob)\n`)
+	await wrapper.withdraw(await wrapper.balanceOf(bob), { from: bob })
 
 	// checks
 	const aliceCurveBalance = await curveLP.balanceOf(alice)
@@ -435,8 +435,8 @@ async function itRedemption() {
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(crv.address)) - 1)
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(cvx.address)) - 1)
 
-	console.log(`\n--> withdrawAndUnwrap(bob)\n`)
-	await wrapper.withdrawAndUnwrap(await wrapper.balanceOf(bob), { from: bob })
+	console.log(`\n--> withdraw(bob)\n`)
+	await wrapper.withdraw(await wrapper.balanceOf(bob), { from: bob })
 
 	// checks
 	const aliceCurveBalance = await curveLP.balanceOf(alice)
