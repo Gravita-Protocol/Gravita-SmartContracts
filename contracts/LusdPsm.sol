@@ -19,9 +19,11 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 
 	uint256 public buyFee;
 	uint256 public sellFee;
+	uint256 public backedGRAI;
 	uint256 public constant DECIMAL_PRECISION = 1 ether;
 	address public immutable lusd;
 	IPool public immutable aavePool;
+	address public immutable aToken;
 
 	event BuyLUSD(address indexed user, uint256 amount, uint256 fee);
 	event SellLUSD(address indexed user, uint256 amount, uint256 fee);
@@ -31,12 +33,13 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 	error LusdPsm__InvalidAddress();
 	error LusdPsm__InvalidAmount();
 
-	constructor(address _lusd, address _pool) {
-		if (_lusd == address(0) || _pool == address(0)) {
+	constructor(address _lusd, address _pool, address _aToken) {
+		if (_lusd == address(0) || _pool == address(0) || _aToken == address(0)) {
 			revert LusdPsm__InvalidAddress();
 		}
 		lusd = _lusd;
 		aavePool = IPool(_pool);
+		aToken = _aToken;
 	}
 
 	// --- Initializer ---
@@ -47,6 +50,9 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 		IERC20Upgradeable(lusd).approve(address(aavePool), type(uint256).max);
 		buyFee = _buyFee;
 		sellFee = _sellFee;
+
+		emit BuyFeeChanged(_buyFee);
+		emit SellFeeChanged(_sellFee);
 	}
 
 	function sellLUSD(uint256 _lusdAmount) public nonReentrant {
@@ -61,6 +67,8 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 
 		IDebtToken(debtToken).mintFromWhitelistedContract(graiAmount);
 		IERC20Upgradeable(debtToken).safeTransfer(msg.sender, graiAmount);
+		uint256 backed = backedGRAI;
+		backedGRAI = backed + graiAmount;
 		emit SellLUSD(msg.sender, _lusdAmount, feeAmount);
 	}
 
@@ -74,6 +82,8 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 		IERC20Upgradeable(debtToken).transfer(treasuryAddress, feeAmount);
 		IDebtToken(debtToken).burnFromWhitelistedContract(_lusdAmount);
 		aavePool.withdraw(lusd, _lusdAmount, msg.sender);
+		uint256 backed = backedGRAI;
+		backedGRAI = backed - _lusdAmount;
 		emit BuyLUSD(msg.sender, _lusdAmount, feeAmount);
 	}
 
@@ -87,8 +97,13 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 		emit SellFeeChanged(_fee);
 	}
 
-	function withdrawExcessFromDeposits(uint256 _amount) public onlyOwner {
-		aavePool.withdraw(lusd, _amount, treasuryAddress);
+	function getATokenBalance() public view returns (uint256) {
+		return IERC20Upgradeable(aToken).balanceOf(address(this));
+	}
+
+	function collectYield() public onlyOwner {
+		uint256 withdrawableBalance = IERC20Upgradeable(aToken).balanceOf(address(this)) - backedGRAI;
+		aavePool.withdraw(lusd, withdrawableBalance, treasuryAddress);
 	}
 
 	function authorizeUpgrade(address newImplementation) public {

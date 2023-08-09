@@ -69,18 +69,16 @@ contract("LusdPsm", async accounts => {
 			assert.equal(await lusd.balanceOf(treasury), 106)
 		})
 
-		it.only("Withdraw reverts if not owner", async () => {
+		it("Withdraw reverts if not owner", async () => {
 			await impersonateAccount(lusdHolder)
 			holder = await ethers.getSigner(lusdHolder)
 			await lusd.connect(holder).approve(lusdPsm.address, 100)
 			await lusdPsm.sellLUSD(100, { from: lusdHolder })
 
 			await fastForwardTime(100000000, web3.currentProvider)
-			await assertRevert(lusdPsm.withdrawExcessFromDeposits(105, { from: alice }))
+			await assertRevert(lusdPsm.collectYield({ from: alice }))
 		})
-	})
 
-	describe("Buy LUSD", async () => {
 		it("Buy LUSD moves the correct amount of GRAI and LUSD", async () => {
 			await impersonateAccount(lusdHolder)
 			holder = await ethers.getSigner(lusdHolder)
@@ -111,6 +109,17 @@ contract("LusdPsm", async accounts => {
 
 		it("Buy LUSD reverts if amount == 0", async () => {
 			await assertRevert(lusdPsm.buyLUSD(0))
+		})
+
+		it.only("Collect yield withdraws amount over what needs to be kept to back minted GRAI", async () => {
+			await impersonateAccount(lusdHolder)
+			holder = await ethers.getSigner(lusdHolder)
+			await lusd.connect(holder).approve(lusdPsm.address, 100)
+			await lusdPsm.sellLUSD(100, { from: lusdHolder })
+			await lusd.connect(holder).approve(lusdPsm.address, 1000)
+			await lusdPsm.sellLUSD(1000, { from: lusdHolder })
+			await fastForwardTime(100000000, web3.currentProvider)
+			await lusdPsm.collectYield()
 		})
 	})
 })

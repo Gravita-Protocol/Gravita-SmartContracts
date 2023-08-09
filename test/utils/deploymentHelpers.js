@@ -28,13 +28,15 @@ const EMPTY_ADDRESS = "0x" + "0".repeat(40)
 const TIMELOCK_SHORT_DELAY = 86400 * 3
 const TIMELOCK_LONG_DELAY = 86400 * 7
 const AAVE_POOL_ADDRESS = "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
+const LUSD_ADDRESS = "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0"
+const AAVE_LUSD_A_TOKEN = "0x3Fe6a295459FAe07DF8A0ceCC36F37160FE86AA9"
 
 /**
  * Deploys Gravita's contracts to Hardhat TEST env
  */
 class DeploymentHelper {
-	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = [], lusdAddress) {
-		const core = await this._deployCoreContracts(treasuryAddress, lusdAddress)
+	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = []) {
+		const core = await this._deployCoreContracts(treasuryAddress)
 		const grvt = await this._deployGrvtContracts(treasuryAddress)
 
 		await this._connectCoreContracts(core, grvt, treasuryAddress)
@@ -49,7 +51,7 @@ class DeploymentHelper {
 		return { core, grvt }
 	}
 
-	static async _deployCoreContracts(treasuryAddress, lusdAddress) {
+	static async _deployCoreContracts(treasuryAddress) {
 		const activePool = await ActivePool.new()
 		const adminContract = await AdminContract.new()
 		const borrowerOperations = await BorrowerOperationsTester.new()
@@ -68,7 +70,7 @@ class DeploymentHelper {
 		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)
 		const debtToken = await DebtTokenTester.new()
 		const debtTokenWhitelistedTester = await DebtTokenWhitelistedTester.new(debtToken.address)
-		const lusdPsm = await LusdPsm.new(lusdAddress, AAVE_POOL_ADDRESS)
+		const lusdPsm = await LusdPsm.new(LUSD_ADDRESS, AAVE_POOL_ADDRESS, AAVE_LUSD_A_TOKEN)
 
 		await erc20.setDecimals(18)
 		await erc20B.setDecimals(18)
@@ -263,3 +265,4 @@ class DeploymentHelper {
 }
 
 module.exports = DeploymentHelper
+
