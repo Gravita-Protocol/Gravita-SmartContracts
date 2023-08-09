@@ -119,8 +119,8 @@ class DeploymentHelper {
 			if (contract.initialize) {
 				if (key === "lusdPsm") {
 					await contract.initialize(
-						ethers.BigNumber.from("10000000000000000"),
-						ethers.BigNumber.from("10000000000000000")
+						ethers.BigNumber.from("10000000000000000"), // 1% buy fee
+						ethers.BigNumber.from("10000000000000000") // 1% sell fee
 					)
 				} else {
 					await contract.initialize()
