@@ -44,7 +44,7 @@ contract CurveConvexStakingWrapper is AbstractStakingWrapper {
 		AbstractStakingWrapper.abstractInitialize(_lpToken);
 		_addRewards();
 
-		IERC20(_lpToken).safeApprove(_convexBooster, 0);
+		// IERC20(_lpToken).safeApprove(_convexBooster, 0);
 		IERC20(_lpToken).safeApprove(_convexBooster, type(uint256).max);
 	}
 
@@ -60,12 +60,12 @@ contract CurveConvexStakingWrapper is AbstractStakingWrapper {
 
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
 
-	function _rewardContractDeposit(uint256 _amount) internal override {
+	function _rewardContractStake(uint256 _amount) internal override {
 		/// @dev the `true` argument below means the Booster contract will immediately stake into the rewards contract
 		IConvexDeposits(convexBooster).deposit(convexPoolId, _amount, true);
 	}
 
-	function _rewardContractWithdraw(uint256 _amount) internal override {
+	function _rewardContractUnstake(uint256 _amount) internal override {
 		/// @dev withdraw to underlying curve LP token
 		IRewardStaking(convexPool).withdrawAndUnwrap(_amount, false);
 	}
@@ -79,7 +79,7 @@ contract CurveConvexStakingWrapper is AbstractStakingWrapper {
 		if (rewards.length == 0) {
 			RewardType storage newCrvReward = rewards.push();
 			newCrvReward.token = crv;
-			newCrvReward.pool = _convexPool;
+			// newCrvReward.pool = _convexPool;
 			RewardType storage newCvxReward = rewards.push();
 			newCvxReward.token = cvx;
 			registeredRewards[crv] = CRV_INDEX + 1;
@@ -93,12 +93,12 @@ contract CurveConvexStakingWrapper is AbstractStakingWrapper {
 			address _extraToken = _getExtraRewardToken(_extraPool);
 			if (_extraToken == cvx) {
 				// update cvx reward pool address
-				rewards[CVX_INDEX].pool = _extraPool;
+				// rewards[CVX_INDEX].pool = _extraPool;
 			} else if (registeredRewards[_extraToken] == 0) {
 				// add new token to list
 				RewardType storage newReward = rewards.push();
 				newReward.token = _extraToken;
-				newReward.pool = _extraPool;
+				// newReward.pool = _extraPool;
 				registeredRewards[_extraToken] = rewards.length;
 				emit RewardAdded(_extraToken);
 			}

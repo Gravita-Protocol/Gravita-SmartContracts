@@ -44,10 +44,10 @@ abstract contract AbstractStakingWrapper is
 
 	struct RewardType {
 		address token;
-		address pool;
+		// address pool;
 		uint256 integral;
 		uint256 remaining;
-		mapping(address => uint256) integralFor;
+		mapping(address => uint256) integralFor; // account -> integralValue
 		mapping(address => uint256) claimableAmount;
 	}
 
@@ -58,19 +58,19 @@ abstract contract AbstractStakingWrapper is
 
 	// Events -----------------------------------------------------------------------------------------------------------
 
-	event Deposited(address indexed _user, address indexed _account, uint256 _amount, bool _wrapped);
+	event Deposited(address indexed _account, uint256 _amount);
 	event ProtocolFeeChanged(uint256 oldProtocolFee, uint256 newProtocolFee);
 	event RewardAdded(address _token);
 	event RewardInvalidated(address _rewardToken);
 	event RewardRedirected(address indexed _account, address _forward);
 	event UserCheckpoint(address _userA, address _userB);
-	event Withdrawn(address indexed _user, uint256 _amount, bool _unwrapped);
+	event Withdrawn(address indexed _user, uint256 _amount);
 
 	// Constants/Immutables ---------------------------------------------------------------------------------------------
 
 	string private wrapperName;
 	string private wrapperSymbol;
-  address public wrappedToken;
+	address public wrappedToken;
 
 	// State ------------------------------------------------------------------------------------------------------------
 
@@ -82,10 +82,9 @@ abstract contract AbstractStakingWrapper is
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
 	function abstractInitialize(address _wrappedToken) public onlyInitializing {
-
 		wrapperName = string(abi.encodePacked("Gravita ", ERC20(_wrappedToken).name()));
 		wrapperSymbol = string(abi.encodePacked("gr", ERC20(_wrappedToken).symbol()));
-    wrappedToken = _wrappedToken;
+		wrappedToken = _wrappedToken;
 
 		__ERC20_init(wrapperName, wrapperSymbol);
 		__Ownable_init();
@@ -152,13 +151,13 @@ abstract contract AbstractStakingWrapper is
 		return wrapperSymbol;
 	}
 
-	function deposit(uint256 _amount, address _to) external whenNotPaused {
+	function deposit(uint256 _amount) external whenNotPaused {
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _mint() will
-			_mint(_to, _amount);
-  		IERC20(wrappedToken).safeTransferFrom(msg.sender, address(this), _amount);
-      _rewardContractDeposit(_amount);
-			emit Deposited(msg.sender, _to, _amount, true);
+			_mint(msg.sender, _amount);
+			IERC20(wrappedToken).safeTransferFrom(msg.sender, address(this), _amount);
+			_rewardContractStake(_amount);
+			emit Deposited(msg.sender, _amount);
 		}
 	}
 
@@ -269,9 +268,9 @@ abstract contract AbstractStakingWrapper is
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _burn() will
 			_burn(msg.sender, _amount);
-      _rewardContractWithdraw(_amount);
-  		IERC20(wrappedToken).safeTransfer(msg.sender, _amount);
-			emit Withdrawn(msg.sender, _amount, true);
+			_rewardContractUnstake(_amount);
+			IERC20(wrappedToken).safeTransfer(msg.sender, _amount);
+			emit Withdrawn(msg.sender, _amount);
 		}
 	}
 
@@ -279,11 +278,11 @@ abstract contract AbstractStakingWrapper is
 
 	function _addRewards() internal virtual;
 
-  function _rewardContractDeposit(uint256 _amount) internal virtual;
+	function _rewardContractStake(uint256 _amount) internal virtual;
 
-  function _rewardContractWithdraw(uint256 _amount) internal virtual;
+	function _rewardContractUnstake(uint256 _amount) internal virtual;
 
-  function _rewardContractGetReward() internal virtual;
+	function _rewardContractGetReward() internal virtual;
 
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
 
@@ -320,7 +319,7 @@ abstract contract AbstractStakingWrapper is
 		// don't claim rewards directly if paused -- can still technically claim via unguarded calls
 		// but skipping here protects against outside calls reverting
 		if (!paused()) {
-      _rewardContractGetReward();
+			_rewardContractGetReward();
 		}
 		uint256 _supply = totalSupply();
 		uint256 _rewardCount = rewards.length;
@@ -509,3 +508,4 @@ abstract contract AbstractStakingWrapper is
 		return string(bResult);
 	}
 }
+
