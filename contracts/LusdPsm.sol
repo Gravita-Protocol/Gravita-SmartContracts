@@ -44,7 +44,7 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-
+		IERC20Upgradeable(lusd).approve(address(aavePool), type(uint256).max);
 		buyFee = _buyFee;
 		sellFee = _sellFee;
 	}
@@ -57,10 +57,10 @@ contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGu
 		uint256 graiAmount = _lusdAmount - feeAmount;
 		IERC20Upgradeable(lusd).transferFrom(msg.sender, address(this), _lusdAmount);
 		IERC20Upgradeable(lusd).transfer(treasuryAddress, feeAmount);
-		aavePool.supply(lusd, _lusdAmount, address(this), 0);
+		aavePool.supply(lusd, graiAmount, address(this), 0);
 
 		IDebtToken(debtToken).mintFromWhitelistedContract(graiAmount);
-		IERC20Upgradeable(debtToken).safeTransferFrom(address(this), msg.sender, graiAmount);
+		IERC20Upgradeable(debtToken).safeTransfer(msg.sender, graiAmount);
 		emit SellLUSD(msg.sender, _lusdAmount, feeAmount);
 	}
 

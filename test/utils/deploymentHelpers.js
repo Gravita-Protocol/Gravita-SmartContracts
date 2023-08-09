@@ -14,6 +14,7 @@ const GRVTTokenTester = artifacts.require("GRVTTokenTester")
 const LockedGRVT = artifacts.require("LockedGRVT")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const SortedVessels = artifacts.require("SortedVessels")
+const LusdPsm = artifacts.require("LusdPsm")
 const StabilityPoolTester = artifacts.require("StabilityPoolTester")
 const Timelock = artifacts.require("Timelock")
 const VesselManagerOperations = artifacts.require("VesselManagerOperations")
@@ -26,13 +27,14 @@ const dec = th.dec
 const EMPTY_ADDRESS = "0x" + "0".repeat(40)
 const TIMELOCK_SHORT_DELAY = 86400 * 3
 const TIMELOCK_LONG_DELAY = 86400 * 7
+const AAVE_POOL_ADDRESS = "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
 
 /**
  * Deploys Gravita's contracts to Hardhat TEST env
  */
 class DeploymentHelper {
-	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = []) {
-		const core = await this._deployCoreContracts(treasuryAddress)
+	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = [], lusdAddress) {
+		const core = await this._deployCoreContracts(treasuryAddress, lusdAddress)
 		const grvt = await this._deployGrvtContracts(treasuryAddress)
 
 		await this._connectCoreContracts(core, grvt, treasuryAddress)
@@ -47,7 +49,7 @@ class DeploymentHelper {
 		return { core, grvt }
 	}
 
-	static async _deployCoreContracts(treasuryAddress) {
+	static async _deployCoreContracts(treasuryAddress, lusdAddress) {
 		const activePool = await ActivePool.new()
 		const adminContract = await AdminContract.new()
 		const borrowerOperations = await BorrowerOperationsTester.new()
@@ -66,6 +68,7 @@ class DeploymentHelper {
 		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)
 		const debtToken = await DebtTokenTester.new()
 		const debtTokenWhitelistedTester = await DebtTokenWhitelistedTester.new(debtToken.address)
+		const lusdPsm = await LusdPsm.new(lusdAddress, AAVE_POOL_ADDRESS)
 
 		await erc20.setDecimals(18)
 		await erc20B.setDecimals(18)
@@ -87,6 +90,7 @@ class DeploymentHelper {
 			stabilityPool,
 			shortTimelock,
 			longTimelock,
+			lusdPsm,
 			erc20,
 			erc20B,
 		}
@@ -113,7 +117,14 @@ class DeploymentHelper {
 		for (const key in contracts) {
 			const contract = contracts[key]
 			if (contract.initialize) {
-				await contract.initialize()
+				if (key === "lusdPsm") {
+					await contract.initialize(
+						ethers.BigNumber.from("10000000000000000"),
+						ethers.BigNumber.from("10000000000000000")
+					)
+				} else {
+					await contract.initialize()
+				}
 			}
 		}
 	}
