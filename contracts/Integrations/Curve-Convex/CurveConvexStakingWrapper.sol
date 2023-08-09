@@ -42,7 +42,6 @@ contract CurveConvexStakingWrapper is AbstractStakingWrapper {
 		convexPoolId = _poolId;
 
 		AbstractStakingWrapper.abstractInitialize(_lpToken);
-		_addRewards();
 
 		// IERC20(_lpToken).safeApprove(_convexBooster, 0);
 		IERC20(_lpToken).safeApprove(_convexBooster, type(uint256).max);

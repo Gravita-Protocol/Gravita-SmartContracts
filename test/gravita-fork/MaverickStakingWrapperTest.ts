@@ -16,7 +16,7 @@ const ISortedVessels = artifacts.require("ISortedVessels")
 const IVesselManager = artifacts.require("IVesselManager")
 
 export enum WrapperType {
-	Maverick
+	Maverick,
 }
 
 type StakingWrapperTestConfig = {
@@ -65,28 +65,28 @@ describe("MaverickStakingWrapper", async () => {
 		await deployGravitaContracts(treasury, [])
 		await setupWrappers()
 
-        lpToken = await IERC20.at(config.lpToken)
+		lpToken = await IERC20.at(maverickConfig.lpToken)
 	})
 
-    beforeEach(async () => {
-        snapshotId = await network.provider.send("evm_snapshot")
-    })
+	beforeEach(async () => {
+		snapshotId = await network.provider.send("evm_snapshot")
+	})
 
-    afterEach(async () => {
-        await network.provider.send("evm_revert", [snapshotId])
-    })
+	afterEach(async () => {
+		await network.provider.send("evm_revert", [snapshotId])
+	})
 
-    it("Maverick: on happy path, openVessel & closeVessel should not transfer reward rights", async () => {
-        await itHappyPath()
-    })
+	it("Maverick: on happy path, openVessel & closeVessel should not transfer reward rights", async () => {
+		await itHappyPath()
+	})
 
-    it("Maverick: Liquidation using stability pool deposits should transfer reward rights to treasury", async () => {
-        await itLiquidation()
-    })
+	it("Maverick: Liquidation using stability pool deposits should transfer reward rights to treasury", async () => {
+		await itLiquidation()
+	})
 
-    it("Maverick: Redemption should transfer rewards rights", async () => {
-        await itRedemption()
-    })
+	it("Maverick: Redemption should transfer rewards rights", async () => {
+		await itRedemption()
+	})
 })
 
 // Test cases ---------------------------------------------------------------------------------------------------------
@@ -97,9 +97,9 @@ async function itHappyPath() {
 
 	// alice & bob deposit into wrapper
 	console.log(`\n --> deposit(alice)\n`)
-	await wrapper.deposit(aliceInitialLpTokenBalance, alice, { from: alice })
+	await wrapper.deposit(aliceInitialLpTokenBalance, { from: alice })
 	console.log(`\n --> deposit(bob)\n`)
-	await wrapper.deposit(bobInitialLpTokenBalance, bob, { from: bob })
+	await wrapper.deposit(bobInitialLpTokenBalance, { from: bob })
 
 	// only alice opens a vessel
 	console.log(`\n--> openVessel(alice)\n`)
@@ -187,8 +187,8 @@ async function itLiquidation() {
 
 	// alice & bob deposit into wrapper
 	console.log(`\n--> deposit(alice & bob)\n`)
-	await wrapper.deposit(aliceInitialLpTokenBalance, alice, { from: alice })
-	await wrapper.deposit(bobInitialLpTokenBalance, bob, { from: bob })
+	await wrapper.deposit(aliceInitialLpTokenBalance, { from: alice })
+	await wrapper.deposit(bobInitialLpTokenBalance, { from: bob })
 
 	// whale provides to SP
 	const whaleInitialDebtTokenBalance = await debtToken.balanceOf(whale)
@@ -309,8 +309,8 @@ async function itRedemption() {
 	const aliceInitialLpTokenBalance = await lpToken.balanceOf(alice)
 	const bobInitialLpTokenBalance = await lpToken.balanceOf(bob)
 	console.log(`\n--> deposit(alice & bob)\n`)
-	await wrapper.deposit(aliceInitialLpTokenBalance, alice, { from: alice })
-	await wrapper.deposit(bobInitialLpTokenBalance, bob, { from: bob })
+	await wrapper.deposit(aliceInitialLpTokenBalance, { from: alice })
+	await wrapper.deposit(bobInitialLpTokenBalance, { from: bob })
 
 	// alice & bob open vessels
 	const aliceMaxLoan = await calcMaxLoan(aliceInitialLpTokenBalance)
@@ -529,12 +529,13 @@ async function setupWrappers() {
 async function setupPositions(wrapper: any, cfg: StakingWrapperTestConfig) {
 	const lpToken = await IERC20.at(cfg.lpToken)
 	// assign CurveLP tokens to whale, alice and bob
-	await impersonateAccount(cfg.gauge)
-	await setBalance(cfg.gauge, 20e18)
-	await lpToken.transfer(whale, toEther(10_000), { from: cfg.gauge })
-	await lpToken.transfer(alice, toEther(100), { from: cfg.gauge })
-	await lpToken.transfer(bob, toEther(100), { from: cfg.gauge })
-	await stopImpersonatingAccount(cfg.gauge)
+	const lpTokenWhale = "0x14edfe68031bBf229a765919EB52AE6F6F3347d4"
+	await impersonateAccount(lpTokenWhale)
+	await setBalance(lpTokenWhale, 20e18)
+	await lpToken.transfer(whale, toEther(50), { from: lpTokenWhale })
+	await lpToken.transfer(alice, toEther(10), { from: lpTokenWhale })
+	await lpToken.transfer(bob, toEther(10), { from: lpTokenWhale })
+	await stopImpersonatingAccount(lpTokenWhale)
 	// issue token transfer approvals
 	await lpToken.approve(wrapper.address, MaxUint256, { from: whale })
 	await lpToken.approve(wrapper.address, MaxUint256, { from: alice })
@@ -544,9 +545,9 @@ async function setupPositions(wrapper: any, cfg: StakingWrapperTestConfig) {
 	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: bob })
 	// whale opens a vessel
 	const whaleCurveBalance = await lpToken.balanceOf(whale)
-	await wrapper.deposit(whaleCurveBalance, whale, { from: whale })
-	console.log(`\n--> openVessel(whale, ${f(whaleCurveBalance)}) => ${f(toEther(500_000))} GRAI\n`)
-	await borrowerOperations.openVessel(wrapper.address, whaleCurveBalance, toEther(500_000), AddressZero, AddressZero, {
+	await wrapper.deposit(whaleCurveBalance, { from: whale })
+	console.log(`\n--> openVessel(whale, ${f(whaleCurveBalance)}) => ${f(toEther(50_000))} GRAI\n`)
+	await borrowerOperations.openVessel(wrapper.address, whaleCurveBalance, toEther(50_000), AddressZero, AddressZero, {
 		from: whale,
 	})
 	// give alice & bob some grai ($1,000 each) for fees

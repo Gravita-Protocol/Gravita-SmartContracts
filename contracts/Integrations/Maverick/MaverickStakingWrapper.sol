@@ -26,11 +26,10 @@ contract MaverickStakingWrapper is AbstractStakingWrapper {
 	 * @param _rewardContractAddress address of a `IReward` contract
 	 */
 	function initialize(address _lpToken, address _rewardContractAddress) public initializer {
-		AbstractStakingWrapper.abstractInitialize(_lpToken);
 		rewardContractAddress = _rewardContractAddress;
-		_addRewards();
+		AbstractStakingWrapper.abstractInitialize(_lpToken);
 		// IERC20(_lpToken).safeApprove(_rewardContractAddress, 0);
-		// IERC20(_lpToken).safeApprove(_rewardContractAddress, type(uint256).max);
+		IERC20(_lpToken).safeApprove(_rewardContractAddress, type(uint256).max);
 	}
 
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
@@ -52,17 +51,17 @@ contract MaverickStakingWrapper is AbstractStakingWrapper {
 		uint256 _rewardLength = _rewardInfo.length;
 		for (uint256 _i; _i < _rewardLength; ) {
 			address _rewardToken = address(_rewardInfo[_i].rewardToken);
-			uint8 _rewardTokenIndex = IReward(rewardContractAddress).tokenIndex(_rewardToken);
-			maverickRewardTokenIndices.push(_rewardTokenIndex);
-			RewardType storage newReward = rewards.push();
-			newReward.token = _rewardToken;
-			registeredRewards[_rewardToken] = rewards.length;
-			console.log("Maverick Reward Added: %s", _rewardToken);
-			emit RewardAdded(_rewardToken);
+			if (_rewardToken != address(0)) {
+				uint8 _rewardTokenIndex = IReward(rewardContractAddress).tokenIndex(_rewardToken);
+				maverickRewardTokenIndices.push(_rewardTokenIndex);
+				RewardType storage newReward = rewards.push();
+				newReward.token = _rewardToken;
+				registeredRewards[_rewardToken] = rewards.length;
+				emit RewardAdded(_rewardToken);
+			}
 			unchecked {
 				++_i;
 			}
 		}
 	}
 }
-
