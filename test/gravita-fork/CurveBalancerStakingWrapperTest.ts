@@ -12,6 +12,7 @@ const deploymentHelper = require("../utils/deploymentHelpers.js")
 
 const BalancerAuraStakingWrapper = artifacts.require("BalancerAuraStakingWrapper")
 const CurveConvexStakingWrapper = artifacts.require("CurveConvexStakingWrapper")
+const MaverickStakingWrapper = artifacts.require("MaverickStakingWrapper")
 const IERC20 = artifacts.require("IERC20")
 const ISortedVessels = artifacts.require("ISortedVessels")
 const IVesselManager = artifacts.require("IVesselManager")
@@ -31,6 +32,12 @@ type StakingWrapperTestConfig = {
 	convexRewards: `0x${string}`
 	crv: `0x${string}`
 	cvx: `0x${string}`
+}
+
+type RewardEarned = {
+	token: `0x${string}`
+	index: number
+	amount: BigNumber
 }
 
 const curveConvexConfig: StakingWrapperTestConfig = {
@@ -67,14 +74,15 @@ let stabilityPool: any
 let vesselManagerOperations: any
 
 let config: StakingWrapperTestConfig
-let wrapper: any, curveConvexWrapper: any, balancerAuraWrapper: any
-let crv: any, cvx: any, curveLP: any
+let wrapper: any, curveConvexWrapper: any, balancerAuraWrapper: any, maverickWrapper: any
+let lpToken: any
 
 let alice: string, bob: string, whale: string, deployer: string, treasury: string
 
 let snapshotId: number
 
 describe("StakingWrappers", async () => {
+
 	before(async () => {
 		const accounts = await ethers.getSigners()
 		deployer = await accounts[0].getAddress()
@@ -97,9 +105,6 @@ describe("StakingWrappers", async () => {
 		before(async () => {
 			config = curveConvexConfig
 			wrapper = curveConvexWrapper
-			crv = await IERC20.at(config.crv)
-			cvx = await IERC20.at(config.cvx)
-			curveLP = await IERC20.at(config.curveLPToken)
 		})
 
 		beforeEach(async () => {
@@ -127,9 +132,6 @@ describe("StakingWrappers", async () => {
 		before(async () => {
 			config = balancerAuraConfig
 			wrapper = balancerAuraWrapper
-			crv = await IERC20.at(config.crv)
-			cvx = await IERC20.at(config.cvx)
-			curveLP = await IERC20.at(config.curveLPToken)
 		})
 
 		beforeEach(async () => {
@@ -157,14 +159,14 @@ describe("StakingWrappers", async () => {
 // Test cases ---------------------------------------------------------------------------------------------------------
 
 async function itHappyPath() {
-	const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
-	const bobInitialCurveBalance = await curveLP.balanceOf(bob)
+	const aliceInitialLpTokenBalance = await lpToken.balanceOf(alice)
+	const bobInitialLpTokenBalance = await lpToken.balanceOf(bob)
 
 	// alice & bob deposit into wrapper
 	console.log(`\n --> deposit(alice)\n`)
-	await wrapper.deposit(aliceInitialCurveBalance, alice, { from: alice })
+	await wrapper.deposit(aliceInitialLpTokenBalance, alice, { from: alice })
 	console.log(`\n --> deposit(bob)\n`)
-	await wrapper.deposit(bobInitialCurveBalance, bob, { from: bob })
+	await wrapper.deposit(bobInitialLpTokenBalance, bob, { from: bob })
 
 	// only alice opens a vessel
 	console.log(`\n--> openVessel(alice)\n`)
@@ -185,7 +187,9 @@ async function itHappyPath() {
 
 	// alice, bob and treasury claim rewards & unwrap
 	console.log(`\n--> claimEarnedRewards(alice, bob, treasury)\n`)
-	await wrapper.earmarkBoosterRewards()
+	if (wrapper.earmarkBoosterRewards) {
+		await wrapper.earmarkBoosterRewards()
+	}
 	await wrapper.claimEarnedRewards(alice)
 	await wrapper.claimEarnedRewards(bob)
 	await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(crv.address)) - 1)
@@ -196,27 +200,27 @@ async function itHappyPath() {
 	await wrapper.withdraw(await wrapper.balanceOf(bob), { from: bob })
 
 	// checks
-	const aliceCurveBalance = await curveLP.balanceOf(alice)
+	const aliceLpTokenBalance = await lpToken.balanceOf(alice)
 	const aliceCrvBalance = await crv.balanceOf(alice)
 	const aliceCvxBalance = await cvx.balanceOf(alice)
 	const aliceWrapperBalance = await wrapper.totalBalanceOf(alice)
 
-	const bobCurveBalance = await curveLP.balanceOf(bob)
+	const bobLpTokenBalance = await lpToken.balanceOf(bob)
 	const bobCrvBalance = await crv.balanceOf(bob)
 	const bobCvxBalance = await cvx.balanceOf(bob)
 	const bobWrapperBalance = await wrapper.totalBalanceOf(bob)
 
-	const treasuryCurveBalance = await curveLP.balanceOf(treasury)
+	const treasuryLpTokenBalance = await lpToken.balanceOf(treasury)
 	const treasuryCrvBalance = await crv.balanceOf(treasury)
 	const treasuryCvxBalance = await cvx.balanceOf(treasury)
 	const treasuryWrapperBalance = await wrapper.totalBalanceOf(treasury)
 
-	assert.equal(aliceCurveBalance.toString(), aliceInitialCurveBalance.toString())
-	assert.equal(bobCurveBalance.toString(), bobInitialCurveBalance.toString())
+	assert.equal(aliceLpTokenBalance.toString(), aliceInitialLpTokenBalance.toString())
+	assert.equal(bobLpTokenBalance.toString(), bobInitialLpTokenBalance.toString())
 	assert.equal(aliceWrapperBalance.toString(), "0")
 	assert.equal(bobWrapperBalance.toString(), "0")
 	assert.equal(treasuryWrapperBalance.toString(), "0")
-	assert.equal(treasuryCurveBalance.toString(), "0")
+	assert.equal(treasuryLpTokenBalance.toString(), "0")
 
 	const crvSum = aliceCrvBalance.add(bobCrvBalance).add(treasuryCrvBalance)
 	const cvxSum = aliceCvxBalance.add(bobCvxBalance).add(treasuryCvxBalance)
@@ -233,6 +237,7 @@ async function itHappyPath() {
 	assertIsApproximatelyEqual(treasuryCvxBalance, expectedTreasuryCvxBalance)
 
 	// remaining rewards on wrapper should belong to whale - and corresponding treasury share (.5% deviation accepted)
+	const wrapperRewards = await rewardTokensBalances(wrapper.address)
 	const wrapperCrvBalance = await crv.balanceOf(wrapper.address)
 	const wrapperCvxBalance = await cvx.balanceOf(wrapper.address)
 
@@ -246,14 +251,27 @@ async function itHappyPath() {
 	assertIsApproximatelyEqual(wrapperCvxBalance, claimableCvxRewards, Number(wrapperCvxBalance) / 200)
 }
 
+async function rewardTokensBalances(account: string): Promise<RewardEarned[]> {
+	const rewardsTokensBalances: RewardEarned[] = []
+	const rewards = await wrapper.rewards()
+	for (const { token } of rewards) {
+		const index = await wrapper.registeredRewards(token)
+		const amount = await (await IERC20.at(token)).balanceOf(account)
+		rewardsTokensBalances.push({
+			token, index, amount
+		})
+	}
+	return rewardsTokensBalances
+}
+
 async function itLiquidation() {
-	const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
-	const bobInitialCurveBalance = await curveLP.balanceOf(bob)
+	const aliceInitialLpTokenBalance = await lpToken.balanceOf(alice)
+	const bobInitialLpTokenBalance = await lpToken.balanceOf(bob)
 
 	// alice & bob deposit into wrapper
 	console.log(`\n--> deposit(alice & bob)\n`)
-	await wrapper.deposit(aliceInitialCurveBalance, alice, { from: alice })
-	await wrapper.deposit(bobInitialCurveBalance, bob, { from: bob })
+	await wrapper.deposit(aliceInitialLpTokenBalance, alice, { from: alice })
+	await wrapper.deposit(bobInitialLpTokenBalance, bob, { from: bob })
 
 	// whale provides to SP
 	const whaleInitialDebtTokenBalance = await debtToken.balanceOf(whale)
@@ -261,11 +279,11 @@ async function itLiquidation() {
 	await stabilityPool.provideToSP(whaleInitialDebtTokenBalance, [], { from: whale })
 
 	// alice & bob open vessels
-	const aliceMaxLoan = await calcMaxLoan(aliceInitialCurveBalance)
-	console.log(`\n--> openVessel(alice, ${f(aliceInitialCurveBalance)}) => ${f(aliceMaxLoan)} GRAI\n`)
+	const aliceMaxLoan = await calcMaxLoan(aliceInitialLpTokenBalance)
+	console.log(`\n--> openVessel(alice, ${f(aliceInitialLpTokenBalance)}) => ${f(aliceMaxLoan)} GRAI\n`)
 	await borrowerOperations.openVessel(
 		wrapper.address,
-		aliceInitialCurveBalance,
+		aliceInitialLpTokenBalance,
 		aliceMaxLoan,
 		AddressZero,
 		AddressZero,
@@ -273,9 +291,9 @@ async function itLiquidation() {
 			from: alice,
 		}
 	)
-	const bobMaxLoan = await calcMaxLoan(bobInitialCurveBalance)
-	console.log(`\n--> openVessel(bob, ${f(bobInitialCurveBalance)}) => ${f(bobMaxLoan)} GRAI\n`)
-	await borrowerOperations.openVessel(wrapper.address, bobInitialCurveBalance, bobMaxLoan, AddressZero, AddressZero, {
+	const bobMaxLoan = await calcMaxLoan(bobInitialLpTokenBalance)
+	console.log(`\n--> openVessel(bob, ${f(bobInitialLpTokenBalance)}) => ${f(bobMaxLoan)} GRAI\n`)
+	await borrowerOperations.openVessel(wrapper.address, bobInitialLpTokenBalance, bobMaxLoan, AddressZero, AddressZero, {
 		from: bob,
 	})
 
@@ -319,27 +337,27 @@ async function itLiquidation() {
 	await wrapper.withdraw(await wrapper.balanceOf(bob), { from: bob })
 
 	// checks
-	const aliceCurveBalance = await curveLP.balanceOf(alice)
+	const aliceLpTokenBalance = await lpToken.balanceOf(alice)
 	const aliceCrvBalance = await crv.balanceOf(alice)
 	const aliceCvxBalance = await cvx.balanceOf(alice)
 	const aliceWrapperBalance = await wrapper.totalBalanceOf(alice)
 
-	const bobCurveBalance = await curveLP.balanceOf(bob)
+	const bobLpTokenBalance = await lpToken.balanceOf(bob)
 	const bobCrvBalance = await crv.balanceOf(bob)
 	const bobCvxBalance = await cvx.balanceOf(bob)
 	const bobWrapperBalance = await wrapper.totalBalanceOf(bob)
 
-	const treasuryCurveBalance = await curveLP.balanceOf(treasury)
+	const treasuryCurveBalance = await lpToken.balanceOf(treasury)
 	const treasuryCrvBalance = await crv.balanceOf(treasury)
 	const treasuryCvxBalance = await cvx.balanceOf(treasury)
 	const treasuryWrapperBalance = await wrapper.totalBalanceOf(treasury)
 
-	console.log(`\naliceCurveBalance: ${f(aliceCurveBalance)}`)
+	console.log(`\naliceLpTokenBalance: ${f(aliceLpTokenBalance)}`)
 	console.log(`aliceCrvBalance: ${f(aliceCrvBalance)}`)
 	console.log(`aliceCvxBalance: ${f(aliceCvxBalance)}`)
 	console.log(`aliceWrapperBalance: ${f(aliceWrapperBalance)}`)
 
-	console.log(`\nbobCurveBalance: ${f(bobCurveBalance)}`)
+	console.log(`\nbobLpTokenBalance: ${f(bobLpTokenBalance)}`)
 	console.log(`bobCrvBalance: ${f(bobCrvBalance)}`)
 	console.log(`bobCvxBalance: ${f(bobCvxBalance)}`)
 	console.log(`bobWrapperBalance: ${f(bobWrapperBalance)}`)
@@ -349,8 +367,8 @@ async function itLiquidation() {
 	console.log(`treasuryCvxBalance: ${f(treasuryCvxBalance)}`)
 	console.log(`treasuryWrapperBalance: ${f(treasuryWrapperBalance)}`)
 
-	assert.equal(aliceCurveBalance.toString(), "0") // alice lost her collateral on liquidation
-	assert.equal(bobCurveBalance.toString(), bobInitialCurveBalance.toString())
+	assert.equal(aliceLpTokenBalance.toString(), "0") // alice lost her collateral on liquidation
+	assert.equal(bobLpTokenBalance.toString(), bobInitialLpTokenBalance.toString())
 	assert.equal(aliceWrapperBalance.toString(), "0")
 	assert.equal(bobWrapperBalance.toString(), "0")
 	assert.equal(treasuryCurveBalance.toString(), "0")
@@ -371,18 +389,18 @@ async function itRedemption() {
 	await adminContract.setRedemptionBlockTimestamp(wrapper.address, currentBlockTimestamp - 1)
 
 	// alice & bob deposit into wrapper
-	const aliceInitialCurveBalance = await curveLP.balanceOf(alice)
-	const bobInitialCurveBalance = await curveLP.balanceOf(bob)
+	const aliceInitialLpTokenBalance = await lpToken.balanceOf(alice)
+	const bobInitialLpTokenBalance = await lpToken.balanceOf(bob)
 	console.log(`\n--> deposit(alice & bob)\n`)
-	await wrapper.deposit(aliceInitialCurveBalance, alice, { from: alice })
-	await wrapper.deposit(bobInitialCurveBalance, bob, { from: bob })
+	await wrapper.deposit(aliceInitialLpTokenBalance, alice, { from: alice })
+	await wrapper.deposit(bobInitialLpTokenBalance, bob, { from: bob })
 
 	// alice & bob open vessels
-	const aliceMaxLoan = await calcMaxLoan(aliceInitialCurveBalance)
-	console.log(`\n--> openVessel(alice, ${f(aliceInitialCurveBalance)}) => ${f(aliceMaxLoan)} GRAI\n`)
+	const aliceMaxLoan = await calcMaxLoan(aliceInitialLpTokenBalance)
+	console.log(`\n--> openVessel(alice, ${f(aliceInitialLpTokenBalance)}) => ${f(aliceMaxLoan)} GRAI\n`)
 	await borrowerOperations.openVessel(
 		wrapper.address,
-		aliceInitialCurveBalance,
+		aliceInitialLpTokenBalance,
 		aliceMaxLoan,
 		AddressZero,
 		AddressZero,
@@ -390,9 +408,9 @@ async function itRedemption() {
 			from: alice,
 		}
 	)
-	const bobMaxLoan = await calcMaxLoan(bobInitialCurveBalance)
-	console.log(`\n--> openVessel(bob, ${f(bobInitialCurveBalance)}) => ${f(bobMaxLoan)} GRAI\n`)
-	await borrowerOperations.openVessel(wrapper.address, bobInitialCurveBalance, bobMaxLoan, AddressZero, AddressZero, {
+	const bobMaxLoan = await calcMaxLoan(bobInitialLpTokenBalance)
+	console.log(`\n--> openVessel(bob, ${f(bobInitialLpTokenBalance)}) => ${f(bobMaxLoan)} GRAI\n`)
+	await borrowerOperations.openVessel(wrapper.address, bobInitialLpTokenBalance, bobMaxLoan, AddressZero, AddressZero, {
 		from: bob,
 	})
 
@@ -439,27 +457,27 @@ async function itRedemption() {
 	await wrapper.withdraw(await wrapper.balanceOf(bob), { from: bob })
 
 	// checks
-	const aliceCurveBalance = await curveLP.balanceOf(alice)
+	const aliceLpTokenBalance = await lpToken.balanceOf(alice)
 	const aliceCrvBalance = await crv.balanceOf(alice)
 	const aliceCvxBalance = await cvx.balanceOf(alice)
 	const aliceWrapperBalance = await wrapper.totalBalanceOf(alice)
 
-	const bobCurveBalance = await curveLP.balanceOf(bob)
+	const bobLpTokenBalance = await lpToken.balanceOf(bob)
 	const bobCrvBalance = await crv.balanceOf(bob)
 	const bobCvxBalance = await cvx.balanceOf(bob)
 	const bobWrapperBalance = await wrapper.totalBalanceOf(bob)
 
-	const treasuryCurveBalance = await curveLP.balanceOf(treasury)
+	const treasuryCurveBalance = await lpToken.balanceOf(treasury)
 	const treasuryCrvBalance = await crv.balanceOf(treasury)
 	const treasuryCvxBalance = await cvx.balanceOf(treasury)
 	const treasuryWrapperBalance = await wrapper.totalBalanceOf(treasury)
 
-	console.log(`\naliceCurveBalance: ${f(aliceCurveBalance)}`)
+	console.log(`\naliceLpTokenBalance: ${f(aliceLpTokenBalance)}`)
 	console.log(`aliceCrvBalance: ${f(aliceCrvBalance)}`)
 	console.log(`aliceCvxBalance: ${f(aliceCvxBalance)}`)
 	console.log(`aliceWrapperBalance: ${f(aliceWrapperBalance)}`)
 
-	console.log(`\nbobCurveBalance: ${f(bobCurveBalance)}`)
+	console.log(`\nbobLpTokenBalance: ${f(bobLpTokenBalance)}`)
 	console.log(`bobCrvBalance: ${f(bobCrvBalance)}`)
 	console.log(`bobCvxBalance: ${f(bobCvxBalance)}`)
 	console.log(`bobWrapperBalance: ${f(bobWrapperBalance)}`)
@@ -469,8 +487,8 @@ async function itRedemption() {
 	console.log(`treasuryCvxBalance: ${f(treasuryCvxBalance)}`)
 	console.log(`treasuryWrapperBalance: ${f(treasuryWrapperBalance)}`)
 
-	assert.equal(aliceCurveBalance.toString(), "0") // alice lost her collateral on liquidation
-	assert.equal(bobCurveBalance.toString(), bobInitialCurveBalance.toString())
+	assert.equal(aliceLpTokenBalance.toString(), "0") // alice lost her collateral on liquidation
+	assert.equal(bobLpTokenBalance.toString(), bobInitialLpTokenBalance.toString())
 	assert.equal(aliceWrapperBalance.toString(), "0")
 	assert.equal(bobWrapperBalance.toString(), "0")
 	assert.equal(treasuryCurveBalance.toString(), "0")
@@ -602,19 +620,19 @@ async function setupPositions(wrapper: any, cfg: StakingWrapperTestConfig) {
 	// assign CurveLP tokens to whale, alice and bob
 	await impersonateAccount(cfg.gauge)
 	await setBalance(cfg.gauge, 20e18)
-	await curveLPToken.transfer(whale, toEther(10_000), { from: cfg.gauge })
-	await curveLPToken.transfer(alice, toEther(100), { from: cfg.gauge })
-	await curveLPToken.transfer(bob, toEther(100), { from: cfg.gauge })
+	await lpToken.transfer(whale, toEther(10_000), { from: cfg.gauge })
+	await lpToken.transfer(alice, toEther(100), { from: cfg.gauge })
+	await lpToken.transfer(bob, toEther(100), { from: cfg.gauge })
 	await stopImpersonatingAccount(cfg.gauge)
 	// issue token transfer approvals
-	await curveLPToken.approve(wrapper.address, MaxUint256, { from: whale })
-	await curveLPToken.approve(wrapper.address, MaxUint256, { from: alice })
-	await curveLPToken.approve(wrapper.address, MaxUint256, { from: bob })
+	await lpToken.approve(wrapper.address, MaxUint256, { from: whale })
+	await lpToken.approve(wrapper.address, MaxUint256, { from: alice })
+	await lpToken.approve(wrapper.address, MaxUint256, { from: bob })
 	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: whale })
 	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: alice })
 	await wrapper.approve(borrowerOperations.address, MaxUint256, { from: bob })
 	// whale opens a vessel
-	const whaleCurveBalance = await curveLPToken.balanceOf(whale)
+	const whaleCurveBalance = await lpToken.balanceOf(whale)
 	await wrapper.deposit(whaleCurveBalance, whale, { from: whale })
 	console.log(`\n--> openVessel(whale, ${f(whaleCurveBalance)}) => ${f(toEther(500_000))} GRAI\n`)
 	await borrowerOperations.openVessel(wrapper.address, whaleCurveBalance, toEther(500_000), AddressZero, AddressZero, {
