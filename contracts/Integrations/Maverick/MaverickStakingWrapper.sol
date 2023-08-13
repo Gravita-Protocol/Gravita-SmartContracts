@@ -35,11 +35,11 @@ contract MaverickStakingWrapper is AbstractStakingWrapper {
 	// Internal/Helper functions ----------------------------------------------------------------------------------------
 
 	function _rewardContractStake(uint256 _amount) internal override {
-		IReward(rewardContractAddress).stake(_amount, msg.sender);
+		IReward(rewardContractAddress).stake(_amount, address(this));
 	}
 
 	function _rewardContractUnstake(uint256 _amount) internal override {
-		IReward(rewardContractAddress).unstake(_amount, msg.sender);
+		IReward(rewardContractAddress).unstake(_amount, address(this));
 	}
 
 	function _rewardContractGetReward() internal override {
