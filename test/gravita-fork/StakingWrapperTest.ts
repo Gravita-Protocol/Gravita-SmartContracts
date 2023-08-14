@@ -219,11 +219,39 @@ describe("StakingWrappers", async () => {
 	// Maverick wrapper tests
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	describe.only("Maverick Staking Wrapper", async () => {
+	describe("Maverick Staking Wrapper", async () => {
+
+		/**
+		 * Function that gives LDO and swETH tokens to be distributed as rewards to Maverick's Rewards contract.
+		 */
+		async function fundMaverickRewards() {
+			const rewardsContract = await MaverickRewards.at(config.rewards)
+			const duration = 30 * 86_400 // 3 <= days <= 30
+
+			const rewardToken1 = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32" // LDO
+			const rewardAmount1 = toEther(50) // rewardFactory.minimumRewardAmount = 40
+			const rewardToken1Provider = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c" // Lido Agent aka whale
+			await setBalance(rewardToken1Provider, 10e18) // for gas
+			await impersonateAccount(rewardToken1Provider)
+			await (await ERC20.at(rewardToken1)).approve(rewardsContract.address, rewardAmount1, { from: rewardToken1Provider })
+			await rewardsContract.notifyAndTransfer(rewardToken1, rewardAmount1, duration, { from: rewardToken1Provider })
+			await stopImpersonatingAccount(rewardToken1Provider)
+
+			const rewardToken2 = "0xf951E335afb289353dc249e82926178EaC7DEd78" // swETH
+			const rewardAmount2 = toEther(5) // rewardFactory.minimumRewardAmount = 0.052600000
+			const rewardToken2Provider = "0xBA12222222228d8Ba445958a75a0704d566BF2C8" // Balancer Vault aka whale
+			await setBalance(rewardToken2Provider, 10e18) // for gas
+			await impersonateAccount(rewardToken2Provider)
+			await (await ERC20.at(rewardToken2)).approve(rewardsContract.address, rewardAmount2, { from: rewardToken2Provider })
+			await rewardsContract.notifyAndTransfer(rewardToken2, rewardAmount2, duration, { from: rewardToken2Provider })
+			await stopImpersonatingAccount(rewardToken2Provider)
+		}
+
 		before(async () => {
 			config = maverickConfig
 			wrapper = maverickWrapper
 			lpToken = await ERC20.at(config.lpToken)
+			await fundMaverickRewards()
 		})
 
 		beforeEach(async () => {
@@ -235,8 +263,6 @@ describe("StakingWrappers", async () => {
 		})
 
 		it("Maverick: on happy path, openVessel & closeVessel should not transfer reward rights", async () => {
-			const rewardsContract = await MaverickRewards.at(config.rewards)
-			// notifyAndTransfer(address rewardTokenAddress, uint256 amount, uint256 duration)
 			await itHappyPath()
 		})
 
