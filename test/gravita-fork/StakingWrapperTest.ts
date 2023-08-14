@@ -16,6 +16,7 @@ const ERC20 = artifacts.require("ERC20")
 const ISortedVessels = artifacts.require("ISortedVessels")
 const IVesselManager = artifacts.require("IVesselManager")
 const MaverickStakingWrapper = artifacts.require("MaverickStakingWrapper")
+const MaverickRewards = artifacts.require("IReward")
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Internal test types
@@ -234,6 +235,8 @@ describe("StakingWrappers", async () => {
 		})
 
 		it("Maverick: on happy path, openVessel & closeVessel should not transfer reward rights", async () => {
+			const rewardsContract = await MaverickRewards.at(config.rewards)
+			// notifyAndTransfer(address rewardTokenAddress, uint256 amount, uint256 duration)
 			await itHappyPath()
 		})
 

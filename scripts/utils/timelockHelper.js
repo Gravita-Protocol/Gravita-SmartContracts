@@ -7,10 +7,19 @@ const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 
 // Setup:
 const TIMELOCK_ADDRESS = "0x57a1953bf194a1ef73396e442ac7dc761dcd23cc" // Mainnet::Timelock
-const TARGET_ADDRESS = "0xc49B737fa56f9142974a54F6C66055468eC631d0" // Mainnet::VesselManagerOperations
-const METHOD_SIGNATURE = "setMintCap(address,uint256)"
-const METHOD_ARG_TYPES = ["address","uint256"]
-const METHOD_ARG_VALUES = ["0x8ffDf2DE812095b1D19CB146E4c004587C0A0692","100000000000000000000000"]
+const TARGET_ADDRESS = "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53" // Mainnet::AdminContract
+const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
+const METHOD_ARG_TYPES = ["address","uint256","uint256","uint256","uint256","uint256","uint256","uint256"]
+const METHOD_ARG_VALUES = [
+	"0xac3E018457B222d93114458476f3E3416Abbe38F",
+	"5000000000000000",
+	"1400000000000000000",
+	"1250000000000000000",
+	"2000000000000000000000",
+	"1000000000000000000000000",
+	"200",
+	"5000000000000000"
+]
 
 main()
 	.then(() => process.exit(0))
@@ -116,7 +125,7 @@ async function getTimelockContract() {
 
 async function calcETA(timelockContract) {
 	const delay = Number(await timelockContract.delay())
-	return (await getBlockTimestamp()) + delay + 3_600 // add 1h for multisigning
+	return (await getBlockTimestamp()) + delay + 4 * 3_600 // add 4h for multisigning
 }
 
 async function getBlockTimestamp() {
