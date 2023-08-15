@@ -384,7 +384,10 @@ async function itHappyPath() {
 }
 
 /**
- *
+ * Liquidation test: alice & bob open vessels, and after 30 days alice gets liquidated; 30 more days goes by,
+ * bob closes his vessel, and the SP provider withdraws his gains. It is expected that alice's rewards
+ * stopped at day 30, and that the treasury gained rewards while alice's collateral was sitting in the 
+ * StabilityPool waiting to be claimed.
  */
 async function itLiquidation() {
 	const aliceInitialLpTokenBalance = await lpToken.balanceOf(alice)
