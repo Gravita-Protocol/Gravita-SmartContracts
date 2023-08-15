@@ -77,11 +77,12 @@ abstract contract AbstractStakingWrapper is
 	RewardType[] public rewards;
 	mapping(address => uint256) public registeredRewards; // rewardToken -> index in rewards[] + 1
 	mapping(address => address) public rewardRedirect; // account -> redirectTo
-	uint256 public protocolFee = 0.15 ether; // 15% share of rewards that are routed to protocol's treasury
+	uint256 public protocolFee; // share of rewards that are routed to protocol's treasury
 
 	// Constructor/Initializer ------------------------------------------------------------------------------------------
 
 	function abstractInitialize(address _wrappedToken) public onlyInitializing {
+		protocolFee = 0.15 ether; // default protocol fee is 15%
 		wrapperName = string(abi.encodePacked("Gravita ", ERC20(_wrappedToken).name()));
 		wrapperSymbol = string(abi.encodePacked("gr", ERC20(_wrappedToken).symbol()));
 		wrappedToken = _wrappedToken;
@@ -429,7 +430,7 @@ abstract contract AbstractStakingWrapper is
 
 	// Timelock functions -----------------------------------------------------------------------------------------------
 
-	function setProtocolFee(uint256 _newfee) external onlyTimelock {
+	function setProtocolFee(uint256 _newfee) public onlyTimelock {
 		uint256 _oldFee = protocolFee;
 		protocolFee = _newfee;
 		emit ProtocolFeeChanged(_oldFee, _newfee);

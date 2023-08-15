@@ -28,7 +28,6 @@ contract MaverickStakingWrapper is AbstractStakingWrapper {
 	function initialize(address _lpToken, address _rewardContractAddress) public initializer {
 		rewardContractAddress = _rewardContractAddress;
 		AbstractStakingWrapper.abstractInitialize(_lpToken);
-		// IERC20(_lpToken).safeApprove(_rewardContractAddress, 0);
 		IERC20(_lpToken).safeApprove(_rewardContractAddress, type(uint256).max);
 	}
 
