@@ -315,8 +315,8 @@ async function itHappyPath() {
 	if (wrapper.earmarkBoosterRewards) {
 		await wrapper.earmarkBoosterRewards()
 	}
-	await wrapper.claimEarnedRewards(alice)
-	await wrapper.claimEarnedRewards(bob)
+	await wrapper.claimEarnedRewards({ from: alice })
+	await wrapper.claimEarnedRewards({ from: bob })
 	for (const r of await wrapper.getEarnedRewards(treasury)) {
 		await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(r.token)) - 1)
 	}
@@ -441,9 +441,9 @@ async function itLiquidation() {
 	if (wrapper.earmarkBoosterRewards) {
 		await wrapper.earmarkBoosterRewards()
 	}
-	await wrapper.claimEarnedRewards(alice)
-	await wrapper.claimEarnedRewards(bob)
-	await wrapper.claimEarnedRewards(liquidator)
+	await wrapper.claimEarnedRewards({ from: alice })
+	await wrapper.claimEarnedRewards({ from: bob })
+	await wrapper.claimEarnedRewards({ from: liquidator })
 	for (const r of await wrapper.getEarnedRewards(treasury)) {
 		await wrapper.claimTreasuryEarnedRewards((await wrapper.registeredRewards(r.token)) - 1)
 	}

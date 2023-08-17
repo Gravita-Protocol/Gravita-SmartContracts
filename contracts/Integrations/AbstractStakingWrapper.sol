@@ -18,6 +18,7 @@ import "../Interfaces/IRewardAccruing.sol";
 import "../Interfaces/IStabilityPool.sol";
 import "../Interfaces/IVesselManager.sol";
 import "../Addresses.sol";
+import "./IStakingWrapper.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol"; // TODO remove after done with debug/tests
 import "hardhat/console.sol"; // TODO remove after done with debug/tests
@@ -27,44 +28,15 @@ import "hardhat/console.sol"; // TODO remove after done with debug/tests
  */
 abstract contract AbstractStakingWrapper is
 	OwnableUpgradeable,
-	UUPSUpgradeable,
-	ReentrancyGuardUpgradeable,
-	PausableUpgradeable,
 	ERC20Upgradeable,
+	PausableUpgradeable,
+	ReentrancyGuardUpgradeable,
+	UUPSUpgradeable,
+	Addresses,
 	IRewardAccruing,
-	Addresses
+	IStakingWrapper
 {
 	using SafeERC20 for IERC20;
-
-	// Events -----------------------------------------------------------------------------------------------------------
-
-	event RewardAccruingRightsTransferred(address _from, address _to, uint256 _amount);
-
-	// Structs ----------------------------------------------------------------------------------------------------------
-
-	struct RewardType {
-		address token;
-		// address pool;
-		uint256 integral;
-		uint256 remaining;
-		mapping(address => uint256) integralFor; // account -> integralValue
-		mapping(address => uint256) claimableAmount;
-	}
-
-	struct RewardEarned {
-		address token;
-		uint256 amount;
-	}
-
-	// Events -----------------------------------------------------------------------------------------------------------
-
-	event Deposited(address indexed _account, uint256 _amount);
-	event ProtocolFeeChanged(uint256 oldProtocolFee, uint256 newProtocolFee);
-	event RewardAdded(address _token);
-	event RewardInvalidated(address _rewardToken);
-	event RewardRedirected(address indexed _account, address _forward);
-	event UserCheckpoint(address _userA, address _userB);
-	event Withdrawn(address indexed _user, uint256 _amount);
 
 	// Constants/Immutables ---------------------------------------------------------------------------------------------
 
@@ -144,15 +116,18 @@ abstract contract AbstractStakingWrapper is
 
 	// Public functions -------------------------------------------------------------------------------------------------
 
+	/// @inheritdoc ERC20Upgradeable
 	function name() public view override returns (string memory) {
 		return wrapperName;
 	}
 
+	/// @inheritdoc ERC20Upgradeable
 	function symbol() public view override returns (string memory) {
 		return wrapperSymbol;
 	}
 
-	function deposit(uint256 _amount) external whenNotPaused {
+	/// @inheritdoc IStakingWrapper
+	function deposit(uint256 _amount) external override whenNotPaused {
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _mint() will
 			_mint(msg.sender, _amount);
@@ -162,12 +137,8 @@ abstract contract AbstractStakingWrapper is
 		}
 	}
 
-	/**
-	 * @notice Function that returns all claimable rewards for a specific user.
-	 * @dev One should call the mutable userCheckpoint() function beforehand for updating the state for
-	 *     the most up-to-date results.
-	 */
-	function getEarnedRewards(address _account) external view returns (RewardEarned[] memory _claimable) {
+	/// @inheritdoc IStakingWrapper
+	function getEarnedRewards(address _account) external view override returns (RewardEarned[] memory _claimable) {
 		uint256 _rewardCount = rewards.length;
 		_claimable = new RewardEarned[](_rewardCount);
 		for (uint256 _i; _i < _rewardCount; ) {
@@ -182,26 +153,38 @@ abstract contract AbstractStakingWrapper is
 		}
 	}
 
-	function userCheckpoint() external {
-		_checkpoint([msg.sender, address(0)], false);
+	/// @inheritdoc IStakingWrapper
+	function gravitaBalanceOf(address _account) public view override returns (uint256 _collateral) {
+		if (_account == treasuryAddress) {
+			_collateral = IPool(defaultPool).getAssetBalance(address(this));
+			_collateral += IStabilityPool(stabilityPool).getCollateral(address(this));
+		} else {
+			_collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
+			_collateral += ICollSurplusPool(collSurplusPool).getCollateral(address(this), _account);
+		}
 	}
 
-	function userCheckpoint(address _account) external {
-		_checkpoint([_account, address(0)], false);
+	/// @inheritdoc IStakingWrapper
+	function claimEarnedRewards() external override {
+		address _redirect = rewardRedirect[msg.sender];
+		address _destination = _redirect != address(0) ? _redirect : msg.sender;
+		_checkpoint([msg.sender, _destination], true);
 	}
 
-	function claimEarnedRewards(address _account) external {
+	/// @inheritdoc IStakingWrapper
+	function claimEarnedRewardsFor(address _account) external override {
 		address _redirect = rewardRedirect[_account];
 		address _destination = _redirect != address(0) ? _redirect : _account;
 		_checkpoint([_account, _destination], true);
 	}
 
-	function claimAndForwardEarnedRewards(address _account, address _forwardTo) external {
-		require(msg.sender == _account, "!self");
-		_checkpoint([_account, _forwardTo], true);
+	/// @inheritdoc IStakingWrapper
+	function claimAndForwardEarnedRewards(address _forwardTo) external override {
+		_checkpoint([msg.sender, _forwardTo], true);
 	}
 
-	function claimTreasuryEarnedRewards(uint256 _index) external {
+	/// @inheritdoc IStakingWrapper
+	function claimTreasuryEarnedRewards(uint256 _index) external override {
 		RewardType storage reward = rewards[_index];
 		if (reward.token != address(0)) {
 			uint256 _amount = reward.claimableAmount[treasuryAddress];
@@ -213,47 +196,26 @@ abstract contract AbstractStakingWrapper is
 		}
 	}
 
-	/**
-	 * @notice Collateral on the Gravita Protocol is stored in different pools based on its lifecycle status.
-	 *     Borrowers will accrue rewards while their collateral is in:
-	 *         - ActivePool (queried via VesselManager), meaning their vessel is active
-	 *         - CollSurplusPool, meaning their vessel was liquidated/redeemed against and there was a surplus
-	 *     Gravita will accrue rewards while collateral is in:
-	 *         - DefaultPool, meaning collateral got redistributed during a liquidation
-	 *         - StabilityPool, meaning collateral got offset against deposits and turned into gains waiting for claiming
-	 *
-	 * @dev See https://docs.google.com/document/d/1j6mcK4iB3aWfPSH3l8UdYL_G3sqY3k0k1G4jt81OsRE/edit?usp=sharing
-	 */
-	function gravitaBalanceOf(address _account) public view returns (uint256 _collateral) {
-		if (_account == treasuryAddress) {
-			_collateral = IPool(defaultPool).getAssetBalance(address(this));
-			_collateral += IStabilityPool(stabilityPool).getCollateral(address(this));
-		} else {
-			_collateral = IVesselManager(vesselManager).getVesselColl(address(this), _account);
-			_collateral += ICollSurplusPool(collSurplusPool).getCollateral(address(this), _account);
-		}
+	/// @inheritdoc IStakingWrapper
+	function rewardsLength() external view override returns (uint256) {
+		return rewards.length;
 	}
 
-	function totalBalanceOf(address _account) public view returns (uint256) {
+	/// @inheritdoc IStakingWrapper
+	function setRewardRedirect(address _to) external override {
+		rewardRedirect[msg.sender] = _to;
+		emit RewardRedirected(msg.sender, _to);
+	}
+
+	/// @inheritdoc IStakingWrapper
+	function totalBalanceOf(address _account) public view override returns (uint256) {
 		if (_account == address(0) || _isGravitaPool(_account)) {
 			return 0;
 		}
 		return balanceOf(_account) + gravitaBalanceOf(_account);
 	}
 
-	function rewardsLength() external view returns (uint256) {
-		return rewards.length;
-	}
-
-	/**
-	 * @notice Set any claimed rewards to automatically go to a different address.
-	 * @dev Set to zero to disable redirect.
-	 */
-	function setRewardRedirect(address _to) external {
-		rewardRedirect[msg.sender] = _to;
-		emit RewardRedirected(msg.sender, _to);
-	}
-
+	/// @inheritdoc IRewardAccruing
 	function transferRewardAccruingRights(
 		address _from,
 		address _to,
@@ -264,8 +226,18 @@ abstract contract AbstractStakingWrapper is
 		emit RewardAccruingRightsTransferred(_from, _to, _amount);
 	}
 
-	// withdraw to underlying LP token
-	function withdraw(uint256 _amount) external {
+	/// @inheritdoc IStakingWrapper
+	function userCheckpoint() external override {
+		_checkpoint([msg.sender, address(0)], false);
+	}
+
+	/// @inheritdoc IStakingWrapper
+	function userCheckpoint(address _account) external override {
+		_checkpoint([_account, address(0)], false);
+	}
+
+	/// @inheritdoc IStakingWrapper
+	function withdraw(uint256 _amount) external override {
 		if (_amount != 0) {
 			// no need to call _checkpoint() since _burn() will
 			_burn(msg.sender, _amount);
@@ -509,4 +481,3 @@ abstract contract AbstractStakingWrapper is
 		return string(bResult);
 	}
 }
-
