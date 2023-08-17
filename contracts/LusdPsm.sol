@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./Interfaces/IDebtToken.sol";
-import { IPool } from "lib/aave-v3-core/contracts/interfaces/IPool.sol";
+import { IPool } from "../lib/aave-v3-core/contracts/interfaces/IPool.sol";
 
 import "./Dependencies/SafetyTransfer.sol";
 import "./Addresses.sol";
