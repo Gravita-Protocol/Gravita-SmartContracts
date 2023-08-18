@@ -1,0 +1,83 @@
+{
+  "ActivePool": {
+    "address": "0xc345d32fAC344999Ef526Dd839C27d46a70bAD92",
+    "txHash": "0xa34113f6a9b401e0f28d4994e467d6de208c0e3f9e1768a2620677d5fa89f3ac",
+    "implAddress": "0xA02Dd8924B9d28cC0507948BEC1844db67b83346",
+    "verification": "https://testnet.ftmscan.com/address/0xc345d32fAC344999Ef526Dd839C27d46a70bAD92#code"
+  },
+  "AdminContract": {
+    "address": "0xaD8Cb0d8D0355C542022F247e0769b409F023f05",
+    "txHash": "0x7ec77c0ccb70bca338dbcd4cb54d2913eaae2351a76bd2ce183cc694778951cd",
+    "implAddress": "0xEbE08fd303C40e2bf779373C21C51D255B8b24AE",
+    "verification": "https://testnet.ftmscan.com/address/0xaD8Cb0d8D0355C542022F247e0769b409F023f05#code"
+  },
+  "BorrowerOperations": {
+    "address": "0x1bCF1f6959aB22C2f29284D1fB2EA92A6aB6b235",
+    "txHash": "0x51bf35e26d041fd997c3091c5341c32fa6c5ff3e604e31c23e9179679b84e4ae",
+    "implAddress": "0x9d5d6e4878e164666926114083c0Ce676e187efa",
+    "verification": "https://testnet.ftmscan.com/address/0x1bCF1f6959aB22C2f29284D1fB2EA92A6aB6b235#code"
+  },
+  "CollSurplusPool": {
+    "address": "0x588a02d0782cbb9B8c6dC62114AdbE3349b2D70a",
+    "txHash": "0x87302a96c03c1558c0a9151ad2059f83f5482ea054f41976594dc2a6baba85e5",
+    "implAddress": "0x0Df06e9732529257450eE11c0376e92be499c2f6",
+    "verification": "https://testnet.ftmscan.com/address/0x588a02d0782cbb9B8c6dC62114AdbE3349b2D70a#code"
+  },
+  "DefaultPool": {
+    "address": "0x09189B100fa1E9105e91c36737433492b60Aca40",
+    "txHash": "0x6dc59a436db896b5d6a079b0961c513cedf09e2ab5e03abb9be3d7c32fc89385",
+    "implAddress": "0x2d7Ff6fb0D93b81d40158cF999eeDf9B714aD33A",
+    "verification": "https://testnet.ftmscan.com/address/0x09189B100fa1E9105e91c36737433492b60Aca40#code"
+  },
+  "FeeCollector": {
+    "address": "0x4DcbC69579E790235E4b7139Ae1C46d09f2FB27B",
+    "txHash": "0x407eb88c761094d616edc11bc2833643997a3b8944a22bd013c3666fe8dcb269",
+    "implAddress": "0x044EdCB69582Bd6777F6FfBe5594B4BAF2Da3826",
+    "verification": "https://testnet.ftmscan.com/address/0x4DcbC69579E790235E4b7139Ae1C46d09f2FB27B#code"
+  },
+  "SortedVessels": {
+    "address": "0xCd65574E52174909996F4131535b14908342Cbf2",
+    "txHash": "0x001fda3bb90a229c6c902257ff83df7d010495b374e5a8be6c5e9abba6fad801",
+    "implAddress": "0x0c3b41458fCB002138F068146F1Ee56094a70b6D",
+    "verification": "https://testnet.ftmscan.com/address/0xCd65574E52174909996F4131535b14908342Cbf2#code"
+  },
+  "StabilityPool": {
+    "address": "0xe73fD1C8B7c0f2E3419356eAD1069613765174Bf",
+    "txHash": "0x08e00dc1a08d9b1c9b889fe10ecd658c23e9e47cd83b26be84db08b282698275",
+    "implAddress": "0x98936B2DeAa4adD127484b94875C837912AAc51a",
+    "verification": "https://testnet.ftmscan.com/address/0xe73fD1C8B7c0f2E3419356eAD1069613765174Bf#code"
+  },
+  "VesselManager": {
+    "address": "0x1921cDd8807BfF378Ba0597CeFEFd96eFb3C39f4",
+    "txHash": "0x0db0ff26dccda8c8b0d278a7743d433b62750aeb384d1d7b2793986b989a233b",
+    "implAddress": "0xd097b11B6d42D656E0D99b19fB56806B22174CBc",
+    "verification": "https://testnet.ftmscan.com/address/0x1921cDd8807BfF378Ba0597CeFEFd96eFb3C39f4#code"
+  },
+  "VesselManagerOperations": {
+    "address": "0x0BE40AaC58Ef49613FbFc65c0d8172A5a2f88922",
+    "txHash": "0x8dea5ad606aff32a6fd1238b38934123bd39210e0ba6cd52d85770f82b25027f",
+    "implAddress": "0x7979b437f909525dF6AA2A7d2Ed37836bBda39A3",
+    "verification": "https://testnet.ftmscan.com/address/0x0BE40AaC58Ef49613FbFc65c0d8172A5a2f88922#code"
+  },
+  "GasPool": {
+    "address": "0x4F878dF0b002ae84e0bB7A03E63cEF1c66C5eA25",
+    "txHash": "0x46cf6e730bd995a678c51c5fc49ad7c3509f71970c2efd1e843313cda0ffa33b",
+    "verification": "https://testnet.ftmscan.com/address/0x4F878dF0b002ae84e0bB7A03E63cEF1c66C5eA25#code"
+  },
+  "PriceFeed": {
+    "address": "0xb5Bb8d7fA2991c9e4475dB12a93bCC3a129c21BE",
+    "txHash": "0xc92d5e072a2c89dd539aae11d6e151f61f67d478c189da7b61c1604858ec42c9",
+    "implAddress": "0x577ac4118f95B0eAa57EC81f2334CA20338D1444",
+    "verification": "https://testnet.ftmscan.com/address/0xb5Bb8d7fA2991c9e4475dB12a93bCC3a129c21BE#code"
+  },
+  "TimelockTester": {
+    "address": "0x281F209cDabB868077c0e3C936a8E9896F33c037",
+    "txHash": "0xd7b5dcacc9e009b1a5c771635b92d0523931181e8b7ec5221877336913593ca6",
+    "verification": "https://testnet.ftmscan.com/address/0x281F209cDabB868077c0e3C936a8E9896F33c037#code"
+  },
+  "DebtToken": {
+    "address": "0xa6DcCFaea243441e2c1de63c4040be7F018c8A2C",
+    "txHash": "0x755d75aedc1be53ea3afbe8794236ed8e975d6ff95a5795aeae7d7c46e98e627",
+    "verification": "https://testnet.ftmscan.com/address/0xa6DcCFaea243441e2c1de63c4040be7F018c8A2C#code"
+  }
+}

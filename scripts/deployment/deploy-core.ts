@@ -15,7 +15,16 @@ export enum DeploymentTarget {
 	OptimismGoerliTestnet = "optimism-goerli",
 	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
+	OperaTestnet = "opera-testnet",
+	Opera = "opera"
 }
+
+const testnets = [
+	DeploymentTarget.GoerliTestnet,
+	DeploymentTarget.ArbitrumGoerliTestnet,
+	DeploymentTarget.OptimismGoerliTestnet,
+	DeploymentTarget.OperaTestnet
+]
 
 /**
  * Exported deployment class, invoked from hardhat tasks defined on hardhat.config.ts
@@ -40,7 +49,7 @@ export class CoreDeployer {
 		this.deployerWallet = new Wallet(process.env.DEPLOYER_PRIVATEKEY, this.hre.ethers.provider)
 	}
 
-	isTestnetDeployment = () => this.targetNetwork != DeploymentTarget.Mainnet && this.targetNetwork != DeploymentTarget.Arbitrum
+	isTestnetDeployment = () => testnets.includes(this.targetNetwork)
 	isLocalhostDeployment = () => this.targetNetwork == DeploymentTarget.Localhost
 	isLayer2Deployment = () =>
 		[DeploymentTarget.Arbitrum, DeploymentTarget.ArbitrumGoerliTestnet, DeploymentTarget.OptimismGoerliTestnet].includes(this.targetNetwork)

@@ -27,6 +27,12 @@ task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testne
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
+task("deploy-core-opera-testnet", "Deploys contracts to Opera Testnet").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.OperaTestnet).run()
+)
+task("deploy-core-opera", "Deploys contracts to Opera Mainnet").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Opera).run()
+)
 
 module.exports = {
 	paths: {
@@ -81,6 +87,14 @@ module.exports = {
 		},
 		mainnet: {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		opera: {
+			url: `${process.env.OPERA_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		opera_testnet: {
+			url: `${process.env.OPERA_TESNET_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 	},
