@@ -26,23 +26,26 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 
 	// Constants/Immutables -------------------------------------------------------------------------------------------
 
-	uint16 constant PERCENTAGE_FACTOR = 1e4; // percentage plus two decimals (100_00)
-	uint8 public constant decimalsVal = 8;
+	/// @dev percentage plus two decimals (100_00)
+	uint16 constant PERCENTAGE_FACTOR = 1e4;
+
+	/// @dev scale digits for the `answer` response
+	uint8 public constant DECIMALS_VAL = 8;
+
+	/// @dev Format of pool's virtual_price
+	int256 public constant DECIMALS_DIVIDER = 1 ether;
 
 	/// @dev The Curve pool associated with the evaluated LP token
 	ICurvePool public immutable curvePool;
 
-	/// @dev Format of pool's virtual_price
-	int256 public immutable decimalsDivider;
-
 	/// @dev Window size in PERCENTAGE format (usually `2_00` which is 2%) for calculating virtual_price boundaries
 	uint256 public immutable delta;
 
-	/// @dev Price feed of coin A in the pool
-	AggregatorV3Interface public immutable priceFeed1;
+	/// @dev Price feed of token A in the pool
+	AggregatorV3Interface public immutable priceFeedA;
 
-	/// @dev Price feed of coin B in the pool
-	AggregatorV3Interface public immutable priceFeed2;
+	/// @dev Price feed of token B in the pool
+	AggregatorV3Interface public immutable priceFeedB;
 
 	// State ----------------------------------------------------------------------------------------------------------
 
@@ -55,29 +58,62 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 	/**
 	 * @param _delta Window in PERCENTAGE format which is allowed for virtual_price boundaries
 	 * @param _curvePool Address for the Curve Pool this aggregator provides pricing for
-	 * @param _priceFeed1 Price feed of coin A in the pool
-	 * @param _priceFeed2 Price feed of coin B in the pool
+	 * @param _priceFeedA Price feed of token A in the pool
+	 * @param _priceFeedB Price feed of token B in the pool
 	 */
-	constructor(uint256 _delta, address _curvePool, address _priceFeed1, address _priceFeed2) {
-		if (_curvePool == address(0) || _priceFeed1 == address(0) || _priceFeed2 == address(0)) {
+	constructor(uint256 _delta, address _curvePool, address _priceFeedA, address _priceFeedB) {
+		if (_curvePool == address(0) || _priceFeedA == address(0) || _priceFeedB == address(0)) {
 			revert AddressZeroException();
 		}
 
 		delta = _delta;
 		curvePool = ICurvePool(_curvePool);
-		decimalsDivider = 1 ether;
 
 		uint256 virtualPrice = ICurvePool(_curvePool).get_virtual_price();
 		_setVirtualPriceBoundaries(virtualPrice);
 
-		priceFeed1 = AggregatorV3Interface(_priceFeed1);
-		priceFeed2 = AggregatorV3Interface(_priceFeed2);
+		priceFeedA = AggregatorV3Interface(_priceFeedA);
+		priceFeedB = AggregatorV3Interface(_priceFeedB);
 	}
 
 	// AggregatorV3Interface functions --------------------------------------------------------------------------------
 
+	/**
+	 * @notice Computes the LP token price as (min_t(price(coin_t)) * virtual_price())
+	 *     See more at https://dev.gearbox.fi/oracle/curve-pricefeed
+	 */
+	function latestRoundData()
+		external
+		view
+		virtual
+		override
+		returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+	{
+		(roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeedA.latestRoundData();
+
+		// Sanity check for the Chainlink pricefeed 1
+		_checkAnswer(roundId, answer, updatedAt, answeredInRound);
+
+		(uint80 roundId2, int256 answer2, uint256 startedAt2, uint256 updatedAt2, uint80 answeredInRound2) = priceFeedB
+			.latestRoundData();
+
+		// Sanity check for the Chainlink pricefeed 2
+		_checkAnswer(roundId2, answer2, updatedAt2, answeredInRound2);
+
+		if (answer2 < answer) {
+			answer = answer2;
+			answeredInRound = answeredInRound2;
+			roundId = roundId2;
+			startedAt = startedAt2;
+			updatedAt = updatedAt2;
+		}
+
+		uint256 virtualPrice = _getVirtualPrice();
+		answer = (answer * int256(virtualPrice)) / DECIMALS_DIVIDER;
+	}
+
 	function decimals() external pure override returns (uint8) {
-		return decimalsVal;
+		return DECIMALS_VAL;
 	}
 
 	function description() external pure override returns (string memory) {
@@ -105,40 +141,6 @@ contract CurveLP2PriceAggregator is AggregatorV3Interface, Ownable {
 		)
 	{
 		revert NotImplementedException();
-	}
-
-	/**
-	 * @notice Computes the LP token price as (min_t(price(coin_t)) * virtual_price())
-	 *     See more at https://dev.gearbox.fi/oracle/curve-pricefeed
-	 */
-	function latestRoundData()
-		external
-		view
-		virtual
-		override
-		returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-	{
-		(roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed1.latestRoundData();
-
-		// Sanity check for the Chainlink pricefeed 1
-		_checkAnswer(roundId, answer, updatedAt, answeredInRound);
-
-		(uint80 roundId2, int256 answer2, uint256 startedAt2, uint256 updatedAt2, uint80 answeredInRound2) = priceFeed2
-			.latestRoundData();
-
-		// Sanity check for the Chainlink pricefeed 2
-		_checkAnswer(roundId2, answer2, updatedAt2, answeredInRound2);
-
-		if (answer2 < answer) {
-			answer = answer2;
-			answeredInRound = answeredInRound2;
-			roundId = roundId2;
-			startedAt = startedAt2;
-			updatedAt = updatedAt2;
-		}
-
-		uint256 virtualPrice = _getVirtualPrice();
-		answer = (answer * int256(virtualPrice)) / decimalsDivider;
 	}
 
 	// Public functions -----------------------------------------------------------------------------------------------
