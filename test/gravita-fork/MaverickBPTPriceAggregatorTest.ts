@@ -8,29 +8,27 @@ const MaverickBPTPriceAggregator = artifacts.require("MaverickBPTPriceAggregator
 
 let lpPriceAggregator: any
 
-let wEth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-let wstEth = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
 let bpToken = "0xa2b4e72a9d2d3252da335cb50e393f44a9f104ee" // Maverick Position-wstETH-WETH-0
 let poolInformation = "0x0087D11551437c3964Dddf0F4FA58836c5C5d949"
-let wEth2UsdPriceFeed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-let wstEth2UsdPriceFeed = "0xCA68ad4EE5c96871EC6C6dac2F714a8437A3Fe66"
 
 const tokens = [
-  {
-    address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // wETH
-    decimals: 18,
-    oracle: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", // Chainlink wETH:USD
-    piggyBank: "0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E"
-  }, 
-  {
-    address: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", // wstETH
-    decimals: 18,
-    oracle: "0xCA68ad4EE5c96871EC6C6dac2F714a8437A3Fe66", // Gravita/Chainlink wstETH:USD
-    piggyBank: "0x248cCBf4864221fC0E840F29BB042ad5bFC89B5c"
-  }
+	{
+		address: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", // wstETH
+		decimals: 18,
+		oracle: "0xCA68ad4EE5c96871EC6C6dac2F714a8437A3Fe66", // Gravita/Chainlink wstETH:USD
+		piggyBank: "0x248cCBf4864221fC0E840F29BB042ad5bFC89B5c",
+	},
+	{
+		address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // wETH
+		decimals: 18,
+		oracle: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", // Chainlink wETH:USD
+		piggyBank: "0xF04a5cC80B1E94C69B48f5ee68a08CD2F09A7c3E",
+	},
 ]
 let snapshotId: number, initialSnapshotId: number
 let deployer: string, alice: string
+
+const f = (v: any) => ethers.utils.formatEther(v.toString())
 
 describe("MaverickBPTPriceAggregator", async () => {
 	before(async () => {
@@ -39,7 +37,7 @@ describe("MaverickBPTPriceAggregator", async () => {
 		alice = await accounts[1].getAddress()
 		await setBalance(deployer, 10e18)
 
-		const params = [bpToken, poolInformation, wstEth2UsdPriceFeed]
+		const params = [bpToken, poolInformation, tokens[0].oracle]
 		lpPriceAggregator = await MaverickBPTPriceAggregator.new(...params, { from: deployer })
 
 		initialSnapshotId = await network.provider.send("evm_snapshot")
@@ -58,20 +56,25 @@ describe("MaverickBPTPriceAggregator", async () => {
 	})
 
 	it("latestRoundData()", async () => {
-    // give alice 100 of each (wETH & wstETH)
-    const amount = 100
-		const amountEther = String(amount).concat("0".repeat(18))
-    let aliceUsdWalletValue = 0
-    for (const t of tokens) {
-      await setBalance(t.piggyBank, 10e18)
-      await impersonateAccount(t.piggyBank)
-      await (await IERC20.at(t.address)).transfer(alice, amountEther, { from: t.piggyBank })
-      await stopImpersonatingAccount(t.piggyBank)
-      const tokenPrice = (await (await AggregatorV3Interface.at(t.oracle)).latestRoundData()).answer
-      aliceUsdWalletValue += (amount * tokenPrice) / 10 ** 8 // aggregator answer is 8 decimals
-    }
-    const bptUsdPrice = (await lpPriceAggregator.latestRoundData()).answer 
-    console.log(`BPTPrice: ${bptUsdPrice}`)
+		const amount = 100
+		const amountEther = ethers.utils.parseEther(String(amount))
+		let aliceUsdWalletValue = 0
+		for (const t of tokens) {
+			// give alice 100 of each (wstETH & wETH)
+			const token = await IERC20.at(t.address)
+			await setBalance(t.piggyBank, 10e18)
+			await impersonateAccount(t.piggyBank)
+			await token.transfer(alice, amountEther, { from: t.piggyBank })
+			await stopImpersonatingAccount(t.piggyBank)
+			const tokenPrice = (await (await AggregatorV3Interface.at(t.oracle)).latestRoundData()).answer
+			const aliceUsdTokenValue = (amount * tokenPrice) / 10 ** 8 // aggregator answer is 8 decimals
+			aliceUsdWalletValue += aliceUsdTokenValue
+			console.log(`aliceUsdTokenValue: ${aliceUsdTokenValue}`)
+			// await token.approve(curvePool, MaxUint256, { from: alice })
+		}
+		console.log(`aliceUsdWalletValue: ${aliceUsdWalletValue}`)
+		const bptUsdPrice = (await lpPriceAggregator.latestRoundData()).answer
+		console.log(`BPTPrice: ${bptUsdPrice}`)
 		// // alice deposits both into the Curve pool
 		// const curvePoolContract = await ICurvePool.at(curvePool)
 		// const curveTokenContract = await IERC20.at(curveToken)
@@ -92,3 +95,4 @@ function assertIsApproximatelyEqual(x: any, y: any, error = 1_000) {
 	const diff = Math.abs(Number(x) - Number(y))
 	assert.isAtMost(diff, error)
 }
+
