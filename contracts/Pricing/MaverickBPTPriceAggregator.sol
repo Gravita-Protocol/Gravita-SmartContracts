@@ -9,8 +9,6 @@ import "../Integrations/Maverick/Interfaces/IPool.sol";
 import "../Integrations/Maverick/Interfaces/IPoolInformation.sol";
 import "../Integrations/Maverick/Interfaces/IPoolPositionSlim.sol";
 
-import "hardhat/console.sol"; // TODO remove after done with debug/tests
-
 /**
  * @title Maverick boosted pool token price feed aggregator.
  * @dev This contract is responsible for calculating the USD price of a boosted (liquidity) position (BP) token from 
@@ -73,12 +71,8 @@ contract MaverickBPTPriceAggregator is AggregatorV3Interface, Ownable {
 		_checkAnswer(roundId, answer, updatedAt, answeredInRound);
 
 		uint256 _sqrtPrice = poolInformation.getSqrtPrice(pool);
-		uint256 factor = (_sqrtPrice / DECIMALS_DIVIDER) * (_sqrtPrice / DECIMALS_DIVIDER);
-		answer *= int256(factor);
-
-		console.log("sqrtPrice: %s", _sqrtPrice);
-		console.log("factor: %s", factor);
-		console.log("answer: %s", uint256(answer));
+		uint256 factor = _sqrtPrice.mulDiv(_sqrtPrice, DECIMALS_DIVIDER);
+		answer = int256(uint256(answer).mulDiv(factor, DECIMALS_DIVIDER));
 	}
 
 	function decimals() external pure override returns (uint8) {
