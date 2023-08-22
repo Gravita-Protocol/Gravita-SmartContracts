@@ -104,7 +104,5 @@ interface IAdminContract {
 
 	function getTotalAssetDebt(address _asset) external view returns (uint256);
 
-	function setRewardAccruingCollateral(address _asset, bool _isRewardAccruing) external;
-
-	function isRewardAccruingCollateral(address _asset) external view returns (bool);
+	function rewardAccruingCollateral(address _asset) external view returns (bool);
 }

@@ -154,7 +154,7 @@ abstract contract AbstractStakingWrapper is
 	}
 
 	/// @inheritdoc IStakingWrapper
-	function gravitaBalanceOf(address _account) public view override returns (uint256 _collateral) {
+	function balanceOnGravitaPools(address _account) public view override returns (uint256 _collateral) {
 		if (_account == treasuryAddress) {
 			_collateral = IPool(defaultPool).getAssetBalance(address(this));
 			_collateral += IStabilityPool(stabilityPool).getCollateral(address(this));
@@ -212,7 +212,7 @@ abstract contract AbstractStakingWrapper is
 		if (_account == address(0) || _isGravitaPool(_account)) {
 			return 0;
 		}
-		return balanceOf(_account) + gravitaBalanceOf(_account);
+		return balanceOf(_account) + balanceOnGravitaPools(_account);
 	}
 
 	/// @inheritdoc IRewardAccruing

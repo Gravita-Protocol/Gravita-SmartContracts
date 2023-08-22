@@ -46,7 +46,8 @@ interface IStakingWrapper {
 	function getEarnedRewards(address _account) external returns (RewardEarned[] memory _claimable);
 
 	/**
-	 * @notice Collateral on the Gravita Protocol is stored in different pools based on its lifecycle status.
+	 * @notice Balance of this wrapper token for `_account` that is stored within Gravita's pools.
+	 *         Collateral on the Gravita Protocol is stored in different pools based on its lifecycle status.
 	 *         Borrowers will accrue rewards while their collateral is in:
 	 *           - ActivePool (queried via VesselManager), meaning their vessel is active
 	 *           - CollSurplusPool, meaning their vessel was liquidated/redeemed against and there was a surplus
@@ -56,7 +57,7 @@ interface IStakingWrapper {
 	 *
 	 * @dev See https://docs.google.com/document/d/1j6mcK4iB3aWfPSH3l8UdYL_G3sqY3k0k1G4jt81OsRE/edit?usp=sharing
 	 */
-	function gravitaBalanceOf(address _account) external returns (uint256 _collateral);
+	function balanceOnGravitaPools(address _account) external returns (uint256 _collateral);
 
 	/// @notice claim/transfer all rewards owned by/to `msg.sender` (or transfer to a registered redirect address)
 	function claimEarnedRewards() external;
@@ -64,7 +65,7 @@ interface IStakingWrapper {
 	/// @notice claim/transfer all rewards owned by/to `_account` (or transfer to a registered redirect address)
 	function claimEarnedRewardsFor(address _account) external;
 
-	/// @notice same as `claimEarnedRewards()`, but tokens from `msg.sender` are transferred to a forwarding address
+	/// @notice same as `claimEarnedRewards()`, but tokens earned by `msg.sender` are transferred to a forwarding address
 	function claimAndForwardEarnedRewards(address _forwardTo) external;
 
 	/// @notice claim/transfer reward shares earned by the protocol to the treasury address

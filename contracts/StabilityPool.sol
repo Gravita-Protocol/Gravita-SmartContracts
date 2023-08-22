@@ -749,7 +749,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 			uint256 amount = amounts[i];
 			if (amount != 0) {
 				address asset = assets[i];
-				if (IAdminContract(adminContract).isRewardAccruingCollateral(asset)) {
+				if (IAdminContract(adminContract).rewardAccruingCollateral(asset)) {
 					/// @dev rewards accruing shift from the treasury to the depositor
 					IRewardAccruing(asset).transferRewardAccruingRights(treasuryAddress, msg.sender, amount);
 				}

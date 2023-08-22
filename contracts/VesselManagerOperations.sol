@@ -396,7 +396,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			singleLiquidation.collToRedistribute
 		) = _getOffsetAndRedistributionVals(singleLiquidation.entireVesselDebt, collToLiquidate, _debtTokenInStabPool);
 
-		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+		if (IAdminContract(adminContract).rewardAccruingCollateral(_asset)) {
 			console.log("_liquidateNormalMode");
 			/// @dev on a liquidation, collToSendToSP + collToRedistribute rewards shift from the borrower to the treasury
 			IRewardAccruing(_asset).transferRewardAccruingRights(
@@ -460,7 +460,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			singleLiquidation.debtToRedistribute = singleLiquidation.entireVesselDebt;
 			singleLiquidation.collToRedistribute = vars.collToLiquidate;
 
-			if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			if (IAdminContract(adminContract).rewardAccruingCollateral(_asset)) {
 				console.log("_liquidateRecoveryMode :: ICR < 100%");
 				/// @dev on a liquidation, collToRedistribute rewards shift from the borrower to the treasury
 				IRewardAccruing(_asset).transferRewardAccruingRights(
@@ -509,7 +509,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_debtTokenInStabPool
 			);
 
-			if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			if (IAdminContract(adminContract).rewardAccruingCollateral(_asset)) {
 				/// @dev on a liquidation, collToSendToSP + collToRedistribute rewards shift from the borrower to the treasury
 				console.log("_liquidateRecoveryMode :: MCR > ICR > 100%");
 				IRewardAccruing(_asset).transferRewardAccruingRights(
@@ -562,7 +562,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				_price
 			);
 
-			if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+			if (IAdminContract(adminContract).rewardAccruingCollateral(_asset)) {
 				console.log("_liquidateRecoveryMode :: 110% < ICR < TCR");
 				/// @dev on a liquidation, collToSendToSP rewards shift from the borrower to the treasury
 				IRewardAccruing(_asset).transferRewardAccruingRights(
@@ -799,7 +799,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 newDebt = vesselDebt - singleRedemption.debtLot;
 		uint256 newColl = vesselColl - singleRedemption.collLot;
 
-		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+		if (IAdminContract(adminContract).rewardAccruingCollateral(_asset)) {
 			uint256 collLotRedemptionFee = IVesselManager(vesselManager).getRedemptionFee(_asset, singleRedemption.collLot);
 			uint256 netCollLot = singleRedemption.collLot - collLotRedemptionFee;
 			/// @dev on a redemption, reward accruing rights on the collateral shift from the borrower to the redeemer

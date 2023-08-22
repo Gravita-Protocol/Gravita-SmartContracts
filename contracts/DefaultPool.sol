@@ -65,7 +65,7 @@ contract DefaultPool is OwnableUpgradeable, UUPSUpgradeable, IDefaultPool, Addre
 			return;
 		}
 
-		if (IAdminContract(adminContract).isRewardAccruingCollateral(_asset)) {
+		if (IAdminContract(adminContract).rewardAccruingCollateral(_asset)) {
 			/// @dev reward accruing rights shift from the treasury to the borrower, due to an applyPendingRewards() call
 			console.log("DefaultPool.sendAssetToActivePool");
 			IRewardAccruing(_asset).transferRewardAccruingRights(treasuryAddress, _beneficiary, _amount);

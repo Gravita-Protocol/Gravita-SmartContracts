@@ -107,7 +107,7 @@ async function itHappyPath() {
 		from: alice,
 	})
 	console.log(`wrapper.balanceOf(alice): ${f(await wrapper.balanceOf(alice))}`)
-	console.log(`wrapper.gravitaBalanceOf(alice): ${f(await wrapper.gravitaBalanceOf(alice))}`)
+	console.log(`wrapper.balanceOnGravitaPools(alice): ${f(await wrapper.balanceOnGravitaPools(alice))}`)
 	console.log(`wrapper.totalBalanceOf(alice): ${f(await wrapper.totalBalanceOf(alice))}`)
 
 	// fast forward 90 days
