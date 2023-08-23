@@ -17,7 +17,6 @@ const SortedVessels = artifacts.require("SortedVessels")
 const StabilityPoolTester = artifacts.require("StabilityPoolTester")
 const Timelock = artifacts.require("Timelock")
 const VesselManager = artifacts.require("VesselManager")
-const VesselManagerTester = artifacts.require("VesselManagerTester")
 const VesselManagerOperations = artifacts.require("VesselManagerOperations")
 
 const testHelpers = require("./testHelpers.js")
@@ -40,7 +39,7 @@ class DeploymentHelper {
 		await this._connectGrvtContracts(grvt, core)
 
 		for (const acc of collateralMintingAccounts) {
-			const mintingValue = dec(100_000_000, 18)
+			const mintingValue = dec(1_000_000, 18)
 			await core.erc20.mint(acc, mintingValue)
 			await core.erc20B.mint(acc, mintingValue)
 		}
@@ -49,7 +48,6 @@ class DeploymentHelper {
 	}
 
 	static async _deployCoreContracts(treasuryAddress) {
-		const isFork = Boolean(network.config.forking?.enabled)
 		const activePool = await ActivePool.new()
 		const adminContract = await AdminContract.new()
 		const borrowerOperations = await BorrowerOperationsTester.new()
@@ -62,7 +60,7 @@ class DeploymentHelper {
 		const priceFeedTestnet = await PriceFeedTestnet.new()
 		const sortedVessels = await SortedVessels.new()
 		const stabilityPool = await StabilityPoolTester.new()
-		const vesselManager = isFork ? await VesselManager.new() : await VesselManagerTester.new()
+		const vesselManager = await VesselManager.new()
 		const vesselManagerOperations = await VesselManagerOperations.new()
 		const shortTimelock = await Timelock.new(TIMELOCK_SHORT_DELAY, treasuryAddress)
 		const longTimelock = await Timelock.new(TIMELOCK_LONG_DELAY, treasuryAddress)

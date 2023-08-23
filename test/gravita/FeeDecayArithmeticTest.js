@@ -3,14 +3,14 @@ const Decimal = require("decimal.js")
 const { BNConverter } = require("../utils/BNConverter.js")
 const testHelpers = require("../utils/testHelpers.js")
 
-const VesselManagerTester = artifacts.require("VesselManagerTester")
+const VesselManagerFeeDecayTester = artifacts.require("VesselManagerFeeDecayTester")
 const GravitaMathTester = artifacts.require("GravitaMathTester")
 
 const th = testHelpers.TestHelper
 const timeValues = testHelpers.TimeValues
 const { dec, toBN, getDifference, ZERO_ADDRESS } = th
 
-contract("Fee arithmetic tests", async accounts => {
+contract("Fee decay arithmetic tests", async accounts => {
 	let vesselManagerTester
 	let mathTester
 
@@ -190,13 +190,20 @@ contract("Fee arithmetic tests", async accounts => {
 	]
 
 	before(async () => {
-		vesselManagerTester = await VesselManagerTester.new()
+		vesselManagerTester = await VesselManagerFeeDecayTester.new()
 		mathTester = await GravitaMathTester.new()
 	})
 
+	async function minutesPassedSinceLastFeeOp(asset) {
+		const lastFeeOperationTime = Number(await vesselManagerTester.lastFeeOperationTime(asset))
+		const currentBlock = await ethers.provider.getBlockNumber()
+		const currentBlockTimestamp = Number((await ethers.provider.getBlock(currentBlock)).timestamp)
+		return Math.floor((currentBlockTimestamp - lastFeeOperationTime) / 60);
+	}
+
 	it("minutesPassedSinceLastFeeOp(): returns minutes passed for no time increase", async () => {
 		await vesselManagerTester.setLastFeeOpTimeToNow(ZERO_ADDRESS)
-		const minutesPassed = await vesselManagerTester.minutesPassedSinceLastFeeOp(ZERO_ADDRESS)
+		const minutesPassed = await minutesPassedSinceLastFeeOp(ZERO_ADDRESS)
 		assert.equal(minutesPassed, "0")
 	})
 
@@ -209,7 +216,7 @@ contract("Fee arithmetic tests", async accounts => {
 
 			await th.fastForwardTime(seconds, web3.currentProvider)
 
-			const minutesPassed = await vesselManagerTester.minutesPassedSinceLastFeeOp(ZERO_ADDRESS)
+			const minutesPassed = await minutesPassedSinceLastFeeOp(ZERO_ADDRESS)
 
 			assert.equal(expectedHoursPassed.toString(), minutesPassed.toString())
 		}

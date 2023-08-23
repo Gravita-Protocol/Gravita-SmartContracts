@@ -11,28 +11,20 @@ import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";
 import "../Interfaces/IGravitaBase.sol";
 import "../Interfaces/IAdminContract.sol";
-import "../Interfaces/IDefaultPool.sol";
 import "../Addresses.sol";
 
 /*
- * Base contract for VesselManager, BorrowerOperations and StabilityPool. Contains global system constants and
- * common functions.
+ * Common functions used by BorrowerOperations, StabilityPool, VesselManager and VesselManagerOperations. 
  */
-abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Addresses {
-	// --- Gas compensation functions ---
+abstract contract GravitaBase is IGravitaBase, BaseMath, Addresses {
 
-	// Returns the composite debt (drawn debt + gas compensation) of a vessel, for the purpose of ICR calculation
+	// Return the composite debt (drawn debt + gas compensation) of a vessel, for the purpose of ICR calculation
 	function _getCompositeDebt(address _asset, uint256 _debt) internal view returns (uint256) {
 		return _debt + IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
 	}
 
 	function _getNetDebt(address _asset, uint256 _debt) internal view returns (uint256) {
 		return _debt - IAdminContract(adminContract).getDebtTokenGasCompensation(_asset);
-	}
-
-	// Return the amount of ETH to be drawn from a vessel's collateral and sent as gas compensation.
-	function _getCollGasCompensation(address _asset, uint256 _entireColl) internal view returns (uint256) {
-		return _entireColl / IAdminContract(adminContract).getPercentDivisor(_asset);
 	}
 
 	function getEntireSystemColl(address _asset) public view returns (uint256 entireSystemColl) {
@@ -56,10 +48,5 @@ abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Add
 	function _checkRecoveryMode(address _asset, uint256 _price) internal view returns (bool) {
 		uint256 TCR = _getTCR(_asset, _price);
 		return TCR < IAdminContract(adminContract).getCcr(_asset);
-	}
-
-	function _requireUserAcceptsFee(uint256 _fee, uint256 _amount, uint256 _maxFeePercentage) internal view {
-		uint256 feePercentage = (_fee * IAdminContract(adminContract).DECIMAL_PRECISION()) / _amount;
-		require(feePercentage <= _maxFeePercentage, "Fee exceeded provided maximum");
 	}
 }

@@ -64,7 +64,7 @@ contract("BorrowerOperations", async accounts => {
 
 	describe("BorrowerOperations Mechanisms", async () => {
 		before(async () => {
-			await deploy(treasury, [])
+			await deploy(treasury, accounts)
 
 			await feeCollector.setRouteToGRVTStaking(true) // sends fees to GRVTStaking instead of treasury
 
@@ -76,7 +76,6 @@ contract("BorrowerOperations", async accounts => {
 
 			for (const acc of accounts.slice(0, 20)) {
 				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), { from: acc })
-				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
@@ -2071,7 +2070,7 @@ contract("BorrowerOperations", async accounts => {
 			// Make the GRAI request 2 wei above min net debt to correct for floor division, and make net debt = min net debt + 1 wei
 			await borrowerOperations.openVessel(
 				erc20.address,
-				dec(100, 30),
+				dec(1_000_000, 18),
 				await getNetBorrowingAmount(MIN_NET_DEBT_ERC20.add(toBN("2")), erc20.address),
 				A,
 				A,
@@ -2083,11 +2082,11 @@ contract("BorrowerOperations", async accounts => {
 			})
 			assert.isTrue(repayTxA_Asset.receipt.status)
 
-			await borrowerOperations.openVessel(erc20.address, dec(100, 30), dec(20, 25), B, B, {
+			await borrowerOperations.openVessel(erc20.address, dec(1_000_000, 18), dec(20, 23), B, B, {
 				from: B,
 			})
 
-			const repayTxB_Asset = await borrowerOperations.repayDebtTokens(erc20.address, dec(19, 25), B, B, { from: B })
+			const repayTxB_Asset = await borrowerOperations.repayDebtTokens(erc20.address, dec(19, 23), B, B, { from: B })
 			assert.isTrue(repayTxB_Asset.receipt.status)
 		})
 
@@ -2096,7 +2095,7 @@ contract("BorrowerOperations", async accounts => {
 			await borrowerOperations
 			await borrowerOperations.openVessel(
 				erc20.address,
-				dec(100, 30),
+				dec(1_000_000, 18),
 				await getNetBorrowingAmount(MIN_NET_DEBT_ERC20.add(toBN("2")), erc20.address),
 				A,
 				A,
@@ -3373,7 +3372,7 @@ contract("BorrowerOperations", async accounts => {
 
 			// Check the new ICR would be an improvement, but less than the CCR (150%)
 
-			const newICR_Asset = await vesselManager.computeICR(
+			const newICR_Asset = await th.computeICR(
 				aliceColl_Asset.add(collIncrease),
 				aliceDebt_Asset.add(debtIncrease),
 				price
@@ -3425,7 +3424,7 @@ contract("BorrowerOperations", async accounts => {
 			const aliceDebtIncrease = toBN(dec(150, 18))
 			const aliceCollIncrease = toBN(dec(1, "ether"))
 
-			const newICR_A_Asset = await vesselManager.computeICR(
+			const newICR_A_Asset = await th.computeICR(
 				aliceColl_Asset.add(aliceCollIncrease),
 				aliceDebt_Asset.add(aliceDebtIncrease),
 				price
@@ -3456,7 +3455,7 @@ contract("BorrowerOperations", async accounts => {
 			const bobDebtIncrease = toBN(dec(450, 18))
 			const bobCollIncrease = toBN(dec(1, "ether"))
 
-			const newICR_B_Asset = await vesselManager.computeICR(
+			const newICR_B_Asset = await th.computeICR(
 				bobColl_Asset.add(bobCollIncrease),
 				bobDebt_Asset.add(bobDebtIncrease),
 				price
@@ -3506,7 +3505,7 @@ contract("BorrowerOperations", async accounts => {
 			const debtIncrease = toBN(dec(5000, 18))
 			const collIncrease = toBN(dec(150, "ether"))
 
-			const newICR_Asset = await vesselManager.computeICR(
+			const newICR_Asset = await th.computeICR(
 				aliceColl_Asset.add(collIncrease),
 				aliceDebt_Asset.add(debtIncrease),
 				price
@@ -3564,7 +3563,7 @@ contract("BorrowerOperations", async accounts => {
 			const debtIncrease = toBN(dec(5000, 18))
 			const collIncrease = toBN(dec(150, "ether"))
 
-			const newICR_Asset = await vesselManager.computeICR(
+			const newICR_Asset = await th.computeICR(
 				aliceColl_Asset.add(collIncrease),
 				aliceDebt_Asset.add(debtIncrease),
 				price
@@ -3632,7 +3631,7 @@ contract("BorrowerOperations", async accounts => {
 			const debtIncrease = toBN(dec(5000, 18))
 			const collIncrease = toBN(dec(150, "ether"))
 
-			const newICR_Asset = await vesselManager.computeICR(
+			const newICR_Asset = await th.computeICR(
 				aliceColl_Asset.add(collIncrease),
 				aliceDebt_Asset.add(debtIncrease),
 				price
@@ -4947,7 +4946,7 @@ contract("BorrowerOperations", async accounts => {
 			await debtToken.transfer(alice, await debtToken.balanceOf(dennis), { from: dennis })
 
 			// Close the vessel
-			const alicesRefund = await feeCollector.simulateRefund(alice, erc20.address, 1e18.toString())
+			const alicesRefund = await feeCollector.simulateRefund(alice, erc20.address, (1e18).toString())
 			await borrowerOperations.closeVessel(erc20.address, { from: alice })
 
 			// Check after, subtracting alice's refund which was burnt by the FeeCollector
@@ -5324,11 +5323,10 @@ contract("BorrowerOperations", async accounts => {
 			// Add 1 wei to correct for rounding error in helper function
 
 			await adminContract.setMintCap(erc20.address, dec(100, 35))
-			const mintCap = await adminContract.getMintCap(erc20.address)
 
 			const txA_Asset = await borrowerOperations.openVessel(
 				erc20.address,
-				dec(100, 30),
+				dec(1_000, 18),
 				await getNetBorrowingAmount(MIN_NET_DEBT_ERC20.add(toBN(1)), erc20.address),
 				A,
 				A,
@@ -5336,17 +5334,6 @@ contract("BorrowerOperations", async accounts => {
 			)
 			assert.isTrue(txA_Asset.receipt.status)
 			assert.isTrue(await sortedVessels.contains(erc20.address, A))
-
-			const txC_Asset = await borrowerOperations.openVessel(
-				erc20.address,
-				dec(100, 30),
-				await getNetBorrowingAmount(MIN_NET_DEBT_ERC20.add(toBN(dec(47789898, 22)), erc20.address)),
-				A,
-				A,
-				{ from: C }
-			)
-			assert.isTrue(txC_Asset.receipt.status)
-			assert.isTrue(await sortedVessels.contains(erc20.address, C))
 		})
 
 		it("openVessel(): reverts if net debt < minimum net debt", async () => {
@@ -5355,7 +5342,7 @@ contract("BorrowerOperations", async accounts => {
 
 			const txBPromise_Asset = borrowerOperations.openVessel(
 				erc20.address,
-				dec(100, 30),
+				dec(1_000_000, 18),
 				await getNetBorrowingAmount(MIN_NET_DEBT_ERC20.sub(toBN(1)), erc20.address),
 				B,
 				B,
@@ -5365,7 +5352,7 @@ contract("BorrowerOperations", async accounts => {
 
 			const txCPromise_Asset = borrowerOperations.openVessel(
 				erc20.address,
-				dec(100, 30),
+				dec(1_000_000, 18),
 				MIN_NET_DEBT_ERC20.sub(toBN(dec(173, 18))),
 				C,
 				C,

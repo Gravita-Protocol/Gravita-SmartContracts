@@ -4249,7 +4249,7 @@ contract("VesselManager", async accounts => {
 				await debtToken.transfer(B, await debtToken.balanceOf(A), { from: A })
 				await debtToken.transfer(B, await debtToken.balanceOf(C), { from: C })
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -4299,7 +4299,7 @@ contract("VesselManager", async accounts => {
 				await debtToken.transfer(B, await debtToken.balanceOf(A), { from: A })
 				await debtToken.transfer(B, await debtToken.balanceOf(C), { from: C })
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -4819,7 +4819,7 @@ contract("VesselManager", async accounts => {
 				const totalSupply = await debtToken.totalSupply()
 				th.assertIsApproximatelyEqual(totalSupply, expectedTotalSupply_Asset)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -4840,7 +4840,7 @@ contract("VesselManager", async accounts => {
 					"Fee exceeded provided maximum"
 				)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Max fee is 1%
 				await assertRevert(
@@ -4854,7 +4854,7 @@ contract("VesselManager", async accounts => {
 					"Fee exceeded provided maximum"
 				)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Max fee is 3.754%
 				await assertRevert(
@@ -4868,7 +4868,7 @@ contract("VesselManager", async accounts => {
 					"Fee exceeded provided maximum"
 				)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Max fee is 0.5%
 				await assertRevert(
@@ -4909,7 +4909,7 @@ contract("VesselManager", async accounts => {
 				const totalSupply = await debtToken.totalSupply()
 				th.assertIsApproximatelyEqual(totalSupply, expectedTotalSupply_Asset)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -4932,7 +4932,7 @@ contract("VesselManager", async accounts => {
 				)
 				assert.isTrue(tx1_Asset.receipt.status)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Attempt with maxFee = 5.5%
 				const exactSameFee_Asset = await vesselManager.getRedemptionFeeWithDecay(erc20.address, ETHDrawn_Asset)
@@ -4946,7 +4946,9 @@ contract("VesselManager", async accounts => {
 				)
 				assert.isTrue(tx2_Asset.receipt.status)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
+				// wait for fee to decay
+				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK, web3.currentProvider)
 
 				// Max fee is 10%
 				const tx3_Asset = await th.redeemCollateralAndGetTxObject(
@@ -4958,7 +4960,7 @@ contract("VesselManager", async accounts => {
 				)
 				assert.isTrue(tx3_Asset.receipt.status)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Max fee is 37.659%
 
@@ -4971,7 +4973,7 @@ contract("VesselManager", async accounts => {
 				)
 				assert.isTrue(tx4_Asset.receipt.status)
 
-				await vesselManager.setBaseRate(erc20.address, 0)
+				// await vesselManager.setBaseRate(erc20.address, 0)
 
 				// Max fee is 100%
 
@@ -6653,7 +6655,7 @@ contract("VesselManager", async accounts => {
 				const coll = dec(1, "ether")
 				const debt = dec(100, 18)
 
-				const ICR = (await vesselManager.computeICR(coll, debt, price)).toString()
+				const ICR = (await th.computeICR(coll, debt, price)).toString()
 				assert.equal(ICR, 0)
 			})
 
@@ -6662,7 +6664,7 @@ contract("VesselManager", async accounts => {
 				const coll = dec(1, "ether")
 				const debt = dec(100, 18)
 
-				const ICR = (await vesselManager.computeICR(coll, debt, price)).toString()
+				const ICR = (await th.computeICR(coll, debt, price)).toString()
 				assert.equal(ICR, dec(1, 18))
 			})
 
@@ -6671,7 +6673,7 @@ contract("VesselManager", async accounts => {
 				const coll = dec(200, "ether")
 				const debt = dec(30, 18)
 
-				const ICR = (await vesselManager.computeICR(coll, debt, price)).toString()
+				const ICR = (await th.computeICR(coll, debt, price)).toString()
 				assert.isAtMost(th.getDifference(ICR, "666666666666666666666"), 1000)
 			})
 
@@ -6680,7 +6682,7 @@ contract("VesselManager", async accounts => {
 				const coll = "1350000000000000000000"
 				const debt = "127000000000000000000"
 
-				const ICR = await vesselManager.computeICR(coll, debt, price)
+				const ICR = await th.computeICR(coll, debt, price)
 				assert.isAtMost(th.getDifference(ICR, "2657480314960630000000"), 1000000)
 			})
 
@@ -6689,7 +6691,7 @@ contract("VesselManager", async accounts => {
 				const coll = dec(1, "ether")
 				const debt = "54321000000000000000000"
 
-				const ICR = (await vesselManager.computeICR(coll, debt, price)).toString()
+				const ICR = (await th.computeICR(coll, debt, price)).toString()
 				assert.isAtMost(th.getDifference(ICR, "1840908672520756"), 1000)
 			})
 
@@ -6698,7 +6700,7 @@ contract("VesselManager", async accounts => {
 				const coll = dec(1, "ether")
 				const debt = 0
 
-				const ICR = web3.utils.toHex(await vesselManager.computeICR(coll, debt, price))
+				const ICR = web3.utils.toHex(await th.computeICR(coll, debt, price))
 				const maxBytes32 = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 				assert.equal(ICR, maxBytes32)
 			})

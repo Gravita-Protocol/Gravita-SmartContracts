@@ -850,6 +850,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		return redemptionSofteningParam;
 	}
 
+	// Return the amount to be drawn from a vessel's collateral and sent as gas compensation.
+	function _getCollGasCompensation(address _asset, uint256 _entireColl) internal view returns (uint256) {
+		return _entireColl / IAdminContract(adminContract).getPercentDivisor(_asset);
+	}
+
 	function setRedemptionSofteningParam(uint256 _redemptionSofteningParam) public {
 		if (msg.sender != timelockAddress) {
 			revert VesselManagerOperations__NotTimelock();
@@ -859,6 +864,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		}
 		redemptionSofteningParam = _redemptionSofteningParam;
 		emit RedemptionSoftenParamChanged(_redemptionSofteningParam);
+	}
+
+	function _requireUserAcceptsFee(uint256 _fee, uint256 _amount, uint256 _maxFeePercentage) internal view {
+		uint256 feePercentage = (_fee * IAdminContract(adminContract).DECIMAL_PRECISION()) / _amount;
+		require(feePercentage <= _maxFeePercentage, "Fee exceeded provided maximum");
 	}
 
 	function authorizeUpgrade(address newImplementation) public {

@@ -66,8 +66,10 @@ module.exports = {
 		// 	accounts: accountsList,
 		// },
 		hardhat: {
+			accounts: accountsList,
 			forking: {
-				url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+				url: `https://rpc.ankr.com/eth`,
+				// url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
 				blockNumber: 17835000,
 			},
 		},

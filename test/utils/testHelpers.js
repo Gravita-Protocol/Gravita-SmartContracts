@@ -316,14 +316,10 @@ class TestHelper {
 	// --- Gas compensation calculation functions ---
 
 	// Given a composite debt, returns the actual debt  - i.e. subtracts the virtual debt.
-	// Virtual debt = 50 GRAI.
-	static async getActualDebtFromComposite(compositeDebt, contracts, asset) {
+	static async getNetDebt(debt, contracts, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
-		const issuedDebt = await contracts.vesselManager.getActualDebtFromComposite(
-			asset,
-			compositeDebt
-		)
-		return issuedDebt
+		const gasCompensation = await contracts.adminContract.getDebtTokenGasCompensation(asset)
+		return web3.utils.toBN(debt).sub(gasCompensation)
 	}
 
 	// Adds the gas compensation (50 GRAI)
@@ -365,8 +361,8 @@ class TestHelper {
 	 */
 	static async getOpenVesselGRAIAmount(contracts, totalDebt, asset) {
 		if (!asset) asset = this.ZERO_ADDRESS
-		const actualDebt = await this.getActualDebtFromComposite(totalDebt, contracts, asset)
-		const netDebt = await this.getNetBorrowingAmount(contracts, actualDebt, asset)
+		const actualDebt = await this.getNetDebt(totalDebt, contracts, asset)
+		const netDebt = await this.getNetBorrowingAmount(contracts, actualDebt.toString(), asset)
 		return netDebt
 	}
 
@@ -840,7 +836,7 @@ class TestHelper {
 		} else if (typeof ICR == "string") ICR = this.toBN(ICR)
 
 		const totalDebt = await this.getOpenVesselTotalDebt(contracts, GRAIAmount, asset)
-		const netDebt = await this.getActualDebtFromComposite(totalDebt, contracts, asset)
+		const netDebt = await this.getNetDebt(totalDebt, contracts, asset)
 
 		if (extraParams.value) {
 			assetSent = extraParams.value

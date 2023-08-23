@@ -63,6 +63,10 @@ contract("Gas compensation tests", async accounts => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
+	async function getCollGasCompensation(asset, amount) {
+		return toBN(amount).div(await adminContract.getPercentDivisor(asset))
+	}
+
 	// --- Raw gas compensation calculations ---
 
 	it("getCollGasCompensation(): returns the 0.5% of collaterall if it is < $10 in value", async () => {
@@ -73,7 +77,7 @@ contract("Gas compensation tests", async accounts => {
 		await priceFeed.setPrice(erc20.address, dec(1, 18))
 		// const price_1 = await priceFeed.getPrice(erc20.address)
 
-		assert.equal((await vesselManager.getCollGasCompensation(erc20.address, dec(1, "ether"))).toString(), dec(5, 15))
+		assert.equal((await getCollGasCompensation(erc20.address, dec(1, "ether"))).toString(), dec(5, 15))
 
 		/* 
     ETH:USD price = 28.4
@@ -81,7 +85,7 @@ contract("Gas compensation tests", async accounts => {
     -> Expect 0.5% of collaterall as gas compensation */
 		await priceFeed.setPrice(erc20.address, "28400000000000000000")
 		// const price_2 = await priceFeed.getPrice(erc20.address)
-		assert.equal((await vesselManager.getCollGasCompensation(erc20.address, dec(100, "finney"))).toString(), dec(5, 14))
+		assert.equal((await getCollGasCompensation(erc20.address, dec(100, "finney"))).toString(), dec(5, 14))
 
 		/* 
     ETH:USD price = 1000000000 (1 billion)
@@ -89,7 +93,7 @@ contract("Gas compensation tests", async accounts => {
     -> Expect 0.5% of collaterall as gas compensation */
 		await priceFeed.setPrice(erc20.address, dec(1, 27))
 		// const price_3 = await priceFeed.getPrice(erc20.address)
-		assert.equal((await vesselManager.getCollGasCompensation(erc20.address, "5000000000")).toString(), "25000000")
+		assert.equal((await getCollGasCompensation(erc20.address, "5000000000")).toString(), "25000000")
 	})
 
 	it("getCollGasCompensation(): returns 0.5% of collaterall when 0.5% of collateral < $10 in value", async () => {
@@ -101,28 +105,19 @@ contract("Gas compensation tests", async accounts => {
     coll = 9.999 ETH  
     0.5% of coll = 0.04995 ETH. USD value: $9.99
     -> Expect 0.5% of collaterall as gas compensation */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, "9999000000000000000")).toString(),
-			"49995000000000000"
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, "9999000000000000000")).toString(), "49995000000000000")
 
 		/* ETH:USD price = 200
      coll = 0.055 ETH  
      0.5% of coll = 0.000275 ETH. USD value: $0.055
      -> Expect 0.5% of collaterall as gas compensation */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, "55000000000000000")).toString(),
-			dec(275, 12)
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, "55000000000000000")).toString(), dec(275, 12))
 
 		/* ETH:USD price = 200
     coll = 6.09232408808723580 ETH  
     0.5% of coll = 0.004995 ETH. USD value: $6.09
     -> Expect 0.5% of collaterall as gas compensation */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, "6092324088087235800")).toString(),
-			"30461620440436179"
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, "6092324088087235800")).toString(), "30461620440436179")
 	})
 
 	it("getCollGasCompensation(): returns 0.5% of collaterall when 0.5% of collateral = $10 in value", async () => {
@@ -134,10 +129,7 @@ contract("Gas compensation tests", async accounts => {
     coll = 10 ETH  
     0.5% of coll = 0.5 ETH. USD value: $10
     -> Expect 0.5% of collaterall as gas compensation */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, dec(10, "ether"))).toString(),
-			"50000000000000000"
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, dec(10, "ether"))).toString(), "50000000000000000")
 	})
 
 	it("getCollGasCompensation(): returns 0.5% of collaterall when 0.5% of collateral = $10 in value", async () => {
@@ -149,30 +141,21 @@ contract("Gas compensation tests", async accounts => {
     coll = 100 ETH  
     0.5% of coll = 0.5 ETH. USD value: $100
     -> Expect $100 gas compensation, i.e. 0.5 ETH */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, dec(100, "ether"))).toString(),
-			dec(500, "finney")
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, dec(100, "ether"))).toString(), dec(500, "finney"))
 
 		/* 
     ETH:USD price = 200 $/E
     coll = 10.001 ETH  
     0.5% of coll = 0.050005 ETH. USD value: $10.001
     -> Expect $100 gas compensation, i.e.  0.050005  ETH */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, "10001000000000000000")).toString(),
-			"50005000000000000"
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, "10001000000000000000")).toString(), "50005000000000000")
 
 		/* 
     ETH:USD price = 200 $/E
     coll = 37.5 ETH  
     0.5% of coll = 0.1875 ETH. USD value: $37.5
     -> Expect $37.5 gas compensation i.e.  0.1875  ETH */
-		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, "37500000000000000000")).toString(),
-			"187500000000000000"
-		)
+		assert.equal((await getCollGasCompensation(erc20.address, "37500000000000000000")).toString(), "187500000000000000")
 
 		/* 
     ETH:USD price = 45323.54542 $/E
@@ -181,10 +164,7 @@ contract("Gas compensation tests", async accounts => {
     -> Expect $21473894.8385808 gas compensation, i.e.  473.7911529115490  ETH */
 		await priceFeed.setPrice(erc20.address, "45323545420000000000000")
 		assert.isAtMost(
-			th.getDifference(
-				await vesselManager.getCollGasCompensation(erc20.address, "94758230582309850000000"),
-				"473791152911549000000"
-			),
+			th.getDifference(await getCollGasCompensation(erc20.address, "94758230582309850000000"), "473791152911549000000"),
 			1000000
 		)
 
@@ -195,7 +175,7 @@ contract("Gas compensation tests", async accounts => {
     -> Expect $150000000000 gas compensation, i.e. 1500000 ETH */
 		await priceFeed.setPrice(erc20.address, dec(1, 24))
 		assert.equal(
-			(await vesselManager.getCollGasCompensation(erc20.address, "300000000000000000000000000")).toString(),
+			(await getCollGasCompensation(erc20.address, "300000000000000000000000000")).toString(),
 			"1500000000000000000000000"
 		)
 	})
@@ -241,7 +221,10 @@ contract("Gas compensation tests", async accounts => {
     debt = 123.45 GRAI
     0.5% of coll = 0.5 ETH. USD value: $10
     -> Expect composite debt = (123.45 + 200) = 323.45 GRAI  */
-		assert.equal(await borrowerOperations.getCompositeDebt(erc20.address, "123450000000000000000"), "323450000000000000000")
+		assert.equal(
+			await borrowerOperations.getCompositeDebt(erc20.address, "123450000000000000000"),
+			"323450000000000000000"
+		)
 	})
 
 	/// ***
@@ -1240,7 +1223,7 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_carolCollERC20 = carolCollERC20.div(web3.utils.toBN("200"))
 		const _0pt5percent_dennisCollERC20 = dennisCollERC20.div(web3.utils.toBN("200"))
 
-		const collGasCompensationERC20 = await vesselManager.getCollGasCompensation(erc20.address, price)
+		const collGasCompensationERC20 = await getCollGasCompensation(erc20.address, price)
 		assert.equal(collGasCompensationERC20, dec(1, 18))
 
 		/* Expect total gas compensation = 
@@ -1346,7 +1329,7 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_carolCollERC20 = carolCollERC20.div(web3.utils.toBN("200"))
 		const _0pt5percent_dennisCollERC20 = dennisCollERC20.div(web3.utils.toBN("200"))
 
-		assert.equal(await vesselManager.getCollGasCompensation(erc20.address, price), dec(1, 18))
+		assert.equal(await getCollGasCompensation(erc20.address, price), dec(1, 18))
 
 		/* Expect total gas compensation = 
        0.5% of [A_coll + B_coll + C_coll + D_coll]
@@ -1470,7 +1453,7 @@ contract("Gas compensation tests", async accounts => {
 		const _0pt5percent_carolCollERC20 = carolCollERC20.div(web3.utils.toBN("200"))
 		const _0pt5percent_dennisCollERC20 = dennisCollERC20.div(web3.utils.toBN("200"))
 
-		assert.equal(await vesselManager.getCollGasCompensation(erc20.address, price), dec(1, 18))
+		assert.equal(await getCollGasCompensation(erc20.address, price), dec(1, 18))
 
 		/* Expect total gas compensation = 
     0.5% of [A_coll + B_coll + C_coll + D_coll]
@@ -1650,15 +1633,13 @@ contract("Gas compensation tests", async accounts => {
 
 			const ICRListERC20 = []
 			const coll_firstVesselERC20 = (await vesselManager.Vessels(_10_accounts[0], erc20.address))[th.VESSEL_COLL_INDEX]
-			const gasComp_firstVesselERC20 = (
-				await vesselManager.getCollGasCompensation(erc20.address, coll_firstVesselERC20)
-			).toString()
+			const gasComp_firstVesselERC20 = (await getCollGasCompensation(erc20.address, coll_firstVesselERC20)).toString()
 
 			for (account of _10_accounts) {
 				// Check gas compensation is the same for all vessels
 
 				const collERC20 = (await vesselManager.Vessels(account, erc20.address))[th.VESSEL_COLL_INDEX]
-				const gasCompensationERC20 = (await vesselManager.getCollGasCompensation(erc20.address, collERC20)).toString()
+				const gasCompensationERC20 = (await getCollGasCompensation(erc20.address, collERC20)).toString()
 
 				assert.equal(gasCompensationERC20, gasComp_firstVesselERC20)
 
@@ -1740,14 +1721,13 @@ contract("Gas compensation tests", async accounts => {
 		for (const coll of collVals) {
 			const account = accountsList[accountIdx]
 			const collString = coll.toString().concat("000000000000000000")
-
+			await erc20.mint(account, collString)
 			await openVessel({
 				asset: erc20.address,
 				assetSent: collString,
-				extraGRAIAmount: dec(100, 18),
+				extraGRAIAmount: dec(1, 18),
 				extraParams: { from: account },
 			})
-
 			accountIdx += 1
 		}
 
@@ -1784,4 +1764,3 @@ contract("Gas compensation tests", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
-
