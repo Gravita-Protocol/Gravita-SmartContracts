@@ -60,19 +60,18 @@ module.exports = {
 		],
 	},
 	networks: {
-		// hardhat: {
-		// 	allowUnlimitedContractSize: true,
-		// 	// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
-		// 	accounts: accountsList,
-		// },
 		hardhat: {
+			allowUnlimitedContractSize: true,
+			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
-			forking: {
-				url: `https://rpc.ankr.com/eth`,
-				// url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-				blockNumber: 17835000,
-			},
 		},
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	forking: {
+		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+		// 		blockNumber: 17835000,
+		// 	},
+		// },
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
