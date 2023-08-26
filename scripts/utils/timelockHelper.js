@@ -6,7 +6,7 @@ const { ethers } = require("hardhat")
 const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 
 // Setup:
-const QUEUE_EXPIRATION_HOURS = 6;
+const QUEUE_EXPIRATION_HOURS = 12;
 const TIMELOCK_ADDRESS = "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc" // Mainnet::Timelock
 const TARGET_ADDRESS = "0x89F1ecCF2644902344db02788A790551Bb070351" // Mainnet::PriceFeed
 const METHOD_SIGNATURE = "setOracle(address,address,uint8,uint256,bool,bool)"
@@ -16,8 +16,8 @@ const METHOD_ARG_VALUES = [
 	"0x0704eEc81ea7CF98Aa4A400c65DC4ED5933bddf7",
 	"0",
 	"4500",
-	"false",
-	"false"
+	false,
+	false
 ]
 
 main()
@@ -135,6 +135,11 @@ async function getBlockTimestamp() {
 function encodeParameters(types, values) {
 	const abi = new ethers.utils.AbiCoder()
 	return abi.encode(types, values)
+}
+
+function decodeParameters(types, values) {
+	const abi = new ethers.utils.AbiCoder()
+	return abi.decode(types, values)
 }
 
 function calcTxHash(targetAddress, value, methodSignature, data, eta) {
