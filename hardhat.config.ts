@@ -88,6 +88,10 @@ module.exports = {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		zksync: {
+			url: `${process.env.ZKSYNC_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
