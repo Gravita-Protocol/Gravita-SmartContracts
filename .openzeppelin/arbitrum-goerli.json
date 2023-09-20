@@ -2,6 +2,7 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
+<<<<<<< HEAD
       "address": "0x412D48c3467177140B83C0dBdf786317C5604F4e",
       "txHash": "0x5caeaf05fe03d87e9889af885078cc2e0afa2bbe20e6d67c90ff92412711b724",
       "kind": "uups"
@@ -114,13 +115,78 @@
     {
       "address": "0xB77581012975C857890e35BdEB97b834f4c26782",
       "txHash": "0xf3d4afe2a85d463db8f0be991f0a35f821cc2005d3ea99f22387462553fc4762",
+=======
+      "address": "0x553A902c41C6Efd848e80f4F139f03409922d061",
+      "txHash": "0xec3e1e957d766940629d08e432118ae0409225caec81da269d944d4c25129ddb",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0Bf969388d04E9507f09dFdCA1905FAE3D26f34f",
+      "txHash": "0xf9041af92ba1ecf3976c886d6247bfdc6c4d9a67232193c0440e250f209bdb52",
+      "kind": "uups"
+    },
+    {
+      "address": "0x24FB0E03428F507f81CcfAa3EA3087E8e9cb3622",
+      "txHash": "0xe28454a9e138832e6abb56bdb044c3a0d642f8aff3d1cfcfbd07a854af31225d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x37f9E8DA2312673C82894E377f27dc750210116C",
+      "txHash": "0x4e4ed6b8a1a6219402cae7f502d0322b1bbc6d46eca54b5d11e03a8de886b969",
+      "kind": "uups"
+    },
+    {
+      "address": "0xC02C907B8Dc68f6bCE5C2dE23c49fD8432b201b7",
+      "txHash": "0x97866119b805f16fce36ce1dc8330bdbb6bf0e6234a22507b2e5021ba0718e4e",
+      "kind": "uups"
+    },
+    {
+      "address": "0xA694F84F3bc3DB1fa508309e425913f52B999B16",
+      "txHash": "0x2b48dceb3fb2564cb661e4062b4939248095689c1d7eda16ca7f74d69e15f0b3",
+      "kind": "uups"
+    },
+    {
+      "address": "0x5f56f6a576fD322E92DB8F2D67bb552248D4195C",
+      "txHash": "0x169598062144e81f98ac4b2de6f356c211bf3d6ad16306418bba019c80a64f23",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7c83AbE56a1d75004b2c39004519957fbb0a10B5",
+      "txHash": "0x4e4d1899804ec63992622108c35c25861bdaf18bcc0f7d71401dbd92425a2c0e",
+      "kind": "uups"
+    },
+    {
+      "address": "0xBB6396E10F8f750Ca10eb9CB4976aCa0E5dF56C4",
+      "txHash": "0x16fa9d09e3bdafc6c9aac275b49f038a72d7afb6b47df52645f08d140a1ccc80",
+      "kind": "uups"
+    },
+    {
+      "address": "0xc033fC0dB6d0E563BD36d522174769967FB6E46A",
+      "txHash": "0xb173f96c6713d17f560db6854f2173294220a425e6fde96d5c4f3b68e04ca63b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x6900C649665EfB32da95c486631255005e9Ce764",
+      "txHash": "0x0392c86a80201018d9c5df10ff9b83563e618f1d48651a85b67132a7c7e7016b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x769eFeAfdE17Cf82722493881db107eF709A051a",
+      "txHash": "0xb89dff5c3dcc9bc0f50ac8c7066e52a7fed928eb47a16a2b9313ab1bedb274f5",
+>>>>>>> staging
       "kind": "uups"
     }
   ],
   "impls": {
+<<<<<<< HEAD
     "a32dd33bff427abc809ab6580e65dcb65b7357c80df1bf7a9f1f4676238b80bc": {
       "address": "0xF1c0DB770e77a961efde9DD11216e3833ad5c588",
       "txHash": "0x3847a5bf6f984af5b8551572c768526cc8d1b5f2ef6d56a2c590615ede44fd0e",
+=======
+    "13447b803a43cabf8e0e2f7acd58408ef87e656daf13dbd63406141ebce8f922": {
+      "address": "0x4EF114AEB01bb39a9afF61B71387fbd14407f7f2",
+      "txHash": "0xbca37aa551b7f0e584f5e8462e6715713038cd90c198b063725fdf1a6337edb8",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -130,7 +196,11 @@
             "slot": "0",
             "type": "t_uint8",
             "contract": "Initializable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+=======
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+>>>>>>> staging
             "retypedFrom": "bool"
           },
           {
@@ -139,7 +209,11 @@
             "slot": "0",
             "type": "t_bool",
             "contract": "Initializable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+>>>>>>> staging
           },
           {
             "label": "__gap",
@@ -147,7 +221,11 @@
             "slot": "1",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC1967UpgradeUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:197"
+>>>>>>> staging
           },
           {
             "label": "__gap",
@@ -155,7 +233,11 @@
             "slot": "51",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ContextUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+>>>>>>> staging
           },
           {
             "label": "_owner",
@@ -163,7 +245,11 @@
             "slot": "101",
             "type": "t_address",
             "contract": "OwnableUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "__gap",
@@ -171,7 +257,11 @@
             "slot": "102",
             "type": "t_array(t_uint256)49_storage",
             "contract": "OwnableUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+>>>>>>> staging
           },
           {
             "label": "__gap",
@@ -179,7 +269,11 @@
             "slot": "151",
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+>>>>>>> staging
           },
           {
             "label": "_status",
@@ -187,7 +281,11 @@
             "slot": "201",
             "type": "t_uint256",
             "contract": "ReentrancyGuardUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+>>>>>>> staging
           },
           {
             "label": "__gap",
@@ -195,159 +293,278 @@
             "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "ReentrancyGuardUpgradeable",
+<<<<<<< HEAD
             "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:80"
+=======
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:80"
+>>>>>>> staging
           },
           {
             "label": "activePool",
             "offset": 0,
             "slot": "251",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "252",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "253",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "254",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "255",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "256",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "257",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "258",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "259",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "261",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "262",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "263",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "264",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "265",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "266",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "267",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts/Dependencies/AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "assetsBalances",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "268",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "ActivePool",
             "src": "contracts\\ActivePool.sol:25"
+=======
+            "slot": "315",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ActivePool",
+            "src": "contracts/ActivePool.sol:25"
+>>>>>>> staging
           },
           {
             "label": "debtTokenBalances",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "269",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "ActivePool",
             "src": "contracts\\ActivePool.sol:26"
+=======
+            "slot": "316",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ActivePool",
+            "src": "contracts/ActivePool.sol:26"
+>>>>>>> staging
           }
         ],
         "types": {
@@ -355,6 +572,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -382,9 +606,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "683a2179c5b14142f1c9fc9546aa366fefaa9332a0b2aec29980910c22036a40": {
       "address": "0x47C7277224BbCc6Bed8d1735c54490FeaAb27387",
       "txHash": "0x5c0f865228dce44cef366b62764638bd1596e0a3da032ed90183b23d98b110ed",
+=======
+    "c01775523622f6704f54c13ff6895810e9d8e3af98c79984d93e97fa614c26ed": {
+      "address": "0x4A88B8c20300a487218054E25Ff30cf6bC27E234",
+      "txHash": "0x3a1595b87acbd0b204080c9fb865454390c4b297c51235f7253e6db6785aafee",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -450,149 +680,259 @@
             "offset": 0,
             "slot": "201",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "202",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "203",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "204",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "205",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "206",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "207",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "208",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "209",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "211",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "212",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "213",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "214",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "215",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "216",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "217",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "collateralParams",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
             "type": "t_mapping(t_address,t_struct(CollateralParams)8668_storage)",
+=======
+            "slot": "265",
+            "type": "t_mapping(t_address,t_struct(CollateralParams)13003_storage)",
+>>>>>>> staging
             "contract": "AdminContract",
             "src": "contracts\\AdminContract.sol:38"
           },
           {
             "label": "validCollateral",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "219",
+=======
+            "slot": "266",
+>>>>>>> staging
             "type": "t_array(t_address)dyn_storage",
             "contract": "AdminContract",
             "src": "contracts\\AdminContract.sol:42"
@@ -600,7 +940,11 @@
           {
             "label": "isSetupInitialized",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "220",
+=======
+            "slot": "267",
+>>>>>>> staging
             "type": "t_bool",
             "contract": "AdminContract",
             "src": "contracts\\AdminContract.sol:44"
@@ -615,6 +959,13 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -627,11 +978,19 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
+<<<<<<< HEAD
           "t_mapping(t_address,t_struct(CollateralParams)8668_storage)": {
             "label": "mapping(address => struct IAdminContract.CollateralParams)",
             "numberOfBytes": "32"
           },
           "t_struct(CollateralParams)8668_storage": {
+=======
+          "t_mapping(t_address,t_struct(CollateralParams)13003_storage)": {
+            "label": "mapping(address => struct IAdminContract.CollateralParams)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(CollateralParams)13003_storage": {
+>>>>>>> staging
             "label": "struct IAdminContract.CollateralParams",
             "members": [
               {
@@ -720,9 +1079,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "9bb5838daf416507639f472334b1caf3a005330b5bffb2be271eb2516dfb4d91": {
       "address": "0x5480c5c5610000998677519602cEe57e09Aa493E",
       "txHash": "0x136dac454935047d40d914ab12113d83da95cf49599a78788024722b43993ff3",
+=======
+    "ed7ec57867f834e9a810c4c7fc89ab85d9420c3e5306cf36f81356daf61d631e": {
+      "address": "0x168983C0ABDd509A4A76FdA0f0d61B2A1d5120d6",
+      "txHash": "0x61453287e804e6f869dfeb667a291de351cecfa793bcdc7e7db200f46905e6b6",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -772,141 +1137,246 @@
             "offset": 0,
             "slot": "101",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "102",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "103",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "104",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "105",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "106",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "107",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "108",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "109",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "111",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "113",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "114",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "115",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "116",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "117",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "117",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "118",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "_status",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "118",
+=======
+            "slot": "165",
+>>>>>>> staging
             "type": "t_uint256",
             "contract": "ReentrancyGuardUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
@@ -914,7 +1384,11 @@
           {
             "label": "__gap",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "119",
+=======
+            "slot": "166",
+>>>>>>> staging
             "type": "t_array(t_uint256)49_storage",
             "contract": "ReentrancyGuardUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:80"
@@ -922,7 +1396,11 @@
           {
             "label": "__gap",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "168",
+=======
+            "slot": "215",
+>>>>>>> staging
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC1967UpgradeUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:197"
@@ -930,7 +1408,11 @@
           {
             "label": "__gap",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
+=======
+            "slot": "265",
+>>>>>>> staging
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
@@ -941,6 +1423,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -964,9 +1453,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "f8904e9260567fed1443127aa678761e6890cda1f728b8809e324d77658def3f": {
       "address": "0xBCbDc92e4fa95F90CB38Edf8a00e77e29588F7dD",
       "txHash": "0xaa1a6b22bff6fc685cd832872d936a994d1b639524729ad356e97c19cbe7bae7",
+=======
+    "8519639fe07b0c7e15bed4055fb81758b3073c8b61bb396ac3d36a8d0c54f359": {
+      "address": "0xE8eAaC81fa548795eD19a985f734630Cd5E1770D",
+      "txHash": "0x65832174f5e21cc4f7119d94efb30f1aefe92df8871913a5d4a576cf77e57148",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -1032,141 +1527,246 @@
             "offset": 0,
             "slot": "201",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "202",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "203",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "204",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "205",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "206",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "207",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "208",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "209",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "211",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "212",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "213",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "214",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "215",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "216",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "217",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "balances",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
+=======
+            "slot": "265",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "CollSurplusPool",
             "src": "contracts\\CollSurplusPool.sol:19"
@@ -1174,7 +1774,11 @@
           {
             "label": "userBalances",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "219",
+=======
+            "slot": "266",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
             "contract": "CollSurplusPool",
             "src": "contracts\\CollSurplusPool.sol:21"
@@ -1185,6 +1789,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -1216,9 +1827,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "6c9422e4a3a5c9ada23302809aa1a6fcdd2d019d6850c9d44117247c12f6dc5e": {
       "address": "0xafCf3d22fE71459c8FEc9AA0Fe1B5572f13d7EFa",
       "txHash": "0x16c8866f1071a3b837fe4f47161ca22863454335702acda659f11771dca7e70f",
+=======
+    "15f5cd64ebba5349cac2c95509518bacfcd69c315b386480a3279d3633b294b1": {
+      "address": "0xe382eCE96ccDA5cd6c64f628Dd2D602866B80530",
+      "txHash": "0xf2945cee56ea2b20958c7e85e186ee3932d7d8b499de46d0ad1c5a593f9209e8",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -1284,141 +1901,246 @@
             "offset": 0,
             "slot": "201",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "202",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "203",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "204",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "205",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "206",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "207",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "208",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "209",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "211",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "212",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "213",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "214",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "215",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "216",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "217",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "assetsBalances",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
+=======
+            "slot": "265",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "DefaultPool",
             "src": "contracts\\DefaultPool.sol:25"
@@ -1426,7 +2148,11 @@
           {
             "label": "debtTokenBalances",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "219",
+=======
+            "slot": "266",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "DefaultPool",
             "src": "contracts\\DefaultPool.sol:26"
@@ -1437,6 +2163,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -1464,9 +2197,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "c20a60b2c33db5f6541c57acd0a6276e3d7aa1ff8df56d70b4709f89dc879081": {
       "address": "0x6cB4BDA294faC398eB7B0eDf4f7E9138bbf8EA89",
       "txHash": "0x10067415f43ee251219fc2763166965c01c93186fc63f447f49ade8abf7442c9",
+=======
+    "f3e735812b23c441fa5a112ffa859486c3b3ea3dce809c2720e4e2508712e123": {
+      "address": "0xe898eFDA0605493116CD7E6e11B70A731e89E8f6",
+      "txHash": "0xfd6833275bf34bbc83e2a6215a394f3daca4d5b4a5a12081bea05f0483c47f64",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -1532,144 +2271,252 @@
             "offset": 0,
             "slot": "201",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "202",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "203",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "204",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "205",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "206",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "207",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "208",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "209",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "211",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "212",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "213",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "214",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "215",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "216",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "217",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "feeRecords",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
             "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)9312_storage))",
             "contract": "FeeCollector",
             "src": "contracts\\FeeCollector.sol:27"
+=======
+            "slot": "265",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)13676_storage))",
+            "contract": "FeeCollector",
+            "src": "contracts\\FeeCollector.sol:28"
+>>>>>>> staging
           }
         ],
         "types": {
@@ -1677,6 +2524,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -1689,6 +2543,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
+<<<<<<< HEAD
           "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)9312_storage))": {
             "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))",
             "numberOfBytes": "32"
@@ -1698,6 +2553,17 @@
             "numberOfBytes": "32"
           },
           "t_struct(FeeRecord)9312_storage": {
+=======
+          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)13676_storage))": {
+            "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(FeeRecord)13676_storage)": {
+            "label": "mapping(address => struct IFeeCollector.FeeRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(FeeRecord)13676_storage": {
+>>>>>>> staging
             "label": "struct IFeeCollector.FeeRecord",
             "members": [
               {
@@ -1732,9 +2598,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "918597d62d7dedcb67ab96e99fb4ceb21ce1cd70ef8816f5e12323750eaf2c11": {
       "address": "0xD8e4009aE9e22FCF8DE786946E33eF5783eC34Ee",
       "txHash": "0x3427b75ee332d66ac97baa08a14f1c3db7f868d641a13ba2172a7a4af03387cb",
+=======
+    "ff7249302aaa34c322da2568ee912b614339261b4f9104ec57624ba150ae47fa": {
+      "address": "0x16B32a71149Dc1C5Aa4a977719D846feedA39fc9",
+      "txHash": "0x23441f8be23349f0a134f0a7cde6dd3aa93625dc1a854bd97f78071ec6ec7f11",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -1800,134 +2672,215 @@
             "offset": 0,
             "slot": "201",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "202",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "203",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "204",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "205",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "206",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "207",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "208",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "209",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "211",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "212",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "213",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "214",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "215",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "216",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "217",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
           },
@@ -2240,12 +3193,37 @@
             "type": "t_address",
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "data",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
             "type": "t_mapping(t_address,t_struct(Data)11561_storage)",
+=======
+            "slot": "265",
+            "type": "t_mapping(t_address,t_struct(Data)16128_storage)",
+>>>>>>> staging
             "contract": "SortedVessels",
             "src": "contracts\\SortedVessels.sol:63"
           }
@@ -2255,6 +3233,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -2267,6 +3252,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
+<<<<<<< HEAD
           "t_mapping(t_address,t_struct(Data)11561_storage)": {
             "label": "mapping(address => struct SortedVessels.Data)",
             "numberOfBytes": "32"
@@ -2276,6 +3262,17 @@
             "numberOfBytes": "32"
           },
           "t_struct(Data)11561_storage": {
+=======
+          "t_mapping(t_address,t_struct(Data)16128_storage)": {
+            "label": "mapping(address => struct SortedVessels.Data)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Node)16116_storage)": {
+            "label": "mapping(address => struct SortedVessels.Node)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Data)16128_storage": {
+>>>>>>> staging
             "label": "struct SortedVessels.Data",
             "members": [
               {
@@ -2298,14 +3295,22 @@
               },
               {
                 "label": "nodes",
+<<<<<<< HEAD
                 "type": "t_mapping(t_address,t_struct(Node)11549_storage)",
+=======
+                "type": "t_mapping(t_address,t_struct(Node)16116_storage)",
+>>>>>>> staging
                 "offset": 0,
                 "slot": "3"
               }
             ],
             "numberOfBytes": "128"
           },
+<<<<<<< HEAD
           "t_struct(Node)11549_storage": {
+=======
+          "t_struct(Node)16116_storage": {
+>>>>>>> staging
             "label": "struct SortedVessels.Node",
             "members": [
               {
@@ -2340,9 +3345,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "7ffa00d3efd69d1066221348cb599e61afb944348968b8a2158a4a1e407d4b4b": {
       "address": "0x0d441bD787F7bF026dEf59e9e9D9F880fE59B5b4",
       "txHash": "0x2afe8d3848758d30a0e41d924898419b582cfd50606a635c875bf92ca64a0c70",
+=======
+    "fc32641d34ecf2d763dbaf883d1bbf61f801c6e7e6f56a5d02d54d5a390e81b7": {
+      "address": "0xFb0B2acBbd09f50183ceF629ACe474A64BA2280b",
+      "txHash": "0x49eae98bf978e4b34a8887457b3491efe6581321cd2a861ecb6b7ffaf1ca1878",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -2424,141 +3435,246 @@
             "offset": 0,
             "slot": "251",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "252",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "253",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "254",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "255",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "256",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "257",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "258",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "259",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "261",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "262",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "263",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "264",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "265",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "266",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "267",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "totalDebtTokenDeposits",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "268",
+=======
+            "slot": "315",
+>>>>>>> staging
             "type": "t_uint256",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:146"
@@ -2566,15 +3682,24 @@
           {
             "label": "totalColl",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "269",
             "type": "t_struct(Colls)9514_storage",
+=======
+            "slot": "316",
+            "type": "t_struct(Colls)13883_storage",
+>>>>>>> staging
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:151"
           },
           {
             "label": "deposits",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "271",
+=======
+            "slot": "318",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:153"
@@ -2582,15 +3707,24 @@
           {
             "label": "depositSnapshots",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "272",
             "type": "t_mapping(t_address,t_struct(Snapshots)9800_storage)",
+=======
+            "slot": "319",
+            "type": "t_mapping(t_address,t_struct(Snapshots)14185_storage)",
+>>>>>>> staging
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:163"
           },
           {
             "label": "P",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "273",
+=======
+            "slot": "320",
+>>>>>>> staging
             "type": "t_uint256",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:171"
@@ -2598,7 +3732,11 @@
           {
             "label": "currentScale",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "274",
+=======
+            "slot": "321",
+>>>>>>> staging
             "type": "t_uint128",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:176"
@@ -2606,7 +3744,11 @@
           {
             "label": "currentEpoch",
             "offset": 16,
+<<<<<<< HEAD
             "slot": "274",
+=======
+            "slot": "321",
+>>>>>>> staging
             "type": "t_uint128",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:179"
@@ -2614,7 +3756,11 @@
           {
             "label": "epochToScaleToSum",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "275",
+=======
+            "slot": "322",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_mapping(t_uint128,t_mapping(t_uint128,t_uint256)))",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:190"
@@ -2622,7 +3768,11 @@
           {
             "label": "epochToScaleToG",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "276",
+=======
+            "slot": "323",
+>>>>>>> staging
             "type": "t_mapping(t_uint128,t_mapping(t_uint128,t_uint256))",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:199"
@@ -2630,7 +3780,11 @@
           {
             "label": "lastGRVTError",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "277",
+=======
+            "slot": "324",
+>>>>>>> staging
             "type": "t_uint256",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:202"
@@ -2638,7 +3792,11 @@
           {
             "label": "lastAssetError_Offset",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "278",
+=======
+            "slot": "325",
+>>>>>>> staging
             "type": "t_array(t_uint256)dyn_storage",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:204"
@@ -2646,7 +3804,11 @@
           {
             "label": "lastDebtTokenLossError_Offset",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "279",
+=======
+            "slot": "326",
+>>>>>>> staging
             "type": "t_uint256",
             "contract": "StabilityPool",
             "src": "contracts\\StabilityPool.sol:205"
@@ -2661,6 +3823,13 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -2681,7 +3850,11 @@
             "label": "mapping(address => mapping(uint128 => mapping(uint128 => uint256)))",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
           "t_mapping(t_address,t_struct(Snapshots)9800_storage)": {
+=======
+          "t_mapping(t_address,t_struct(Snapshots)14185_storage)": {
+>>>>>>> staging
             "label": "mapping(address => struct IStabilityPool.Snapshots)",
             "numberOfBytes": "32"
           },
@@ -2697,7 +3870,11 @@
             "label": "mapping(uint128 => uint256)",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
           "t_struct(Colls)9514_storage": {
+=======
+          "t_struct(Colls)13883_storage": {
+>>>>>>> staging
             "label": "struct IGravitaBase.Colls",
             "members": [
               {
@@ -2715,7 +3892,11 @@
             ],
             "numberOfBytes": "64"
           },
+<<<<<<< HEAD
           "t_struct(Snapshots)9800_storage": {
+=======
+          "t_struct(Snapshots)14185_storage": {
+>>>>>>> staging
             "label": "struct IStabilityPool.Snapshots",
             "members": [
               {
@@ -2766,9 +3947,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "071817f73b302a3af7afeef7e6b79116866e4a34d9373b35acf71e91a6123790": {
       "address": "0xeebd674d85E02cF41c28eC87e4FA89F5a51554D7",
       "txHash": "0x0ae4fc9d7c13eab9957adf3756e391bc8fc881ea112ed58d6b887c80f475c08d",
+=======
+    "2111c6782433d93fbb7a297a24b9b15fe843b4eb10b7a79912c9596f655a668a": {
+      "address": "0xB2974b1fad68DE80B6195A22ddf1050C851E257D",
+      "txHash": "0xc6765f986903dfa366d27e778b0c74fd06c0bbe7bd66409af4b5563171a0c658",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -2850,141 +4037,246 @@
             "offset": 0,
             "slot": "251",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "252",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "253",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "254",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "255",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "256",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "257",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "258",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "259",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "261",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "262",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "263",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "264",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "265",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "266",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "267",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "baseRate",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "268",
+=======
+            "slot": "315",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:39"
@@ -2992,7 +4284,11 @@
           {
             "label": "lastFeeOperationTime",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "269",
+=======
+            "slot": "316",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:42"
@@ -3000,15 +4296,24 @@
           {
             "label": "Vessels",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "270",
             "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)10078_storage))",
+=======
+            "slot": "317",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14474_storage))",
+>>>>>>> staging
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:45"
           },
           {
             "label": "totalStakes",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "271",
+=======
+            "slot": "318",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:47"
@@ -3016,7 +4321,11 @@
           {
             "label": "totalStakesSnapshot",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "272",
+=======
+            "slot": "319",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:50"
@@ -3024,7 +4333,11 @@
           {
             "label": "totalCollateralSnapshot",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "273",
+=======
+            "slot": "320",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:53"
@@ -3032,7 +4345,11 @@
           {
             "label": "L_Colls",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "274",
+=======
+            "slot": "321",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:63"
@@ -3040,7 +4357,11 @@
           {
             "label": "L_Debts",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "275",
+=======
+            "slot": "322",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:64"
@@ -3048,15 +4369,24 @@
           {
             "label": "rewardSnapshots",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "276",
             "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)15205_storage))",
+=======
+            "slot": "323",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)21540_storage))",
+>>>>>>> staging
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:67"
           },
           {
             "label": "VesselOwners",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "277",
+=======
+            "slot": "324",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:70"
@@ -3064,7 +4394,11 @@
           {
             "label": "lastCollError_Redistribution",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "278",
+=======
+            "slot": "325",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:73"
@@ -3072,7 +4406,11 @@
           {
             "label": "lastDebtError_Redistribution",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "279",
+=======
+            "slot": "326",
+>>>>>>> staging
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:74"
@@ -3080,7 +4418,11 @@
           {
             "label": "isSetupInitialized",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "280",
+=======
+            "slot": "327",
+>>>>>>> staging
             "type": "t_bool",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:76"
@@ -3095,6 +4437,13 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -3107,7 +4456,11 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
+<<<<<<< HEAD
           "t_enum(Status)9986": {
+=======
+          "t_enum(Status)14382": {
+>>>>>>> staging
             "label": "enum IVesselManager.Status",
             "members": [
               "nonExistent",
@@ -3122,6 +4475,7 @@
             "label": "mapping(address => address[])",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
           "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)15205_storage))": {
             "label": "mapping(address => mapping(address => struct VesselManager.RewardSnapshot))",
             "numberOfBytes": "32"
@@ -3135,6 +4489,21 @@
             "numberOfBytes": "32"
           },
           "t_mapping(t_address,t_struct(Vessel)10078_storage)": {
+=======
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)21540_storage))": {
+            "label": "mapping(address => mapping(address => struct VesselManager.RewardSnapshot))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14474_storage))": {
+            "label": "mapping(address => mapping(address => struct IVesselManager.Vessel))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(RewardSnapshot)21540_storage)": {
+            "label": "mapping(address => struct VesselManager.RewardSnapshot)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Vessel)14474_storage)": {
+>>>>>>> staging
             "label": "mapping(address => struct IVesselManager.Vessel)",
             "numberOfBytes": "32"
           },
@@ -3142,7 +4511,11 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
+<<<<<<< HEAD
           "t_struct(RewardSnapshot)15205_storage": {
+=======
+          "t_struct(RewardSnapshot)21540_storage": {
+>>>>>>> staging
             "label": "struct VesselManager.RewardSnapshot",
             "members": [
               {
@@ -3160,7 +4533,11 @@
             ],
             "numberOfBytes": "64"
           },
+<<<<<<< HEAD
           "t_struct(Vessel)10078_storage": {
+=======
+          "t_struct(Vessel)14474_storage": {
+>>>>>>> staging
             "label": "struct IVesselManager.Vessel",
             "members": [
               {
@@ -3183,7 +4560,11 @@
               },
               {
                 "label": "status",
+<<<<<<< HEAD
                 "type": "t_enum(Status)9986",
+=======
+                "type": "t_enum(Status)14382",
+>>>>>>> staging
                 "offset": 0,
                 "slot": "3"
               },
@@ -3211,9 +4592,15 @@
         }
       }
     },
+<<<<<<< HEAD
     "fef05d7999dbe2555cef68faac8c0e63c2ce83ca53516135043e8430fad2b838": {
       "address": "0x54eD9C8b2CAB402540B11996979064CFF709888e",
       "txHash": "0x104a502aa68712a3001da9f168123bd3a07db4ccbbce861a890a86f56fa5723a",
+=======
+    "bef82813ec78dcb7c3127099138b740849d5d4ad01378571f818419bcf42bc13": {
+      "address": "0x9FB2fb07466FC8b752d45DBa9243f15846312179",
+      "txHash": "0xe325e0df22671643a7ba2155ebd23f9e237b0f9ccee0492d51ba7a6dd0f4aaa0",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -3295,134 +4682,215 @@
             "offset": 0,
             "slot": "251",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "252",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "253",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "254",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "255",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "256",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "257",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "258",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "259",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "261",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "262",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "263",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "264",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "265",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "266",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "267",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:25"
           }
@@ -3669,12 +5137,17 @@
             "type": "t_address",
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+>>>>>>> staging
           },
           {
             "label": "isAddressSetupInitialized",
             "offset": 20,
             "slot": "267",
             "type": "t_bool",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:26"
           },
@@ -4295,6 +5768,26 @@
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+          },
+          {
+            "label": "redemptionSofteningParam",
+            "offset": 0,
+            "slot": "315",
+            "type": "t_uint256",
+            "contract": "VesselManagerOperations",
+            "src": "contracts\\VesselManagerOperations.sol:15"
+>>>>>>> staging
           }
         ],
         "types": {
@@ -4302,6 +5795,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -4325,6 +5825,7 @@
         }
       }
     },
+<<<<<<< HEAD
     "fe56d2ae3588192063df4e7dafc3c5f23618fff730a6704cb7be08e6ba8520a2": {
       "address": "0x75044d1440c01609b0D933582E2c5742954b5014",
       "txHash": "0x31a087b56f746459a3927fc5b5b694c11f8a3eeeab8a15dcb326603e7408ef54",
@@ -4588,6 +6089,11 @@
     "eb03efaebe6943a68766438cf2e7482180cbe21b5a431f5b5518184ec986ba65": {
       "address": "0xeC78Ee631445C77629a5255E7901151B66170d4F",
       "txHash": "0x54f3a6acf7a7ba8e02d7ea916a784428abe29164ae641a246a75ce9ee6d2caa3",
+=======
+    "233e259a71cce552ec57b8281c659e3143f3fa924e7c3dddce2f4a220554f86f": {
+      "address": "0x32C56b980454A3807cd5EDe4c86AaaEc141883Dd",
+      "txHash": "0xf01d913f872ca992dca12994981db4c6975db5f74f6dded177825bac39c66af3",
+>>>>>>> staging
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -4653,142 +6159,228 @@
             "offset": 0,
             "slot": "201",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:8"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+>>>>>>> staging
           },
           {
             "label": "adminContract",
             "offset": 0,
             "slot": "202",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:9"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+>>>>>>> staging
           },
           {
             "label": "borrowerOperations",
             "offset": 0,
             "slot": "203",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:10"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+>>>>>>> staging
           },
           {
             "label": "collSurplusPool",
             "offset": 0,
             "slot": "204",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:11"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+>>>>>>> staging
           },
           {
             "label": "communityIssuance",
             "offset": 0,
             "slot": "205",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:12"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+>>>>>>> staging
           },
           {
             "label": "debtToken",
             "offset": 0,
             "slot": "206",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:13"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+>>>>>>> staging
           },
           {
             "label": "defaultPool",
             "offset": 0,
             "slot": "207",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:14"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+>>>>>>> staging
           },
           {
             "label": "feeCollector",
             "offset": 0,
             "slot": "208",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:15"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+>>>>>>> staging
           },
           {
             "label": "gasPoolAddress",
             "offset": 0,
             "slot": "209",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:16"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+>>>>>>> staging
           },
           {
             "label": "grvtStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:17"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+>>>>>>> staging
           },
           {
             "label": "priceFeed",
             "offset": 0,
             "slot": "211",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:18"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+>>>>>>> staging
           },
           {
             "label": "sortedVessels",
             "offset": 0,
             "slot": "212",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:19"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+>>>>>>> staging
           },
           {
             "label": "stabilityPool",
             "offset": 0,
             "slot": "213",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:20"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+>>>>>>> staging
           },
           {
             "label": "timelockAddress",
             "offset": 0,
             "slot": "214",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:21"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+>>>>>>> staging
           },
           {
             "label": "treasuryAddress",
             "offset": 0,
             "slot": "215",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:22"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+>>>>>>> staging
           },
           {
             "label": "vesselManager",
             "offset": 0,
             "slot": "216",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:23"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+>>>>>>> staging
           },
           {
             "label": "vesselManagerOperations",
             "offset": 0,
             "slot": "217",
             "type": "t_address",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:24"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+>>>>>>> staging
           },
           {
             "label": "isAddressSetupInitialized",
             "offset": 20,
             "slot": "217",
             "type": "t_bool",
+<<<<<<< HEAD
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:26"
           },
@@ -5323,22 +6915,72 @@
             "type": "t_bool",
             "contract": "Addresses",
             "src": "contracts\\Addresses.sol:26"
+=======
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+>>>>>>> staging
           },
           {
             "label": "oracleRecords",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "218",
             "type": "t_mapping(t_address,t_struct(OracleRecord)9511_storage)",
             "contract": "PriceFeed",
             "src": "contracts\\PriceFeed.sol:30"
+=======
+            "slot": "265",
+            "type": "t_mapping(t_address,t_struct(OracleRecord)13972_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:31"
+>>>>>>> staging
           },
           {
             "label": "priceRecords",
             "offset": 0,
+<<<<<<< HEAD
             "slot": "219",
             "type": "t_mapping(t_address,t_struct(PriceRecord)9516_storage)",
             "contract": "PriceFeed",
             "src": "contracts\\PriceFeed.sol:31"
+=======
+            "slot": "266",
+            "type": "t_mapping(t_address,t_struct(PriceRecord)13977_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:32"
+          },
+          {
+            "label": "oracles",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_mapping(t_address,t_struct(OracleRecordV2)13961_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:34"
+          },
+          {
+            "label": "fallbacks",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_mapping(t_address,t_struct(OracleRecordV2)13961_storage)",
+            "contract": "PriceFeed",
+            "src": "contracts\\PriceFeed.sol:35"
+          },
+          {
+            "label": "sequencerUptimeFeedAddress",
+            "offset": 0,
+            "slot": "269",
+            "type": "t_address",
+            "contract": "PriceFeedL2",
+            "src": "contracts\\Pricing\\PriceFeedL2.sol:27"
+>>>>>>> staging
           }
         ],
         "types": {
@@ -5346,6 +6988,13 @@
             "label": "address",
             "numberOfBytes": "20"
           },
+<<<<<<< HEAD
+=======
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+>>>>>>> staging
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
             "numberOfBytes": "1568"
@@ -5358,6 +7007,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
+<<<<<<< HEAD
           "t_contract(AggregatorV3Interface)45": {
             "label": "contract AggregatorV3Interface",
             "numberOfBytes": "20"
@@ -5371,11 +7021,37 @@
             "numberOfBytes": "32"
           },
           "t_struct(OracleRecord)9511_storage": {
+=======
+          "t_enum(ProviderType)13949": {
+            "label": "enum IPriceFeed.ProviderType",
+            "members": [
+              "Chainlink"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_struct(OracleRecord)13972_storage)": {
+            "label": "mapping(address => struct IPriceFeed.OracleRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(OracleRecordV2)13961_storage)": {
+            "label": "mapping(address => struct IPriceFeed.OracleRecordV2)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(PriceRecord)13977_storage)": {
+            "label": "mapping(address => struct IPriceFeed.PriceRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(OracleRecord)13972_storage": {
+>>>>>>> staging
             "label": "struct IPriceFeed.OracleRecord",
             "members": [
               {
                 "label": "chainLinkOracle",
+<<<<<<< HEAD
                 "type": "t_contract(AggregatorV3Interface)45",
+=======
+                "type": "t_address",
+>>>>>>> staging
                 "offset": 0,
                 "slot": "0"
               },
@@ -5406,7 +7082,47 @@
             ],
             "numberOfBytes": "96"
           },
+<<<<<<< HEAD
           "t_struct(PriceRecord)9516_storage": {
+=======
+          "t_struct(OracleRecordV2)13961_storage": {
+            "label": "struct IPriceFeed.OracleRecordV2",
+            "members": [
+              {
+                "label": "oracleAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "providerType",
+                "type": "t_enum(ProviderType)13949",
+                "offset": 20,
+                "slot": "0"
+              },
+              {
+                "label": "timeoutMinutes",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "decimals",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isEthIndexed",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(PriceRecord)13977_storage": {
+>>>>>>> staging
             "label": "struct IPriceFeed.PriceRecord",
             "members": [
               {
@@ -5434,6 +7150,7 @@
           }
         }
       }
+<<<<<<< HEAD
     },
     "6b34240282669b7f1fb4c9b2c870135b130d01410cc760b9b9756dc2d9dc116a": {
       "address": "0xb6a98600a66C35985958C4DDA1599A4C15Ff9D70",
@@ -7305,6 +9022,8 @@
           }
         }
       }
+=======
+>>>>>>> staging
     }
   }
 }

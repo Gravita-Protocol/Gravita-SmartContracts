@@ -17,7 +17,9 @@ export enum DeploymentTarget {
 	GoerliTestnet = "goerli",
 	ArbitrumGoerliTestnet = "arbitrum-goerli",
 	ZkSyncTestnet = "zksync-testnet",
+	OptimismGoerliTestnet = "optimism-goerli",
 	Mainnet = "mainnet",
+	Arbitrum = "arbitrum",
 }
 
 /**
@@ -273,6 +275,16 @@ export class CoreDeployer {
 				console.log(`(${key} has no setAddresses() or isAddressSetupInitialized() function)`)
 			}
 		}
+		try {
+			console.log(`DebtToken.setAddresses()...`)
+			await this.coreContracts.debtToken.setAddresses(
+				this.coreContracts.borrowerOperations.address,
+				this.coreContracts.stabilityPool.address,
+				this.coreContracts.vesselManager.address
+			)
+		} catch (e) {
+			console.log(`DebtToken.setAddresses() failed!`)
+		}
 	}
 
 	async addCollaterals() {
@@ -357,7 +369,7 @@ export class CoreDeployer {
 					coll.address,
 					coll.oracleAddress,
 					oracleProviderType,
-					coll.oracleTimeoutMinutes,
+					coll.oracleTimeoutSeconds,
 					coll.oracleIsEthIndexed,
 					isFallback
 				)
@@ -497,19 +509,19 @@ export class CoreDeployer {
 		if (!this.config.ETHERSCAN_BASE_URL) {
 			console.log("(No Etherscan URL defined, skipping contract verification)")
 		} else {
-			await this.verifyContract("ActivePool", this.state)
-			await this.verifyContract("AdminContract", this.state)
-			await this.verifyContract("BorrowerOperations", this.state)
-			await this.verifyContract("CollSurplusPool", this.state)
-			await this.verifyContract("DebtToken", this.state)
-			await this.verifyContract("DefaultPool", this.state)
-			await this.verifyContract("FeeCollector", this.state)
-			await this.verifyContract("GasPool", this.state)
-			await this.verifyContract("PriceFeed", this.state)
-			await this.verifyContract("SortedVessels", this.state)
-			await this.verifyContract("StabilityPool", this.state)
-			await this.verifyContract("VesselManager", this.state)
-			await this.verifyContract("VesselManagerOperations", this.state)
+			await this.verifyContract("ActivePool")
+			await this.verifyContract("AdminContract")
+			await this.verifyContract("BorrowerOperations")
+			await this.verifyContract("CollSurplusPool")
+			await this.verifyContract("DebtToken")
+			await this.verifyContract("DefaultPool")
+			await this.verifyContract("FeeCollector")
+			await this.verifyContract("GasPool")
+			await this.verifyContract("PriceFeed")
+			await this.verifyContract("SortedVessels")
+			await this.verifyContract("StabilityPool")
+			await this.verifyContract("VesselManager")
+			await this.verifyContract("VesselManagerOperations")
 		}
 	}
 

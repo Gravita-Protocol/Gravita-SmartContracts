@@ -9,7 +9,7 @@ import "./Interfaces/IVesselManagerOperations.sol";
 
 contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
-	uint256 public constant PERCENTAGE_PRECISION = 10000;
+	uint256 public constant PERCENTAGE_PRECISION = 100_00;
 	uint256 public constant BATCH_SIZE_LIMIT = 25;
 
 	uint256 public redemptionSofteningParam;
@@ -958,10 +958,11 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		if (msg.sender != timelockAddress) {
 			revert VesselManagerOperations__NotTimelock();
 		}
-		if (_redemptionSofteningParam < 9700 || _redemptionSofteningParam > 10000) {
+		if (_redemptionSofteningParam < 9700 || _redemptionSofteningParam > PERCENTAGE_PRECISION) {
 			revert VesselManagerOperations__InvalidParam();
 		}
 		redemptionSofteningParam = _redemptionSofteningParam;
+		emit RedemptionSoftenParamChanged(_redemptionSofteningParam);
 	}
 
 	function authorizeUpgrade(address newImplementation) public {

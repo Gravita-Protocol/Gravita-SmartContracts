@@ -1,5 +1,6 @@
 {
   "ActivePool": {
+<<<<<<< HEAD
     "address": "0x443978eb25e2379587246AdD4a6a23f19738B131",
     "txHash": "0x7098008d27ac01fe864d814a2509869497eb0a5c2a7b7e59aa5a89321e21ad05",
     "implAddress": "0xdDf7ADB56b1Be18A077E7377c88D4E1811aFE0AE",
@@ -73,5 +74,80 @@
   "TimelockTester": {
     "address": "0x50f14DC6eEECa4995b946f4251Bf79d19026D0b8",
     "txHash": "0xc3799f2b4b899e18a6a2715074277fa28ebac03f3c98e4403b639706bed80d8c"
+=======
+    "address": "0x0Bf969388d04E9507f09dFdCA1905FAE3D26f34f",
+    "txHash": "0xf9041af92ba1ecf3976c886d6247bfdc6c4d9a67232193c0440e250f209bdb52",
+    "implAddress": "0x4EF114AEB01bb39a9afF61B71387fbd14407f7f2",
+    "verification": "https://goerli.arbiscan.io/address/0x0Bf969388d04E9507f09dFdCA1905FAE3D26f34f#code"
+  },
+  "AdminContract": {
+    "address": "0x24FB0E03428F507f81CcfAa3EA3087E8e9cb3622",
+    "txHash": "0xe28454a9e138832e6abb56bdb044c3a0d642f8aff3d1cfcfbd07a854af31225d",
+    "implAddress": "0x4A88B8c20300a487218054E25Ff30cf6bC27E234",
+    "verification": "https://goerli.arbiscan.io/address/0x24FB0E03428F507f81CcfAa3EA3087E8e9cb3622#code"
+  },
+  "BorrowerOperations": {
+    "address": "0x37f9E8DA2312673C82894E377f27dc750210116C",
+    "txHash": "0x4e4ed6b8a1a6219402cae7f502d0322b1bbc6d46eca54b5d11e03a8de886b969",
+    "implAddress": "0x168983C0ABDd509A4A76FdA0f0d61B2A1d5120d6",
+    "verification": "https://goerli.arbiscan.io/address/0x37f9E8DA2312673C82894E377f27dc750210116C#code"
+  },
+  "CollSurplusPool": {
+    "address": "0xC02C907B8Dc68f6bCE5C2dE23c49fD8432b201b7",
+    "txHash": "0x97866119b805f16fce36ce1dc8330bdbb6bf0e6234a22507b2e5021ba0718e4e",
+    "implAddress": "0xE8eAaC81fa548795eD19a985f734630Cd5E1770D",
+    "verification": "https://goerli.arbiscan.io/address/0xC02C907B8Dc68f6bCE5C2dE23c49fD8432b201b7#code"
+  },
+  "DefaultPool": {
+    "address": "0xA694F84F3bc3DB1fa508309e425913f52B999B16",
+    "txHash": "0x2b48dceb3fb2564cb661e4062b4939248095689c1d7eda16ca7f74d69e15f0b3",
+    "implAddress": "0xe382eCE96ccDA5cd6c64f628Dd2D602866B80530",
+    "verification": "https://goerli.arbiscan.io/address/0xA694F84F3bc3DB1fa508309e425913f52B999B16#code"
+  },
+  "FeeCollector": {
+    "address": "0x5f56f6a576fD322E92DB8F2D67bb552248D4195C",
+    "txHash": "0x169598062144e81f98ac4b2de6f356c211bf3d6ad16306418bba019c80a64f23",
+    "implAddress": "0xe898eFDA0605493116CD7E6e11B70A731e89E8f6",
+    "verification": "https://goerli.arbiscan.io/address/0x5f56f6a576fD322E92DB8F2D67bb552248D4195C#code"
+  },
+  "SortedVessels": {
+    "address": "0x7c83AbE56a1d75004b2c39004519957fbb0a10B5",
+    "txHash": "0x4e4d1899804ec63992622108c35c25861bdaf18bcc0f7d71401dbd92425a2c0e",
+    "implAddress": "0x16B32a71149Dc1C5Aa4a977719D846feedA39fc9",
+    "verification": "https://goerli.arbiscan.io/address/0x7c83AbE56a1d75004b2c39004519957fbb0a10B5#code"
+  },
+  "StabilityPool": {
+    "address": "0xBB6396E10F8f750Ca10eb9CB4976aCa0E5dF56C4",
+    "txHash": "0x16fa9d09e3bdafc6c9aac275b49f038a72d7afb6b47df52645f08d140a1ccc80",
+    "implAddress": "0xFb0B2acBbd09f50183ceF629ACe474A64BA2280b",
+    "verification": "https://goerli.arbiscan.io/address/0xBB6396E10F8f750Ca10eb9CB4976aCa0E5dF56C4#code"
+  },
+  "VesselManager": {
+    "address": "0xc033fC0dB6d0E563BD36d522174769967FB6E46A",
+    "txHash": "0xb173f96c6713d17f560db6854f2173294220a425e6fde96d5c4f3b68e04ca63b",
+    "implAddress": "0xB2974b1fad68DE80B6195A22ddf1050C851E257D",
+    "verification": "https://goerli.arbiscan.io/address/0xc033fC0dB6d0E563BD36d522174769967FB6E46A#code"
+  },
+  "VesselManagerOperations": {
+    "address": "0x6900C649665EfB32da95c486631255005e9Ce764",
+    "txHash": "0x0392c86a80201018d9c5df10ff9b83563e618f1d48651a85b67132a7c7e7016b",
+    "implAddress": "0x9FB2fb07466FC8b752d45DBa9243f15846312179",
+    "verification": "https://goerli.arbiscan.io/address/0x6900C649665EfB32da95c486631255005e9Ce764#code"
+  },
+  "GasPool": {
+    "address": "0x4B144f217a979c6bdd51329F6b10D41407CeD4D9",
+    "txHash": "0x0e7f66025553954e189e023ad75120c40a4130c99a262b5df90b32f0d7b35de6",
+    "verification": "https://goerli.arbiscan.io/address/0x4B144f217a979c6bdd51329F6b10D41407CeD4D9#code"
+  },
+  "PriceFeedL2": {
+    "address": "0x769eFeAfdE17Cf82722493881db107eF709A051a",
+    "txHash": "0xb89dff5c3dcc9bc0f50ac8c7066e52a7fed928eb47a16a2b9313ab1bedb274f5",
+    "implAddress": "0x32C56b980454A3807cd5EDe4c86AaaEc141883Dd"
+  },
+  "TimelockTester": {
+    "address": "0x0e9aA8b3BC8BD81e5253422e7Aee695c4a55CCdA",
+    "txHash": "0xbfb4fa342a9f16f336d0463faad3bafe0b393999cee80c4b4863c0a663b7221d",
+    "verification": "https://goerli.arbiscan.io/address/0x0e9aA8b3BC8BD81e5253422e7Aee695c4a55CCdA#code"
+>>>>>>> staging
   }
 }

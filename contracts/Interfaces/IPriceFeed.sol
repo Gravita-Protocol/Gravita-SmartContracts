@@ -26,7 +26,7 @@ interface IPriceFeed {
 	struct OracleRecordV2 {
 		address oracleAddress;
 		ProviderType providerType;
-		uint256 timeoutMinutes;
+		uint256 timeoutSeconds;
 		uint256 decimals;
 		bool isEthIndexed;
 	}
@@ -57,12 +57,11 @@ interface IPriceFeed {
 
 	// Custom Errors --------------------------------------------------------------------------------------------------
 
-	error PriceFeed__InvalidOracleResponseError(address token);
-	error PriceFeed__InvalidDecimalsError();
 	error PriceFeed__ExistingOracleRequired();
+	error PriceFeed__InvalidDecimalsError();
+	error PriceFeed__InvalidOracleResponseError(address token);
 	error PriceFeed__TimelockOnlyError();
 	error PriceFeed__UnknownAssetError();
-	error PriceFeed__DeprecatedFunctionError();
 
 	// Events ---------------------------------------------------------------------------------------------------------
 
@@ -76,9 +75,8 @@ interface IPriceFeed {
 		address _token,
 		address _oracle,
 		ProviderType _type,
-		uint256 _timeoutMinutes,
+		uint256 _timeoutSeconds,
 		bool _isEthIndexed,
 		bool _isFallback
 	) external;
 }
-
