@@ -178,7 +178,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		RedemptionTotals memory totals;
 		totals.price = IPriceFeed(priceFeed).fetchPrice(_asset);
 		_validateRedemptionRequirements(_asset, _maxFeePercentage, _debtTokenAmount, totals.price);
-		totals.totalDebtTokenSupplyAtStart = getEntireSystemDebt(_asset);
+		totals.totalDebtTokenSupplyAtStart = IERC20(debtToken).totalSupply();
 		totals.remainingDebt = _debtTokenAmount;
 		address currentBorrower;
 		if (IVesselManager(vesselManager).isValidFirstRedemptionHint(_asset, _firstRedemptionHint, totals.price)) {
