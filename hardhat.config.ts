@@ -61,19 +61,20 @@ module.exports = {
 		],
 	},
 	networks: {
-		// hardhat: {
-		// 	allowUnlimitedContractSize: true,
-		// 	// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
-		// 	accounts: accountsList,
-		// },
 		hardhat: {
+			allowUnlimitedContractSize: true,
+			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
-			chainId: 42161,
-      forking:{
-        url: "https://arb1.arbitrum.io/rpc",
-				blockNumber: 133331300,
-			},
 		},
+		// Setup for testing files in test/gravita-fork:
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	chainId: 42161,
+		// 	forking: {
+		// 		url: "https://arb1.arbitrum.io/rpc",
+		// 		blockNumber: 133331300,
+		// 	},
+		// },
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
@@ -109,3 +110,4 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
+
