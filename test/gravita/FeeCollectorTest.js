@@ -19,6 +19,7 @@ var contracts
 var snapshotId
 var initialSnapshotId
 
+const f = v => ethers.utils.formatEther(v.toString())
 const openVessel = async params => th.openVessel(contracts.core, params)
 const deploy = async (treasury, mintingAccounts) => {
 	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
@@ -377,7 +378,7 @@ contract("FeeCollector", async accounts => {
 				assertRevert(borrowerOperations.closeVessel(erc20.address, { from: alice }))
 				// refund available at this point should be maxFee - minFee
 				const { minFee, maxFee } = calcFees(toBN(borrowAmount))
-				const refund = await feeCollector.simulateRefund(alice, erc20.address, 1e18.toString())
+				const refund = await feeCollector.simulateRefund(alice, erc20.address, (1e18).toString())
 				assert.equal(refund.toString(), maxFee.sub(minFee))
 				// alice grabs enough debt tokens to pay for minFee
 				await debtToken.transfer(alice, minFee, { from: whale })
@@ -486,6 +487,76 @@ contract("FeeCollector", async accounts => {
 				th.assertIsApproximatelyEqual(
 					minFeeWhale.add(maxFeeAlice).toString(),
 					treasuryBalanceAfterLiquidation.toString(),
+					100
+				)
+			})
+		})
+
+		describe.only("Vessel redemption", async () => {
+			it("redeemed vessel: should credit all fees to platform", async () => {
+				assert.equal(await debtToken.balanceOf(treasury), "0")
+
+				// whale opens a vessel
+				const { totalDebt: totalDebtWhale } = await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(5, 18)),
+					extraGRAIAmount: toBN(dec(100_000, 18)),
+					extraParams: { from: whale },
+				})
+				const netDebtWhale = await th.getOpenVesselGRAIAmount(contracts.core, totalDebtWhale, erc20.address)
+				const { minFee: minFeeWhale } = calcFees(netDebtWhale)
+				const treasuryBalance1 = await debtToken.balanceOf(treasury)
+				assert.equal(minFeeWhale.toString(), treasuryBalance1.toString())
+
+				// alice opens a vessel
+				const MCR = await adminContract.getMcr(erc20.address)
+				const { totalDebt: totalDebtAlice } = await openVessel({
+					asset: erc20.address,
+					ICR: MCR,
+					extraParams: { from: alice },
+				})
+				const netDebtAlice = await th.getOpenVesselGRAIAmount(contracts.core, totalDebtAlice, erc20.address)
+				const { minFee: minFeeAlice, maxFee: maxFeeAlice } = calcFees(netDebtAlice)
+				const treasuryBalanceBeforeRedemption = await debtToken.balanceOf(treasury)
+
+				// treasury must have been paid both borrower's minFees
+				th.assertIsApproximatelyEqual(
+					minFeeWhale.add(minFeeAlice).toString(),
+					treasuryBalanceBeforeRedemption.toString(),
+					100
+				)
+
+				// redeem alice's vessel
+
+				const redeemer = bob
+				await debtToken.transfer(redeemer, totalDebtAlice, { from: whale })
+				await vesselManagerOperations.redeemCollateral(
+					erc20.address,
+					totalDebtAlice,
+					ZERO_ADDRESS,
+					ZERO_ADDRESS,
+					ZERO_ADDRESS,
+					ZERO_ADDRESS,
+					0,
+					1e18.toString(),
+					{
+						from: redeemer,
+					}
+				)
+
+				const treasuryBalanceAfterRedemption = await debtToken.balanceOf(treasury)
+
+				// check the vessel is successfully closed, and removed from sortedList
+				const status_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_STATUS_INDEX]
+
+				// status enum 4 corresponds to "closedByRedemption"
+				assert.equal(status_Asset.toString(), "4")
+				assert.isFalse(await sortedVessels.contains(erc20.address, alice))
+
+				// treasury must now account for whale's minFee and alice's maxFee
+				th.assertIsApproximatelyEqual(
+					minFeeWhale.add(maxFeeAlice).toString(),
+					treasuryBalanceAfterRedemption.toString(),
 					100
 				)
 			})
