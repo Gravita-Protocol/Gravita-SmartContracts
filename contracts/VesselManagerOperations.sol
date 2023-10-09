@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "./Dependencies/GravitaBase.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
 
-import "hardhat/console.sol";
-
 contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant PERCENTAGE_PRECISION = 100_00;
@@ -938,10 +936,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				newNICR != _partialRedemptionHintNICR ||
 				_getNetDebt(_asset, newDebt) < IAdminContract(adminContract).getMinNetDebt(_asset)
 			) {
-				console.log("newNICR: %s", newNICR);
-				console.log("_partialRedemptionHintNICR: %s", _partialRedemptionHintNICR);
-//				console.log("_getNetDebt(_asset, newDebt): %s", _getNetDebt(_asset, newDebt));
-//				console.log("minNetDebt: %s", IAdminContract(adminContract).getMinNetDebt(_asset));
 				singleRedemption.cancelledPartial = true;
 				return singleRedemption;
 			}
