@@ -327,8 +327,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 						IVesselManager(vesselManager).getPendingAssetReward(vars.asset, currentVesselBorrower);
 
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
-					// Apply redemption softening
-					collLot = (collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
 					uint256 newColl = currentVesselColl - collLot;
 					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
@@ -913,8 +911,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
-		// Apply redemption softening
-		singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
 		// Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
 
