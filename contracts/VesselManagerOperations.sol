@@ -12,7 +12,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	uint256 public constant PERCENTAGE_PRECISION = 100_00;
 	uint256 public constant BATCH_SIZE_LIMIT = 25;
 
-	uint256 public redemptionSofteningParam;
+	uint256 public redemptionSofteningParam; // deprecated as the param is moving to 100% - redemptions would not be softened
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
