@@ -360,7 +360,7 @@ export class CoreDeployer {
 					coll.address,
 					coll.oracleAddress,
 					oracleProviderType,
-					coll.oracleTimeoutMinutes,
+					coll.oracleTimeoutSeconds,
 					coll.oracleIsEthIndexed,
 					isFallback
 				)

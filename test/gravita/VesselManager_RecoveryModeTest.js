@@ -89,19 +89,13 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		treasury,
 	] = accounts
 
-	let REDEMPTION_SOFTENING_PARAM
-
 	const openVessel = async params => th.openVessel(contracts.core, params)
-	const calcSoftnedAmount = (collAmount, price) =>
-		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(10000)).div(price)
+	const calcExpectedAmount = (collAmount, price) =>
+		collAmount.mul(mv._1e18BN).div(price)
 
 	before(async () => {
 		await deploy(treasury, accounts.slice(0, 40))
 		setBalance(shortTimelock.address, 1e18)
-		await impersonateAccount(shortTimelock.address)
-		await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
-		await stopImpersonatingAccount(shortTimelock.address)
-		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.redemptionSofteningParam()
 
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
@@ -2340,7 +2334,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 
 		price = await priceFeed.getPrice(erc20.address)
 
-		const bob_surplus_Asset = B_coll_2_Asset.sub(calcSoftnedAmount(B_netDebt_2_Asset, price))
+		const bob_surplus_Asset = B_coll_2_Asset.sub(calcExpectedAmount(B_netDebt_2_Asset, price))
 		th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(erc20.address, bob), bob_surplus_Asset)
 
 		// can claim collateral
@@ -2376,7 +2370,7 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await th.redeemCollateral(dennis, contracts.core, B_netDebt_Asset, erc20.address)
 		let price = await priceFeed.getPrice(erc20.address)
 
-		const bob_surplus_Asset = B_coll_Asset.sub(calcSoftnedAmount(B_netDebt_Asset, price))
+		const bob_surplus_Asset = B_coll_Asset.sub(calcExpectedAmount(B_netDebt_Asset, price))
 		th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(erc20.address, bob), bob_surplus_Asset)
 
 		// can claim collateral

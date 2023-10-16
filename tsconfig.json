@@ -1,15 +1,15 @@
 {
     "compilerOptions": {
       "target": "es5",
-      "module": "commonjs",
+      "module": "Node16",
       "lib": ["es2017", "es7", "es6", "dom"],
       "declaration": true,
-      "outDir": "dist",
+      "outDir": "build",
       "strict": true,
       "esModuleInterop": true
     },
     "exclude": [
       "node_modules",
-      "dist"
+      "build"
     ]
   }
