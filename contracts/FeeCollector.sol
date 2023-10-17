@@ -9,11 +9,14 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
+import "./Interfaces/IVesselManager.sol";
 
 import "./Addresses.sol";
 
 contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
+
+	error FeeCollector__InvalidVesselState(address asset, address borrower);
 
 	// Constants --------------------------------------------------------------------------------------------------------
 
@@ -65,6 +68,35 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 		uint256 _paybackFraction
 	) external override onlyBorrowerOperationsOrVesselManager {
 		_decreaseDebt(_borrower, _asset, _paybackFraction);
+	}
+
+	/**
+	 * Admin-only function to forcefully update debts that were decreased/closed by redemptions.
+	 * Should only be called up until a fix for that issue is deployed.
+	 */
+	function batchForceDecreaseDebt(
+		address[] calldata _borrowers,
+		address[] calldata _assets,
+		uint256[] calldata _paybackFractions
+	) external {
+		if (msg.sender != timelockAddress) {
+			revert("Timelock only");
+		}
+		uint256 length = _borrowers.length;
+		if (length == 0 || _assets.length != length || _paybackFractions.length != length) {
+			revert FeeCollector__ArrayMismatch();
+		}
+		for (uint256 i = 0; i < length; i++) {
+			uint256 vesselStatus = IVesselManager(vesselManager).getVesselStatus(_assets[i], _borrowers[i]);
+			if (_paybackFractions[i] == 1 ether && vesselStatus != uint256(IVesselManager.Status.closedByRedemption)) {
+				// a 100% payback requires the vessel to have been closed by a redemption
+				revert FeeCollector__InvalidVesselState(_assets[i], _borrowers[i]);
+			} else if (vesselStatus != uint256(IVesselManager.Status.active)) {
+				// a partial payback requires the vessel to still be active
+				revert FeeCollector__InvalidVesselState(_assets[i], _borrowers[i]);
+			}
+			_decreaseDebt(_borrowers[i], _assets[i], _paybackFractions[i]);
+		}
 	}
 
 	/**
