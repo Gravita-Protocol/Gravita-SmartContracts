@@ -72,7 +72,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 
 	/**
 	 * Admin-only function to forcefully update debts that were decreased/closed by redemptions.
-	 * Should only be called up until a fix for that issue is deployed.
+	 * Should only be called upon vessels that were redeemed up until a fix was released on VesselMgr and VesselMgrOps.
 	 */
 	function batchForceDecreaseDebt(
 		address[] calldata _borrowers,
