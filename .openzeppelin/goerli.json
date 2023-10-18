@@ -611,6 +611,10 @@
       "kind": "uups"
     },
     {
+      "address": "0x4FC9067e08B16293b6aB251bB335e832F0e896C9",
+      "kind": "uups"
+    },
+    {
       "address": "0x13Ec47632B8291DCFC7c334F7e7E068676C472a5",
       "txHash": "0x6ef52b5b5cb74ec9fbc24f009b2e051bc2b4a9cfaa0f74b9db4766dcc3945e56",
       "kind": "uups"
@@ -32519,6 +32523,551 @@
           "t_uint128": {
             "label": "uint128",
             "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "2f9527d6d66a8b3ef4df66a86bb6049109931b1ea71e18125f669d92c0637838": {
+      "address": "0xa53cB63AdbF81DA06769785aB15Ab0e5257Bbb8b",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "253",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "254",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "255",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "256",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "257",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "258",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "259",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "260",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "261",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "262",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "263",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "264",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "266",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_address",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesGoerli",
+            "src": "contracts\\TestContracts\\AddressesGoerli.sol:33"
+          },
+          {
+            "label": "redemptionSofteningParam",
+            "offset": 0,
+            "slot": "315",
+            "type": "t_uint256",
+            "contract": "VesselManagerOperations",
+            "src": "contracts\\VesselManagerOperations.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "28a1e456337dc542a18d68b5dd4cc490a0b62a7965025a6e4ff8a377fd039dc9": {
+      "address": "0xc2Ee399EEf003897D5e0de6E68E8388CdD3E3cc0",
+      "txHash": "0x3c07d5ecccdef69057ea2687dfddc10fa329941c070dcac3f114df5c5ce5eee6",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "253",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "254",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "255",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "256",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "257",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "258",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "259",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "260",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "261",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "262",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "263",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "264",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "266",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+          },
+          {
+            "label": "redemptionSofteningParam",
+            "offset": 0,
+            "slot": "315",
+            "type": "t_uint256",
+            "contract": "VesselManagerOperations",
+            "src": "contracts\\VesselManagerOperations.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
           },
           "t_uint256": {
             "label": "uint256",
