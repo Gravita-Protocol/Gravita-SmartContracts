@@ -2,8 +2,12 @@ const { run, upgrades: upgrades2 } = require("hardhat")
 
 const upgrades = [
 	{
-		contract: "StabilityPool",
-		address: "0x1317F2749Cd53555B33ab75f17EB46fd57B9eFaB",
+		contract: "FeeCollector",
+		address: "0x9c966245C17F953Fa1e6FCaD8E79B0D7f9d2a872",
+	},
+	{
+		contract: "VesselManager",
+		address: "0x2177946fD433F24666b23c51C8D728c34Af05627",
 	},
 ]
 
