@@ -239,6 +239,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		_removeStake(_asset, _borrower);
 		_closeVessel(_asset, _borrower, Status.closedByRedemption);
 		_redeemCloseVessel(_asset, _borrower, IAdminContract(adminContract).getDebtTokenGasCompensation(_asset), _newColl);
+		IFeeCollector(feeCollector).closeDebt(_borrower, _asset);
 		emit VesselUpdated(_asset, _borrower, 0, 0, 0, VesselManagerOperation.redeemCollateral);
 	}
 
@@ -259,18 +260,17 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 			_lowerPartialRedemptionHint
 		);
 
-		Vessels[_borrower][_asset].debt = _newDebt;
-		Vessels[_borrower][_asset].coll = _newColl;
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		uint256 paybackFraction = ((vessel.debt - _newDebt) * 1 ether) / vessel.debt;
+		if (paybackFraction != 0) {
+			IFeeCollector(feeCollector).decreaseDebt(_borrower, _asset, paybackFraction);
+		}
+
+		vessel.debt = _newDebt;
+		vessel.coll = _newColl;
 		_updateStakeAndTotalStakes(_asset, _borrower);
 
-		emit VesselUpdated(
-			_asset,
-			_borrower,
-			_newDebt,
-			_newColl,
-			Vessels[_borrower][_asset].stake,
-			VesselManagerOperation.redeemCollateral
-		);
+		emit VesselUpdated(_asset, _borrower, _newDebt, _newColl, vessel.stake, VesselManagerOperation.redeemCollateral);
 	}
 
 	function finalizeRedemption(
@@ -703,3 +703,4 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
+
