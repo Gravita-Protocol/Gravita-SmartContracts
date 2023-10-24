@@ -32321,7 +32321,7 @@
             "label": "Vessels",
             "offset": 0,
             "slot": "317",
-            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)9318_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14953_storage))",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:45"
           },
@@ -32369,7 +32369,7 @@
             "label": "rewardSnapshots",
             "offset": 0,
             "slot": "323",
-            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)14334_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)22160_storage))",
             "contract": "VesselManager",
             "src": "contracts\\VesselManager.sol:67"
           },
@@ -32431,7 +32431,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_enum(Status)9226": {
+          "t_enum(Status)14861": {
             "label": "enum IVesselManager.Status",
             "members": [
               "nonExistent",
@@ -32446,19 +32446,19 @@
             "label": "mapping(address => address[])",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)14334_storage))": {
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)22160_storage))": {
             "label": "mapping(address => mapping(address => struct VesselManager.RewardSnapshot))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)9318_storage))": {
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14953_storage))": {
             "label": "mapping(address => mapping(address => struct IVesselManager.Vessel))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(RewardSnapshot)14334_storage)": {
+          "t_mapping(t_address,t_struct(RewardSnapshot)22160_storage)": {
             "label": "mapping(address => struct VesselManager.RewardSnapshot)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(Vessel)9318_storage)": {
+          "t_mapping(t_address,t_struct(Vessel)14953_storage)": {
             "label": "mapping(address => struct IVesselManager.Vessel)",
             "numberOfBytes": "32"
           },
@@ -32466,7 +32466,7 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
-          "t_struct(RewardSnapshot)14334_storage": {
+          "t_struct(RewardSnapshot)22160_storage": {
             "label": "struct VesselManager.RewardSnapshot",
             "members": [
               {
@@ -32484,7 +32484,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Vessel)9318_storage": {
+          "t_struct(Vessel)14953_storage": {
             "label": "struct IVesselManager.Vessel",
             "members": [
               {
@@ -32507,7 +32507,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(Status)9226",
+                "type": "t_enum(Status)14861",
                 "offset": 0,
                 "slot": "3"
               },
@@ -33068,6 +33068,568 @@
           "t_bool": {
             "label": "bool",
             "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "3b6f1c0d2f5021e0bb738c222d603cfbe4bec2a7685fa7ab6f9a4490b5847cdc": {
+      "address": "0xC80865B61CD8911931E6D267e29f9a5A03a12A99",
+      "txHash": "0x2f758a5782fe5d24a9bf6df6fffb2f60eb96230dceb5b63f010ec6f62201e573",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "253",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "254",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "255",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "256",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "257",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "258",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "259",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "260",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "261",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "262",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "263",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "264",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "266",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "267",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+          },
+          {
+            "label": "redemptionSofteningParam",
+            "offset": 0,
+            "slot": "315",
+            "type": "t_uint256",
+            "contract": "VesselManagerOperations",
+            "src": "contracts\\VesselManagerOperations.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "3d9cdf23dce272152d7af0df90eef469be8926904e935d126db7a35175f9b650": {
+      "address": "0xb83F7fe2b84F4CFEab1264CfFF68446d0Ea91c81",
+      "txHash": "0x35d6c16441272734fe88fdc6bb4650c69ff6a038f436617cc4240ed4419c9e7f",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "activePool",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:8"
+          },
+          {
+            "label": "adminContract",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:9"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:10"
+          },
+          {
+            "label": "collSurplusPool",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:11"
+          },
+          {
+            "label": "communityIssuance",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:12"
+          },
+          {
+            "label": "debtToken",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:13"
+          },
+          {
+            "label": "defaultPool",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:14"
+          },
+          {
+            "label": "feeCollector",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:15"
+          },
+          {
+            "label": "gasPoolAddress",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
+          },
+          {
+            "label": "grvtStaking",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:17"
+          },
+          {
+            "label": "priceFeed",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:18"
+          },
+          {
+            "label": "sortedVessels",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:19"
+          },
+          {
+            "label": "stabilityPool",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:20"
+          },
+          {
+            "label": "timelockAddress",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:21"
+          },
+          {
+            "label": "treasuryAddress",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:22"
+          },
+          {
+            "label": "vesselManager",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:23"
+          },
+          {
+            "label": "vesselManagerOperations",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_address",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:24"
+          },
+          {
+            "label": "isAddressSetupInitialized",
+            "offset": 20,
+            "slot": "217",
+            "type": "t_bool",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)47_storage",
+            "contract": "AddressesConfigurable",
+            "src": "contracts\\Dependencies\\AddressesConfigurable.sol:33"
+          },
+          {
+            "label": "feeRecords",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)3303_storage))",
+            "contract": "FeeCollector",
+            "src": "contracts\\FeeCollector.sol:28"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]",
+            "numberOfBytes": "1504"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)3303_storage))": {
+            "label": "mapping(address => mapping(address => struct IFeeCollector.FeeRecord))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(FeeRecord)3303_storage)": {
+            "label": "mapping(address => struct IFeeCollector.FeeRecord)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(FeeRecord)3303_storage": {
+            "label": "struct IFeeCollector.FeeRecord",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
           },
           "t_uint256": {
             "label": "uint256",
