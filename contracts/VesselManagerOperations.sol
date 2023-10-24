@@ -12,7 +12,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 	uint256 public constant PERCENTAGE_PRECISION = 100_00;
 	uint256 public constant BATCH_SIZE_LIMIT = 25;
 
-	uint256 public redemptionSofteningParam; // deprecated as the param is moving to 100% - redemptions would not be softened
+	uint256 public redemptionSofteningParam;
 
 	// Structs ----------------------------------------------------------------------------------------------------------
 
@@ -178,7 +178,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		RedemptionTotals memory totals;
 		totals.price = IPriceFeed(priceFeed).fetchPrice(_asset);
 		_validateRedemptionRequirements(_asset, _maxFeePercentage, _debtTokenAmount, totals.price);
-		totals.totalDebtTokenSupplyAtStart = IERC20(debtToken).totalSupply();
+		totals.totalDebtTokenSupplyAtStart = getEntireSystemDebt(_asset);
 		totals.remainingDebt = _debtTokenAmount;
 		address currentBorrower;
 		if (IVesselManager(vesselManager).isValidFirstRedemptionHint(_asset, _firstRedemptionHint, totals.price)) {
@@ -327,7 +327,8 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 						IVesselManager(vesselManager).getPendingAssetReward(vars.asset, currentVesselBorrower);
 
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
-
+					// Apply redemption softening
+					collLot = (collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 					uint256 newColl = currentVesselColl - collLot;
 					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
 					uint256 compositeDebt = _getCompositeDebt(vars.asset, newDebt);
@@ -911,6 +912,9 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
+
+		// Apply redemption softening
+		singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
 		// Decrease the debt and collateral of the current vessel according to the debt token lot and corresponding coll to send
 

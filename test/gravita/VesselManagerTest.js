@@ -87,14 +87,15 @@ contract("VesselManager", async accounts => {
 
 	const multisig = accounts[999]
 
+	let REDEMPTION_SOFTENING_PARAM
 	const getOpenVesselGRAIAmount = async (totalDebt, asset) =>
 		th.getOpenVesselGRAIAmount(contracts.core, totalDebt, asset)
 	const getNetBorrowingAmount = async (debtWithFee, asset) =>
 		th.getNetBorrowingAmount(contracts.core, debtWithFee, asset)
 	const openVessel = async params => th.openVessel(contracts.core, params)
 	const withdrawGRAI = async params => th.withdrawGRAI(contracts.core, params)
-	const calcExpectedAmount = (collAmount, price) =>
-		collAmount.mul(mv._1e18BN).div(price)
+	const calcSoftnedAmount = (collAmount, price) =>
+		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(10000)).div(price)
 
 	describe("Vessel Manager", async () => {
 		before(async () => {
@@ -108,6 +109,11 @@ contract("VesselManager", async accounts => {
 				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), { from: acc })
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
+
+			await impersonateAccount(shortTimelock.address)
+			await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+			await stopImpersonatingAccount(shortTimelock.address)
+			REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.redemptionSofteningParam()
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
@@ -1032,9 +1038,9 @@ contract("VesselManager", async accounts => {
 				// Check Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated ETH
 				const dennis_Deposit_Before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
 				const idx = validCollateral.indexOf(erc20.address)
-				const dennis_ETHGain_Before_Asset = (
-					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][idx].toString()
+				const dennis_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][
+					idx
+				].toString()
 				assert.isAtMost(th.getDifference(dennis_Deposit_Before_Asset, spDeposit.sub(liquidatedDebt_Asset)), 1000000)
 				assert.isAtMost(th.getDifference(dennis_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
 
@@ -1053,9 +1059,9 @@ contract("VesselManager", async accounts => {
 
 				// Check Dennis' SP deposit does not change after liquidation attempt
 				const dennis_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
-				const dennis_ETHGain_After_Asset = (
-					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][idx].toString()
+				const dennis_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][
+					idx
+				].toString()
 
 				assert.equal(dennis_Deposit_Before_Asset, dennis_Deposit_After_Asset)
 				assert.equal(dennis_ETHGain_Before_Asset, dennis_ETHGain_After_Asset)
@@ -1100,7 +1106,9 @@ contract("VesselManager", async accounts => {
 
 				const bob_Deposit_Before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(bob)).toString()
 				const idx = validCollateral.indexOf(erc20.address)
-				const bob_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
+				const bob_ETHGain_Before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][
+					idx
+				].toString()
 
 				assert.isAtMost(th.getDifference(bob_Deposit_Before_Asset, spDeposit.sub(liquidatedDebt_Asset)), 1000000)
 				assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, liquidatedColl_Asset), 1000)
@@ -1192,9 +1200,9 @@ contract("VesselManager", async accounts => {
 
      Check Bob' SP deposit has been reduced to 50 GRAI, and his ETH gain has increased to 1.5 ETH. */
 				const alice_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
-				const alice_ETHGain_After_Asset = (
-					await stabilityPool.getDepositorGains(alice, validCollateral)
-				)[1][idx].toString()
+				const alice_ETHGain_After_Asset = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][
+					idx
+				].toString()
 
 				const totalDeposits_Asset = bob_Deposit_Before_Asset.add(A_spDeposit)
 
@@ -3536,6 +3544,14 @@ contract("VesselManager", async accounts => {
 
 				assert.equal(partialRedemptionHintNICR_Asset, "0")
 			}),
+				it("redemptionSofteningParam(): revert on invalid value", async () => {
+					await impersonateAccount(shortTimelock.address)
+					let tx = vesselManagerOperations.setRedemptionSofteningParam("10100", { from: shortTimelock.address })
+					await th.assertRevert(tx)
+					let tx2 = vesselManagerOperations.setRedemptionSofteningParam("9600", { from: shortTimelock.address })
+					await th.assertRevert(tx2)
+					await stopImpersonatingAccount(shortTimelock.address)
+				}),
 				it("redeemCollateral(): soft redemption dates", async () => {
 					const redemptionWait = 14 * 24 * 60 * 60 // 14 days
 					const redemptionBlock = (await time.latest()) + redemptionWait
@@ -3695,7 +3711,7 @@ contract("VesselManager", async accounts => {
 				const dennis_CollBalance_After = toBN(await erc20.balanceOf(dennis))
 				const receivedColl = dennis_CollBalance_After.sub(dennis_CollBalance_Before)
 
-				const expectedTotalCollDrawn = calcExpectedAmount(redemptionAmount, price)
+				const expectedTotalCollDrawn = calcSoftnedAmount(redemptionAmount, price)
 				const expectedReceivedColl = expectedTotalCollDrawn.sub(toBN(collFee))
 
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
@@ -3796,7 +3812,7 @@ contract("VesselManager", async accounts => {
 				const dennis_CollBalance_After = toBN(await erc20.balanceOf(dennis))
 				const receivedColl = dennis_CollBalance_After.sub(dennis_CollBalance_Before)
 
-				const expectedTotalCollDrawn = calcExpectedAmount(redemptionAmount, price)
+				const expectedTotalCollDrawn = calcSoftnedAmount(redemptionAmount, price)
 				const expectedReceivedColl = expectedTotalCollDrawn.sub(toBN(collFee))
 
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
@@ -3896,7 +3912,7 @@ contract("VesselManager", async accounts => {
 				const dennis_CollBalance_After = toBN(await erc20.balanceOf(dennis))
 				const receivedColl = dennis_CollBalance_After.sub(dennis_CollBalance_Before)
 
-				const expectedTotalCollDrawn = calcExpectedAmount(redemptionAmount, price)
+				const expectedTotalCollDrawn = calcSoftnedAmount(redemptionAmount, price)
 				const expectedReceivedColl = expectedTotalCollDrawn.sub(toBN(collFee))
 
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
@@ -4008,7 +4024,7 @@ contract("VesselManager", async accounts => {
 				const dennis_CollBalance_After = toBN(await erc20.balanceOf(dennis))
 				const receivedColl = dennis_CollBalance_After.sub(dennis_CollBalance_Before)
 
-				const expectedTotalCollDrawn = calcExpectedAmount(redemptionAmount, price)
+				const expectedTotalCollDrawn = calcSoftnedAmount(redemptionAmount, price)
 				const expectedReceivedColl = expectedTotalCollDrawn.sub(toBN(collFee))
 
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
@@ -4403,7 +4419,7 @@ contract("VesselManager", async accounts => {
 				const receivedColl = dennis_CollBalance_After.sub(dennis_CollBalance_Before)
 
 				// Expect only 17 worth of collateral drawn
-				const expectedTotalCollDrawn = calcExpectedAmount(fullfilledRedemptionAmount.sub(frontRunRedemption), price)
+				const expectedTotalCollDrawn = calcSoftnedAmount(fullfilledRedemptionAmount.sub(frontRunRedemption), price)
 				const expectedReceivedColl = expectedTotalCollDrawn.sub(collFee)
 
 				th.assertIsApproximatelyEqual(expectedReceivedColl, receivedColl)
@@ -5049,13 +5065,15 @@ contract("VesselManager", async accounts => {
 				const dennis_SPDeposit_before_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
 
 				const idx = validCollateral.indexOf(erc20.address)
-				const bob_ETHGain_before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
-				const carol_ETHGain_before_Asset = (
-					await stabilityPool.getDepositorGains(carol, validCollateral)
-				)[1][idx].toString()
-				const dennis_ETHGain_before_Asset = (
-					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][idx].toString()
+				const bob_ETHGain_before_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][
+					idx
+				].toString()
+				const carol_ETHGain_before_Asset = (await stabilityPool.getDepositorGains(carol, validCollateral))[1][
+					idx
+				].toString()
+				const dennis_ETHGain_before_Asset = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][
+					idx
+				].toString()
 
 				// Check the remaining GRAI and ETH in Stability Pool after liquidation is non-zero
 
@@ -5087,12 +5105,12 @@ contract("VesselManager", async accounts => {
 				const dennis_SPDeposit_after_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(dennis)).toString()
 
 				const bob_ETHGain_after_Asset = (await stabilityPool.getDepositorGains(bob, validCollateral))[1][idx].toString()
-				const carol_ETHGain_after_Asset = (
-					await stabilityPool.getDepositorGains(carol, validCollateral)
-				)[1][idx].toString()
-				const dennis_ETHGain_after_Asset = (
-					await stabilityPool.getDepositorGains(dennis, validCollateral)
-				)[1][idx].toString()
+				const carol_ETHGain_after_Asset = (await stabilityPool.getDepositorGains(carol, validCollateral))[1][
+					idx
+				].toString()
+				const dennis_ETHGain_after_Asset = (await stabilityPool.getDepositorGains(dennis, validCollateral))[1][
+					idx
+				].toString()
 
 				// Check B, C, D Stability Pool deposits and ETH gain have not been affected by redemptions from their vessels
 				assert.equal(bob_SPDeposit_before_Asset, bob_SPDeposit_after_Asset)
@@ -5183,9 +5201,9 @@ contract("VesselManager", async accounts => {
 				assert.equal(activePool_debt_before.sub(activePool_debt_after), dec(400, 18))
 
 				// Check ActivePool coll reduced by $400 worth of collateral: at Coll:USD price of $200, this should be 2,
-				// therefore, remaining ActivePool coll should be 198 
+				// therefore, remaining ActivePool coll should be 198
 				const activePool_coll_after = await activePool.getAssetBalance(erc20.address)
-				const expectedCollWithdrawn = calcExpectedAmount(toBN(dec(400, 18)), price)
+				const expectedCollWithdrawn = calcSoftnedAmount(toBN(dec(400, 18)), price)
 				assert.equal(activePool_coll_after.toString(), activePool_coll_before.sub(expectedCollWithdrawn))
 
 				// Check Erin's balance after
@@ -5437,7 +5455,7 @@ contract("VesselManager", async accounts => {
 				// 120 debt tokens redeemed = expect $120 worth of collateral removed
 
 				const activePoolBalance1 = await activePool.getAssetBalance(erc20.address)
-				const expectedActivePoolBalance1 = activePoolBalance0.sub(calcExpectedAmount(toBN(_120_), price))
+				const expectedActivePoolBalance1 = activePoolBalance0.sub(calcSoftnedAmount(toBN(_120_), price))
 				assert.equal(activePoolBalance1.toString(), expectedActivePoolBalance1.toString())
 
 				// Flyn redeems 373 debt tokens
@@ -5467,7 +5485,7 @@ contract("VesselManager", async accounts => {
 				// Coll removed = (373/200) = 1.865 * 97% (softening) = 1.80905
 				// Total active collateral = 279.418 - 1.80905 = 277.60895
 				const activePoolBalance2 = await activePool.getAssetBalance(erc20.address)
-				const expectedActivePoolBalance2 = activePoolBalance1.sub(calcExpectedAmount(toBN(_373_), price))
+				const expectedActivePoolBalance2 = activePoolBalance1.sub(calcSoftnedAmount(toBN(_373_), price))
 				assert.equal(activePoolBalance2.toString(), expectedActivePoolBalance2.toString())
 
 				// Graham redeems 950 debt tokens
@@ -5494,7 +5512,7 @@ contract("VesselManager", async accounts => {
 
 				// 950 debt tokens redeemed = expect $950 worth of collateral removed
 				const activePoolBalance3 = (await activePool.getAssetBalance(erc20.address)).toString()
-				const expectedActivePoolBalance3 = activePoolBalance2.sub(calcExpectedAmount(toBN(_950_), price))
+				const expectedActivePoolBalance3 = activePoolBalance2.sub(calcSoftnedAmount(toBN(_950_), price))
 				assert.equal(activePoolBalance3.toString(), expectedActivePoolBalance3.toString())
 			})
 
@@ -6057,7 +6075,7 @@ contract("VesselManager", async accounts => {
 
 				// check A's asset balance has increased by 0.045
 				const price = await priceFeed.getPrice(erc20.address)
-				const assetDrawn = calcExpectedAmount(redemptionAmount, price)
+				const assetDrawn = calcSoftnedAmount(redemptionAmount, price)
 
 				const A_balanceDiff = A_balanceAfter.sub(A_balanceBefore)
 				const redemptionFee = toBN(dec(5, 15))
@@ -6378,13 +6396,13 @@ contract("VesselManager", async accounts => {
 				const price = await priceFeed.getPrice(erc20.address)
 
 				const A_balanceExpected_Asset = A_balanceBefore_Asset.add(
-					A_coll_Asset.sub(calcExpectedAmount(A_netDebt_Asset, price))
+					A_coll_Asset.sub(calcSoftnedAmount(A_netDebt_Asset, price))
 				)
 				const B_balanceExpected_Asset = B_balanceBefore_Asset.add(
-					B_coll_Asset.sub(calcExpectedAmount(B_netDebt_Asset, price))
+					B_coll_Asset.sub(calcSoftnedAmount(B_netDebt_Asset, price))
 				)
 				const C_balanceExpected_Asset = C_balanceBefore_Asset.add(
-					C_coll_Asset.sub(calcExpectedAmount(C_netDebt_Asset, price))
+					C_coll_Asset.sub(calcSoftnedAmount(C_netDebt_Asset, price))
 				)
 
 				th.assertIsApproximatelyEqual(A_balanceAfter_Asset, A_balanceExpected_Asset)
@@ -6404,9 +6422,9 @@ contract("VesselManager", async accounts => {
 
 				const price = await priceFeed.getPrice(erc20.address)
 
-				const A_surplus_Asset = A_collBefore_Asset.sub(calcExpectedAmount(A_netDebt_Asset, price))
-				const B_surplus_Asset = B_collBefore_Asset.sub(calcExpectedAmount(B_netDebt_Asset, price))
-				const C_surplus_Asset = C_collBefore_Asset.sub(calcExpectedAmount(C_netDebt_Asset, price))
+				const A_surplus_Asset = A_collBefore_Asset.sub(calcSoftnedAmount(A_netDebt_Asset, price))
+				const B_surplus_Asset = B_collBefore_Asset.sub(calcSoftnedAmount(B_netDebt_Asset, price))
+				const C_surplus_Asset = C_collBefore_Asset.sub(calcSoftnedAmount(C_netDebt_Asset, price))
 
 				const { collateral: A_coll_Asset } = await openVessel({
 					asset: erc20.address,
@@ -6874,4 +6892,3 @@ contract("VesselManager", async accounts => {
 })
 
 contract("Reset chain state", async accounts => {})
-
