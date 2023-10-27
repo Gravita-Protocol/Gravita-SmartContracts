@@ -329,7 +329,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 					uint256 collLot = (maxRedeemableDebt * DECIMAL_PRECISION) / vars.price;
 					// Apply redemption softening
 					collLot = (collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
-
 					uint256 newColl = currentVesselColl - collLot;
 					uint256 newDebt = currentVesselNetDebt - maxRedeemableDebt;
 					uint256 compositeDebt = _getCompositeDebt(vars.asset, newDebt);
@@ -913,6 +912,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
+
 		// Apply redemption softening
 		singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 

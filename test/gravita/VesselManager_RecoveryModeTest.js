@@ -102,7 +102,6 @@ contract("VesselManager - in Recovery Mode", async accounts => {
 		await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
 		await stopImpersonatingAccount(shortTimelock.address)
 		REDEMPTION_SOFTENING_PARAM = await vesselManagerOperations.redemptionSofteningParam()
-
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
 

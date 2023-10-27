@@ -27,6 +27,9 @@ task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testne
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
+task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
+)
 
 module.exports = {
 	paths: {
@@ -63,6 +66,15 @@ module.exports = {
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
 		},
+		// Setup for testing files in test/gravita-fork:
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	chainId: 42161,
+		// 	forking: {
+		// 		url: "https://arb1.arbitrum.io/rpc",
+		// 		blockNumber: 133331300,
+		// 	},
+		// },
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
@@ -98,3 +110,4 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
+

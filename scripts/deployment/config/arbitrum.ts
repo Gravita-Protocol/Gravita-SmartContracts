@@ -20,7 +20,7 @@ const COLLATERAL = [
         name: "wETH",
         address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
         oracleAddress: "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
-        oracleTimeoutMinutes: 4500, // TODO: CHECK
+        oracleTimeoutSeconds: 4500,
         oracleIsEthIndexed: false,
         MCR: toEther(1.111),
         CCR: toEther(1.4),
@@ -31,9 +31,9 @@ const COLLATERAL = [
     {
         name: "wstETH",
         address: "0x5979D7b546E38E414F7E9822514be443A4800529",
-        oracleAddress: "0x07C5b924399cc23c24a95c8743DE4006a32b7f2a",
-        oracleTimeoutMinutes: 4500, // TODO: CHECK
-        oracleIsEthIndexed: false,
+        oracleAddress: "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+        oracleTimeoutSeconds: 90000, 
+        oracleIsEthIndexed: true,
         MCR: toEther(1.176),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
@@ -44,8 +44,8 @@ const COLLATERAL = [
         name: "rETH",
         address: "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
         oracleAddress: "0xF3272CAfe65b190e76caAF483db13424a3e23dD2",
-        oracleTimeoutMinutes: 90000, // TODO: CHECK
-        oracleIsEthIndexed: false,
+        oracleTimeoutSeconds: 90000, 
+        oracleIsEthIndexed: true,
         MCR: toEther(1.176),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
@@ -55,8 +55,8 @@ const COLLATERAL = [
     {
         name: "aLUSD",
         address: "0x8ffDf2DE812095b1D19CB146E4c004587C0A0692",
-        oracleAddress: "",  // TODO: deploy
-        oracleTimeoutMinutes: 4500, // TODO: CHECK
+        oracleAddress: "0x118e3040b899ec6AAd6a696b3583aE03a927d3A0",
+        oracleTimeoutSeconds: 4500, 
         oracleIsEthIndexed: false,
         MCR: toEther(1.111),
         CCR: toEther(1),

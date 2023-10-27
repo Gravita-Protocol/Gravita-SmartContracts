@@ -1376,7 +1376,6 @@ class TestHelper {
 			0,
 			maxFee,
 			{ from: redeemer }
-			// NOTE: removed to not get an error
 		)
 
 		return tx
