@@ -4189,6 +4189,649 @@
           }
         }
       }
+    },
+    "5afa6869aca211ed28199b57ce3d87d9abe4563aef2ed5c12096fe3a43dddf91": {
+      "address": "0xb81aBD6E76182D5696789158747b349a9b2e2055",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_array(t_uint256)40_storage",
+            "contract": "AddressesMainnet",
+            "src": "contracts\\Dependencies\\AddressesMainnet.sol:29"
+          },
+          {
+            "label": "baseRate",
+            "offset": 0,
+            "slot": "291",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:39"
+          },
+          {
+            "label": "lastFeeOperationTime",
+            "offset": 0,
+            "slot": "292",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:42"
+          },
+          {
+            "label": "Vessels",
+            "offset": 0,
+            "slot": "293",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14953_storage))",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:45"
+          },
+          {
+            "label": "totalStakes",
+            "offset": 0,
+            "slot": "294",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:47"
+          },
+          {
+            "label": "totalStakesSnapshot",
+            "offset": 0,
+            "slot": "295",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:50"
+          },
+          {
+            "label": "totalCollateralSnapshot",
+            "offset": 0,
+            "slot": "296",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:53"
+          },
+          {
+            "label": "L_Colls",
+            "offset": 0,
+            "slot": "297",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:63"
+          },
+          {
+            "label": "L_Debts",
+            "offset": 0,
+            "slot": "298",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:64"
+          },
+          {
+            "label": "rewardSnapshots",
+            "offset": 0,
+            "slot": "299",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)22160_storage))",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:67"
+          },
+          {
+            "label": "VesselOwners",
+            "offset": 0,
+            "slot": "300",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:70"
+          },
+          {
+            "label": "lastCollError_Redistribution",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:73"
+          },
+          {
+            "label": "lastDebtError_Redistribution",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:74"
+          },
+          {
+            "label": "isSetupInitialized",
+            "offset": 0,
+            "slot": "303",
+            "type": "t_bool",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:76"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)40_storage": {
+            "label": "uint256[40]",
+            "numberOfBytes": "1280"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_enum(Status)14861": {
+            "label": "enum IVesselManager.Status",
+            "members": [
+              "nonExistent",
+              "active",
+              "closedByOwner",
+              "closedByLiquidation",
+              "closedByRedemption"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)22160_storage))": {
+            "label": "mapping(address => mapping(address => struct VesselManager.RewardSnapshot))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14953_storage))": {
+            "label": "mapping(address => mapping(address => struct IVesselManager.Vessel))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(RewardSnapshot)22160_storage)": {
+            "label": "mapping(address => struct VesselManager.RewardSnapshot)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Vessel)14953_storage)": {
+            "label": "mapping(address => struct IVesselManager.Vessel)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(RewardSnapshot)22160_storage": {
+            "label": "struct VesselManager.RewardSnapshot",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "debt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Vessel)14953_storage": {
+            "label": "struct IVesselManager.Vessel",
+            "members": [
+              {
+                "label": "debt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "coll",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stake",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(Status)14861",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "arrayIndex",
+                "type": "t_uint128",
+                "offset": 1,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "2ea7b09e5a0b0964163fd38e26f5e55a20386e986944d96b29aecdfa1c6546ba": {
+      "address": "0x3fF8f95a8dB2B709D14ff2eAa2D0687476A7b654",
+      "txHash": "0x2a5f4d51899fc724e5ec11e689e92c7c2eb72fe841720eae6f058aa52e5ccbd4",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:169"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:111"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_array(t_uint256)40_storage",
+            "contract": "AddressesMainnet",
+            "src": "contracts\\Dependencies\\AddressesMainnet.sol:29"
+          },
+          {
+            "label": "baseRate",
+            "offset": 0,
+            "slot": "291",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:39"
+          },
+          {
+            "label": "lastFeeOperationTime",
+            "offset": 0,
+            "slot": "292",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:42"
+          },
+          {
+            "label": "Vessels",
+            "offset": 0,
+            "slot": "293",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14953_storage))",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:45"
+          },
+          {
+            "label": "totalStakes",
+            "offset": 0,
+            "slot": "294",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:47"
+          },
+          {
+            "label": "totalStakesSnapshot",
+            "offset": 0,
+            "slot": "295",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:50"
+          },
+          {
+            "label": "totalCollateralSnapshot",
+            "offset": 0,
+            "slot": "296",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:53"
+          },
+          {
+            "label": "L_Colls",
+            "offset": 0,
+            "slot": "297",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:63"
+          },
+          {
+            "label": "L_Debts",
+            "offset": 0,
+            "slot": "298",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:64"
+          },
+          {
+            "label": "rewardSnapshots",
+            "offset": 0,
+            "slot": "299",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)22160_storage))",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:67"
+          },
+          {
+            "label": "VesselOwners",
+            "offset": 0,
+            "slot": "300",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:70"
+          },
+          {
+            "label": "lastCollError_Redistribution",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:73"
+          },
+          {
+            "label": "lastDebtError_Redistribution",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:74"
+          },
+          {
+            "label": "isSetupInitialized",
+            "offset": 0,
+            "slot": "303",
+            "type": "t_bool",
+            "contract": "VesselManager",
+            "src": "contracts\\VesselManager.sol:76"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)40_storage": {
+            "label": "uint256[40]",
+            "numberOfBytes": "1280"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_enum(Status)14861": {
+            "label": "enum IVesselManager.Status",
+            "members": [
+              "nonExistent",
+              "active",
+              "closedByOwner",
+              "closedByLiquidation",
+              "closedByRedemption"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(RewardSnapshot)22160_storage))": {
+            "label": "mapping(address => mapping(address => struct VesselManager.RewardSnapshot))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Vessel)14953_storage))": {
+            "label": "mapping(address => mapping(address => struct IVesselManager.Vessel))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(RewardSnapshot)22160_storage)": {
+            "label": "mapping(address => struct VesselManager.RewardSnapshot)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Vessel)14953_storage)": {
+            "label": "mapping(address => struct IVesselManager.Vessel)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(RewardSnapshot)22160_storage": {
+            "label": "struct VesselManager.RewardSnapshot",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "debt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Vessel)14953_storage": {
+            "label": "struct IVesselManager.Vessel",
+            "members": [
+              {
+                "label": "debt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "coll",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stake",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(Status)14861",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "arrayIndex",
+                "type": "t_uint128",
+                "offset": 1,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
     }
   }
 }
