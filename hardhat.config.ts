@@ -71,8 +71,8 @@ module.exports = {
 		// 	accounts: accountsList,
 		// 	chainId: 42161,
 		// 	forking: {
-		// 		url: "https://arb1.arbitrum.io/rpc",
-		// 		blockNumber: 133331300,
+		// 		url: `https://arbitrum-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 145845570,
 		// 	},
 		// },
 		localhost: {
