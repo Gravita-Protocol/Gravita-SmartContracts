@@ -6,19 +6,29 @@ const { ethers } = require("hardhat")
 const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 
 // Setup:
-const QUEUE_EXPIRATION_HOURS = 24;
 const TIMELOCK_ADDRESS = "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc" // Mainnet::Timelock
-const TARGET_ADDRESS = "0x89F1ecCF2644902344db02788A790551Bb070351" // Mainnet::PriceFeed
-const METHOD_SIGNATURE = "setOracle(address,address,uint8,uint256,bool,bool)"
-const METHOD_ARG_TYPES = ["address","address","uint8","uint256","bool","bool"]
+const TARGET_ADDRESS = "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53" // Mainnet::AdminContract
+
+// const METHOD_SIGNATURE = "addNewCollateral(address,uint256,uint256)"
+// const METHOD_ARG_TYPES = ["address","uint256","uint256"]
+// const METHOD_ARG_VALUES = ["0xA35b1B31Ce002FBF2058D22F30f95D405200A15b","200000000000000000000",18]
+
+const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
+const METHOD_ARG_TYPES = ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"]
 const METHOD_ARG_VALUES = [
-	"0xf951E335afb289353dc249e82926178EaC7DEd78",
-	"0x0704eEc81ea7CF98Aa4A400c65DC4ED5933bddf7",
-	0,
-	25_200,
-	false,
-	false
+	"0xA35b1B31Ce002FBF2058D22F30f95D405200A15b",
+	"5000000000000000", // borrowingFee
+	"1400000000000000000", // ccr
+	"1250000000000000000", // mcr
+	"2000000000000000000000", // minNetDebt
+	"1000000000000000000000000", // mintCap
+	"200", // percentDivisor
+	"5000000000000000", // redemptionFeeFloor
 ]
+
+// const METHOD_SIGNATURE = "setRedemptionBlockTimestamp(address,uint256)"
+// const METHOD_ARG_TYPES = ["address","uint256"]
+// const METHOD_ARG_VALUES = ["0xA35b1B31Ce002FBF2058D22F30f95D405200A15b","1695859199"]
 
 main()
 	.then(() => process.exit(0))
@@ -124,7 +134,7 @@ async function getTimelockContract() {
 
 async function calcETA(timelockContract) {
 	const delay = Number(await timelockContract.delay())
-	return (await getBlockTimestamp()) + delay + QUEUE_EXPIRATION_HOURS * 3_600 // add x hours for multisigning
+	return (await getBlockTimestamp()) + delay + 24 * 3_600 // add 24h for multisigning
 }
 
 async function getBlockTimestamp() {

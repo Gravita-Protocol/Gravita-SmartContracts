@@ -29,6 +29,9 @@ task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testne
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
+task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
+)
 
 module.exports = {
 	paths: {
@@ -65,11 +68,13 @@ module.exports = {
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
 		},
+		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
 		// 	accounts: accountsList,
+		// 	chainId: 42161,
 		// 	forking: {
-		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-		// 		blockNumber: 17835000,
+		// 		url: `https://arbitrum-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 145845570,
 		// 	},
 		// },
 		localhost: {
@@ -82,6 +87,10 @@ module.exports = {
 		},
 		arbitrum_goerli: {
 			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		arbitrum: {
+			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
@@ -107,3 +116,4 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
+

@@ -14,6 +14,7 @@ export enum DeploymentTarget {
 	ArbitrumGoerliTestnet = "arbitrum-goerli",
 	OptimismGoerliTestnet = "optimism-goerli",
 	Mainnet = "mainnet",
+	Arbitrum = "arbitrum",
 }
 
 /**
@@ -39,10 +40,10 @@ export class CoreDeployer {
 		this.deployerWallet = new Wallet(process.env.DEPLOYER_PRIVATEKEY, this.hre.ethers.provider)
 	}
 
-	isTestnetDeployment = () => this.targetNetwork != DeploymentTarget.Mainnet
+	isTestnetDeployment = () => this.targetNetwork != DeploymentTarget.Mainnet && this.targetNetwork != DeploymentTarget.Arbitrum
 	isLocalhostDeployment = () => this.targetNetwork == DeploymentTarget.Localhost
 	isLayer2Deployment = () =>
-		[DeploymentTarget.ArbitrumGoerliTestnet, DeploymentTarget.OptimismGoerliTestnet].includes(this.targetNetwork)
+		[DeploymentTarget.Arbitrum, DeploymentTarget.ArbitrumGoerliTestnet, DeploymentTarget.OptimismGoerliTestnet].includes(this.targetNetwork)
 
 	/**
 	 * Main function that is invoked by the deployment process.
@@ -359,7 +360,7 @@ export class CoreDeployer {
 					coll.address,
 					coll.oracleAddress,
 					oracleProviderType,
-					coll.oracleTimeoutMinutes,
+					coll.oracleTimeoutSeconds,
 					coll.oracleIsEthIndexed,
 					isFallback
 				)
@@ -440,8 +441,7 @@ export class CoreDeployer {
 		this.deployerBalance = await this.hre.ethers.provider.getBalance(this.deployerWallet.address)
 		const cost = prevBalance ? this.hre.ethers.utils.formatUnits(prevBalance.sub(this.deployerBalance)) : 0
 		console.log(
-			`${this.deployerWallet.address} Balance: ${this.hre.ethers.utils.formatUnits(this.deployerBalance)} ${
-				cost ? `(Deployment cost: ${cost})` : ""
+			`${this.deployerWallet.address} Balance: ${this.hre.ethers.utils.formatUnits(this.deployerBalance)} ${cost ? `(Deployment cost: ${cost})` : ""
 			}`
 		)
 	}
@@ -490,7 +490,7 @@ export class CoreDeployer {
 			const contract = contracts[name]
 			try {
 				name = await contract.NAME()
-			} catch (e) {}
+			} catch (e) { }
 			console.log(`Contract deployed: ${contract.address} -> ${name}`)
 		}
 	}

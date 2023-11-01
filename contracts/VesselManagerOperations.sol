@@ -791,6 +791,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 
 		// Get the debtToken lot of equivalent value in USD
 		singleRedemption.collLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
+
 		// Apply redemption softening
 		singleRedemption.collLot = (singleRedemption.collLot * redemptionSofteningParam) / PERCENTAGE_PRECISION;
 
