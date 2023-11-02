@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.19;
 
+pragma abicoder v2;
+
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -13,6 +15,11 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "../Dependencies/External/OpenZeppelin5/ERC4626.sol";
 
+/**
+ * @notice This is an ERC-4626 (Tokenized Vault) specialized contract that charges an ongoing interest rate on the 
+ *         underlying deposited asset. The accruing payable interest amount is recalculated whenever the vault balance 
+ *         changes (upon each deposit/withdrawal) and can be collected at any time to a predefined destination address.
+ */
 contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, ERC4626 {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +82,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		require(_interestRateInBPS <= MAX_INTEREST_RATE_IN_BPS, "Interest > Maximum");
 		uint256 newInterestRatePerSecond = (INTEREST_RATE_PRECISION * _interestRateInBPS) / (10_000 * SECONDS_IN_ONE_YEAR);
 		if (newInterestRatePerSecond != interestRatePerSecond) {
-			_accountForInterestDue();
+			accountForInterestDue();
 			interestRatePerSecond = newInterestRatePerSecond;
 			emit InterestRateUpdated(_interestRateInBPS);
 		}
@@ -95,20 +102,32 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	// Public functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	function depositAssets(uint256 assets) external nonReentrant {
-		require(assets > 0, "Deposit amount must be greater than 0");
-		_accountForInterestDue();
-		ERC4626.deposit(assets, msg.sender);
+	function depositAssets(uint256 _assets) external nonReentrant {
+		require(_assets > 0, "Deposit amount must be greater than 0");
+		accountForInterestDue();
+		ERC4626.deposit(_assets, msg.sender);
 	}
 
-	function withdrawShares(uint256 shares) external nonReentrant {
-		require(shares > 0, "Withdrawal amount must be greater than 0");
-		_accountForInterestDue();
-		ERC4626.redeem(shares, msg.sender, msg.sender);
+	function withdrawShares(uint256 _shares) external nonReentrant {
+		require(_shares > 0, "Withdrawal amount must be greater than 0");
+		accountForInterestDue();
+		ERC4626.redeem(_shares, msg.sender, msg.sender);
+	}
+
+	function accountForInterestDue() public {
+		uint256 _lastInterestPayoutTimestamp = lastInterestPayoutTimestamp;
+		if (_lastInterestPayoutTimestamp == block.timestamp) {
+			return;
+		}
+		uint256 _interestRatePerSecond = interestRatePerSecond;
+		uint256 _interestFactor = _interestRatePerSecond * (block.timestamp - _lastInterestPayoutTimestamp);
+		uint256 _interestDue = Math.mulDiv(totalAssets(), _interestFactor, INTEREST_RATE_PRECISION);
+		payableInterestAmount += _interestDue;
+		lastInterestPayoutTimestamp = block.timestamp;
 	}
 
 	function collectInterest() external nonReentrant {
-		_accountForInterestDue();
+		accountForInterestDue();
 		uint256 payableInterestAmountCached = payableInterestAmount;
 		require(payableInterestAmountCached > 0, "Nothing to collect");
 		IERC20Upgradeable(asset()).safeTransfer(interestReceiverAddress, payableInterestAmountCached);
@@ -118,25 +137,14 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Private/helper functions
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	function _accountForInterestDue() internal {
-		uint256 lastInterestPayoutTimestampCached = lastInterestPayoutTimestamp;
-		if (lastInterestPayoutTimestampCached == block.timestamp) {
-			return;
-		}
-		uint256 interestRatePerSecondCached = interestRatePerSecond;
-		uint256 interestFactor = interestRatePerSecondCached * (block.timestamp - lastInterestPayoutTimestampCached);
-		uint256 interestDue = Math.mulDiv(totalAssets(), interestFactor, INTEREST_RATE_PRECISION);
-		payableInterestAmount += interestDue;
-		lastInterestPayoutTimestamp = block.timestamp;
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ERC4626 overriden functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	/**
+	 * Returns the net available assets in the vault, accounting for the accrued interest amount.
+	 * @dev The pending payable interest amount can become outdated; for increased precision, calling 
+	 *      `accountForInterestDue()` is necessary beforehand. 
+	 */
 	function totalAssets() public view override returns (uint256) {
 		return ERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
 	}

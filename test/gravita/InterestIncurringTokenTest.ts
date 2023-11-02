@@ -16,12 +16,12 @@ const bn = (v: any) => ethers.utils.parseEther(v.toString())
 
 describe("InterestIncurringToken", async () => {
 	let snapshotId: number, initialSnapshotId: number
-	let alice: string, bob: string, whale: string, deployer: string, treasury: string
+	let alice: string, bob: string, carol: string, treasury: string
 	let asset: any, token: any
 	let interestRate
 
 	before(async () => {
-		;([alice, bob, whale, treasury] = (await ethers.getSigners()).map(signer => signer.address))
+		;([alice, bob, carol, treasury] = (await ethers.getSigners()).map(signer => signer.address))
 
 		interestRate = 200 // 2%
 		asset = await ERC20Mock.new("Mock ERC20", "MCK", 18)
@@ -45,19 +45,27 @@ describe("InterestIncurringToken", async () => {
 	it("depositAndWithdraw()", async () => {
 		const assetAmountAlice = bn(100_000)
 		const assetAmountBob = bn(200_000)
+		const assetAmountCarol = bn(300_000)
 		await asset.mint(alice, assetAmountAlice)
 		await asset.mint(bob, assetAmountBob)
+		await asset.mint(carol, assetAmountCarol)
 		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
 		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
+		console.log(`Carol's assets: ${f(await asset.balanceOf(carol))}`)
+		console.log(`Approving...`)
 		await asset.approve(token.address, MaxUint256, { from: alice })
 		await asset.approve(token.address, MaxUint256, { from: bob })
+		await asset.approve(token.address, MaxUint256, { from: carol })
 		console.log(`Depositing...`)
 		await token.depositAssets(assetAmountAlice, { from: alice })
 		await token.depositAssets(assetAmountBob, { from: bob })
+		await token.depositAssets(assetAmountCarol, { from: carol })
 		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
 		console.log(`Alice's shares: ${f(await token.balanceOf(alice))}`)
 		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
 		console.log(`Bob's shares: ${f(await token.balanceOf(bob))}`)
+		console.log(`Carol's assets: ${f(await asset.balanceOf(carol))}`)
+		console.log(`Carol's shares: ${f(await token.balanceOf(carol))}`)
 		console.log(`... one year goes by ...`)
 		await time.increase(365 * 86_400)
 		console.log(`Collecting...`)
@@ -67,10 +75,13 @@ describe("InterestIncurringToken", async () => {
 		console.log(`Withdrawing...`)
 		await token.withdrawShares(await token.balanceOf(alice), { from: alice })
 		await token.withdrawShares(await token.balanceOf(bob), { from: bob })
+		await token.withdrawShares(await token.balanceOf(carol), { from: carol })
 		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
 		console.log(`Alice's shares: ${f(await token.balanceOf(alice))}`)
 		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
 		console.log(`Bob's shares: ${f(await token.balanceOf(bob))}`)
+		console.log(`Carol's assets: ${f(await asset.balanceOf(carol))}`)
+		console.log(`Carol's shares: ${f(await token.balanceOf(carol))}`)
 	})
 })
 
