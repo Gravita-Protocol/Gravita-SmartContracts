@@ -1,15 +1,17 @@
 {
-    "compilerOptions": {
-      "target": "es5",
-      "module": "Node16",
-      "lib": ["es2017", "es7", "es6", "dom"],
-      "declaration": true,
-      "outDir": "build",
-      "strict": true,
-      "esModuleInterop": true
-    },
-    "exclude": [
-      "node_modules",
-      "build"
-    ]
-  }
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "strict": true,
+    "rootDirs": ["./src", "./scripts", "./test/gravita-fork", "./test/gravita"],
+    "esModuleInterop": true,
+    "types": ["node"]
+  },
+  "exclude": ["node_modules"],
+  "include": ["./test", "./src", "./scripts"],
+  "files": ["./hardhat.config.ts"]
+}
