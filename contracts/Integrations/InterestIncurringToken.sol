@@ -16,8 +16,8 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Dependencies/External/OpenZeppelin5/ERC4626.sol";
 
 /**
- * @notice This is an ERC-4626 (Tokenized Vault) specialized contract that charges an ongoing interest rate on the 
- *         underlying deposited asset. The accruing payable interest amount is recalculated whenever the vault balance 
+ * @notice This is an ERC-4626 (Tokenized Vault) specialized contract that charges an ongoing interest rate on the
+ *         underlying deposited asset. The accruing payable interest amount is recalculated whenever the vault balance
  *         changes (upon each deposit/withdrawal) and can be collected at any time to a predefined destination address.
  */
 contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, ERC4626 {
@@ -77,6 +77,10 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		_setInterestRate(_interestRateInBPS);
 	}
 
+	function setInterestReceiverAddress(address _interestReceiverAddress) external onlyOwner {
+		_setInterestReceiverAddress(_interestReceiverAddress);
+	}
+
 	function _setInterestRate(uint256 _interestRateInBPS) internal {
 		require(_interestRateInBPS >= MIN_INTEREST_RATE_IN_BPS, "Interest < Minimum");
 		require(_interestRateInBPS <= MAX_INTEREST_RATE_IN_BPS, "Interest > Maximum");
@@ -86,10 +90,6 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 			interestRatePerSecond = newInterestRatePerSecond;
 			emit InterestRateUpdated(_interestRateInBPS);
 		}
-	}
-
-	function setInterestReceiverAddress(address _interestReceiverAddress) external onlyOwner {
-		_setInterestReceiverAddress(_interestReceiverAddress);
 	}
 
 	function _setInterestReceiverAddress(address _interestReceiverAddress) internal {
@@ -102,18 +102,9 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	// Public functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	function depositAssets(uint256 _assets) external nonReentrant {
-		require(_assets > 0, "Deposit amount must be greater than 0");
-		accountForInterestDue();
-		ERC4626.deposit(_assets, msg.sender);
-	}
-
-	function withdrawShares(uint256 _shares) external nonReentrant {
-		require(_shares > 0, "Withdrawal amount must be greater than 0");
-		accountForInterestDue();
-		ERC4626.redeem(_shares, msg.sender, msg.sender);
-	}
-
+	/**
+	 * @notice Updates the payable accrued interest amount since the last interest calculation.
+	 */
 	function accountForInterestDue() public {
 		uint256 _lastInterestPayoutTimestamp = lastInterestPayoutTimestamp;
 		if (_lastInterestPayoutTimestamp == block.timestamp) {
@@ -126,6 +117,10 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		lastInterestPayoutTimestamp = block.timestamp;
 	}
 
+	/**
+	 * @notice Calculates accrued interest since the last payment and transfers the resulting amount to a previously 
+	 *         defined destination address.
+	 */
 	function collectInterest() external nonReentrant {
 		accountForInterestDue();
 		uint256 payableInterestAmountCached = payableInterestAmount;
@@ -136,39 +131,53 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		emit InterestCollected(payableInterestAmountCached);
 	}
 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ERC4626 overriden functions
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @inheritdoc IERC4626
+	function deposit(uint256 _assets, address _receiver) public override nonReentrant returns (uint256) {
+		require(_assets > 0, "Deposit amount must be greater than 0");
+		accountForInterestDue();
+		return ERC4626.deposit(_assets, _receiver);
+	}
+
+	/// @inheritdoc IERC4626
+	function mint(uint256 _shares, address _receiver) public override nonReentrant returns (uint256) {
+		require(_shares > 0, "Mint amount must be greater than 0");
+		accountForInterestDue();
+		return ERC4626.mint(_shares, _receiver);
+	}
+
+	/// @inheritdoc IERC4626
+	function redeem(uint256 _shares, address _receiver, address _owner) public override nonReentrant returns (uint256) {
+		require(_shares > 0, "Redemption amount must be greater than 0");
+		accountForInterestDue();
+		return ERC4626.redeem(_shares, _receiver, _owner);
+	}
+
+	/// @inheritdoc IERC4626
+	function withdraw(
+		uint256 _assets,
+		address _receiver,
+		address _owner
+	) public override nonReentrant returns (uint256) {
+		require(_assets > 0, "Withdrawal amount must be greater than 0");
+		accountForInterestDue();
+		return ERC4626.withdraw(_assets, _receiver, _owner);
+	}
 
 	/**
-	 * Returns the net available assets in the vault, accounting for the accrued interest amount.
-	 * @dev The pending payable interest amount can become outdated; for increased precision, calling 
-	 *      `accountForInterestDue()` is necessary beforehand. 
+	 * @notice Returns the net available assets in the vault, accounting for the accrued interest amount.
+	 * @dev The pending payable interest amount can become outdated; for increased precision, calling
+	 *      `accountForInterestDue()` is necessary beforehand.
 	 */
 	function totalAssets() public view override returns (uint256) {
 		return ERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
 	}
 
-	function redeem(uint256, address, address) public pure override returns (uint256) {
-		revert("Not implemented");
-	}
-
-	function withdraw(uint256, address, address) public pure override returns (uint256) {
-		revert("Not implemented");
-	}
-
-	function mint(uint256, address) public pure override returns (uint256) {
-		revert("Not implemented");
-	}
-
-	function deposit(uint256, address) public pure override returns (uint256) {
-		revert("Not implemented");
-	}
-
+	/// @dev This function is necessary for the compiler to resolve dual-inheritance determinism.
 	function _msgSender() internal view override(Context, ContextUpgradeable) returns (address) {
 		return msg.sender;
 	}
 
+	/// @dev This function is necessary for the compiler to resolve dual-inheritance determinism.
 	function _msgData() internal pure override(Context, ContextUpgradeable) returns (bytes calldata) {
 		return msg.data;
 	}

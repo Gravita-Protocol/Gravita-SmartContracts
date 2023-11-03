@@ -21,7 +21,7 @@ describe("InterestIncurringToken", async () => {
 	let interestRate
 
 	before(async () => {
-		;([alice, bob, carol, treasury] = (await ethers.getSigners()).map(signer => signer.address))
+		;[alice, bob, carol, treasury] = (await ethers.getSigners()).map(signer => signer.address)
 
 		interestRate = 200 // 2%
 		asset = await ERC20Mock.new("Mock ERC20", "MCK", 18)
@@ -57,9 +57,9 @@ describe("InterestIncurringToken", async () => {
 		await asset.approve(token.address, MaxUint256, { from: bob })
 		await asset.approve(token.address, MaxUint256, { from: carol })
 		console.log(`Depositing...`)
-		await token.depositAssets(assetAmountAlice, { from: alice })
-		await token.depositAssets(assetAmountBob, { from: bob })
-		await token.depositAssets(assetAmountCarol, { from: carol })
+		await token.deposit(assetAmountAlice, alice, { from: alice })
+		await token.deposit(assetAmountBob, bob, { from: bob })
+		await token.deposit(assetAmountCarol, carol, { from: carol })
 		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
 		console.log(`Alice's shares: ${f(await token.balanceOf(alice))}`)
 		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
@@ -73,9 +73,9 @@ describe("InterestIncurringToken", async () => {
 		console.log(`Treasury's assets: ${f(await asset.balanceOf(treasury))}`)
 		console.log(`Treasury's shares: ${f(await token.balanceOf(treasury))}`)
 		console.log(`Withdrawing...`)
-		await token.withdrawShares(await token.balanceOf(alice), { from: alice })
-		await token.withdrawShares(await token.balanceOf(bob), { from: bob })
-		await token.withdrawShares(await token.balanceOf(carol), { from: carol })
+		await token.redeem(await token.balanceOf(alice), alice, alice, { from: alice })
+		await token.redeem(await token.balanceOf(bob), bob, bob, { from: bob })
+		await token.redeem(await token.balanceOf(carol), carol, carol, { from: carol })
 		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
 		console.log(`Alice's shares: ${f(await token.balanceOf(alice))}`)
 		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
