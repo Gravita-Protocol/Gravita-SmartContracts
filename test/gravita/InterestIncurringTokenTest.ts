@@ -85,7 +85,7 @@ describe("InterestIncurringToken", async () => {
 		console.log(`Carol's shares: ${f(await token.balanceOf(carol))}`)
 	})
 
-	it.only("50% interest rate, shares should reflect discounts", async () => {
+	it("50% interest rate, shares should reflect discounts", async () => {
 		const assetAmountAlice = bn(100_000)
 		const assetAmountBob = bn(100_000)
 		await asset.mint(alice, assetAmountAlice)

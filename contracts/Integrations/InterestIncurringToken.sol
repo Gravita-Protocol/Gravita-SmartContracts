@@ -12,6 +12,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "../Dependencies/External/OpenZeppelin5/ERC4626.sol";
+import "hardhat/console.sol";
 
 /**
  * @notice This is an ERC-4626 (Tokenized Vault) specialized contract that charges an ongoing interest rate on the
@@ -105,28 +106,26 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	 */
 	function accountForInterestDue() public {
 		uint256 _lastInterestPayoutTimestamp = lastInterestPayoutTimestamp;
-		if (_lastInterestPayoutTimestamp == block.timestamp) {
-			return;
+		if (_lastInterestPayoutTimestamp != block.timestamp) {
+			uint256 _payableInterestAmount = payableInterestAmount;
+			uint256 _netTotalAssets = ERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
+			payableInterestAmount = _payableInterestAmount + _calcInterestDue(_netTotalAssets, _lastInterestPayoutTimestamp);
+			lastInterestPayoutTimestamp = block.timestamp;
 		}
-		uint256 _interestRatePerSecond = interestRatePerSecond;
-		uint256 _interestFactor = _interestRatePerSecond * (block.timestamp - _lastInterestPayoutTimestamp);
-		uint256 _interestDue = Math.mulDiv(totalAssets(), _interestFactor, INTEREST_RATE_PRECISION);
-		payableInterestAmount += _interestDue;
-		lastInterestPayoutTimestamp = block.timestamp;
 	}
 
 	/**
-	 * @notice Calculates accrued interest since the last payment and transfers the resulting amount to a previously 
+	 * @notice Calculates accrued interest since the last payment and transfers the resulting amount to a previously
 	 *         defined destination address.
 	 */
 	function collectInterest() external nonReentrant {
 		accountForInterestDue();
-		uint256 payableInterestAmountCached = payableInterestAmount;
-		require(payableInterestAmountCached > 0, "Nothing to collect");
-		IERC20Upgradeable(asset()).safeTransfer(interestReceiverAddress, payableInterestAmountCached);
+		uint256 _payableInterestAmount = payableInterestAmount;
+		require(_payableInterestAmount > 0, "Nothing to collect");
+		IERC20Upgradeable(asset()).safeTransfer(interestReceiverAddress, _payableInterestAmount);
 		payableInterestAmount = 0;
 		lastInterestPayoutTimestamp = block.timestamp;
-		emit InterestCollected(payableInterestAmountCached);
+		emit InterestCollected(_payableInterestAmount);
 	}
 
 	/// @inheritdoc IERC4626
@@ -151,11 +150,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	}
 
 	/// @inheritdoc IERC4626
-	function withdraw(
-		uint256 _assets,
-		address _receiver,
-		address _owner
-	) public override nonReentrant returns (uint256) {
+	function withdraw(uint256 _assets, address _receiver, address _owner) public override nonReentrant returns (uint256) {
 		require(_assets > 0, "Withdrawal amount must be greater than 0");
 		accountForInterestDue();
 		return ERC4626.withdraw(_assets, _receiver, _owner);
@@ -163,11 +158,23 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 
 	/**
 	 * @notice Returns the net available assets in the vault, accounting for the accrued interest amount.
-	 * @dev The pending payable interest amount can become outdated; for increased precision, calling
-	 *      `accountForInterestDue()` is necessary beforehand.
 	 */
-	function totalAssets() public view override returns (uint256) {
-		return ERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
+	function totalAssets() public view override returns (uint256 _netTotalAssets) {
+		uint256 _payableInterestAmount = payableInterestAmount;
+		_netTotalAssets = ERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
+		uint256 _lastInterestPayoutTimestamp = lastInterestPayoutTimestamp;
+		if (_lastInterestPayoutTimestamp != block.timestamp) {
+			_netTotalAssets -= _calcInterestDue(_netTotalAssets, _lastInterestPayoutTimestamp);
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Internal/helper functions
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	function _calcInterestDue(uint256 _amount, uint256 _lastInterestPayoutTimestamp) internal view returns (uint256) {
+		uint256 _interestFactor = interestRatePerSecond * (block.timestamp - _lastInterestPayoutTimestamp);
+		return Math.mulDiv(_amount, _interestFactor, INTEREST_RATE_PRECISION);
 	}
 
 	/// @dev This function is necessary for the compiler to resolve dual-inheritance determinism.
@@ -184,8 +191,8 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	// Upgrade functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	function authorizeUpgrade(address newImplementation) public {
-		_authorizeUpgrade(newImplementation);
+	function authorizeUpgrade(address _newImplementation) public {
+		_authorizeUpgrade(_newImplementation);
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
