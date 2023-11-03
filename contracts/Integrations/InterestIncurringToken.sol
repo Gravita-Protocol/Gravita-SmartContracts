@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.19;
 
-pragma abicoder v2;
-
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -37,7 +35,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	uint256 constant INTEREST_RATE_PRECISION = 1e27;
 	uint256 constant SECONDS_IN_ONE_YEAR = 365 days;
 	uint256 public constant MIN_INTEREST_RATE_IN_BPS = 50; // 0,5%
-	uint256 public constant MAX_INTEREST_RATE_IN_BPS = 500; // 5%
+	uint256 public constant MAX_INTEREST_RATE_IN_BPS = 5000; // 50%
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// State

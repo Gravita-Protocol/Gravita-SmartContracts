@@ -26,6 +26,7 @@ describe("InterestIncurringToken", async () => {
 		interestRate = 200 // 2%
 		asset = await ERC20Mock.new("Mock ERC20", "MCK", 18)
 		token = await InterestIncurringToken.new(asset.address, "InterestToken", "INTTKN", treasury, interestRate)
+		await token.initialize()
 
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
@@ -42,7 +43,7 @@ describe("InterestIncurringToken", async () => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
 	})
 
-	it("depositAndWithdraw()", async () => {
+	it("deposit and withdraw happy path", async () => {
 		const assetAmountAlice = bn(100_000)
 		const assetAmountBob = bn(200_000)
 		const assetAmountCarol = bn(300_000)
@@ -82,6 +83,30 @@ describe("InterestIncurringToken", async () => {
 		console.log(`Bob's shares: ${f(await token.balanceOf(bob))}`)
 		console.log(`Carol's assets: ${f(await asset.balanceOf(carol))}`)
 		console.log(`Carol's shares: ${f(await token.balanceOf(carol))}`)
+	})
+
+	it.only("50% interest rate, shares should reflect discounts", async () => {
+		const assetAmountAlice = bn(100_000)
+		const assetAmountBob = bn(100_000)
+		await asset.mint(alice, assetAmountAlice)
+		await asset.mint(bob, assetAmountBob)
+		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
+		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
+		console.log(`Approving...`)
+		await asset.approve(token.address, MaxUint256, { from: alice })
+		await asset.approve(token.address, MaxUint256, { from: bob })
+		console.log(`Setting interest rate to 50%`)
+		await token.setInterestRate(5000)
+		console.log(`Alice deposits...`)
+		await token.deposit(assetAmountAlice, alice, { from: alice })
+		console.log(`... one year goes by ...`)
+		await time.increase(365 * 86_400)
+		console.log(`Bob deposits...`)
+		await token.deposit(assetAmountBob, bob, { from: bob })
+		console.log(`Alice's assets: ${f(await asset.balanceOf(alice))}`)
+		console.log(`Alice's shares: ${f(await token.balanceOf(alice))}`)
+		console.log(`Bob's assets: ${f(await asset.balanceOf(bob))}`)
+		console.log(`Bob's shares: ${f(await token.balanceOf(bob))}`)
 	})
 })
 

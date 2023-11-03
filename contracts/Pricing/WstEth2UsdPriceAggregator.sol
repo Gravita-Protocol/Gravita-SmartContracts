@@ -10,7 +10,7 @@ interface IWstETH {
 	function stEthPerToken() external view returns (uint256);
 }
 
-/*
+/**
  * @notice Returns the USD price for 1 wstETH.
  *
  * @dev Queries the wstETH token for its stETH value/rate; then queries the stETH:USD oracle for the price, and
