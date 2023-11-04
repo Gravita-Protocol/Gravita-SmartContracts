@@ -122,9 +122,9 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		accountForInterestDue();
 		uint256 _payableInterestAmount = payableInterestAmount;
 		require(_payableInterestAmount > 0, "Nothing to collect");
-		IERC20Upgradeable(asset()).safeTransfer(interestReceiverAddress, _payableInterestAmount);
 		payableInterestAmount = 0;
 		lastInterestPayoutTimestamp = block.timestamp;
+		IERC20Upgradeable(asset()).safeTransfer(interestReceiverAddress, _payableInterestAmount);
 		emit InterestCollected(_payableInterestAmount);
 	}
 

@@ -110,6 +110,10 @@ describe("InterestIncurringToken", async () => {
 	})
 })
 
+it("transfer assets directly (without calling deposit/mint functions)", async () => {
+	
+})
+
 function assertIsApproximatelyEqual(x: any, y: any, error = 1_000) {
 	const diff = Math.abs(Number(x) - Number(y))
 	assert.isAtMost(diff, error)
