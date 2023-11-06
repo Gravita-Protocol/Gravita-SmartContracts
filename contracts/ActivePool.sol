@@ -112,6 +112,14 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 		if (isERC20DepositContract(_account)) {
 			IDeposit(_account).receivedERC20(_asset, _amount);
+		} else {
+			/**
+			 * If asset is being sent from ActivePool to an EOA, the amount refers to:
+			 * - Gas compensation due to a liquidator upon a liquidation;
+			 * - Redemption fee due to the treasury address;
+			 * - Redemption collateral sent to a redeemer (bot);
+			 * - Vessel closing or adjustment resulting in outgoing collateral;
+			 */
 		}
 
 		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
