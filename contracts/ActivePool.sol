@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-import "./Dependencies/SafetyTransfer.sol";
 import "./Addresses.sol";
+import "./InterestIncurringToken.sol";
+import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IActivePool.sol";
+import "./Interfaces/IInterestIncurringToken.sol";
 
 /*
  * The Active Pool holds the collaterals and debt amounts for all active vessels.
@@ -19,6 +23,7 @@ import "./Interfaces/IActivePool.sol";
  */
 contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, IActivePool, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
+	using ERC165Checker for address;
 
 	string public constant NAME = "ActivePool";
 
@@ -108,22 +113,24 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		uint256 newBalance = assetsBalances[_asset] - _amount;
 		assetsBalances[_asset] = newBalance;
 
-		IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
+		// wrapped assets need to be withdrawn from vault (unless being sent to DefaultPool)
+		bool assetNeedsWithdrawal = _asset.supportsInterface(type(IInterestIncurringToken).interfaceId) && (_account != defaultPool);
 
-		if (isERC20DepositContract(_account)) {
-			IDeposit(_account).receivedERC20(_asset, _amount);
+		if (assetNeedsWithdrawal) {
+			address _underlyingAsset = InterestIncurringToken(_asset).asset();
+			uint256 _withdrawnAmount = InterestIncurringToken(_asset).redeem(_amount, _account, address(this));
+			if (isERC20DepositContract(_account)) {
+				IDeposit(_account).receivedERC20(_underlyingAsset, _withdrawnAmount);
+			}
+			emit AssetSent(_account, _underlyingAsset, _withdrawnAmount);
 		} else {
-			/**
-			 * If asset is being sent from ActivePool to an EOA, the amount refers to:
-			 * - Gas compensation due to a liquidator upon a liquidation;
-			 * - Redemption fee due to the treasury address;
-			 * - Redemption collateral sent to a redeemer (bot);
-			 * - Vessel closing or adjustment resulting in outgoing collateral;
-			 */
+			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
+			if (isERC20DepositContract(_account)) {
+				IDeposit(_account).receivedERC20(_asset, _amount);
+			}
+			emit AssetSent(_account, _asset, safetyTransferAmount);
 		}
-
 		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
-		emit AssetSent(_account, _asset, safetyTransferAmount);
 	}
 
 	function isERC20DepositContract(address _account) private view returns (bool) {

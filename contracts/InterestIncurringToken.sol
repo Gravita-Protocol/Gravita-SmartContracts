@@ -3,6 +3,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -12,13 +13,21 @@ import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "./Dependencies/External/OpenZeppelin5/ERC4626.sol";
+import "./Interfaces/IInterestIncurringToken.sol";
 
 /**
  * @notice This is an ERC-4626 (Tokenized Vault) specialized contract that charges an ongoing interest rate on the
  *         underlying deposited asset. The accruing payable interest amount is recalculated whenever the vault balance
  *         changes (upon each deposit/withdrawal) and can be collected at any time to a predefined destination address.
  */
-contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable, ERC4626 {
+contract InterestIncurringToken is
+	IInterestIncurringToken,
+	OwnableUpgradeable,
+	UUPSUpgradeable,
+	ReentrancyGuardUpgradeable,
+	ERC4626,
+	ERC165Storage
+{
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Events
@@ -33,7 +42,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	uint256 public constant MIN_INTEREST_RATE_IN_BPS = 50; // 0,5%
-	uint256 public constant MAX_INTEREST_RATE_IN_BPS = 5000; // 50%
+	uint256 public constant MAX_INTEREST_RATE_IN_BPS = 500; // 5%
 	uint256 private constant BASIS_POINTS_DIVISOR = 10_000;
 	uint256 private constant INTEREST_RATE_PRECISION = 1e27;
 	uint256 private constant SECONDS_IN_ONE_YEAR = 365 days;
@@ -42,7 +51,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	 * @dev On L2s (where gas is cheaper), interest collection will be triggered if a timeout has been surpassed.
 	 *      On mainnet, this parameter should be set to zero to avoid imposing that cost on the user.
 	 */
-	uint256 public immutable AUTO_TRANSFER_INTERESTS_TIMEOUT;
+	uint256 public immutable AUTO_TRANSFER_INTEREST_TIMEOUT;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// State
@@ -67,11 +76,12 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		uint256 _autoTransferInterestsTimeoutSeconds
 	) ERC20(_newTokenName, _newTokenSymbol) ERC4626(_underlyingToken) {
 		require(address(_underlyingToken) != address(0), "Invalid token address");
-		AUTO_TRANSFER_INTERESTS_TIMEOUT = _autoTransferInterestsTimeoutSeconds;
+		AUTO_TRANSFER_INTEREST_TIMEOUT = _autoTransferInterestsTimeoutSeconds;
 		lastInterestAmountUpdateTimestamp = block.timestamp;
 		lastInterestPayoutTimestamp = block.timestamp;
 		_setInterestReceiverAddress(_interestReceiverAddress);
 		_setInterestRate(_interestRateInBPS);
+		_registerInterface(type(IInterestIncurringToken).interfaceId);
 	}
 
 	/**
@@ -82,11 +92,11 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 		__Ownable_init();
 	}
 
-	function setInterestRate(uint256 _interestRateInBPS) external onlyOwner {
+	function setInterestRate(uint256 _interestRateInBPS) external override onlyOwner {
 		_setInterestRate(_interestRateInBPS);
 	}
 
-	function setInterestReceiverAddress(address _interestReceiverAddress) external onlyOwner {
+	function setInterestReceiverAddress(address _interestReceiverAddress) external override onlyOwner {
 		_setInterestReceiverAddress(_interestReceiverAddress);
 	}
 
@@ -115,7 +125,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	 * @notice Calculates accrued interest since the last payment and transfers the resulting amount to a previously
 	 *         defined destination address.
 	 */
-	function collectInterest() public nonReentrant {
+	function collectInterest() public override {
 		_accountForInterestDue();
 		uint256 _payableInterestAmount = payableInterestAmount;
 		require(_payableInterestAmount != 0, "Nothing to collect");
@@ -129,7 +139,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	function deposit(uint256 _assets, address _receiver) public override nonReentrant returns (uint256) {
 		require(_assets != 0, "Deposit amount must be greater than 0");
 		_accountForInterestDue();
-		_triggerAutoTransferInterests();
+		_triggerAutoTransferInterest();
 		return ERC4626.deposit(_assets, _receiver);
 	}
 
@@ -137,7 +147,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	function mint(uint256 _shares, address _receiver) public override nonReentrant returns (uint256) {
 		require(_shares != 0, "Mint amount must be greater than 0");
 		_accountForInterestDue();
-		_triggerAutoTransferInterests();
+		_triggerAutoTransferInterest();
 		return ERC4626.mint(_shares, _receiver);
 	}
 
@@ -145,7 +155,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	function redeem(uint256 _shares, address _receiver, address _owner) public override nonReentrant returns (uint256) {
 		require(_shares != 0, "Redemption amount must be greater than 0");
 		_accountForInterestDue();
-		_triggerAutoTransferInterests();
+		_triggerAutoTransferInterest();
 		return ERC4626.redeem(_shares, _receiver, _owner);
 	}
 
@@ -153,7 +163,7 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	function withdraw(uint256 _assets, address _receiver, address _owner) public override nonReentrant returns (uint256) {
 		require(_assets != 0, "Withdrawal amount must be greater than 0");
 		_accountForInterestDue();
-		_triggerAutoTransferInterests();
+		_triggerAutoTransferInterest();
 		return ERC4626.withdraw(_assets, _receiver, _owner);
 	}
 
@@ -199,9 +209,9 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 	/**
 	 * @notice Pays out the accumulated interest if a timeout has elapsed.
 	 */
-	function _triggerAutoTransferInterests() internal {
-		if (AUTO_TRANSFER_INTERESTS_TIMEOUT != 0) {
-			if (block.timestamp - lastInterestPayoutTimestamp > AUTO_TRANSFER_INTERESTS_TIMEOUT) {
+	function _triggerAutoTransferInterest() internal {
+		if (AUTO_TRANSFER_INTEREST_TIMEOUT != 0) {
+			if (block.timestamp - lastInterestPayoutTimestamp > AUTO_TRANSFER_INTEREST_TIMEOUT) {
 				collectInterest();
 			}
 		}
@@ -227,4 +237,3 @@ contract InterestIncurringToken is OwnableUpgradeable, UUPSUpgradeable, Reentran
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
-
