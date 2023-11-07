@@ -12,6 +12,7 @@ import "./Addresses.sol";
 import "./InterestIncurringToken.sol";
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IActivePool.sol";
+import "./Interfaces/IAdminContract.sol";
 import "./Interfaces/IInterestIncurringToken.sol";
 
 /*
@@ -113,10 +114,12 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		uint256 newBalance = assetsBalances[_asset] - _amount;
 		assetsBalances[_asset] = newBalance;
 
-		// wrapped assets need to be withdrawn from vault (unless being sent to DefaultPool)
-		bool assetNeedsWithdrawal = _asset.supportsInterface(type(IInterestIncurringToken).interfaceId) && (_account != defaultPool);
+		// wrapped assets need to be withdrawn from vault (unless being sent to DefaultPool or StabilityPool)
+		bool assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringToken).interfaceId) &&
+			(_account != defaultPool) &&
+			(_account != stabilityPool);
 
-		if (assetNeedsWithdrawal) {
+		if (assetNeedsUnwrap) {
 			address _underlyingAsset = InterestIncurringToken(_asset).asset();
 			uint256 _withdrawnAmount = InterestIncurringToken(_asset).redeem(_amount, _account, address(this));
 			if (isERC20DepositContract(_account)) {
@@ -149,3 +152,4 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
+

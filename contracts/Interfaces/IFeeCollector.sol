@@ -9,6 +9,7 @@ interface IFeeCollector {
 	event FeeRecordUpdated(address borrower, address asset, uint256 from, uint256 to, uint256 amount);
 	event FeeCollected(address borrower, address asset, address collector, uint256 amount);
 	event FeeRefunded(address borrower, address asset, uint256 amount);
+	event InterestCollected(address sender, address asset, uint256 amount);
 	event RedemptionFeeCollected(address asset, uint256 amount);
 
 	// Structs ----------------------------------------------------------------------------------------------------------
@@ -50,6 +51,8 @@ interface IFeeCollector {
 	function collectFees(address[] calldata _borrowers, address[] calldata _assets) external;
 
 	function handleRedemptionFee(address _asset, uint256 _amount) external;
+
+	function transferInterestRate(address _asset, uint256 _amount) external;
 
 	function getProtocolRevenueDestination() external view returns (address);
 }

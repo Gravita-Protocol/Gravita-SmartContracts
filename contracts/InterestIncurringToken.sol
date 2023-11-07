@@ -13,6 +13,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "./Dependencies/External/OpenZeppelin5/ERC4626.sol";
+import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IInterestIncurringToken.sol";
 
 /**
@@ -51,13 +52,13 @@ contract InterestIncurringToken is
 	 * @dev On L2s (where gas is cheaper), interest collection will be triggered if a timeout has been surpassed.
 	 *      On mainnet, this parameter should be set to zero to avoid imposing that cost on the user.
 	 */
-	uint256 public immutable AUTO_TRANSFER_INTEREST_TIMEOUT;
+	uint256 public immutable INTEREST_AUTO_TRANSFER_TIMEOUT;
+    address public immutable FEE_COLLECTOR_ADDRESS;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// State
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	address public interestReceiverAddress;
 	uint256 public interestRatePerSecond;
 	uint256 public payableInterestAmount;
 	uint256 public lastInterestAmountUpdateTimestamp;
@@ -71,15 +72,16 @@ contract InterestIncurringToken is
 		ERC20 _underlyingToken,
 		string memory _newTokenName,
 		string memory _newTokenSymbol,
-		address _interestReceiverAddress,
+		address _feeCollectorAddress,
 		uint256 _interestRateInBPS,
-		uint256 _autoTransferInterestsTimeoutSeconds
+		uint256 _interestAutoTransferTimeout
 	) ERC20(_newTokenName, _newTokenSymbol) ERC4626(_underlyingToken) {
 		require(address(_underlyingToken) != address(0), "Invalid token address");
-		AUTO_TRANSFER_INTEREST_TIMEOUT = _autoTransferInterestsTimeoutSeconds;
+		require(address(_feeCollectorAddress) != address(0), "Invalid FeeCollector address");
+        FEE_COLLECTOR_ADDRESS = _feeCollectorAddress;
+		INTEREST_AUTO_TRANSFER_TIMEOUT = _interestAutoTransferTimeout;
 		lastInterestAmountUpdateTimestamp = block.timestamp;
 		lastInterestPayoutTimestamp = block.timestamp;
-		_setInterestReceiverAddress(_interestReceiverAddress);
 		_setInterestRate(_interestRateInBPS);
 		_registerInterface(type(IInterestIncurringToken).interfaceId);
 	}
@@ -96,10 +98,6 @@ contract InterestIncurringToken is
 		_setInterestRate(_interestRateInBPS);
 	}
 
-	function setInterestReceiverAddress(address _interestReceiverAddress) external override onlyOwner {
-		_setInterestReceiverAddress(_interestReceiverAddress);
-	}
-
 	function _setInterestRate(uint256 _interestRateInBPS) internal {
 		require(_interestRateInBPS >= MIN_INTEREST_RATE_IN_BPS, "Interest < Minimum");
 		require(_interestRateInBPS <= MAX_INTEREST_RATE_IN_BPS, "Interest > Maximum");
@@ -109,12 +107,6 @@ contract InterestIncurringToken is
 			interestRatePerSecond = newInterestRatePerSecond;
 			emit InterestRateUpdated(_interestRateInBPS);
 		}
-	}
-
-	function _setInterestReceiverAddress(address _interestReceiverAddress) internal {
-		require(_interestReceiverAddress != address(0), "Invalid interest receiver address");
-		interestReceiverAddress = _interestReceiverAddress;
-		emit InterestReceiverAddressUpdated(_interestReceiverAddress);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,8 +122,9 @@ contract InterestIncurringToken is
 		uint256 _payableInterestAmount = payableInterestAmount;
 		require(_payableInterestAmount != 0, "Nothing to collect");
 		payableInterestAmount = 0;
-		lastInterestPayoutTimestamp = block.timestamp;
-		IERC20Upgradeable(asset()).safeTransfer(interestReceiverAddress, _payableInterestAmount);
+		lastInterestPayoutTimestamp = block.timestamp;        
+		IERC20Upgradeable(asset()).approve(FEE_COLLECTOR_ADDRESS, _payableInterestAmount);
+        IFeeCollector(FEE_COLLECTOR_ADDRESS).transferInterestRate(asset(), _payableInterestAmount);
 		emit InterestCollected(_payableInterestAmount);
 	}
 
@@ -210,8 +203,8 @@ contract InterestIncurringToken is
 	 * @notice Pays out the accumulated interest if a timeout has elapsed.
 	 */
 	function _triggerAutoTransferInterest() internal {
-		if (AUTO_TRANSFER_INTEREST_TIMEOUT != 0) {
-			if (block.timestamp - lastInterestPayoutTimestamp > AUTO_TRANSFER_INTEREST_TIMEOUT) {
+		if (INTEREST_AUTO_TRANSFER_TIMEOUT != 0) {
+			if (block.timestamp - lastInterestPayoutTimestamp > INTEREST_AUTO_TRANSFER_TIMEOUT) {
 				collectInterest();
 			}
 		}

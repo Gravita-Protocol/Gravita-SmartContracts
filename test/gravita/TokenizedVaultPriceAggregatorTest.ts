@@ -67,12 +67,16 @@ describe("TokenizedVaultPriceAggregator :: 18-decimal asset", async () => {
 		await asset.mint(alice, assetAmountAlice)
 		await asset.approve(token.address, MaxUint256, { from: alice })
 		await token.deposit(assetAmountAlice, alice, { from: alice })
-    // one year goes by
-    await time.increase(365 * 86_400)
-    // expect vault price to drop by 5%
+		// one year goes by
+		await time.increase(365 * 86_400)
+		// expect vault price to drop by 5%
 		let vaultPrice = (await tokenPriceFeed.latestRoundData()).answer
-    const expectedPrice = assetPrice * .95
+		const expectedPrice = assetPrice * 0.95
 		assert.equal(expectedPrice.toString(), vaultPrice.toString())
+	})
+
+	it("transfer assets directly (without calling deposit/mint functions)", async () => {
+		// TODO
 	})
 })
 

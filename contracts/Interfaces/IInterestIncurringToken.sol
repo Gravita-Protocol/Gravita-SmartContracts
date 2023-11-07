@@ -6,7 +6,5 @@ interface IInterestIncurringToken {
   
 	function setInterestRate(uint256 _interestRateInBPS) external;
 
-	function setInterestReceiverAddress(address _interestReceiverAddress) external;
-
 	function collectInterest() external;
 }

@@ -6,11 +6,11 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
+import "./Addresses.sol";
+import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IGRVTStaking.sol";
-
-import "./Addresses.sol";
 
 contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Addresses {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -140,11 +140,24 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	 * Triggered by VesselManager.finalizeRedemption(); assumes _amount of _asset has been already transferred to
 	 * getProtocolRevenueDestination().
 	 */
-	function handleRedemptionFee(address _asset, uint256 _amount) external onlyVesselManager {
+	function handleRedemptionFee(address _asset, uint256 _amount) external override onlyVesselManager {
 		if (_routeToGRVTStaking()) {
 			IGRVTStaking(grvtStaking).increaseFee_Asset(_asset, _amount);
 		}
 		emit RedemptionFeeCollected(_asset, _amount);
+	}
+
+	/**
+	 * Unlike `handleRedemptionFee`, it does *not* assume funds have already been tranferred, and fetches them.
+	 */
+	function transferInterestRate(address _asset, uint256 _amount) external override {
+		address _destination = getProtocolRevenueDestination();
+		uint256 _safeAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
+		IERC20Upgradeable(_asset).safeTransferFrom(msg.sender, _destination, _safeAmount);
+		if (_routeToGRVTStaking()) {
+			IGRVTStaking(grvtStaking).increaseFee_Asset(_asset, _safeAmount);
+		}
+		emit InterestCollected(msg.sender, _asset, _safeAmount);
 	}
 
 	function getProtocolRevenueDestination() public view override returns (address) {
@@ -330,3 +343,4 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
+
