@@ -197,10 +197,10 @@ contract("InterestIncurringToken", async accounts => {
         const collValueAlice = bnMulDiv(vaultAmountAlice, await priceFeed.getPrice(vault.address), 1e18)
         const loanAmountAlice = bnMulDec(collValueAlice, 0.8) // 80% LTV
 		await vault.approve(borrowerOperations.address, MaxUint256, { from: alice })
-        console.log(`vaultPrice: ${f(await priceFeed.getPrice(vault.address))}`)
-        console.log(`vaultAmountAlice: ${f(vaultAmountAlice)}`)
-        console.log(`collValueAlice: ${f(collValueAlice)}`)
-        console.log(`loanAmountAlice: ${f(loanAmountAlice)}`)
+        debug && console.log(`vaultPrice: ${f(await priceFeed.getPrice(vault.address))}`)
+        debug && console.log(`vaultAmountAlice: ${f(vaultAmountAlice)}`)
+        debug && console.log(`collValueAlice: ${f(collValueAlice)}`)
+        debug && console.log(`loanAmountAlice: ${f(loanAmountAlice)}`)
 		await borrowerOperations.openVessel(vault.address, vaultAmountAlice, loanAmountAlice, AddressZero, AddressZero, {
 			from: alice,
 		})
@@ -225,21 +225,23 @@ contract("InterestIncurringToken", async accounts => {
 		assert.isFalse(await sortedVessels.contains(vault.address, alice))
 
 		// liquidator earned some underlying (unwrapped) vault asset as gas compensation (~0,5%))
-		debug && console.log(`Liquidator's assets: ${f(await erc20.balanceOf(liquidator))}`)
+		const liquidatorErc20Balance = await erc20.balanceOf(liquidator)
+		const expectedLiquidatorErc2Balance = bnMulDec(bnMulDec(assetAmountAlice, .98), .005)
+		debug && console.log(`Liquidator's erc20: ${f(liquidatorErc20Balance)} (actual)`)
+		debug && console.log(`Liquidator's erc20: ${f(expectedLiquidatorErc2Balance)} (expected)`)
+		assertIsApproximatelyEqual(liquidatorErc20Balance, expectedLiquidatorErc2Balance)
 
-        // whale earned (unwrapped vaults as erc20s) gains from his deposit in the SP
-        const gains = (await stabilityPool.getDepositorGains(whale, [vault.address, erc20.address]))
-        console.log(gains[1])
-        console.log(`SP vault whale gains: ${f(gains[1][0])}`)
-        console.log(`SP erc20 whale gains: ${f(gains[1][1])}`)
-        console.log(`SP erc20 balance: ${f(await erc20.balanceOf(stabilityPool.address))}`)
+        // whale earned vault gains from his deposit in the SP (expected to be alice's coll minus 0,5% liquidator's fee)
+        const whaleVaultGains = (await stabilityPool.getDepositorGains(whale, [vault.address]))[1][0]
+		const expectecWhaleVaultGains = bnMulDec(assetAmountAlice, .995)
+        debug && console.log(`StabilityPool whale vault gains: ${f(whaleVaultGains)} (actual)`)
+        debug && console.log(`StabilityPool whale vault gains: ${f(expectecWhaleVaultGains)} (expected)`)
+		assertIsApproximatelyEqual(whaleVaultGains, expectecWhaleVaultGains)
 
-        console.log(`${erc20.address} -> ERC20`)
-        console.log(`${vault.address} -> Vault`)
-        console.log(`${stabilityPool.address} -> StabilityPool`)
-        console.log(`${whale} -> whale`)
-        console.log(`${alice} -> alice`)
-        console.log(`${liquidator} -> liquidator`)
+		// no unwrapped erc20's should have been sent to the SP
+		const spErc20Balance = await erc20.balanceOf(stabilityPool.address)
+        debug && console.log(`StabilityPool erc20 balance: ${f(spErc20Balance)}`)
+		assert.equal("0", spErc20Balance.toString())
 	})
 })
 
