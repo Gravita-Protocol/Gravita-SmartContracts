@@ -12,6 +12,8 @@ const InterestIncurringToken = artifacts.require("InterestIncurringToken")
 const f = (v: any) => ethers.utils.commify(ethers.utils.formatEther(v.toString()))
 const bn = (v: any) => ethers.utils.parseEther(v.toString())
 
+const debug = false
+
 let contracts: any,
 	adminContract: any,
 	borrowerOperations: any,
@@ -39,7 +41,6 @@ const deploy = async (treasury: string, mintingAccounts: string[]) => {
 }
 
 contract("InterestIncurringToken", async accounts => {
-	const debug = true
 	let snapshotId: number, initialSnapshotId: number
 	const [treasury, alice, bob, carol, whale] = accounts
 	let vault: any
@@ -237,12 +238,14 @@ contract("InterestIncurringToken", async accounts => {
 		assert.equal("0", spErc20Balance.toString())
 	})
 
-	it.only("entering the vault in different timelines should maintain share/asset proportions", async () => {
+	it("entering the vault in different timelines should maintain share/asset proportions", async () => {
+		// allow for an elastic error margin of 2% - which isn't an error, but a compound interest effect
+		const errorMarginPercent = 2
 		debug && console.log(`Setting interest rate to 4%`)
 		const interestRate = 0.04
 		await vault.setInterestRate(interestRate * 100_00)
 
-		debug && console.log(`--> [alice] deposits...`)
+		debug && console.log(`[alice] deposits...`)
 		const assetAmountAlice = bn(100_000)
 		await erc20.mint(alice, assetAmountAlice)
 		await erc20.approve(vault.address, MaxUint256, { from: alice })
@@ -258,34 +261,16 @@ contract("InterestIncurringToken", async accounts => {
 		debug && console.log(`[treasury] assets: ${f(await erc20.balanceOf(treasury))}`)
 		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
 
-		debug && console.log(`--> [bob] deposits...`)
+		debug && console.log(`[bob] deposits...`)
 		const assetAmountBob = bn(100_000)
 		await erc20.mint(bob, assetAmountBob)
 		await erc20.approve(vault.address, MaxUint256, { from: bob })
 		await vault.deposit(assetAmountBob, bob, { from: bob })
 
-		debug && console.log(`[alice] shares: ${f(await vault.balanceOf(alice))}`)
-		debug && console.log(`[alice] assets: ${f(await vault.previewRedeem(await vault.balanceOf(alice)))}`)
-		debug && console.log(`[bob] shares: ${f(await vault.balanceOf(bob))}`)
-		debug && console.log(`[bob] assets: ${f(await vault.previewRedeem(await vault.balanceOf(bob)))}`)
-		debug && console.log(`[vault] shares: ${f(await vault.totalSupply())}`)
-		debug && console.log(`[vault] assets: ${f(await vault.totalAssets())}`)
-		debug && console.log(`[treasury] assets: ${f(await erc20.balanceOf(treasury))}`)
-		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
-
 		debug && console.log(`... half a year goes by ...`)
 		await time.increase(182.5 * 86_400)
 
-		debug && console.log(`[alice] shares: ${f(await vault.balanceOf(alice))}`)
-		debug && console.log(`[alice] assets: ${f(await vault.previewRedeem(await vault.balanceOf(alice)))}`)
-		debug && console.log(`[bob] shares: ${f(await vault.balanceOf(bob))}`)
-		debug && console.log(`[bob] assets: ${f(await vault.previewRedeem(await vault.balanceOf(bob)))}`)
-		debug && console.log(`[vault] shares: ${f(await vault.totalSupply())}`)
-		debug && console.log(`[vault] assets: ${f(await vault.totalAssets())}`)
-		debug && console.log(`[treasury] assets: ${f(await erc20.balanceOf(treasury))}`)
-		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
-
-		debug && console.log(`--> [carol] deposits...`)
+		debug && console.log(`[carol] deposits...`)
 		const assetAmountCarol = bn(100_000)
 		await erc20.mint(carol, assetAmountCarol)
 		await erc20.approve(vault.address, MaxUint256, { from: carol })
@@ -305,57 +290,35 @@ contract("InterestIncurringToken", async accounts => {
 		debug && console.log(`... half a year goes by ...`)
 		await time.increase(182.5 * 86_400)
 
-		debug && console.log(`[alice] shares: ${f(await vault.balanceOf(alice))}`)
-		debug && console.log(`[alice] assets: ${f(await vault.previewRedeem(await vault.balanceOf(alice)))}`)
-		debug && console.log(`[bob] shares: ${f(await vault.balanceOf(bob))}`)
-		debug && console.log(`[bob] assets: ${f(await vault.previewRedeem(await vault.balanceOf(bob)))}`)
-		debug && console.log(`[carol] shares: ${f(await vault.balanceOf(carol))}`)
-		debug && console.log(`[carol] assets: ${f(await vault.previewRedeem(await vault.balanceOf(carol)))}`)
-		debug && console.log(`[vault] shares: ${f(await vault.totalSupply())}`)
-		debug && console.log(`[vault] assets: ${f(await vault.totalAssets())}`)
-		debug && console.log(`[treasury] assets: ${f(await erc20.balanceOf(treasury))}`)
-		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
-
-		debug && console.log(`--> [alice] withdraws...`)
+		debug && console.log(`[alice] withdraws...`)
 		await vault.redeem(await vault.balanceOf(alice), alice, alice, { from: alice })
 		const finalAssetAmountAlice = await erc20.balanceOf(alice)
 		const interestRateAlice = interestRate * 1.5 // alice pays for one and a half year
 		const expectedFinalAssetAmountAlice = bnMulDec(assetAmountAlice, 1 - interestRateAlice)
 		debug && console.log(`[alice] assets: ${f(finalAssetAmountAlice)} (actual)`)
 		debug && console.log(`[alice] assets: ${f(expectedFinalAssetAmountAlice)} (expected)`)
-		assertIsApproximatelyEqual(finalAssetAmountAlice, expectedFinalAssetAmountAlice, 0.1)
+		assertIsApproximatelyEqual(finalAssetAmountAlice, expectedFinalAssetAmountAlice, errorMarginPercent)
 
-		debug && console.log(`[alice] shares: ${f(await vault.balanceOf(alice))}`)
-		debug && console.log(`[alice] assets: ${f(await vault.previewRedeem(await vault.balanceOf(alice)))}`)
-		debug && console.log(`[bob] shares: ${f(await vault.balanceOf(bob))}`)
-		debug && console.log(`[bob] assets: ${f(await vault.previewRedeem(await vault.balanceOf(bob)))}`)
-		debug && console.log(`[carol] shares: ${f(await vault.balanceOf(carol))}`)
-		debug && console.log(`[carol] assets: ${f(await vault.previewRedeem(await vault.balanceOf(carol)))}`)
-		debug && console.log(`[vault] shares: ${f(await vault.totalSupply())}`)
-		debug && console.log(`[vault] assets: ${f(await vault.totalAssets())}`)
-		debug && console.log(`[treasury] assets: ${f(await erc20.balanceOf(treasury))}`)
-		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
-
-		debug && console.log(`--> [bob] withdraws...`)
+		debug && console.log(`[bob] withdraws...`)
 		await vault.redeem(await vault.balanceOf(bob), bob, bob, { from: bob })
 		const finalAssetAmountBob = await erc20.balanceOf(bob)
 		const interestRateBob = interestRate // bob pays for one year
 		const expectedFinalAssetAmountBob = bnMulDec(assetAmountBob, 1 - interestRateBob)
 		debug && console.log(`[bob] assets: ${f(finalAssetAmountBob)} (actual)`)
 		debug && console.log(`[bob] assets: ${f(expectedFinalAssetAmountBob)} (expected)`)
-		assertIsApproximatelyEqual(finalAssetAmountBob, expectedFinalAssetAmountBob)
+		assertIsApproximatelyEqual(finalAssetAmountBob, expectedFinalAssetAmountBob, errorMarginPercent)
 
 		debug && console.log(`... two years go by ...`)
 		await time.increase(730 * 86_400)
 
-		debug && console.log(`--> [carol] withdraws...`)
+		debug && console.log(`[carol] withdraws...`)
 		await vault.redeem(await vault.balanceOf(carol), carol, carol, { from: carol })
 		const finalAssetAmountCarol = await erc20.balanceOf(carol)
 		const interestRateCarol = interestRate * 2.5 // carol pays for two and a half years
 		const expectedFinalAssetAmountCarol = bnMulDec(assetAmountCarol, 1 - interestRateCarol)
 		debug && console.log(`[carol] assets: ${f(finalAssetAmountCarol)} (actual)`)
 		debug && console.log(`[carol] assets: ${f(expectedFinalAssetAmountCarol)} (expected)`)
-		assertIsApproximatelyEqual(finalAssetAmountCarol, expectedFinalAssetAmountCarol)
+		assertIsApproximatelyEqual(finalAssetAmountCarol, expectedFinalAssetAmountCarol, errorMarginPercent)
 
 		const finalAssetAmountTreasury = await erc20.balanceOf(treasury)
 		const expectedFinalAssetAmountTreasury = bnMulDec(assetAmountAlice, interestRateAlice)
@@ -365,9 +328,8 @@ contract("InterestIncurringToken", async accounts => {
 		debug && console.log(`[treasury] assets: ${f(finalAssetAmountTreasury)} (actual)`)
 		debug && console.log(`[treasury] assets: ${f(expectedFinalAssetAmountTreasury)} (expected)`)
 		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
-
-		assertIsApproximatelyEqual(finalAssetAmountTreasury, expectedFinalAssetAmountTreasury, 0.3)
-		// TODO understand why alice's numbers are not exact
+		
+		assertIsApproximatelyEqual(finalAssetAmountTreasury, expectedFinalAssetAmountTreasury, errorMarginPercent)
 	})
 
 	it("adjusting and closing vessel should return unwrapped collateral to borrower", async () => {
