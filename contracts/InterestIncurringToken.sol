@@ -53,7 +53,7 @@ contract InterestIncurringToken is
 	 *      On mainnet, this parameter should be set to zero to avoid imposing that cost on the user.
 	 */
 	uint256 public immutable INTEREST_AUTO_TRANSFER_TIMEOUT;
-    address public immutable FEE_COLLECTOR_ADDRESS;
+	address public immutable FEE_COLLECTOR_ADDRESS;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// State
@@ -78,12 +78,13 @@ contract InterestIncurringToken is
 	) ERC20(_newTokenName, _newTokenSymbol) ERC4626(_underlyingToken) {
 		require(address(_underlyingToken) != address(0), "Invalid token address");
 		require(address(_feeCollectorAddress) != address(0), "Invalid FeeCollector address");
-        FEE_COLLECTOR_ADDRESS = _feeCollectorAddress;
+		FEE_COLLECTOR_ADDRESS = _feeCollectorAddress;
 		INTEREST_AUTO_TRANSFER_TIMEOUT = _interestAutoTransferTimeout;
 		lastInterestAmountUpdateTimestamp = block.timestamp;
 		lastInterestPayoutTimestamp = block.timestamp;
 		_setInterestRate(_interestRateInBPS);
 		_registerInterface(type(IInterestIncurringToken).interfaceId);
+		_underlyingToken.approve(FEE_COLLECTOR_ADDRESS, type(uint256).max);
 	}
 
 	/**
@@ -114,18 +115,25 @@ contract InterestIncurringToken is
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * @notice Calculates accrued interest since the last payment and transfers the resulting amount to a previously
-	 *         defined destination address.
+	 * @notice Calculates accrued interest since the last payment and triggers the FeeCollector contract for 
+	           collecting (transferring) the resulting amount.
 	 */
 	function collectInterest() public override {
 		_accountForInterestDue();
 		uint256 _payableInterestAmount = payableInterestAmount;
 		require(_payableInterestAmount != 0, "Nothing to collect");
 		payableInterestAmount = 0;
-		lastInterestPayoutTimestamp = block.timestamp;        
-		IERC20Upgradeable(asset()).approve(FEE_COLLECTOR_ADDRESS, _payableInterestAmount);
-        IFeeCollector(FEE_COLLECTOR_ADDRESS).transferInterestRate(asset(), _payableInterestAmount);
+		lastInterestPayoutTimestamp = block.timestamp;
+		IFeeCollector(FEE_COLLECTOR_ADDRESS).transferInterestRate(asset(), _payableInterestAmount);
 		emit InterestCollected(_payableInterestAmount);
+	}
+
+	/**
+	 * @notice Returns the interest amount available for collection.
+	 */
+	function getCollectableInterest() external view override returns (uint256) {
+		uint256 _netTotalAssets = ERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
+		return payableInterestAmount + _calcInterestDue(_netTotalAssets, lastInterestAmountUpdateTimestamp);
 	}
 
 	/// @inheritdoc IERC4626
@@ -230,3 +238,4 @@ contract InterestIncurringToken is
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
+

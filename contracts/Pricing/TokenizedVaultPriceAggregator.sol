@@ -3,23 +3,23 @@
 pragma solidity ^0.8.19;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../Dependencies/External/OpenZeppelin5/ERC4626.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "hardhat/console.sol";
+import "../Dependencies/External/OpenZeppelin5/IERC4626.sol";
 
 /**
  * @notice An aggregator that determines the price of a vault's token by considering the ratio of its shares to the 
            underlying assets.
- * @dev Assumes that the underlying asset of the vault uses 18 digits, as is the case with all Gravita's collateral.
  */
 contract TokenizedVaultPriceAggregator is AggregatorV3Interface {
+	using Math for uint256;
 	error NotImplementedException();
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Constants
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	uint256 private constant RATIO_PRECISION = 1 ether;
 	IERC4626 public immutable erc4626Vault;
 	AggregatorV3Interface public immutable vaultAssetPriceFeed;
 
@@ -57,14 +57,10 @@ contract TokenizedVaultPriceAggregator is AggregatorV3Interface {
 
 		uint256 shares = erc4626Vault.totalSupply();
 		// In case of an empty vault, just return the asset value; else, apply ratio asset/share
-		if (shares > 0) {
+		if (shares != 0) {
 			uint256 assets = erc4626Vault.totalAssets();
-			uint256 ratio = Math.mulDiv(assets, 1 ether, shares);
-			answer = int256(Math.mulDiv(uint256(answer), ratio, 1 ether));
-			console.log("assets: %s", assets);
-			console.log("shares: %s", shares);
-			console.log("ratio: %s", ratio);
-			console.log("answer: %s", uint256(answer));
+			uint256 ratio = Math.mulDiv(assets, RATIO_PRECISION, shares);
+			answer = int256(Math.mulDiv(uint256(answer), ratio, RATIO_PRECISION));
 		}
 	}
 
