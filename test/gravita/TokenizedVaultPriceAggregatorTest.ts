@@ -13,25 +13,47 @@ const InterestIncurringToken = artifacts.require("InterestIncurringToken")
 const TokenizedVaultPriceAggregator = artifacts.require("TokenizedVaultPriceAggregator")
 const MockAggregator = artifacts.require("MockAggregator")
 
+const deploymentHelper = require("../utils/deploymentHelpers.js")
+const testHelpers = require("../utils/testHelpers.js")
+const th = testHelpers.TestHelper
+
 const f = (v: any) => ethers.utils.formatEther(v.toString())
 const bn = (v: any) => ethers.utils.parseEther(v.toString())
+
+let feeCollector: any
+
+const deploy = async (treasury: string, mintingAccounts: string[]) => {
+	let contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
+	feeCollector = contracts.core.feeCollector
+}
 
 describe("TokenizedVaultPriceAggregator :: 18-decimal asset", async () => {
 	let snapshotId: number, initialSnapshotId: number
 	let alice: string, bob: string, carol: string, treasury: string
-	let asset: any, token: any, assetPriceFeed: any, tokenPriceFeed: any
+	let asset: any, vault: any, assetPriceFeed: any, vaultPriceFeed: any
+	const autoTransfer = 0 // never
 	const assetPrice = 2_000_0000_0000 // $2,000 (using mock feed's 8 digits)
 
 	before(async () => {
 		;[alice, bob, carol, treasury] = (await ethers.getSigners()).map(signer => signer.address)
 
+		await deploy(treasury, [])
+
 		const interestRate = 500 // 5%
 		asset = await ERC20Mock.new("Mock ERC20", "MCK", 18)
-		token = await InterestIncurringToken.new(asset.address, "InterestToken", "INTTKN", treasury, interestRate)
-		await token.initialize()
+
+		vault = await InterestIncurringToken.new(
+			asset.address,
+			"InterestToken",
+			"INTTKN",
+			feeCollector.address,
+			interestRate,
+			autoTransfer
+		)
+		await vault.initialize()
 		assetPriceFeed = await MockAggregator.new()
 		await assetPriceFeed.setPrice(assetPrice)
-		tokenPriceFeed = await TokenizedVaultPriceAggregator.new(token.address, assetPriceFeed.address)
+		vaultPriceFeed = await TokenizedVaultPriceAggregator.new(vault.address, assetPriceFeed.address)
 
 		initialSnapshotId = await network.provider.send("evm_snapshot")
 	})
@@ -49,28 +71,28 @@ describe("TokenizedVaultPriceAggregator :: 18-decimal asset", async () => {
 	})
 
 	it("empty vault price should be the asset price", async () => {
-		let emptyVaultPrice = (await tokenPriceFeed.latestRoundData()).answer
+		let emptyVaultPrice = (await vaultPriceFeed.latestRoundData()).answer
 		assert.equal(assetPrice.toString(), emptyVaultPrice.toString())
 	})
 
 	it("price should remain still after a deposit", async () => {
 		const assetAmountAlice = bn(100_000)
 		await asset.mint(alice, assetAmountAlice)
-		await asset.approve(token.address, MaxUint256, { from: alice })
-		await token.deposit(assetAmountAlice, alice, { from: alice })
-		let vaultPrice = (await tokenPriceFeed.latestRoundData()).answer
+		await asset.approve(vault.address, MaxUint256, { from: alice })
+		await vault.deposit(assetAmountAlice, alice, { from: alice })
+		let vaultPrice = (await vaultPriceFeed.latestRoundData()).answer
 		assert.equal(assetPrice.toString(), vaultPrice.toString())
 	})
 
 	it("price should decrease after interest is accrued", async () => {
 		const assetAmountAlice = bn(100_000)
 		await asset.mint(alice, assetAmountAlice)
-		await asset.approve(token.address, MaxUint256, { from: alice })
-		await token.deposit(assetAmountAlice, alice, { from: alice })
+		await asset.approve(vault.address, MaxUint256, { from: alice })
+		await vault.deposit(assetAmountAlice, alice, { from: alice })
 		// one year goes by
 		await time.increase(365 * 86_400)
 		// expect vault price to drop by 5%
-		let vaultPrice = (await tokenPriceFeed.latestRoundData()).answer
+		let vaultPrice = (await vaultPriceFeed.latestRoundData()).answer
 		const expectedPrice = assetPrice * 0.95
 		assert.equal(expectedPrice.toString(), vaultPrice.toString())
 	})
