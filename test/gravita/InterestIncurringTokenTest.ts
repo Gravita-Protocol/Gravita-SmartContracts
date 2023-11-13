@@ -328,7 +328,7 @@ contract("InterestIncurringToken", async accounts => {
 		debug && console.log(`[treasury] assets: ${f(finalAssetAmountTreasury)} (actual)`)
 		debug && console.log(`[treasury] assets: ${f(expectedFinalAssetAmountTreasury)} (expected)`)
 		debug && console.log(`[treasury] collectable interest: ${f(await vault.getCollectableInterest())}`)
-		
+
 		assertIsApproximatelyEqual(finalAssetAmountTreasury, expectedFinalAssetAmountTreasury, errorMarginPercent)
 	})
 
@@ -408,6 +408,46 @@ contract("InterestIncurringToken", async accounts => {
 		assert.equal("0", await vault.balanceOf(alice))
 		assertIsApproximatelyEqual(assetBalanceAlice2, expectedAssetBalanceAlice2, 0.1)
 	})
+
+	it("compound interest on frequent checkpoints", async () => {
+		const assetAmountAlice = bn(100_000)
+		await erc20.mint(alice, assetAmountAlice)
+		debug && console.log(`[alice] approves...`)
+		await erc20.approve(vault.address, MaxUint256, { from: alice })
+		debug && console.log(`[alice] deposits...`)
+		await vault.deposit(assetAmountAlice, alice, { from: alice })
+		// collect interest on Alice's deposit each 6 hours for one year
+		debug && console.log(`[treasury] collect interest every 6h for a year (compound effect)...`)
+		for (let i = 1; i <= 1_460; i ++) {
+			await time.increase(6 * 60 * 60)
+			await vault.collectInterest()
+		}
+		// alice withdraws
+		debug && console.log(`[alice] withdraws...`)
+		await vault.redeem(await vault.balanceOf(alice), alice, alice, { from: alice })
+		const compoundAssetAmountTreasury = await erc20.balanceOf(treasury)
+		// make sure vault is empty (no assets generating interest)
+		assert.equal("0", await vault.totalAssets())
+		// now bob gets in
+		const assetAmountBob = bn(100_000)
+		await erc20.mint(bob, assetAmountBob)
+		debug && console.log(`[bob] approves...`)
+		await erc20.approve(vault.address, MaxUint256, { from: bob })
+		debug && console.log(`[bob] deposits...`)
+		await vault.deposit(assetAmountBob, bob, { from: bob })
+		// one year goes by, no checkpoints
+		debug && console.log(`[treasury] wait one year without collecting anything...`)
+		await time.increase(365 * 86_400)
+		// bob withdraws
+		debug && console.log(`[bob] withdraws...`)
+		await vault.redeem(await vault.balanceOf(bob), bob, bob, { from: bob })
+		const finalAssetAmountTreasury = await erc20.balanceOf(treasury)
+		const notCompoundAssetAmountTreasury = finalAssetAmountTreasury.sub(compoundAssetAmountTreasury)
+		// compare, allowing for a 1% "loss" due to the logarithmic curve of the compound interest effect
+		debug && console.log(`[treasury] assets: ${f(compoundAssetAmountTreasury)} (compound)`)
+		debug && console.log(`[treasury] assets: ${f(notCompoundAssetAmountTreasury)} (not compound)`)
+		assertIsApproximatelyEqual(compoundAssetAmountTreasury, notCompoundAssetAmountTreasury, 1)
+	})
 })
 
 /**
@@ -436,4 +476,3 @@ function bnMulDiv(x: any, y: any, z: any) {
 	const zBn = BigNumber.from(z.toString())
 	return xBn.mul(yBn).div(zBn)
 }
-
