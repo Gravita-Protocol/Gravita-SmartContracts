@@ -83,7 +83,7 @@ The general changes in the design are the following:
 - Each collateral has an individual mintcap
 - Added timelock for system changes
 - Removed checkContract() as the addresses will be set on deployment. Some will still be upgradable.
-- Redemptions are 0.97 to 1 (the reedemer pays a 3% fee to the borrower)
+- Redemptions are 0.97 to 1 (the redeemer pays a 3% fee to the borrower)
 - Troves are named Vessels instead
 
 `ActivePool` - no major changes
