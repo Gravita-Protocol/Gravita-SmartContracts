@@ -17,7 +17,7 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 	// Custom errors
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  error UnregisteredAssetError();
+	error UnregisteredAssetError();
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Constants & immutables
@@ -48,9 +48,9 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 		__Ownable_init();
 	}
 
-  /**
-   * @dev `_vault` can be a new address, an overriding address, or zero in case we want to unregister an asset
-   */
+	/**
+	 * @dev `_vault` can be a new address, an overriding address, or zero in case we want to unregister an asset
+	 */
 	function registerStakingVault(address _asset, address _vault) external onlyOwner {
 		require(_asset != address(0), "Invalid asset address");
 		stakingVaults[_asset] = _vault;
@@ -68,9 +68,9 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 		address _lowerHint
 	) external nonReentrant {
 		address _vault = stakingVaults[_asset];
-    if (_vault == address(0)) {
-      revert UnregisteredAssetError();
-    }
+		if (_vault == address(0)) {
+			revert UnregisteredAssetError();
+		}
 		IERC20(_asset).transferFrom(msg.sender, address(this), _assetAmount);
 		uint256 _shares = IERC4626(_vault).deposit(_assetAmount, msg.sender);
 		IBorrowerOperations(borrowerOperations).openVesselFor(
@@ -93,9 +93,9 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 		address _lowerHint
 	) external nonReentrant {
 		address _vault = stakingVaults[_asset];
-    if (_vault == address(0)) {
-      revert UnregisteredAssetError();
-    }
+		if (_vault == address(0)) {
+			revert UnregisteredAssetError();
+		}
 		uint256 _sharesSent = 0;
 		if (_assetSent != 0) {
 			IERC20(_asset).transferFrom(msg.sender, address(this), _assetSent);
@@ -115,9 +115,9 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 
 	function closeVessel(address _asset) external nonReentrant {
 		address _vault = stakingVaults[_asset];
-    if (_vault == address(0)) {
-      revert UnregisteredAssetError();
-    }
+		if (_vault == address(0)) {
+			revert UnregisteredAssetError();
+		}
 		IBorrowerOperations(borrowerOperations).closeVesselFor(msg.sender, _vault);
 	}
 
@@ -138,3 +138,4 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
+

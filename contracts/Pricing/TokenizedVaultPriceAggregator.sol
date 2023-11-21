@@ -8,11 +8,16 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../Dependencies/External/OpenZeppelin5/IERC4626.sol";
 
 /**
- * @notice An aggregator that determines the price of a vault's token by considering the ratio of its shares to the 
-           underlying assets.
+ * @notice An aggregator that calculates the price of a vault's token by multiplying the ratio of its shares to the 
+ *         underlying assets by the price of one unit of the asset.
  */
 contract TokenizedVaultPriceAggregator is AggregatorV3Interface {
 	using Math for uint256;
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Custom errors
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	error NotImplementedException();
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

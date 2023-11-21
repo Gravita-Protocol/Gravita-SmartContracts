@@ -9,11 +9,10 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Addresses.sol";
-import "./InterestIncurringToken.sol";
 import "./Dependencies/SafetyTransfer.sol";
 import "./Interfaces/IActivePool.sol";
 import "./Interfaces/IAdminContract.sol";
-import "./Interfaces/IInterestIncurringToken.sol";
+import "./Interfaces/IInterestIncurringTokenizedVault.sol";
 
 /*
  * The Active Pool holds the collaterals and debt amounts for all active vessels.
@@ -115,13 +114,13 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		assetsBalances[_asset] = newBalance;
 
 		// wrapped assets need to be withdrawn from vault (unless being sent to DefaultPool or StabilityPool)
-		bool assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringToken).interfaceId) &&
+		bool assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringTokenizedVault).interfaceId) &&
 			(_account != defaultPool) &&
 			(_account != stabilityPool);
 
 		if (assetNeedsUnwrap) {
-			address _underlyingAsset = InterestIncurringToken(_asset).asset();
-			uint256 _withdrawnAmount = InterestIncurringToken(_asset).redeem(_amount, _account, address(this));
+			address _underlyingAsset = IInterestIncurringTokenizedVault(_asset).asset();
+			uint256 _withdrawnAmount = IInterestIncurringTokenizedVault(_asset).redeem(_amount, _account, address(this));
 			if (isERC20DepositContract(_account)) {
 				IDeposit(_account).receivedERC20(_underlyingAsset, _withdrawnAmount);
 			}

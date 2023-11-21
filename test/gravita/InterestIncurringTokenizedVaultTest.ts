@@ -7,7 +7,7 @@ const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const th = testHelpers.TestHelper
 
-const InterestIncurringToken = artifacts.require("InterestIncurringToken")
+const InterestIncurringTokenizedVault = artifacts.require("InterestIncurringTokenizedVault")
 
 const f = (v: any) => ethers.utils.commify(ethers.utils.formatEther(v.toString()))
 const bn = (v: any) => ethers.utils.parseEther(v.toString())
@@ -40,7 +40,7 @@ const deploy = async (treasury: string, mintingAccounts: string[]) => {
 	vesselManagerOperations = contracts.core.vesselManagerOperations
 }
 
-contract("InterestIncurringToken", async accounts => {
+contract("InterestIncurringTokenizedVault", async accounts => {
 	let snapshotId: number, initialSnapshotId: number
 	const [treasury, alice, bob, carol, whale] = accounts
 	let vault: any
@@ -52,7 +52,7 @@ contract("InterestIncurringToken", async accounts => {
 		interestRate = 200 // 2%
 		autoTransfer = 30 * 86_400 // 30 days timeout
 
-		vault = await InterestIncurringToken.new(
+		vault = await InterestIncurringTokenizedVault.new(
 			erc20.address,
 			"InterestToken",
 			"INTTKN",

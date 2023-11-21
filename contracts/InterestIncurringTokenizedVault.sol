@@ -14,15 +14,15 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "./Dependencies/External/OpenZeppelin5/ERC4626.sol";
 import "./Interfaces/IFeeCollector.sol";
-import "./Interfaces/IInterestIncurringToken.sol";
+import "./Interfaces/IInterestIncurringTokenizedVault.sol";
 
 /**
  * @notice This is an ERC-4626 (Tokenized Vault) specialized contract that charges an ongoing interest rate on the
  *         underlying deposited asset. The accruing payable interest amount is recalculated whenever the vault balance
  *         changes (upon each deposit/withdrawal) and can be collected at any time to a predefined destination address.
  */
-contract InterestIncurringToken is
-	IInterestIncurringToken,
+contract InterestIncurringTokenizedVault is
+	IInterestIncurringTokenizedVault,
 	OwnableUpgradeable,
 	UUPSUpgradeable,
 	ReentrancyGuardUpgradeable,
@@ -37,6 +37,13 @@ contract InterestIncurringToken is
 	event InterestCollected(uint256 amount);
 	event InterestRateUpdated(uint256 newInterestRateInBPS);
 	event InterestReceiverAddressUpdated(address newInterestReceiver);
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Custom errors
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	error InterestOutOfBoundsError();
+	error ZeroAmountError();
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Constants & immutables
@@ -83,7 +90,8 @@ contract InterestIncurringToken is
 		lastInterestAmountUpdateTimestamp = block.timestamp;
 		lastInterestPayoutTimestamp = block.timestamp;
 		_setInterestRate(_interestRateInBPS);
-		_registerInterface(type(IInterestIncurringToken).interfaceId);
+		/// @dev ERC-165 interface is used by ActivePool to check if unwrapping is needed
+		_registerInterface(type(IInterestIncurringTokenizedVault).interfaceId);
 		_underlyingToken.approve(FEE_COLLECTOR_ADDRESS, type(uint256).max);
 	}
 
@@ -100,8 +108,9 @@ contract InterestIncurringToken is
 	}
 
 	function _setInterestRate(uint256 _interestRateInBPS) internal {
-		require(_interestRateInBPS >= MIN_INTEREST_RATE_IN_BPS, "Interest < Minimum");
-		require(_interestRateInBPS <= MAX_INTEREST_RATE_IN_BPS, "Interest > Maximum");
+		if (_interestRateInBPS < MIN_INTEREST_RATE_IN_BPS || _interestRateInBPS > MAX_INTEREST_RATE_IN_BPS) {
+			revert InterestOutOfBoundsError();
+		}
 		uint256 newInterestRatePerSecond = (INTEREST_RATE_PRECISION * _interestRateInBPS) /
 			(SECONDS_IN_ONE_YEAR * BASIS_POINTS_DIVISOR);
 		if (newInterestRatePerSecond != interestRatePerSecond) {
@@ -121,7 +130,9 @@ contract InterestIncurringToken is
 	function collectInterest() public override {
 		_accountForInterestDue();
 		uint256 _payableInterestAmount = payableInterestAmount;
-		require(_payableInterestAmount != 0, "Nothing to collect");
+		if (_payableInterestAmount == 0) {
+			revert ZeroAmountError();
+		}
 		payableInterestAmount = 0;
 		lastInterestPayoutTimestamp = block.timestamp;
 		IFeeCollector(FEE_COLLECTOR_ADDRESS).transferInterestRate(asset(), _payableInterestAmount);
@@ -136,42 +147,66 @@ contract InterestIncurringToken is
 		return payableInterestAmount + _calcInterestDue(_netTotalAssets, lastInterestAmountUpdateTimestamp);
 	}
 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Public ERC-4626 overriden functions
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	/// @inheritdoc IERC4626
-	function deposit(uint256 _assets, address _receiver) public override nonReentrant returns (uint256) {
-		require(_assets != 0, "Deposit amount must be greater than 0");
+	function deposit(
+		uint256 _assets,
+		address _receiver
+	) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+		if (_assets == 0) {
+			revert ZeroAmountError();
+		}
 		_accountForInterestDue();
 		_triggerAutoTransferInterest();
 		return ERC4626.deposit(_assets, _receiver);
 	}
 
 	/// @inheritdoc IERC4626
-	function mint(uint256 _shares, address _receiver) public override nonReentrant returns (uint256) {
-		require(_shares != 0, "Mint amount must be greater than 0");
+	function mint(uint256 _shares, address _receiver) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+		if (_shares == 0) {
+			revert ZeroAmountError();
+		}
 		_accountForInterestDue();
 		_triggerAutoTransferInterest();
 		return ERC4626.mint(_shares, _receiver);
 	}
 
 	/// @inheritdoc IERC4626
-	function redeem(uint256 _shares, address _receiver, address _owner) public override nonReentrant returns (uint256) {
-		require(_shares != 0, "Redemption amount must be greater than 0");
+	function redeem(
+		uint256 _shares,
+		address _receiver,
+		address _owner
+	) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+		if (_shares == 0) {
+			revert ZeroAmountError();
+		}
 		_accountForInterestDue();
 		_triggerAutoTransferInterest();
 		return ERC4626.redeem(_shares, _receiver, _owner);
 	}
 
 	/// @inheritdoc IERC4626
-	function withdraw(uint256 _assets, address _receiver, address _owner) public override nonReentrant returns (uint256) {
-		require(_assets != 0, "Withdrawal amount must be greater than 0");
+	function withdraw(
+		uint256 _assets,
+		address _receiver,
+		address _owner
+	) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+		if (_assets == 0) {
+			revert ZeroAmountError();
+		}
 		_accountForInterestDue();
 		_triggerAutoTransferInterest();
 		return ERC4626.withdraw(_assets, _receiver, _owner);
 	}
 
 	/**
+	 * @inheritdoc IERC4626
 	 * @notice Returns the net available assets in the vault, accounting for the accrued interest amount.
 	 */
-	function totalAssets() public view override returns (uint256 _netTotalAssets) {
+	function totalAssets() public view override(ERC4626, IERC4626) returns (uint256 _netTotalAssets) {
 		uint256 _payableInterestAmount = payableInterestAmount;
 		_netTotalAssets = ERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
 		uint256 _lastInterestAmountUpdateTimestamp = lastInterestAmountUpdateTimestamp;

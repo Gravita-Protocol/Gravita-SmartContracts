@@ -3,7 +3,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers"
 import { MaxUint256 } from "@ethersproject/constants"
 
 const ERC20Mock = artifacts.require("ERC20Mock")
-const InterestIncurringToken = artifacts.require("InterestIncurringToken")
+const InterestIncurringTokenizedVault = artifacts.require("InterestIncurringTokenizedVault")
 const TokenizedVaultPriceAggregator = artifacts.require("TokenizedVaultPriceAggregator")
 const MockAggregator = artifacts.require("MockAggregator")
 
@@ -32,7 +32,7 @@ contract("TokenizedVaultPriceAggregator", async accounts => {
 		const interestRate = 500 // 5%
 		asset = await ERC20Mock.new("Mock ERC20", "MCK", 18)
 
-		vault = await InterestIncurringToken.new(
+		vault = await InterestIncurringTokenizedVault.new(
 			asset.address,
 			"InterestToken",
 			"INTTKN",

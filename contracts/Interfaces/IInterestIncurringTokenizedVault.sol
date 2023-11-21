@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.19;
 
-interface IInterestIncurringToken {
+import "../Dependencies/External/OpenZeppelin5/IERC4626.sol";
+
+interface IInterestIncurringTokenizedVault is IERC4626 {
 
 	function setInterestRate(uint256 _interestRateInBPS) external;
 
