@@ -19,6 +19,7 @@ var contracts
 var snapshotId
 var initialSnapshotId
 
+const f = v => ethers.utils.formatEther(v.toString())
 const openVessel = async params => th.openVessel(contracts.core, params)
 const deploy = async (treasury, mintingAccounts) => {
 	contracts = await deploymentHelper.deployTestContracts(treasury, mintingAccounts)
@@ -48,7 +49,7 @@ const deploy = async (treasury, mintingAccounts) => {
 contract("FeeCollector", async accounts => {
 	const withdrawGRAI = async params => th.withdrawGRAI(contracts.core, params)
 
-	const [treasury, alice, bob, whale] = accounts
+	const [treasury, alice, bob, carol, whale] = accounts
 
 	let MIN_FEE_DAYS
 	let MIN_FEE_SECONDS
@@ -101,6 +102,11 @@ contract("FeeCollector", async accounts => {
 			MIN_FEE_FRACTION = toBN(String(await feeCollector.MIN_FEE_FRACTION()))
 			FEE_EXPIRATION_SECONDS = toBN(String(await feeCollector.FEE_EXPIRATION_SECONDS()))
 
+			setBalance(shortTimelock.address, 1e18)
+			await impersonateAccount(shortTimelock.address)
+			await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+			await stopImpersonatingAccount(shortTimelock.address)
+		
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
 
@@ -377,7 +383,7 @@ contract("FeeCollector", async accounts => {
 				assertRevert(borrowerOperations.closeVessel(erc20.address, { from: alice }))
 				// refund available at this point should be maxFee - minFee
 				const { minFee, maxFee } = calcFees(toBN(borrowAmount))
-				const refund = await feeCollector.simulateRefund(alice, erc20.address, 1e18.toString())
+				const refund = await feeCollector.simulateRefund(alice, erc20.address, (1e18).toString())
 				assert.equal(refund.toString(), maxFee.sub(minFee))
 				// alice grabs enough debt tokens to pay for minFee
 				await debtToken.transfer(alice, minFee, { from: whale })
@@ -491,6 +497,89 @@ contract("FeeCollector", async accounts => {
 			})
 		})
 
+		describe("Vessel redemption", async () => {
+			it("redeemed vessel: should credit expired fees to platform", async () => {
+				assert.equal(await debtToken.balanceOf(treasury), "0")
+
+				await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(250, 16)),
+					extraGRAIAmount: dec(1_000_000, 18),
+					extraParams: { from: whale }
+				})
+
+				const price = await priceFeed.getPrice(erc20.address)
+				const { totalDebt: totalDebt_alice } = await openVessel({
+					asset: erc20.address,
+					extraGRAIAmount: toBN(dec(10_000, 18)),
+					extraParams: { from: alice },
+				})
+				const netDebt_alice = await th.getOpenVesselGRAIAmount(contracts.core, totalDebt_alice, erc20.address)
+
+				const { totalDebt: totalDebt_bob } = await openVessel({
+					asset: erc20.address,
+					extraGRAIAmount: toBN(dec(10_000, 18)),
+					extraParams: { from: bob },
+				})
+				const netDebt_bob = await th.getOpenVesselGRAIAmount(contracts.core, totalDebt_bob, erc20.address)
+
+				// redeem all of alice's vessel, and half of bob's
+				const redemptionAmount = netDebt_alice.add(netDebt_bob.div(toBN(2)))
+
+				// carol will be the redeemer
+				await openVessel({
+					asset: erc20.address,
+					ICR: toBN(dec(100, 18)),
+					extraGRAIAmount: redemptionAmount,
+					extraParams: { from: carol },
+				})
+
+				const { minFee: minFee_alice, maxFee: maxFee_alice } = calcFees(netDebt_alice)
+				const { minFee: minFee_bob, maxFee: maxFee_bob } = calcFees(netDebt_bob)
+
+				const treasuryBalanceBeforeRedemption = await debtToken.balanceOf(treasury)
+
+				// wait 6 months for all the fees to expire
+				await time.increase(183 * 86_400)
+
+				const { 1: hintNICR } = await vesselManagerOperations.getRedemptionHints(
+					erc20.address,
+					redemptionAmount,
+					price,
+					0
+				)
+				const { 0: upperHint, 1: lowerHint } = await sortedVessels.findInsertPosition(
+					erc20.address,
+					hintNICR,
+					carol,
+					carol
+				)
+
+				// redeem alice's and bob's (partially) vessels
+				await vesselManagerOperations.redeemCollateral(
+					erc20.address,
+					redemptionAmount,
+					ZERO_ADDRESS,
+					upperHint,
+					lowerHint,
+					hintNICR,
+					0,
+					th._100pct,
+					{ from: carol }
+				)
+
+				const treasuryBalanceAfterRedemption = await debtToken.balanceOf(treasury)
+				const treasuryBalanceDifference = treasuryBalanceAfterRedemption.sub(treasuryBalanceBeforeRedemption)
+				const expectedTreasuryBalanceDifference = maxFee_alice.sub(minFee_alice).add(maxFee_bob).sub(minFee_bob)
+
+				th.assertIsApproximatelyEqual(
+					treasuryBalanceDifference.toString(),
+					expectedTreasuryBalanceDifference.toString(),
+					100
+				)
+			})
+		})
+
 		describe("Batch collect", async () => {
 			it("2 loans collected partially and then after they expired. Should collect max fees.", async () => {
 				const borrowAmount = toBN(dec(1_000_000, 18))
@@ -561,3 +650,4 @@ function calcExpiredAmount(_from, _to, _amount, _now, _debug = false) {
 }
 
 contract("Reset chain state", async accounts => {})
+

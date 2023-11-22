@@ -67,6 +67,15 @@ module.exports = {
 				blockNumber: 17835000,
 			},
 		},
+		// Setup for testing files in test/gravita-fork:
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	chainId: 42161,
+		// 	forking: {
+		// 		url: `https://arbitrum-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 145845570,
+		// 	},
+		// },
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
@@ -87,6 +96,10 @@ module.exports = {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		linea: {
+			url: `${process.env.LINEA_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
@@ -102,3 +115,4 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
+

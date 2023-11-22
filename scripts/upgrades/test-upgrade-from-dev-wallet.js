@@ -1,28 +1,26 @@
-const { run, upgrades: upgrades2 } = require("hardhat")
+const { upgrades } = require("hardhat")
 
-const upgrades = [
+const contractList = [
 	{
-		contract: "StabilityPool",
-		address: "0x1317F2749Cd53555B33ab75f17EB46fd57B9eFaB",
+		name: "VesselManager",
+		address: "0x2177946fD433F24666b23c51C8D728c34Af05627",
+	},
+	{
+		name: "VesselManagerOperations",
+		address: "0x4FC9067e08B16293b6aB251bB335e832F0e896C9",
+	},
+	{
+		name: "FeeCollector",
+		address: "0x9c966245C17F953Fa1e6FCaD8E79B0D7f9d2a872",
 	},
 ]
 
 async function main() {
-	for (const { contract, address } of upgrades) {
-		const newContractVersion = await ethers.getContractFactory(contract)
-		console.log(`[${address}] Preparing upgrade for ${contract} ...`)
-		await upgrades2.upgradeProxy(address, newContractVersion)
-		console.log(`[${address}] ${contract} upgraded.`)
-		try {
-			await run("verify:verify", { address })
-			console.log(`[${address}] ${contract} verified.`)
-		} catch (error) {
-			// if it was already verified, it’s like a success, so let’s move forward and save it
-			if (error.name != "NomicLabsHardhatPluginError") {
-				console.error(`Error verifying: ${error.name}`)
-				console.error(error)
-			}
-		}
+	for (const { name, address } of contractList) {
+		const factory = await ethers.getContractFactory(name)
+		console.log(`[${address}] Preparing upgrade for ${name} ...`)
+		await upgrades.upgradeProxy(address, factory)
+		console.log(`[${address}] ${name} upgraded`)
 	}
 }
 
