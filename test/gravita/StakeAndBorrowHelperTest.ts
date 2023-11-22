@@ -1,5 +1,10 @@
 import { artifacts, assert, contract, ethers, network } from "hardhat"
-import { time } from "@nomicfoundation/hardhat-network-helpers"
+import {
+	impersonateAccount,
+	setBalance,
+	stopImpersonatingAccount,
+	time,
+} from "@nomicfoundation/hardhat-network-helpers"
 import { AddressZero, MaxUint256 } from "@ethersproject/constants"
 import { BigNumber } from "ethers"
 
@@ -22,6 +27,7 @@ let contracts: any,
 	erc20: any,
 	feeCollector: any,
 	priceFeed: any,
+	shortTimelock: any,
 	sortedVessels: any,
 	stabilityPool: any,
 	vesselManager: any,
@@ -35,6 +41,7 @@ const deploy = async (treasury: string, mintingAccounts: string[]) => {
 	erc20 = contracts.core.erc20
 	feeCollector = contracts.core.feeCollector
 	priceFeed = contracts.core.priceFeedTestnet
+	shortTimelock = contracts.core.shortTimelock
 	sortedVessels = contracts.core.sortedVessels
 	stabilityPool = contracts.core.stabilityPool
 	vesselManager = contracts.core.vesselManager
@@ -49,6 +56,11 @@ contract("StakeAndBorrowHelper", async accounts => {
 
 	before(async () => {
 		await deploy(treasury, [])
+
+		setBalance(shortTimelock.address, 1e18)
+		await impersonateAccount(shortTimelock.address)
+		await vesselManagerOperations.setRedemptionSofteningParam("9700", { from: shortTimelock.address })
+		await stopImpersonatingAccount(shortTimelock.address)
 
 		interestRate = 200 // 2%
 		autoTransfer = 30 * 86_400 // 30 days timeout
@@ -153,7 +165,6 @@ contract("StakeAndBorrowHelper", async accounts => {
 	})
 
 	it.only("claimCollateral pass-through", async () => {
-
 		debug && console.log(`Enabling redemptions...`)
 		await adminContract.setRedemptionBlockTimestamp(vault.address, 0)
 
@@ -191,13 +202,11 @@ contract("StakeAndBorrowHelper", async accounts => {
 
 		const redeemer = carol
 		const redemptionAmount = bnMulDec(await vesselManager.getVesselDebt(vault.address, alice), 1.5) // alice's debt + half of bob's
-		debug && console.log(`redemptionAmount: $${f(redemptionAmount)} GRAI`)
 		const price = await priceFeed.getPrice(vault.address)
-		debug && console.log(`price: $${f(price)}`)
 		await debtToken.unprotectedMint(redeemer, redemptionAmount)
 
 		// redeem alice's and bob's (partially) vessels
-		debug && console.log(`[redeemer] redeems...`)
+		debug && console.log(`[redeemer] redeems $${f(redemptionAmount)} GRAI...`)
 
 		const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
 			vault.address,
@@ -212,14 +221,7 @@ contract("StakeAndBorrowHelper", async accounts => {
 			AddressZero
 		)
 
-		console.log(`Redeeming $${f(redemptionAmount)} GRAI...`)
-		console.log(`_asset: ${vault.address}`)
-		console.log(`_debtTokenAmount: ${redemptionAmount}`)
-		console.log(`_upperPartialRedemptionHint: ${upperPartialRedemptionHint}`)
-		console.log(`_lowerPartialRedemptionHint: ${lowerPartialRedemptionHint}`)
-		console.log(`_firstRedemptionHint: ${firstRedemptionHint}`)
-		console.log(`_partialRedemptionHintNICR: ${partialRedemptionHintNewICR}`)
-
+		debug && console.log(`[alice] asset balance: ${f(await erc20.balanceOf(alice))}`)
 		await vesselManagerOperations.redeemCollateral(
 			vault.address,
 			redemptionAmount,
@@ -231,6 +233,14 @@ contract("StakeAndBorrowHelper", async accounts => {
 			"1000000000000000000",
 			{ from: redeemer }
 		)
+		debug && console.log(`[alice] asset balance: ${f(await erc20.balanceOf(alice))}`)
+		await stakeAndBorrowHelper.claimCollateral(erc20.address, { from: alice })
+		debug && console.log(`[alice] asset balance: ${f(await erc20.balanceOf(alice))}`)
+
+		assert.equal("0", await erc20.balanceOf(bob))
+		debug && console.log(`[bob] claims surplus after partial redemption...`)
+		await stakeAndBorrowHelper.claimCollateral(erc20.address, { from: bob })
+		debug && console.log(`[bob] asset balance: ${f(await erc20.balanceOf(bob))}`)
 	})
 })
 
@@ -260,3 +270,4 @@ function bnMulDiv(x: any, y: any, z: any) {
 	const zBn = BigNumber.from(z.toString())
 	return xBn.mul(yBn).div(zBn)
 }
+
