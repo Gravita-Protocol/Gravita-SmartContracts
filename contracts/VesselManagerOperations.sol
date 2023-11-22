@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "./Dependencies/GravitaBase.sol";
 import "./Interfaces/IVesselManagerOperations.sol";
 
+import "hardhat/console.sol";
 contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, ReentrancyGuardUpgradeable, GravitaBase {
 	string public constant NAME = "VesselManagerOperations";
 	uint256 public constant PERCENTAGE_PRECISION = 100_00;
@@ -200,6 +201,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 			_maxIterations = type(uint256).max;
 		}
 		while (currentBorrower != address(0) && totals.remainingDebt != 0 && _maxIterations != 0) {
+			console.log("currentBorrower: %s", currentBorrower);
 			_maxIterations--;
 			// Save the address of the vessel preceding the current one, before potentially modifying the list
 			address nextUserToCheck = ISortedVessels(sortedVessels).getPrev(_asset, currentBorrower);
@@ -922,6 +924,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		uint256 newColl = vesselColl - singleRedemption.collLot;
 
 		if (newDebt == IAdminContract(adminContract).getDebtTokenGasCompensation(_asset)) {
+			console.log("executeFullRedemption(%s)", _borrower);
 			IVesselManager(vesselManager).executeFullRedemption(_asset, _borrower, newColl);
 		} else {
 			uint256 newNICR = GravitaMath._computeNominalCR(newColl, newDebt);
@@ -936,10 +939,12 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 				newNICR != _partialRedemptionHintNICR ||
 				_getNetDebt(_asset, newDebt) < IAdminContract(adminContract).getMinNetDebt(_asset)
 			) {
+				console.log("cancelledPartial(%s)", _borrower);
 				singleRedemption.cancelledPartial = true;
 				return singleRedemption;
 			}
 
+				console.log("executePartialRedemption(%s)", _borrower);
 			IVesselManager(vesselManager).executePartialRedemption(
 				_asset,
 				_borrower,

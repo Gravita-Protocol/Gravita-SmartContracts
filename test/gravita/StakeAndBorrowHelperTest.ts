@@ -151,6 +151,87 @@ contract("StakeAndBorrowHelper", async accounts => {
 		const expectedAssetAmountAlice = bnMulDec(assetAmountAlice.add(assetAddOnAlice), 0.99) // original amount minus 1% interest
 		assertIsApproximatelyEqual(expectedAssetAmountAlice, await erc20.balanceOf(alice))
 	})
+
+	it.only("claimCollateral pass-through", async () => {
+
+		debug && console.log(`Enabling redemptions...`)
+		await adminContract.setRedemptionBlockTimestamp(vault.address, 0)
+
+		const assetAmount = bn(100)
+		const assetAmountWhale = bn(1_000)
+		await erc20.mint(alice, assetAmount)
+		await erc20.mint(bob, assetAmount)
+		await erc20.mint(whale, assetAmountWhale)
+
+		debug && console.log(`[whale] approves...`)
+		await erc20.approve(stakeAndBorrowHelper.address, MaxUint256, { from: whale })
+		await vault.approve(borrowerOperations.address, MaxUint256, { from: whale })
+		debug && console.log(`[alice] approves...`)
+		await erc20.approve(stakeAndBorrowHelper.address, MaxUint256, { from: alice })
+		await vault.approve(borrowerOperations.address, MaxUint256, { from: alice })
+		debug && console.log(`[bob] approves...`)
+		await erc20.approve(stakeAndBorrowHelper.address, MaxUint256, { from: bob })
+		await vault.approve(borrowerOperations.address, MaxUint256, { from: bob })
+
+		const collValue = bnMulDiv(assetAmount, await priceFeed.getPrice(vault.address), 1e18)
+		const loanAmount = bnMulDec(collValue, 0.75) // 75% LTV
+
+		debug && console.log(`[whale] opens vessel for $${f(loanAmount)} GRAI...`)
+		await stakeAndBorrowHelper.openVessel(erc20.address, assetAmountWhale, loanAmount, AddressZero, AddressZero, {
+			from: whale,
+		})
+		debug && console.log(`[alice] opens vessel for $${f(loanAmount)} GRAI...`)
+		await stakeAndBorrowHelper.openVessel(erc20.address, assetAmount, loanAmount, AddressZero, AddressZero, {
+			from: alice,
+		})
+		debug && console.log(`[bob] opens vessel for $${f(loanAmount)} GRAI...`)
+		await stakeAndBorrowHelper.openVessel(erc20.address, assetAmount, loanAmount, AddressZero, AddressZero, {
+			from: bob,
+		})
+
+		const redeemer = carol
+		const redemptionAmount = bnMulDec(await vesselManager.getVesselDebt(vault.address, alice), 1.5) // alice's debt + half of bob's
+		debug && console.log(`redemptionAmount: $${f(redemptionAmount)} GRAI`)
+		const price = await priceFeed.getPrice(vault.address)
+		debug && console.log(`price: $${f(price)}`)
+		await debtToken.unprotectedMint(redeemer, redemptionAmount)
+
+		// redeem alice's and bob's (partially) vessels
+		debug && console.log(`[redeemer] redeems...`)
+
+		const { 0: firstRedemptionHint, 1: partialRedemptionHintNewICR } = await vesselManagerOperations.getRedemptionHints(
+			vault.address,
+			redemptionAmount,
+			price,
+			0
+		)
+		const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } = await sortedVessels.findInsertPosition(
+			vault.address,
+			partialRedemptionHintNewICR,
+			AddressZero,
+			AddressZero
+		)
+
+		console.log(`Redeeming $${f(redemptionAmount)} GRAI...`)
+		console.log(`_asset: ${vault.address}`)
+		console.log(`_debtTokenAmount: ${redemptionAmount}`)
+		console.log(`_upperPartialRedemptionHint: ${upperPartialRedemptionHint}`)
+		console.log(`_lowerPartialRedemptionHint: ${lowerPartialRedemptionHint}`)
+		console.log(`_firstRedemptionHint: ${firstRedemptionHint}`)
+		console.log(`_partialRedemptionHintNICR: ${partialRedemptionHintNewICR}`)
+
+		await vesselManagerOperations.redeemCollateral(
+			vault.address,
+			redemptionAmount,
+			upperPartialRedemptionHint,
+			lowerPartialRedemptionHint,
+			firstRedemptionHint,
+			partialRedemptionHintNewICR,
+			0,
+			"1000000000000000000",
+			{ from: redeemer }
+		)
+	})
 })
 
 /**
@@ -179,4 +260,3 @@ function bnMulDiv(x: any, y: any, z: any) {
 	const zBn = BigNumber.from(z.toString())
 	return xBn.mul(yBn).div(zBn)
 }
-
