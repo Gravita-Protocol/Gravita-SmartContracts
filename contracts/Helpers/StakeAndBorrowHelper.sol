@@ -57,7 +57,7 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// BorrowerOperations mimic functions
+	// BorrowerOperations wrapped functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	function openVessel(
@@ -121,11 +121,15 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 		IBorrowerOperations(borrowerOperations).closeVesselFor(msg.sender, _vault);
 	}
 
-	/**
-	 * @dev asset is already unwrapped in the CollSurplusPool, so we send the underlying token's address (instead of the vault's)
-	 */
 	function claimCollateral(address _asset) external nonReentrant {
-		IBorrowerOperations(borrowerOperations).claimCollateralFor(msg.sender, _asset);
+		address _vault = stakingVaults[_asset];
+		if (_vault == address(0)) {
+			revert UnregisteredAssetError();
+		}
+		uint256 _prevBalance = IERC4626(_vault).balanceOf(msg.sender);
+		IBorrowerOperations(borrowerOperations).claimCollateralFor(msg.sender, _vault);
+		uint256 _claimedShares = IERC4626(_vault).balanceOf(msg.sender) - _prevBalance;
+		IERC4626(_vault).redeem(_claimedShares, msg.sender, msg.sender);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

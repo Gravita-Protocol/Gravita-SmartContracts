@@ -106,33 +106,44 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		address _asset,
 		address _account,
 		uint256 _amount
-	) external override nonReentrant callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps {
+	)
+		external
+		override
+		nonReentrant
+		callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps
+		returns (address _assetSent, uint256 _amountSent)
+	{
 		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
-		if (safetyTransferAmount == 0) return;
+		if (safetyTransferAmount == 0) {
+			return (_asset, 0);
+		}
 
 		uint256 newBalance = assetsBalances[_asset] - _amount;
 		assetsBalances[_asset] = newBalance;
+		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
 
-		// wrapped assets need to be withdrawn from vault (unless being sent to DefaultPool or StabilityPool)
+		// wrapped assets need to be withdrawn from vault (unless being sent to CollSurplusPool, DefaultPool or StabilityPool)
 		bool assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringTokenizedVault).interfaceId) &&
+			(_account != collSurplusPool) &&
 			(_account != defaultPool) &&
 			(_account != stabilityPool);
 
 		if (assetNeedsUnwrap) {
-			address _underlyingAsset = IInterestIncurringTokenizedVault(_asset).asset();
-			uint256 _withdrawnAmount = IInterestIncurringTokenizedVault(_asset).redeem(_amount, _account, address(this));
+			_assetSent = IInterestIncurringTokenizedVault(_asset).asset();
+			_amountSent = IInterestIncurringTokenizedVault(_asset).redeem(_amount, _account, address(this));
 			if (isERC20DepositContract(_account)) {
-				IDeposit(_account).receivedERC20(_underlyingAsset, _withdrawnAmount);
+				IDeposit(_account).receivedERC20(_assetSent, _amountSent);
 			}
-			emit AssetSent(_account, _underlyingAsset, _withdrawnAmount);
+			emit AssetSent(_account, _assetSent, _amountSent);
 		} else {
+			_assetSent = _asset;
+			_amountSent = safetyTransferAmount;
 			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
 			if (isERC20DepositContract(_account)) {
-				IDeposit(_account).receivedERC20(_asset, _amount);
+				IDeposit(_account).receivedERC20(_asset, safetyTransferAmount);
 			}
 			emit AssetSent(_account, _asset, safetyTransferAmount);
 		}
-		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
 	}
 
 	function isERC20DepositContract(address _account) private view returns (bool) {
@@ -151,4 +162,3 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
-

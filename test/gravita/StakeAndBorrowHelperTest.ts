@@ -18,7 +18,7 @@ const StakeAndBorrowHelper = artifacts.require("StakeAndBorrowHelper")
 const f = (v: any) => ethers.utils.commify(ethers.utils.formatEther(v.toString()))
 const bn = (v: any) => ethers.utils.parseEther(v.toString())
 
-const debug = true
+const debug = false
 
 let contracts: any,
 	adminContract: any,
@@ -164,7 +164,8 @@ contract("StakeAndBorrowHelper", async accounts => {
 		assertIsApproximatelyEqual(expectedAssetAmountAlice, await erc20.balanceOf(alice))
 	})
 
-	it.only("claimCollateral pass-through", async () => {
+	it("claimCollateral pass-through", async () => {
+
 		debug && console.log(`Enabling redemptions...`)
 		await adminContract.setRedemptionBlockTimestamp(vault.address, 0)
 
@@ -221,7 +222,7 @@ contract("StakeAndBorrowHelper", async accounts => {
 			AddressZero
 		)
 
-		debug && console.log(`[alice] asset balance: ${f(await erc20.balanceOf(alice))}`)
+		assert.equal("0", await erc20.balanceOf(alice))
 		await vesselManagerOperations.redeemCollateral(
 			vault.address,
 			redemptionAmount,
@@ -234,13 +235,14 @@ contract("StakeAndBorrowHelper", async accounts => {
 			{ from: redeemer }
 		)
 		debug && console.log(`[alice] asset balance: ${f(await erc20.balanceOf(alice))}`)
+		debug && console.log(`[alice] vault balance: ${f(await vault.balanceOf(alice))}`)
+		debug && console.log(`[alice] approves...`)
+		await vault.approve(stakeAndBorrowHelper.address, MaxUint256, { from: alice })
+		debug && console.log(`[alice] claims surplus...`)
 		await stakeAndBorrowHelper.claimCollateral(erc20.address, { from: alice })
 		debug && console.log(`[alice] asset balance: ${f(await erc20.balanceOf(alice))}`)
-
-		assert.equal("0", await erc20.balanceOf(bob))
-		debug && console.log(`[bob] claims surplus after partial redemption...`)
-		await stakeAndBorrowHelper.claimCollateral(erc20.address, { from: bob })
-		debug && console.log(`[bob] asset balance: ${f(await erc20.balanceOf(bob))}`)
+		debug && console.log(`[alice] vault balance: ${f(await vault.balanceOf(alice))}`)
+		assert.notEqual("0", await erc20.balanceOf(alice)) // alice had surplus from her vessel redemption, which was unwrapped
 	})
 })
 

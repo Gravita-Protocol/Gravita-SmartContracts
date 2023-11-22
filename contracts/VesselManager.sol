@@ -282,9 +282,13 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	) external override onlyVesselManagerOperations {
 		// Send the asset fee
 		if (_assetFeeAmount != 0) {
-			address destination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
-			IActivePool(activePool).sendAsset(_asset, destination, _assetFeeAmount);
-			IFeeCollector(feeCollector).handleRedemptionFee(_asset, _assetFeeAmount);
+			address _feeDestination = IFeeCollector(feeCollector).getProtocolRevenueDestination();
+			(address _feeAssetSent, uint256 _feeAmountSent) = IActivePool(activePool).sendAsset(
+				_asset,
+				_feeDestination,
+				_assetFeeAmount
+			);
+			IFeeCollector(feeCollector).handleRedemptionFee(_feeAssetSent, _feeAmountSent);
 		}
 		// Burn the total debt tokens that is cancelled with debt, and send the redeemed asset to msg.sender
 		IDebtToken(debtToken).burn(_receiver, _debtToRedeem);
@@ -703,4 +707,3 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
-

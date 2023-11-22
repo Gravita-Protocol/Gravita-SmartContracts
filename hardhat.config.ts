@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-etherscan"
 import "@openzeppelin/hardhat-upgrades"
 import "@openzeppelin/hardhat-defender"
+import "hardhat-contract-sizer"
 import "solidity-coverage"
 
 import { task } from "hardhat/config"
