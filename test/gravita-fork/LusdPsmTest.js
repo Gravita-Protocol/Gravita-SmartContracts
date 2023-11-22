@@ -111,7 +111,7 @@ contract("LusdPsm", async accounts => {
 			await assertRevert(lusdPsm.buyLUSD(0))
 		})
 
-		it.only("Collect yield withdraws amount over what needs to be kept to back minted GRAI", async () => {
+		it("Collect yield withdraws amount over what needs to be kept to back minted GRAI", async () => {
 			await impersonateAccount(lusdHolder)
 			holder = await ethers.getSigner(lusdHolder)
 			await lusd.connect(holder).approve(lusdPsm.address, 100)

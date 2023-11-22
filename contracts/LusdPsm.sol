@@ -6,11 +6,11 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "./Interfaces/IDebtToken.sol";
-import { IPool } from "../lib/aave-v3-core/contracts/interfaces/IPool.sol";
 
-import "./Dependencies/SafetyTransfer.sol";
 import "./Addresses.sol";
+import "./Dependencies/External/AaveV3Core/IPool.sol";
+import "./Dependencies/SafetyTransfer.sol";
+import "./Interfaces/IDebtToken.sol";
 
 contract LusdPsm is UUPSUpgradeable, OwnableUpgradeable, Addresses, ReentrancyGuardUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
