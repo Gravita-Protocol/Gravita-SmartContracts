@@ -15,6 +15,7 @@ export enum DeploymentTarget {
 	OptimismGoerliTestnet = "optimism-goerli",
 	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
+	Linea = "linea",
 }
 
 /**
@@ -40,10 +41,20 @@ export class CoreDeployer {
 		this.deployerWallet = new Wallet(process.env.DEPLOYER_PRIVATEKEY, this.hre.ethers.provider)
 	}
 
-	isTestnetDeployment = () => this.targetNetwork != DeploymentTarget.Mainnet && this.targetNetwork != DeploymentTarget.Arbitrum
-	isLocalhostDeployment = () => this.targetNetwork == DeploymentTarget.Localhost
+	isLocalhostDeployment = () => DeploymentTarget.Localhost == this.targetNetwork
+	isTestnetDeployment = () =>
+		[
+			DeploymentTarget.Localhost,
+			DeploymentTarget.GoerliTestnet,
+			DeploymentTarget.ArbitrumGoerliTestnet,
+			DeploymentTarget.OptimismGoerliTestnet,
+		].includes(this.targetNetwork)
 	isLayer2Deployment = () =>
-		[DeploymentTarget.Arbitrum, DeploymentTarget.ArbitrumGoerliTestnet, DeploymentTarget.OptimismGoerliTestnet].includes(this.targetNetwork)
+		[
+			DeploymentTarget.Arbitrum,
+			DeploymentTarget.ArbitrumGoerliTestnet,
+			DeploymentTarget.OptimismGoerliTestnet,
+		].includes(this.targetNetwork)
 
 	/**
 	 * Main function that is invoked by the deployment process.
@@ -321,12 +332,11 @@ export class CoreDeployer {
 		} else {
 			console.log(`[${coll.name}] Setting collateral params...`)
 			const defaultPercentDivisor = await this.coreContracts.adminContract.PERCENT_DIVISOR_DEFAULT()
-			const defaultBorrowingFee = await this.coreContracts.adminContract.BORROWING_FEE_DEFAULT()
 			const defaultRedemptionFeeFloor = await this.coreContracts.adminContract.REDEMPTION_FEE_FLOOR_DEFAULT()
 			await this.sendAndWaitForTransaction(
 				this.coreContracts.adminContract.setCollateralParameters(
 					coll.address,
-					defaultBorrowingFee,
+					coll.borrowingFee,
 					coll.CCR,
 					coll.MCR,
 					coll.minNetDebt,
@@ -441,7 +451,8 @@ export class CoreDeployer {
 		this.deployerBalance = await this.hre.ethers.provider.getBalance(this.deployerWallet.address)
 		const cost = prevBalance ? this.hre.ethers.utils.formatUnits(prevBalance.sub(this.deployerBalance)) : 0
 		console.log(
-			`${this.deployerWallet.address} Balance: ${this.hre.ethers.utils.formatUnits(this.deployerBalance)} ${cost ? `(Deployment cost: ${cost})` : ""
+			`${this.deployerWallet.address} Balance: ${this.hre.ethers.utils.formatUnits(this.deployerBalance)} ${
+				cost ? `(Deployment cost: ${cost})` : ""
 			}`
 		)
 	}
@@ -490,7 +501,7 @@ export class CoreDeployer {
 			const contract = contracts[name]
 			try {
 				name = await contract.NAME()
-			} catch (e) { }
+			} catch (e) {}
 			console.log(`Contract deployed: ${contract.address} -> ${name}`)
 		}
 	}
@@ -541,4 +552,3 @@ export class CoreDeployer {
 		this.saveDeployment()
 	}
 }
-
