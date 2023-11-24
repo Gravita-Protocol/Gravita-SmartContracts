@@ -16,8 +16,8 @@ const ERC20 = artifacts.require("ERC20")
 const PriceFeed = artifacts.require("PriceFeed")
 const VesselManager = artifacts.require("VesselManager")
 
-const asset = '0xA35b1B31Ce002FBF2058D22F30f95D405200A15b' // ETHx
-const assetPiggyBank = '0xBA12222222228d8Ba445958a75a0704d566BF2C8' // ETHx Balancer Vault
+const asset = '0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee' // weETH
+const assetPiggyBank = '0xBA12222222228d8Ba445958a75a0704d566BF2C8' // Balancer Vault
 const adminContractAddress = '0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53'
 
 let priceFeed, borrowerOperations

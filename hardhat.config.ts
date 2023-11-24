@@ -66,6 +66,14 @@ module.exports = {
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
 		},
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	chainId: 1,
+		// 	forking: {
+		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+		// 		blockNumber: 18642760,
+		// 	},
+		// },
 		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
 		// 	accounts: accountsList,
