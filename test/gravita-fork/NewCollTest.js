@@ -4,7 +4,7 @@
 // 	chainId: 1,
 // 	forking: {
 // 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-// 		blockNumber: 18392400,
+// 		blockNumber: 18664477,
 // 	},
 // },
 
@@ -39,12 +39,13 @@ contract("CollTest", async accounts => {
 	it("openVessel()", async () => {
 		const erc20 = await ERC20.at(asset)
 		console.log(`Using ${await erc20.name()} as collateral`)
+		console.log(`PriceFeed: ${priceFeed.address}`)
         const price = await priceFeed.fetchPrice(asset)
 		console.log(`PriceFeed's price: ${f(price)}`)
-		const amount = p('100')
+		const amount = p('10')
 
 		// piggy bank gives user some of his asset
-		await setBalance(assetPiggyBank, p('100'))
+		await setBalance(assetPiggyBank, p('10'))
 		await impersonateAccount(assetPiggyBank)
 		await erc20.transfer(user, amount, { from: assetPiggyBank })
 		await stopImpersonatingAccount(assetPiggyBank)
