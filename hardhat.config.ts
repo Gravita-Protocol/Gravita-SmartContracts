@@ -30,6 +30,12 @@ task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
 )
+task("deploy-core-linea", "Deploys contracts to Linea").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Linea).run()
+)
+task("deploy-core-optimism", "Deploys contracts to Linea").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Optimism).run()
+)
 
 module.exports = {
 	paths: {
@@ -95,6 +101,14 @@ module.exports = {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		linea: {
+			url: `https://linea-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		optimism: {
+			url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
@@ -110,4 +124,3 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
-

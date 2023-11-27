@@ -16,6 +16,7 @@ export enum DeploymentTarget {
 	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
 	Linea = "linea",
+	Optimism = "optimism"
 }
 
 /**
@@ -54,6 +55,7 @@ export class CoreDeployer {
 			DeploymentTarget.Arbitrum,
 			DeploymentTarget.ArbitrumGoerliTestnet,
 			DeploymentTarget.OptimismGoerliTestnet,
+			DeploymentTarget.Optimism
 		].includes(this.targetNetwork)
 
 	/**
