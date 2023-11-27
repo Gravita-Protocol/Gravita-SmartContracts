@@ -9,7 +9,6 @@ const CONTRACT_UPGRADES_ADMIN = "0x853b5db6310292dF1C8C05Ad0a4fdf0856B772BB"
 const SYSTEM_PARAMS_ADMIN = "0x853b5db6310292dF1C8C05Ad0a4fdf0856B772BB"
 const TREASURY_WALLET = "0x853b5db6310292dF1C8C05Ad0a4fdf0856B772BB"
 
-// Updated 06/20/2023 from Gravita-Protocol/layer-zero branch gravita-proxy file deployments/arbitrum/GravitaDebtToken.json commit 1564b4d
 const GRAI_TOKEN_ADDRESS = "0x894134a25a5faC1c2C26F1d8fBf05111a3CB9487"
 
 // from https://docs.chain.link/data-feeds/l2-sequencer-feeds
