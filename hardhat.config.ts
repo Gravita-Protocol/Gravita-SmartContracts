@@ -75,10 +75,10 @@ module.exports = {
 		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
 		// 	accounts: accountsList,
-		// 	chainId: 42161,
+		// 	chainId: 10,
 		// 	forking: {
-		// 		url: "https://arb1.arbitrum.io/rpc",
-		// 		blockNumber: 133331300,
+		// 		url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 112763546,
 		// 	},
 		// },
 		localhost: {

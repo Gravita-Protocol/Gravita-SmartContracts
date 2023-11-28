@@ -67,16 +67,16 @@ export class CoreDeployer {
 		await this.printDeployerBalance()
 
 		await this.loadOrDeployCoreContracts()
-		await this.connectCoreContracts()
-		await this.addCollaterals()
+		// await this.connectCoreContracts()
+		// await this.addCollaterals()
 
 		// do not hand off from admin to timelock for now
 		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
 
-		await this.verifyCoreContracts()
+		// await this.verifyCoreContracts()
 
 		// do not transfer ownership for now
-		// await this.transferContractsOwnerships(contracts)
+		await this.transferContractsOwnerships(this.coreContracts)
 
 		await this.printDeployerBalance()
 	}
@@ -271,6 +271,7 @@ export class CoreDeployer {
 					try {
 						await setAddresses(contract)
 					} catch (e) {
+						console.error(e)
 						console.log(`${key}.setAddresses() failed!`)
 					}
 				} else {
@@ -281,12 +282,12 @@ export class CoreDeployer {
 			}
 		}
 		try {
-			console.log(`DebtToken.setAddresses()...`)
-			await this.coreContracts.debtToken.setAddresses(
-				this.coreContracts.borrowerOperations.address,
-				this.coreContracts.stabilityPool.address,
-				this.coreContracts.vesselManager.address
-			)
+			// console.log(`DebtToken.setAddresses()...`)
+			// await this.coreContracts.debtToken.setAddresses(
+			// 	this.coreContracts.borrowerOperations.address,
+			// 	this.coreContracts.stabilityPool.address,
+			// 	this.coreContracts.vesselManager.address
+			// )
 		} catch (e) {
 			console.log(`DebtToken.setAddresses() failed!`)
 		}

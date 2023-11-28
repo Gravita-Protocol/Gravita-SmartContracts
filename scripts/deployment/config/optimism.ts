@@ -21,6 +21,7 @@ const COLLATERAL = [
         oracleAddress: "0x13e3Ee699D1909E989722E753853AE30b17e08c5",
         oracleTimeoutSeconds: 4_500,
         oracleIsEthIndexed: false,
+        borrowingFee: toEther(0.01),
         MCR: toEther(1.111),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
@@ -33,6 +34,7 @@ const COLLATERAL = [
         oracleAddress: "0x698B585CbC4407e2D54aa898B2600B53C68958f7",
         oracleTimeoutSeconds: 90_000, 
         oracleIsEthIndexed: false,
+        borrowingFee: toEther(0.01),
         MCR: toEther(1.176),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
@@ -43,6 +45,7 @@ const COLLATERAL = [
         name: "rETH",
         address: "0x9bcef72be871e61ed4fbbc7630889bee758eb81d",
         oracleAddress: "0x22F3727be377781d1579B7C9222382b21c9d1a8f",
+        borrowingFee: toEther(0.01),
         oracleTimeoutSeconds: 90_000, 
         oracleIsEthIndexed: true,  // <-- ETH-indexed oracle
         MCR: toEther(1.176),

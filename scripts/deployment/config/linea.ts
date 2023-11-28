@@ -24,6 +24,7 @@ const COLLATERAL = [
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
         mintCap: toEther(1_000_000),
+        redemptionBlockTimestamp: 1701129000
     },    
     {
         name: "wstETH",
@@ -37,6 +38,7 @@ const COLLATERAL = [
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
         mintCap: toEther(1_000_000),
+        redemptionBlockTimestamp: 1701129000
     }
 ]
 
