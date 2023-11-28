@@ -1,5 +1,5 @@
-import { BigNumber, utils } from "ethers"
-const toEther = (val: any): BigNumber => utils.parseEther(String(val))
+import { parseEther } from "ethers"
+const toEther = (val: any): bigint => parseEther(String(val))
 
 const OUTPUT_FILE = "./scripts/deployment/output/linea.json"
 const TX_CONFIRMATIONS = 1

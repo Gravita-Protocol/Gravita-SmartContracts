@@ -3,7 +3,6 @@ import "@nomiclabs/hardhat-truffle5"
 import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-etherscan"
 import "@openzeppelin/hardhat-upgrades"
-import "@openzeppelin/hardhat-defender"
 import "solidity-coverage"
 
 import { task } from "hardhat/config"
@@ -111,7 +110,19 @@ module.exports = {
 		},
 	},
 	etherscan: {
-		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
+		apiKey: {
+			linea: `${process.env.ETHERSCAN_API_KEY}`
+		},
+		customChains: [
+			{
+				network: "linea",
+				chainId: 59144,
+				urls: {
+					apiURL: "https://api.lineascan.build/api",
+					browserURL: "https://lineascan.build/"
+				}
+			}
+		]
 	},
 	mocha: { timeout: 12_000_000 },
 	rpc: {
