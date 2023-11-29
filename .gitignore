@@ -11,7 +11,7 @@ bin
 /scripts/deployment/output/localhost.json
 
 # https://docs.openzeppelin.com/upgrades-plugins/1.x/network-files
-.openzeppelin/unknown-*.json
+.openzeppelin/unknown-31337.json
 
 .secret
 
