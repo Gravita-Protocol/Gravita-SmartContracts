@@ -1,0 +1,93 @@
+{
+	"ActivePool": {
+		"address": "0xdDf7ADB56b1Be18A077E7377c88D4E1811aFE0AE",
+		"txHash": "0xff4b31e167535f11ecf8c4c9d4364aea23259ee53026e6fd77428f2dc4a87fe7",
+		"implAddress": "0x8786488Fce0ABBBcAbfaE79973EC573CDbe2277B",
+		"verification": "https://holesky.etherscan.io/address/0xdDf7ADB56b1Be18A077E7377c88D4E1811aFE0AE#code"
+	},
+	"AdminContract": {
+		"address": "0x412D48c3467177140B83C0dBdf786317C5604F4e",
+		"txHash": "0x26ef0f29d39643481d72f051de7566987f514267e25df8d1a28c6043c48485b5",
+		"implAddress": "0xF1c0DB770e77a961efde9DD11216e3833ad5c588",
+		"verification": "https://holesky.etherscan.io/address/0x412D48c3467177140B83C0dBdf786317C5604F4e#code"
+	},
+	"BorrowerOperations": {
+		"address": "0x47C7277224BbCc6Bed8d1735c54490FeaAb27387",
+		"txHash": "0x62787038db29bb5dcea92acb1129713cc888cff8277b00a8fd6a54f73b55ae30",
+		"implAddress": "0x985B8fE9D1e76592f586795bD335B5b6C5af42aA",
+		"verification": "https://holesky.etherscan.io/address/0x47C7277224BbCc6Bed8d1735c54490FeaAb27387#code"
+	},
+	"CollSurplusPool": {
+		"address": "0x5480c5c5610000998677519602cEe57e09Aa493E",
+		"txHash": "0x4ee0085c3a247f54fadef46d5369cdc53bfc5cb1df878929dfcdd89b509fe290",
+		"implAddress": "0x6A74Bb4aE703226BC58c5af49ddc26F5EC4B2a63",
+		"verification": "https://holesky.etherscan.io/address/0x5480c5c5610000998677519602cEe57e09Aa493E#code"
+	},
+	"DebtToken": {
+		"address": "0x1a3C351b6CF73b4488d44D8c71f1234Be61603c5",
+		"txHash": "0x0de5e1888eef22f5e4f2d679526946d085a6d14784e5e502bf47297d19ef74d1",
+		"verification": "https://holesky.etherscan.io/address/0x1a3C351b6CF73b4488d44D8c71f1234Be61603c5#code"
+	},
+	"DefaultPool": {
+		"address": "0xBCbDc92e4fa95F90CB38Edf8a00e77e29588F7dD",
+		"txHash": "0x101ca3299f942e2e376064b8cb5e1d81026b0e9b5661b92ab30b6e603afd8f96",
+		"implAddress": "0x77daB71aAa886E7ee8E1abbCbE4aCb6da1802A5F",
+		"verification": "https://holesky.etherscan.io/address/0xBCbDc92e4fa95F90CB38Edf8a00e77e29588F7dD#code"
+	},
+	"FeeCollector": {
+		"address": "0xafCf3d22fE71459c8FEc9AA0Fe1B5572f13d7EFa",
+		"txHash": "0x2cf8a6b1585008c3b86af7dda0bfbda225ddc7283b2c280c50874831b05b146c",
+		"implAddress": "0x582DA0692dD4D67bD67B16083949c5589Ac80703",
+		"verification": "https://holesky.etherscan.io/address/0xafCf3d22fE71459c8FEc9AA0Fe1B5572f13d7EFa#code"
+	},
+	"GasPool": {
+		"address": "0x337c6D715fac1f8013d78567e154Ed38060ca2A6",
+		"txHash": "0xb8acbf0cbeb616cc07a76ff0e705d0cb8bfe5fc386287671e35e6645afb415b9",
+		"verification": "https://holesky.etherscan.io/address/0x337c6D715fac1f8013d78567e154Ed38060ca2A6#code"
+	},
+	"PriceFeed": {
+		"address": "0xE88EDcc956Cb979bF2d823EeFa1f7C6d69169285",
+		"txHash": "0xd9e1a33fae66211e1feb1252c8ed1686dd704e9c7e735a91a796c230a9046666",
+		"implAddress": "0xeebd674d85E02cF41c28eC87e4FA89F5a51554D7",
+		"verification": "https://holesky.etherscan.io/address/0xE88EDcc956Cb979bF2d823EeFa1f7C6d69169285#code"
+	},
+	"SortedVessels": {
+		"address": "0x6cB4BDA294faC398eB7B0eDf4f7E9138bbf8EA89",
+		"txHash": "0x0d8d646a7cd1ea31bdf1a9ee3b4d946db4e131eea37b4ed41c8c4c2700bdaf73",
+		"implAddress": "0x738b4A928bFeEd9Bb4AE67c223f6A05C61dfd4bD",
+		"verification": "https://holesky.etherscan.io/address/0x6cB4BDA294faC398eB7B0eDf4f7E9138bbf8EA89#code"
+	},
+	"StabilityPool": {
+		"address": "0xD8e4009aE9e22FCF8DE786946E33eF5783eC34Ee",
+		"txHash": "0x2775101b8ea95db4b95deb1b98fcd5b24933edfea707526e7a78dd80513318c4",
+		"implAddress": "0x14a8EB5c9960621E7abEf9B8360Fc357Ea41C9c5",
+		"verification": "https://holesky.etherscan.io/address/0xD8e4009aE9e22FCF8DE786946E33eF5783eC34Ee#code"
+	},
+	"TimelockTester": {
+		"address": "0x54eD9C8b2CAB402540B11996979064CFF709888e",
+		"txHash": "0xb554e6823e87fa104b5f31285c237e47b4c0550956b1c14f3eb869afae305872",
+		"verification": "https://holesky.etherscan.io/address/0x54eD9C8b2CAB402540B11996979064CFF709888e#code"
+	},
+	"VesselManager": {
+		"address": "0xD8a84A6064bAcE062AA906f0C11ac35656CD58b6",
+		"txHash": "0x0ebce66b7c368c32f511795b6526652d88caf7a3a514d3320bd7fb435c9985b0",
+		"implAddress": "0xd66A46E8fD06829609c937d25CA1f3f4b4aA79B5",
+		"verification": "https://holesky.etherscan.io/address/0xD8a84A6064bAcE062AA906f0C11ac35656CD58b6#code"
+	},
+	"VesselManagerOperations": {
+		"address": "0x0d441bD787F7bF026dEf59e9e9D9F880fE59B5b4",
+		"txHash": "0x7b1e5978fbe0899754ea0cd9a0a44ba448291ceb7956225957a3ef1034cfaf8d",
+		"implAddress": "0x24CED57dBe3Ce2080A8D4c94E768A0573d7a5f7A",
+		"verification": "https://holesky.etherscan.io/address/0x0d441bD787F7bF026dEf59e9e9D9F880fE59B5b4#code"
+	},
+	"MockLST1": {
+		"address": "0xB77581012975C857890e35BdEB97b834f4c26782",
+		"txHash": "0xe65a069dd95b768310372f7f0b1299e16e39a455f508caac68f62977c424cb1b",
+		"verification": "https://holesky.etherscan.io/address/0xB77581012975C857890e35BdEB97b834f4c26782#code"
+	},
+  "MockAggregator1": {
+    "address": "0xBD9BEBcbAE2851381E1d248b973D8598f0408658",
+		"txHash": "0xf6dd5eb03f91d6b83283858e6105aa33914090c47914df7705264e521c9a2413",
+		"verification": "https://holesky.etherscan.io/address/0xBD9BEBcbAE2851381E1d248b973D8598f0408658#code"
+  }
+}

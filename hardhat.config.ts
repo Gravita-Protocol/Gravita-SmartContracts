@@ -25,6 +25,9 @@ task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
 task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.ArbitrumGoerliTestnet).run()
 )
+task("deploy-core-holesky", "Deploys contracts to Holesky Testnet").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.HoleskyTestnet).run()
+)
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
@@ -62,6 +65,9 @@ module.exports = {
 		],
 	},
 	networks: {
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// TESTNETS
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		hardhat: {
 			allowUnlimitedContractSize: true,
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
@@ -88,12 +94,19 @@ module.exports = {
 			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-		arbitrum: {
-			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
+		holesky: {
+			url: `https://ethereum-holesky.publicnode.com`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// MAINNETS
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		mainnet: {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		arbitrum: {
+			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		linea: {
@@ -102,7 +115,28 @@ module.exports = {
 		},
 	},
 	etherscan: {
-		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
+		apiKey: {
+			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
+			holesky: `${process.env.ETHERSCAN_API_KEY}`
+		},
+		customChains: [
+			{
+				network: "linea",
+				chainId: 59144,
+				urls: {
+					apiURL: "https://api.lineascan.build/api",
+					browserURL: "https://lineascan.build/"
+				}
+			},
+			{
+				network: "holesky",
+				chainId: 17000,
+				urls: {
+					apiURL: "https://api-holesky.etherscan.io/api",
+					browserURL: "https://holesky.etherscan.io/"
+				}
+			}
+		]
 	},
 	mocha: { timeout: 12_000_000 },
 	rpc: {
