@@ -3,9 +3,8 @@
 pragma solidity ^0.8.19;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-
-import "../Dependencies/External/OpenZeppelin5/IERC4626.sol";
 
 /**
  * @notice An aggregator that calculates the price of a vault's token by multiplying the ratio of its shares to the 

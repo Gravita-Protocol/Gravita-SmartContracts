@@ -73,12 +73,11 @@ contract("StakeAndBorrowHelper", async accounts => {
 			interestRate,
 			autoTransfer
 		)
-		await vault.initialize()
 		await adminContract.addNewCollateral(vault.address, bn(200), 18)
 		await adminContract.setIsActive(vault.address, true)
 
-		stakeAndBorrowHelper = await StakeAndBorrowHelper.new(borrowerOperations.address)
-		await stakeAndBorrowHelper.initialize()
+		stakeAndBorrowHelper = await StakeAndBorrowHelper.new()
+		await stakeAndBorrowHelper.initialize(borrowerOperations.address)
 		await stakeAndBorrowHelper.registerStakingVault(erc20.address, vault.address)
 
 		await borrowerOperations.registerHelper(stakeAndBorrowHelper.address, true)

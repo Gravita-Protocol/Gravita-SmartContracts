@@ -60,7 +60,6 @@ contract("InterestIncurringTokenizedVault", async accounts => {
 			interestRate,
 			autoTransfer
 		)
-		await vault.initialize()
 		await adminContract.addNewCollateral(vault.address, bn(200), 18)
 		await adminContract.setIsActive(vault.address, true)
 
@@ -80,6 +79,8 @@ contract("InterestIncurringTokenizedVault", async accounts => {
 	})
 
 	it("deposit and withdraw happy path", async () => {
+		assert.equal("0", await vault.getCollectableInterest())
+		assert.equal("0", await vault.totalAssets())
 		const assetAmountAlice = bn(100_000)
 		const assetAmountBob = bn(200_000)
 		const assetAmountCarol = bn(300_000)
@@ -418,7 +419,7 @@ contract("InterestIncurringTokenizedVault", async accounts => {
 		await vault.deposit(assetAmountAlice, alice, { from: alice })
 		// collect interest on Alice's deposit each 6 hours for one year
 		debug && console.log(`[treasury] collect interest every 6h for a year (compound effect)...`)
-		for (let i = 1; i <= 1_460; i ++) {
+		for (let i = 1; i <= 1_460; i++) {
 			await time.increase(6 * 60 * 60)
 			await vault.collectInterest()
 		}
@@ -476,3 +477,4 @@ function bnMulDiv(x: any, y: any, z: any) {
 	const zBn = BigNumber.from(z.toString())
 	return xBn.mul(yBn).div(zBn)
 }
+

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "../Dependencies/External/OpenZeppelin5/IERC4626.sol";
+import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 interface IInterestIncurringTokenizedVault is IERC4626 {
 

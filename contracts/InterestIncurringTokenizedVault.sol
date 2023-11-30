@@ -2,17 +2,14 @@
 
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import "./Dependencies/External/OpenZeppelin5/ERC4626.sol";
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IInterestIncurringTokenizedVault.sol";
 
@@ -22,14 +19,13 @@ import "./Interfaces/IInterestIncurringTokenizedVault.sol";
  *         changes (upon each deposit/withdrawal) and can be collected at any time to a predefined destination address.
  */
 contract InterestIncurringTokenizedVault is
-	IInterestIncurringTokenizedVault,
-	OwnableUpgradeable,
-	UUPSUpgradeable,
-	ReentrancyGuardUpgradeable,
+	Ownable,
+	ReentrancyGuard,
 	ERC4626,
-	ERC165Storage
+	ERC165Storage,
+	IInterestIncurringTokenizedVault
 {
-	using SafeERC20Upgradeable for IERC20Upgradeable;
+	using SafeERC20 for IERC20;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Events
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,32 +71,26 @@ contract InterestIncurringTokenizedVault is
 	// Initializer & setup functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	/**
+	 * @dev Initialization using `deployProxy` happens at the same time the proxy is created, therefore, there's no
+	 *      risk of front-running.
+	 */
 	constructor(
-		ERC20 _underlyingToken,
+		IERC20 _underlyingToken,
 		string memory _newTokenName,
 		string memory _newTokenSymbol,
 		address _feeCollectorAddress,
 		uint256 _interestRateInBPS,
 		uint256 _interestAutoTransferTimeout
-	) ERC20(_newTokenName, _newTokenSymbol) ERC4626(_underlyingToken) {
+	) ERC4626(_underlyingToken) ERC20(_newTokenName, _newTokenSymbol) {
 		require(address(_underlyingToken) != address(0), "Invalid token address");
 		require(address(_feeCollectorAddress) != address(0), "Invalid FeeCollector address");
 		FEE_COLLECTOR_ADDRESS = _feeCollectorAddress;
 		INTEREST_AUTO_TRANSFER_TIMEOUT = _interestAutoTransferTimeout;
-		lastInterestAmountUpdateTimestamp = block.timestamp;
-		lastInterestPayoutTimestamp = block.timestamp;
 		_setInterestRate(_interestRateInBPS);
 		/// @dev ERC-165 interface is used by ActivePool to check if unwrapping is needed
 		_registerInterface(type(IInterestIncurringTokenizedVault).interfaceId);
 		_underlyingToken.approve(FEE_COLLECTOR_ADDRESS, type(uint256).max);
-	}
-
-	/**
-	 * @dev Initialization using `deployProxy` happens at the same time the proxy is created, therefore, there's no
-	 *      risk of front-running.
-	 */
-	function initialize() public initializer {
-		__Ownable_init();
 	}
 
 	function setInterestRate(uint256 _interestRateInBPS) external override onlyOwner {
@@ -130,20 +120,19 @@ contract InterestIncurringTokenizedVault is
 	function collectInterest() public override {
 		_accountForInterestDue();
 		uint256 _payableInterestAmount = payableInterestAmount;
-		if (_payableInterestAmount == 0) {
-			revert ZeroAmountError();
+		if (_payableInterestAmount != 0) {
+			payableInterestAmount = 0;
+			lastInterestPayoutTimestamp = block.timestamp;
+			IFeeCollector(FEE_COLLECTOR_ADDRESS).transferInterestRate(asset(), _payableInterestAmount);
+			emit InterestCollected(_payableInterestAmount);
 		}
-		payableInterestAmount = 0;
-		lastInterestPayoutTimestamp = block.timestamp;
-		IFeeCollector(FEE_COLLECTOR_ADDRESS).transferInterestRate(asset(), _payableInterestAmount);
-		emit InterestCollected(_payableInterestAmount);
 	}
 
 	/**
 	 * @notice Returns the interest amount available for collection.
 	 */
 	function getCollectableInterest() external view override returns (uint256) {
-		uint256 _netTotalAssets = ERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
+		uint256 _netTotalAssets = IERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
 		return payableInterestAmount + _calcInterestDue(_netTotalAssets, lastInterestAmountUpdateTimestamp);
 	}
 
@@ -155,7 +144,7 @@ contract InterestIncurringTokenizedVault is
 	function deposit(
 		uint256 _assets,
 		address _receiver
-	) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+	) public override(IERC4626, ERC4626) nonReentrant returns (uint256) {
 		if (_assets == 0) {
 			revert ZeroAmountError();
 		}
@@ -165,7 +154,7 @@ contract InterestIncurringTokenizedVault is
 	}
 
 	/// @inheritdoc IERC4626
-	function mint(uint256 _shares, address _receiver) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+	function mint(uint256 _shares, address _receiver) public override(IERC4626, ERC4626) nonReentrant returns (uint256) {
 		if (_shares == 0) {
 			revert ZeroAmountError();
 		}
@@ -179,7 +168,7 @@ contract InterestIncurringTokenizedVault is
 		uint256 _shares,
 		address _receiver,
 		address _owner
-	) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+	) public override(IERC4626, ERC4626) nonReentrant returns (uint256) {
 		if (_shares == 0) {
 			revert ZeroAmountError();
 		}
@@ -193,7 +182,7 @@ contract InterestIncurringTokenizedVault is
 		uint256 _assets,
 		address _receiver,
 		address _owner
-	) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+	) public override(IERC4626, ERC4626) nonReentrant returns (uint256) {
 		if (_assets == 0) {
 			revert ZeroAmountError();
 		}
@@ -206,9 +195,9 @@ contract InterestIncurringTokenizedVault is
 	 * @inheritdoc IERC4626
 	 * @notice Returns the net available assets in the vault, accounting for the accrued interest amount.
 	 */
-	function totalAssets() public view override(ERC4626, IERC4626) returns (uint256 _netTotalAssets) {
+	function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 _netTotalAssets) {
 		uint256 _payableInterestAmount = payableInterestAmount;
-		_netTotalAssets = ERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
+		_netTotalAssets = IERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
 		uint256 _lastInterestAmountUpdateTimestamp = lastInterestAmountUpdateTimestamp;
 		if (_lastInterestAmountUpdateTimestamp != block.timestamp) {
 			_netTotalAssets -= _calcInterestDue(_netTotalAssets, _lastInterestAmountUpdateTimestamp);
@@ -226,7 +215,7 @@ contract InterestIncurringTokenizedVault is
 		uint256 _lastInterestAmountUpdateTimestamp = lastInterestAmountUpdateTimestamp;
 		if (_lastInterestAmountUpdateTimestamp != block.timestamp) {
 			uint256 _payableInterestAmount = payableInterestAmount;
-			uint256 _netTotalAssets = ERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
+			uint256 _netTotalAssets = IERC20(asset()).balanceOf(address(this)) - _payableInterestAmount;
 			payableInterestAmount =
 				_payableInterestAmount +
 				_calcInterestDue(_netTotalAssets, _lastInterestAmountUpdateTimestamp);
@@ -252,25 +241,5 @@ contract InterestIncurringTokenizedVault is
 			}
 		}
 	}
-
-	/// @dev This function is necessary for the compiler to resolve dual-inheritance determinism.
-	function _msgSender() internal view override(Context, ContextUpgradeable) returns (address) {
-		return msg.sender;
-	}
-
-	/// @dev This function is necessary for the compiler to resolve dual-inheritance determinism.
-	function _msgData() internal pure override(Context, ContextUpgradeable) returns (bytes calldata) {
-		return msg.data;
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Upgrade functions
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	function authorizeUpgrade(address _newImplementation) public {
-		_authorizeUpgrade(_newImplementation);
-	}
-
-	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
 

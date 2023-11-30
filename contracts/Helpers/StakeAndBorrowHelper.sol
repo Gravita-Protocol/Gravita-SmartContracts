@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../Interfaces/IBorrowerOperations.sol";
-import "../Dependencies/External/OpenZeppelin5/IERC4626.sol";
 
 contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
 	using SafeERC20 for IERC20;
@@ -20,32 +20,24 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 	error UnregisteredAssetError();
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Constants & immutables
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	address public immutable borrowerOperations;
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// State
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	address public borrowerOperations;
 	mapping(address asset => address stakingVault) public stakingVaults;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Initializer & setup functions
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	constructor(address _borrowerOperations) {
-		require(_borrowerOperations != address(0), "Invalid address");
-		borrowerOperations = _borrowerOperations;
-	}
-
 	/**
 	 * @dev Initialization using `deployProxy` happens at the same time the proxy is created, therefore, there's no
 	 *      risk of front-running.
 	 */
-	function initialize() public initializer {
+	function initialize(address _borrowerOperations) public initializer {
+		require(_borrowerOperations != address(0), "Invalid address");
 		__Ownable_init();
+		borrowerOperations = _borrowerOperations;
 	}
 
 	/**
