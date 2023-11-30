@@ -66,7 +66,7 @@ export class CoreDeployer {
 
 		await this.loadOrDeployCoreContracts()
 		// await this.connectCoreContracts()
-		// await this.addCollaterals()
+		await this.addCollaterals()
 
 		// do not hand off from admin to timelock for now
 		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
@@ -335,12 +335,11 @@ export class CoreDeployer {
 		} else {
 			console.log(`[${coll.name}] Setting collateral params...`)
 			const defaultPercentDivisor = await this.coreContracts.adminContract.PERCENT_DIVISOR_DEFAULT()
-			const defaultBorrowingFee = await this.coreContracts.adminContract.BORROWING_FEE_DEFAULT()
 			const defaultRedemptionFeeFloor = await this.coreContracts.adminContract.REDEMPTION_FEE_FLOOR_DEFAULT()
 			await this.sendAndWaitForTransaction(
 				this.coreContracts.adminContract.setCollateralParameters(
 					coll.address,
-					defaultBorrowingFee,
+					coll.borrowingFee,
 					coll.CCR,
 					coll.MCR,
 					coll.minNetDebt,
