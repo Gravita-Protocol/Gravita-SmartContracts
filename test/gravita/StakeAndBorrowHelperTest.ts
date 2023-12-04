@@ -9,8 +9,6 @@ import { AddressZero, MaxUint256 } from "@ethersproject/constants"
 import { BigNumber } from "ethers"
 
 const deploymentHelper = require("../utils/deploymentHelpers.js")
-const testHelpers = require("../utils/testHelpers.js")
-const th = testHelpers.TestHelper
 
 const InterestIncurringTokenizedVault = artifacts.require("InterestIncurringTokenizedVault")
 const StakeAndBorrowHelper = artifacts.require("StakeAndBorrowHelper")

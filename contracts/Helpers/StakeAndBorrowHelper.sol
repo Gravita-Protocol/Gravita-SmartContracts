@@ -6,12 +6,13 @@ import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "../Interfaces/IBorrowerOperations.sol";
 
 contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
-	using SafeERC20 for IERC20;
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Custom errors
@@ -45,6 +46,7 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 	 */
 	function registerStakingVault(address _asset, address _vault) external onlyOwner {
 		require(_asset != address(0), "Invalid asset address");
+		IERC20Upgradeable(_asset).approve(_vault, type(uint256).max);
 		stakingVaults[_asset] = _vault;
 	}
 
@@ -63,7 +65,7 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 		if (_vault == address(0)) {
 			revert UnregisteredAssetError();
 		}
-		IERC20(_asset).transferFrom(msg.sender, address(this), _assetAmount);
+		IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _assetAmount);		
 		uint256 _shares = IERC4626(_vault).deposit(_assetAmount, msg.sender);
 		IBorrowerOperations(borrowerOperations).openVesselFor(
 			msg.sender,
@@ -90,7 +92,7 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 		}
 		uint256 _sharesSent = 0;
 		if (_assetSent != 0) {
-			IERC20(_asset).transferFrom(msg.sender, address(this), _assetSent);
+			IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _assetSent);
 			_sharesSent = IERC4626(_vault).deposit(_assetSent, msg.sender);
 		}
 		IBorrowerOperations(borrowerOperations).adjustVesselFor(

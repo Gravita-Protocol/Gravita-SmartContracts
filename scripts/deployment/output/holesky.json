@@ -101,8 +101,8 @@
 		"verification": "https://holesky.etherscan.io/address/0xc1d52EAed93FD2BA001F361EDAdf4CE54D99b473#code"
 	},
 	"StakeAndBorrowHelper": {
-		"address": "0x34BE9f967c33c64c408271BB90142B809e48BD94",
-		"txHash": "0xbdc04f8949e9e815709e3894d9d075380e848708b479fc07e70711a950fd3b83",
-		"verification": "https://holesky.etherscan.io/address/0x34BE9f967c33c64c408271BB90142B809e48BD94#code"
+		"address": "0x168983C0ABDd509A4A76FdA0f0d61B2A1d5120d6",
+		"txHash": "0xadbb50a2f835dfe3542ce1433da0b0b88e311e4298e5eb1d02a1d16816b47d9e",
+		"verification": "https://holesky.etherscan.io/address/0x168983C0ABDd509A4A76FdA0f0d61B2A1d5120d6#code"
 	}
 }
