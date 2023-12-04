@@ -102,7 +102,7 @@
 	},
 	"StakeAndBorrowHelper": {
 		"address": "0x34BE9f967c33c64c408271BB90142B809e48BD94",
-		"txHash": "",
+		"txHash": "0xbdc04f8949e9e815709e3894d9d075380e848708b479fc07e70711a950fd3b83",
 		"verification": "https://holesky.etherscan.io/address/0x34BE9f967c33c64c408271BB90142B809e48BD94#code"
 	}
 }
