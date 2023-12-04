@@ -39,7 +39,7 @@ Gravita has an unique multi-collateral design in which each position has a singl
 
 The core Liquity system consists of several smart contracts, which are deployable to the Ethereum blockchain.
 
-All application logic and data is contained in these contracts - there is no need for a separate database or back end logic running on a web server. In effect, the Ethereum network is itself the Gravita back end. As such, all balances and contract data are public.
+All application logic and data are contained in these contracts - there is no need for a separate database or back end logic running on a web server. In effect, the Ethereum network is itself the Gravita back end. As such, all balances and contract data are public.
 
 The three main contracts - `BorrowerOperations.sol`, `VesselManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. Together they control Vessel state updates and movements of collateral and debt tokens around the system.
 
