@@ -44,7 +44,7 @@ contract("InterestIncurringTokenizedVault", async accounts => {
 	let snapshotId: number, initialSnapshotId: number
 	const [treasury, alice, bob, carol, whale] = accounts
 	let vault: any
-	let interestRate, autoTransfer
+	let interestRate: number, autoTransfer: number
 
 	before(async () => {
 		await deploy(treasury, [])
@@ -76,6 +76,16 @@ contract("InterestIncurringTokenizedVault", async accounts => {
 
 	after(async () => {
 		await network.provider.send("evm_revert", [initialSnapshotId])
+	})
+	
+	it("getInterestRate()", async () => {
+		assert.equal(String(interestRate), await vault.getInterestRateInBPS())
+		await vault.setInterestRate(199)
+		assert.equal(String(199), await vault.getInterestRateInBPS())
+		await vault.setInterestRate(50)
+		assert.equal(String(50), await vault.getInterestRateInBPS())
+		await vault.setInterestRate(500)
+		assert.equal(String(500), await vault.getInterestRateInBPS())
 	})
 
 	it("deposit and withdraw happy path", async () => {

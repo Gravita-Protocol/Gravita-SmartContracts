@@ -25,8 +25,8 @@ const COLLATERAL = [
 	},
 	{
 		name: "g(MockLST1)",
-		address: "0x4f8BC845D24c1F81024959E65565854d806ebCcB",
-		oracleAddress: "0xc1d52EAed93FD2BA001F361EDAdf4CE54D99b473",
+		address: "0xe898eFDA0605493116CD7E6e11B70A731e89E8f6",
+		oracleAddress: "0x16B32a71149Dc1C5Aa4a977719D846feedA39fc9",
 		oracleTimeoutSeconds: 90_000,
 		oracleIsEthIndexed: false,
 		borrowingFee: toEther(0.01),

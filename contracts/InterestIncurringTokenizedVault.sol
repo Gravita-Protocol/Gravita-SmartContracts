@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./Interfaces/IFeeCollector.sol";
 import "./Interfaces/IInterestIncurringTokenizedVault.sol";
@@ -114,8 +113,8 @@ contract InterestIncurringTokenizedVault is
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * @notice Calculates accrued interest since the last payment and triggers the FeeCollector contract for 
-	           collecting (transferring) the resulting amount.
+	 * @notice Calculates accrued interest since the last payment and triggers the FeeCollector contract for
+	 *         collecting (transferring) the resulting amount.
 	 */
 	function collectInterest() public override {
 		_accountForInterestDue();
@@ -134,6 +133,19 @@ contract InterestIncurringTokenizedVault is
 	function getCollectableInterest() external view override returns (uint256) {
 		uint256 _netTotalAssets = IERC20(asset()).balanceOf(address(this)) - payableInterestAmount;
 		return payableInterestAmount + _calcInterestDue(_netTotalAssets, lastInterestAmountUpdateTimestamp);
+	}
+
+	/**
+	 * @notice Calculates the APY (in basis points) from the on-chain `per second` rate.
+	 */
+	function getInterestRateInBPS() external view override returns (uint256) {
+		return
+			Math.mulDiv(
+				SECONDS_IN_ONE_YEAR * BASIS_POINTS_DIVISOR,
+				interestRatePerSecond,
+				INTEREST_RATE_PRECISION,
+				Math.Rounding.Up
+			);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,4 +254,3 @@ contract InterestIncurringTokenizedVault is
 		}
 	}
 }
-

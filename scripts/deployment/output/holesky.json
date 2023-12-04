@@ -91,14 +91,14 @@
 		"verification": "https://holesky.etherscan.io/address/0xBD9BEBcbAE2851381E1d248b973D8598f0408658#code"
 	},
 	"InterestIncurringTokenizedVault1": {
-		"address": "0x4f8BC845D24c1F81024959E65565854d806ebCcB",
-		"txHash": "0xc0c349a0dd599c94092b3f4c34ae4d5c72997998db1dcdbf4704e73d0b24887c",
-		"verification": "https://holesky.etherscan.io/address/0x4f8BC845D24c1F81024959E65565854d806ebCcB#code"
+		"address": "0xe898eFDA0605493116CD7E6e11B70A731e89E8f6",
+		"txHash": "0x742f6283e41ae5ee1caa1dbff77d2232c4f686536a10a12cb2c126b9e7bacd22",
+		"verification": "https://holesky.etherscan.io/address/0xe898eFDA0605493116CD7E6e11B70A731e89E8f6#code"
 	},
 	"Vault1Aggregator": {
-		"address": "0xc1d52EAed93FD2BA001F361EDAdf4CE54D99b473",
-		"txHash": "0x5105521d83e3667f1ad775c1ae9f4c82040e1861509dac1fa1f9a4268a2f7ee0",
-		"verification": "https://holesky.etherscan.io/address/0xc1d52EAed93FD2BA001F361EDAdf4CE54D99b473#code"
+		"address": "0x16B32a71149Dc1C5Aa4a977719D846feedA39fc9",
+		"txHash": "0x9398f841ecfb28817da8a331796e1b9592b104bdba85bf63fe1ff73d14590c2f",
+		"verification": "https://holesky.etherscan.io/address/0x16B32a71149Dc1C5Aa4a977719D846feedA39fc9#code"
 	},
 	"StakeAndBorrowHelper": {
 		"address": "0x168983C0ABDd509A4A76FdA0f0d61B2A1d5120d6",
