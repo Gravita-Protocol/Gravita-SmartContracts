@@ -46,7 +46,7 @@ contract StakeAndBorrowHelper is OwnableUpgradeable, UUPSUpgradeable, Reentrancy
 	 */
 	function registerStakingVault(address _asset, address _vault) external onlyOwner {
 		require(_asset != address(0), "Invalid asset address");
-		IERC20Upgradeable(_asset).approve(_vault, type(uint256).max);
+		IERC20Upgradeable(_asset).safeApprove(_vault, type(uint256).max);
 		stakingVaults[_asset] = _vault;
 	}
 

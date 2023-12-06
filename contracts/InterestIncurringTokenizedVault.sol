@@ -89,7 +89,7 @@ contract InterestIncurringTokenizedVault is
 		_setInterestRate(_interestRateInBPS);
 		/// @dev ERC-165 interface is used by ActivePool to check if unwrapping is needed
 		_registerInterface(type(IInterestIncurringTokenizedVault).interfaceId);
-		_underlyingToken.approve(FEE_COLLECTOR_ADDRESS, type(uint256).max);
+		_underlyingToken.safeApprove(FEE_COLLECTOR_ADDRESS, type(uint256).max);
 	}
 
 	function setInterestRate(uint256 _interestRateInBPS) external override onlyOwner {
