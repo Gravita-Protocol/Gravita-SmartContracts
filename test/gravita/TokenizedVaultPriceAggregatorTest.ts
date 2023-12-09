@@ -40,7 +40,6 @@ contract("TokenizedVaultPriceAggregator", async accounts => {
 			interestRate,
 			autoTransfer
 		)
-		await vault.initialize()
 		assetPriceFeed = await MockAggregator.new()
 		await assetPriceFeed.setPrice(assetPrice)
 		vaultPriceFeed = await TokenizedVaultPriceAggregator.new(vault.address, assetPriceFeed.address)

@@ -113,22 +113,22 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 		callerIsBorrowerOpsOrStabilityPoolOrVesselMgrOrVesselMgrOps
 		returns (address _assetSent, uint256 _amountSent)
 	{
-		uint256 safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
-		if (safetyTransferAmount == 0) {
+		uint256 _safetyTransferAmount = SafetyTransfer.decimalsCorrection(_asset, _amount);
+		if (_safetyTransferAmount == 0) {
 			return (_asset, 0);
 		}
 
-		uint256 newBalance = assetsBalances[_asset] - _amount;
-		assetsBalances[_asset] = newBalance;
-		emit ActivePoolAssetBalanceUpdated(_asset, newBalance);
+		uint256 _newBalance = assetsBalances[_asset] - _amount;
+		assetsBalances[_asset] = _newBalance;
+		emit ActivePoolAssetBalanceUpdated(_asset, _newBalance);
 
 		// wrapped assets need to be withdrawn from vault (unless being sent to CollSurplusPool, DefaultPool or StabilityPool)
-		bool assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringTokenizedVault).interfaceId) &&
+		bool _assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringTokenizedVault).interfaceId) &&
 			(_account != collSurplusPool) &&
 			(_account != defaultPool) &&
 			(_account != stabilityPool);
 
-		if (assetNeedsUnwrap) {
+		if (_assetNeedsUnwrap) {
 			_assetSent = IInterestIncurringTokenizedVault(_asset).asset();
 			_amountSent = IInterestIncurringTokenizedVault(_asset).redeem(_amount, _account, address(this));
 			if (isERC20DepositContract(_account)) {
@@ -137,12 +137,12 @@ contract ActivePool is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgra
 			emit AssetSent(_account, _assetSent, _amountSent);
 		} else {
 			_assetSent = _asset;
-			_amountSent = safetyTransferAmount;
-			IERC20Upgradeable(_asset).safeTransfer(_account, safetyTransferAmount);
+			_amountSent = _safetyTransferAmount;
+			IERC20Upgradeable(_asset).safeTransfer(_account, _safetyTransferAmount);
 			if (isERC20DepositContract(_account)) {
-				IDeposit(_account).receivedERC20(_asset, safetyTransferAmount);
+				IDeposit(_account).receivedERC20(_asset, _safetyTransferAmount);
 			}
-			emit AssetSent(_account, _asset, safetyTransferAmount);
+			emit AssetSent(_account, _asset, _safetyTransferAmount);
 		}
 	}
 

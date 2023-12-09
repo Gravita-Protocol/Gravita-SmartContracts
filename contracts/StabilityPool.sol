@@ -2,15 +2,17 @@
 
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Dependencies/GravitaBase.sol";
 import "./Dependencies/SafetyTransfer.sol";
-import "./Interfaces/IStabilityPool.sol";
-import "./Interfaces/IDebtToken.sol";
-import "./Interfaces/IVesselManager.sol";
 import "./Interfaces/ICommunityIssuance.sol";
+import "./Interfaces/IDebtToken.sol";
+import "./Interfaces/IInterestIncurringTokenizedVault.sol";
+import "./Interfaces/IStabilityPool.sol";
+import "./Interfaces/IVesselManager.sol";
 
 /**
  * @title The Stability Pool holds debt tokens deposited by Stability Pool depositors.
@@ -139,6 +141,7 @@ import "./Interfaces/ICommunityIssuance.sol";
  */
 contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBase, IStabilityPool {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
+	using ERC165Checker for address;
 
 	string public constant NAME = "StabilityPool";
 
@@ -266,7 +269,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * - Sends depositor's accumulated gains (GRVT, collateral assets) to depositor
 	 * - Increases deposit stake, and takes new snapshots for each.
 	 * @param _amount amount of debtToken provided
-	 * @param _assets an array of collaterals to be claimed. 
+	 * @param _assets an array of collaterals to be claimed.
 	 * Skipping a collateral forfeits the available rewards (can be useful for gas optimizations)
 	 */
 	function provideToSP(uint256 _amount, address[] calldata _assets) external override nonReentrant {
@@ -295,10 +298,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		// send any collateral gains accrued to the depositor
 		_sendGainsToDepositor(msg.sender, gainAssets, gainAmounts);
 	}
-	/** 
-	* @param _amount amount of debtToken to withdraw
-	* @param _assets an array of collaterals to be claimed. 
-	*/
+
+	/**
+	 * @param _amount amount of debtToken to withdraw
+	 * @param _assets an array of collaterals to be claimed.
+	 */
 
 	function withdrawFromSP(uint256 _amount, address[] calldata _assets) external {
 		(address[] memory assets, uint256[] memory amounts) = _withdrawFromSP(_amount, _assets);
@@ -308,7 +312,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	/**
 	 * @notice withdraw from the stability pool
 	 * @param _amount debtToken amount to withdraw
-	 * @param _assets an array of collaterals to be claimed. 
+	 * @param _assets an array of collaterals to be claimed.
 	 * @return assets address of assets withdrawn, amount of asset withdrawn
 	 */
 	function _withdrawFromSP(
@@ -580,7 +584,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		// asset list must be on ascending order - used to avoid any repeated elements
 		unchecked {
 			for (uint256 i = 1; i < assetsLen; i++) {
-				if (_assets[i] <= _assets[i-1]) {
+				if (_assets[i] <= _assets[i - 1]) {
 					revert StabilityPool__ArrayNotInAscendingOrder();
 				}
 			}
@@ -737,28 +741,34 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * @dev this function also unwraps wrapped assets
 	 * before sending to depositor
 	 * @param _to address
-	 * @param assets array of address
-	 * @param amounts array of uint256. Includes pending collaterals since that was added in previous steps
+	 * @param _assets array of address
+	 * @param _amounts array of uint256. Includes pending collaterals since that was added in previous steps
 	 */
-	function _sendGainsToDepositor(address _to, address[] memory assets, uint256[] memory amounts) internal {
-		uint256 assetsLen = assets.length;
-		require(assetsLen == amounts.length, "StabilityPool: Length mismatch");
-		for (uint256 i = 0; i < assetsLen; ) {
-			uint256 amount = amounts[i];
-			if (amount == 0) {
+	function _sendGainsToDepositor(address _to, address[] memory _assets, uint256[] memory _amounts) internal {
+		uint256 _assetsLen = _assets.length;
+		require(_assetsLen == _amounts.length, "StabilityPool: Length mismatch");
+		for (uint256 _i = 0; _i < _assetsLen; ) {
+			uint256 _amount = _amounts[_i];
+			if (_amount == 0) {
 				unchecked {
-					i++;
+					_i++;
 				}
 				continue;
 			}
-			address asset = assets[i];
-			// Assumes we're internally working only with the wrapped version of ERC20 tokens
-			IERC20Upgradeable(asset).safeTransfer(_to, amount);
+			address _asset = _assets[_i];
+
+			bool _assetNeedsUnwrap = _asset.supportsInterface(type(IInterestIncurringTokenizedVault).interfaceId);
+			if (_assetNeedsUnwrap) {
+				IInterestIncurringTokenizedVault(_asset).redeem(_amount, _to, address(this));
+			} else {
+				IERC20Upgradeable(_asset).safeTransfer(_to, _amount);
+			}
+
 			unchecked {
-				i++;
+				_i++;
 			}
 		}
-		totalColl.amounts = _leftSubColls(totalColl, assets, amounts);
+		totalColl.amounts = _leftSubColls(totalColl, _assets, _amounts);
 	}
 
 	// Send debt tokens to user and decrease deposits in Pool
