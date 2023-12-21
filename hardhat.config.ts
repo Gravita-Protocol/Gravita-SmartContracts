@@ -30,6 +30,9 @@ task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
 )
+task("deploy-core-polygon-zkevm", "Deploys contracts to Polygon ZkEVM").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.PolygonZkEvm).run()
+)
 
 module.exports = {
 	paths: {
@@ -95,6 +98,10 @@ module.exports = {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		polygonZkEvm: {
+			url: `https://polygon-zkevm.drpc.org`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		}
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,

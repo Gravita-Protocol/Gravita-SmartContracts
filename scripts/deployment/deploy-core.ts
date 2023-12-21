@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { getImplementationAddress, EthereumProvider } from "@openzeppelin/upgrades-core"
 import { BigNumber, Contract, Wallet, constants } from "ethers"
-import { getParsedEthersError } from "@enzoferey/ethers-error-parser"
 import fs from "fs"
 
 /**
@@ -15,6 +14,7 @@ export enum DeploymentTarget {
 	HoleskyTestnet = "holesky",
 	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
+	PolygonZkEvm = "polygonZkEvm"
 }
 
 /**
@@ -66,7 +66,7 @@ export class CoreDeployer {
 
 		await this.loadOrDeployCoreContracts()
 		// await this.connectCoreContracts()
-		await this.addCollaterals()
+		// await this.addCollaterals()
 
 		// do not hand off from admin to timelock for now
 		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
@@ -89,6 +89,7 @@ export class CoreDeployer {
 		this.loadPreviousDeployment()
 
 		const activePool = await this.deployUpgradeable("ActivePool")
+		process.exit(0)
 		const adminContract = await this.deployUpgradeable("AdminContract")
 		const borrowerOperations = await this.deployUpgradeable("BorrowerOperations")
 		const collSurplusPool = await this.deployUpgradeable("CollSurplusPool")
@@ -101,7 +102,7 @@ export class CoreDeployer {
 
 		const gasPool = await this.deployNonUpgradeable("GasPool")
 
-		let priceFeed
+		let priceFeed: any
 		if (this.isLocalhostDeployment()) {
 			priceFeed = await this.deployNonUpgradeable("PriceFeedTestnet")
 		} else if (this.isLayer2Deployment()) {
@@ -414,9 +415,7 @@ export class CoreDeployer {
 						await this.sendAndWaitForTransaction((contract as any).transferOwnership(upgradesAdmin))
 						console.log(` - ${name} -> Owner set to CONTRACT_UPGRADES_ADMIN @ ${upgradesAdmin}`)
 					} catch (e: any) {
-						const parsedEthersError = getParsedEthersError(e)
-						const errorMsg = parsedEthersError.context || parsedEthersError.errorCode
-						console.log(` - ${name} -> ERROR: ${errorMsg} [owner = ${currentOwner}]`)
+						console.error(e)
 					}
 				}
 			}

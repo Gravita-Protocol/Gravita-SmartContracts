@@ -15,7 +15,7 @@ const COLLATERAL = [
     {
         name: "wETH",
         address: "0x4F9A0e7FD2Bf6067db6994CF12E4495Df938E6e9",
-        oracleAddress: "0x9C17e6853d0f233bFA29ddbF08CdDE1a8eaf3FF2",
+        oracleAddress: "0x97d9F9A00dEE0004BE8ca0A8fa374d486567eE2D",
         oracleTimeoutSeconds: 4_500,
         oracleIsEthIndexed: false,
         borrowingFee: toEther(0.02),
