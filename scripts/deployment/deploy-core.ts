@@ -14,7 +14,7 @@ export enum DeploymentTarget {
 	HoleskyTestnet = "holesky",
 	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
-	PolygonZkEvm = "polygonZkEvm"
+	PolygonZkEvm = "polygon-zkevm"
 }
 
 /**
