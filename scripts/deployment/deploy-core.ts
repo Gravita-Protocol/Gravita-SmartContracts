@@ -74,7 +74,7 @@ export class CoreDeployer {
 		// await this.verifyCoreContracts()
 
 		// do not transfer ownership for now
-		// await this.transferContractsOwnerships(contracts)
+		await this.transferContractsOwnerships()
 
 		await this.printDeployerBalance()
 	}
@@ -89,7 +89,6 @@ export class CoreDeployer {
 		this.loadPreviousDeployment()
 
 		const activePool = await this.deployUpgradeable("ActivePool")
-		process.exit(0)
 		const adminContract = await this.deployUpgradeable("AdminContract")
 		const borrowerOperations = await this.deployUpgradeable("BorrowerOperations")
 		const collSurplusPool = await this.deployUpgradeable("CollSurplusPool")
@@ -281,14 +280,14 @@ export class CoreDeployer {
 			}
 		}
 		try {
-			console.log(`DebtToken.setAddresses()...`)
-			await this.sendAndWaitForTransaction(
-				this.coreContracts.debtToken.setAddresses(
-					this.coreContracts.borrowerOperations.address,
-					this.coreContracts.stabilityPool.address,
-					this.coreContracts.vesselManager.address
-				)
-			)
+			// console.log(`DebtToken.setAddresses()...`)
+			// await this.sendAndWaitForTransaction(
+			// 	this.coreContracts.debtToken.setAddresses(
+			// 		this.coreContracts.borrowerOperations.address,
+			// 		this.coreContracts.stabilityPool.address,
+			// 		this.coreContracts.vesselManager.address
+			// 	)
+			// )
 		} catch (e) {
 			console.log(`DebtToken.setAddresses() failed!`)
 		}
@@ -394,7 +393,7 @@ export class CoreDeployer {
 	/**
 	 * Transfers the ownership of all Ownable contracts to the address defined on config's CONTRACT_UPGRADES_ADMIN.
 	 */
-	async transferContractsOwnerships(contracts: any) {
+	async transferContractsOwnerships() {
 		const upgradesAdmin = this.config.CONTRACT_UPGRADES_ADMIN
 		if (!upgradesAdmin || upgradesAdmin == this.hre.ethers.constants.AddressZero) {
 			throw Error(
@@ -402,7 +401,7 @@ export class CoreDeployer {
 			)
 		}
 		console.log(`\r\nTransferring contract ownerships to ${upgradesAdmin}...`)
-		for (const contract of Object.values(contracts)) {
+		for (const contract of Object.values(this.coreContracts)) {
 			let name = await this.getContractName(contract)
 			if (!(contract as any).transferOwnership) {
 				console.log(` - ${name} is NOT Ownable`)

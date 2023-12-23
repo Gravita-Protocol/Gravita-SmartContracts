@@ -101,10 +101,40 @@ module.exports = {
 		polygonZkEvm: {
 			url: `https://polygon-zkevm.drpc.org`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		}
+		},
 	},
 	etherscan: {
-		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
+		apiKey: {
+			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
+			holesky: `${process.env.ETHERSCAN_API_KEY}`,
+			polygonZkEvm: `${process.env.POLYGON_ZKEVM_ETHERSCAN_API_KEY}`,
+		},
+		customChains: [
+			{
+				network: "linea",
+				chainId: 59144,
+				urls: {
+					apiURL: "https://api.lineascan.build/api",
+					browserURL: "https://lineascan.build/",
+				},
+			},
+			{
+				network: "holesky",
+				chainId: 17000,
+				urls: {
+					apiURL: "https://api-holesky.etherscan.io/api",
+					browserURL: "https://holesky.etherscan.io/",
+				},
+			},
+			{
+				network: "polygonZkEvm",
+				chainId: 1101,
+				urls: {
+					apiURL: "https://api-zkevm.polygonscan.com/api",
+					browserURL: "https://zkevm.polygonscan.com/",
+				},
+			},
+		],
 	},
 	mocha: { timeout: 12_000_000 },
 	rpc: {
@@ -117,4 +147,3 @@ module.exports = {
 		coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
 	},
 }
-
