@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Addresses.sol";
 import "./Interfaces/IPriceFeed.sol";
+import "./Pricing/API3ProxyInterface.sol";
 
 /**
  * @title The PriceFeed contract contains a directory of oracles for fetching prices for assets based on their
@@ -110,8 +111,10 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	// Internal functions -----------------------------------------------------------------------------------------------
 
 	function _fetchDecimals(address _oracle, ProviderType _type) internal view returns (uint8) {
-		if (_type == ProviderType.Chainlink) {
+		if (ProviderType.Chainlink == _type) {
 			return ChainlinkAggregatorV3Interface(_oracle).decimals();
+		} else if (ProviderType.API3 == _type) {
+			return 18;
 		}
 		return 0;
 	}
@@ -124,6 +127,8 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 		}
 		if (ProviderType.Chainlink == oracle.providerType) {
 			(oraclePrice, priceTimestamp) = _fetchChainlinkOracleResponse(oracle.oracleAddress);
+		} else if (ProviderType.API3 == oracle.providerType) {
+			(oraclePrice, priceTimestamp) = _fetchAPI3OracleResponse(oracle.oracleAddress);
 		}
 		if (oraclePrice != 0 && !_isStalePrice(priceTimestamp, oracle.timeoutSeconds)) {
 			return _scalePriceByDigits(oraclePrice, oracle.decimals);
@@ -136,9 +141,9 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 	}
 
 	function _fetchChainlinkOracleResponse(
-		address _chainlinkOracleAddress
+		address _oracleAddress
 	) internal view returns (uint256 price, uint256 timestamp) {
-		try ChainlinkAggregatorV3Interface(_chainlinkOracleAddress).latestRoundData() returns (
+		try ChainlinkAggregatorV3Interface(_oracleAddress).latestRoundData() returns (
 			uint80 roundId,
 			int256 answer,
 			uint256 /* startedAt */,
@@ -151,6 +156,15 @@ contract PriceFeed is IPriceFeed, OwnableUpgradeable, UUPSUpgradeable, Addresses
 			}
 		} catch {
 			// If call to Chainlink aggregator reverts, return a zero response
+		}
+	}
+
+	function _fetchAPI3OracleResponse(address _oracleAddress) internal view returns (uint256 price, uint256 timestamp) {
+		(int224 _value, uint256 _timestamp) = API3ProxyInterface(_oracleAddress).read();
+		if (_value > 0) {
+			/// @dev negative check -> see API3ProxyInterface
+			price = uint256(int256(_value));
+			timestamp = _timestamp;
 		}
 	}
 
