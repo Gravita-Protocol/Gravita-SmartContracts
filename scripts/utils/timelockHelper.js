@@ -7,36 +7,40 @@ const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 
 // Setup:
 const TIMELOCK_ADDRESS = "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc" // Mainnet::Timelock
-const TARGET_ADDRESS = "0x89F1ecCF2644902344db02788A790551Bb070351" // Mainnet::PriceFeed
+const TARGET_ADDRESS = "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D" // Mainnet::PriceFeed
 
 // const METHOD_SIGNATURE = "addNewCollateral(address,uint256,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256","uint256"]
-// const METHOD_ARG_VALUES = ["0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38","200000000000000000000",18]
+// const METHOD_ARG_VALUES = ["0xcD68DFf4415358c35a28f96Fd5bF7083B22De1D6","20000000000000000000",18]
 
-// const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
-// const METHOD_ARG_TYPES = ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"]
-// const METHOD_ARG_VALUES = [
-// 	"0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38",
-// 	"20000000000000000", // borrowingFee
-// 	"1400000000000000000", // ccr
-// 	"1250000000000000000", // mcr
-// 	"2000000000000000000000", // minNetDebt
-// 	"1000000000000000000000000", // mintCap
-// 	"200", // percentDivisor
-// 	"5000000000000000", // redemptionFeeFloor
-// ]
+const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
+const METHOD_ARG_TYPES = ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"]
+const METHOD_ARG_VALUES = [
+	"0xcD68DFf4415358c35a28f96Fd5bF7083B22De1D6",
+	"20000000000000000", // borrowingFee
+	"1400000000000000000", // ccr
+	"1250000000000000000", // mcr
+	"200000000000000000000", // minNetDebt
+	"500000000000000000000000", // mintCap
+	"200", // percentDivisor
+	"5000000000000000", // redemptionFeeFloor
+]
 
 // const METHOD_SIGNATURE = "setRedemptionBlockTimestamp(address,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256"]
-// const METHOD_ARG_VALUES = ["0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee","1704412800"]
+// const METHOD_ARG_VALUES = ["0xcD68DFf4415358c35a28f96Fd5bF7083B22De1D6","1704844800"]
 
 // const METHOD_SIGNATURE = "setMintCap(address,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256"]
 // const METHOD_ARG_VALUES = ["0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee","3000000000000000000000000"]
 
-const METHOD_SIGNATURE = "setOracle(address,address,uint8,uint256,bool,bool)"
-const METHOD_ARG_TYPES = ["address","address","uint8","uint256","bool","bool"]
-const METHOD_ARG_VALUES = ["0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee","0xddb6f90ffb4d3257dd666b69178e5b3c5bf41136",0,25_200,false,false]
+// const METHOD_SIGNATURE = "setOracle(address,address,uint8,uint256,bool,bool)"
+// const METHOD_ARG_TYPES = ["address","address","uint8","uint256","bool","bool"]
+// const METHOD_ARG_VALUES = ["0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee","0xddb6f90ffb4d3257dd666b69178e5b3c5bf41136",0,25_200,false,false]
+
+// const METHOD_SIGNATURE = "setRedemptionSofteningParam(uint256)"
+// const METHOD_ARG_TYPES = ["uint256"]
+// const METHOD_ARG_VALUES = [9950]
 
 main()
 	.then(() => process.exit(0))
@@ -66,14 +70,16 @@ async function main() {
 
 async function previewParameters() {
 	const timelockContract = await getTimelockContract()
-	const eta = await calcETA(timelockContract)
+	const eta = 1703602800 // await calcETA(timelockContract)
 	const data = encodeParameters(METHOD_ARG_TYPES, METHOD_ARG_VALUES)
+	const txHash = calcTxHash(TARGET_ADDRESS, 0, METHOD_SIGNATURE, data, eta)
 	console.log(`----------------------------------------------------------------------------------`)
 	console.log(`   target: ${TARGET_ADDRESS}`)
 	console.log(`    value: 0`)
 	console.log(`signature: ${METHOD_SIGNATURE}`)
 	console.log(`     data: ${data}`)
 	console.log(`      eta: ${eta}`)
+	console.log(`   txHash: ${txHash}`)
 	console.log(`----------------------------------------------------------------------------------`)
 }
 
