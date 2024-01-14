@@ -1,10 +1,10 @@
 // Setup in hardhat.config.ts:
 // hardhat: {
 // 	accounts: accountsList,
-// 	chainId: 1,
+// 	chainId: 1101,
 // 	forking: {
-// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-// 		blockNumber: 18392400,
+// 		url: "https://polygonzkevm-mainnet.g.alchemy.com/v2/[API-KEY]",
+// 		blockNumber: 9228745,
 // 	},
 // },
 
@@ -16,9 +16,9 @@ const ERC20 = artifacts.require("ERC20")
 const PriceFeed = artifacts.require("PriceFeed")
 const VesselManager = artifacts.require("VesselManager")
 
-const asset = '0xA35b1B31Ce002FBF2058D22F30f95D405200A15b' // ETHx
-const assetPiggyBank = '0xBA12222222228d8Ba445958a75a0704d566BF2C8' // ETHx Balancer Vault
-const adminContractAddress = '0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53'
+const asset = '0xb23C20EFcE6e24Acca0Cef9B7B7aA196b84EC942' // rETH on zkEVM
+const assetPiggyBank = '0xBA12222222228d8Ba445958a75a0704d566BF2C8' // Balancer Vault
+const adminContractAddress = '0x6b42581aC12F442503Dfb3dff2bC75ed83850637'
 
 let priceFeed, borrowerOperations
 
