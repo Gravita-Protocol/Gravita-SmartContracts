@@ -66,36 +66,26 @@ module.exports = {
 	networks: {
 		hardhat: {
 			allowUnlimitedContractSize: true,
-			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
 		},
-		// Setup for testing files in test/gravita-fork:
-		// hardhat: {
-		// 	accounts: accountsList,
-		// 	chainId: 42161,
-		// 	forking: {
-		// 		url: "https://arb1.arbitrum.io/rpc",
-		// 		blockNumber: 133331300,
-		// 	},
-		// },
-		localhost: {
-			url: "http://localhost:8545",
-			gas: 20_000_000,
-		},
-		goerli: {
-			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+		arbitrum: {
+			url: `https://arb1.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		arbitrum_goerli: {
-			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
+			url: `https://arbitrum-goerli.public.blastapi.io`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-		arbitrum: {
-			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
+		linea: {
+			url: `https://rpc.linea.build`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		mantle: {
+			url: `https://rpc.mantle.xyz`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		polygonZkEvm: {
