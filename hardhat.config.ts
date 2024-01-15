@@ -105,17 +105,18 @@ module.exports = {
 	},
 	etherscan: {
 		apiKey: {
-			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
+			arbitrum: `${process.env.ARBITRUM_ETHERSCAN_API_KEY}`,
 			holesky: `${process.env.ETHERSCAN_API_KEY}`,
+			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
 			polygonZkEvm: `${process.env.POLYGON_ZKEVM_ETHERSCAN_API_KEY}`,
 		},
 		customChains: [
 			{
-				network: "linea",
-				chainId: 59144,
+				network: "arbitrum",
+				chainId: 42161,
 				urls: {
-					apiURL: "https://api.lineascan.build/api",
-					browserURL: "https://lineascan.build/",
+					apiURL: "https://api.arbiscan.io/api",
+					browserURL: "https://arbiscan.io/",
 				},
 			},
 			{
@@ -124,6 +125,14 @@ module.exports = {
 				urls: {
 					apiURL: "https://api-holesky.etherscan.io/api",
 					browserURL: "https://holesky.etherscan.io/",
+				},
+			},
+			{
+				network: "linea",
+				chainId: 59144,
+				urls: {
+					apiURL: "https://api.lineascan.build/api",
+					browserURL: "https://lineascan.build/",
 				},
 			},
 			{
