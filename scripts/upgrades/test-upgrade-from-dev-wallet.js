@@ -2,8 +2,8 @@ const { upgrades } = require("hardhat")
 
 const contractList = [
 	{
-		name: "PriceFeed",
-		address: "0x5C3B45c9F9C6e3d37De94BC03318622D3DD3f525",
+		name: "PriceFeedL2",
+		address: "0xF0e0915D233C616CB727E0b2Ca29ff0cbD51B66A",
 	},
 ]
 
