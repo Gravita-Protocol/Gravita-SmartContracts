@@ -8,12 +8,11 @@ import fs from "fs"
  */
 export enum DeploymentTarget {
 	Localhost = "localhost",
-	GoerliTestnet = "goerli",
+	Arbitrum = "arbitrum",
 	ArbitrumGoerliTestnet = "arbitrum-goerli",
-	OptimismGoerliTestnet = "optimism-goerli",
 	HoleskyTestnet = "holesky",
 	Mainnet = "mainnet",
-	Arbitrum = "arbitrum",
+	Mantle = "mantle",
 	PolygonZkEvm = "polygon-zkevm"
 }
 
@@ -44,18 +43,10 @@ export class CoreDeployer {
 	isTestnetDeployment = () =>
 		[
 			DeploymentTarget.Localhost,
-			DeploymentTarget.GoerliTestnet,
 			DeploymentTarget.ArbitrumGoerliTestnet,
-			DeploymentTarget.OptimismGoerliTestnet,
 			DeploymentTarget.HoleskyTestnet,
 		].includes(this.targetNetwork)
-	isLayer2Deployment = () =>
-		[
-			DeploymentTarget.Arbitrum,
-			DeploymentTarget.ArbitrumGoerliTestnet,
-			DeploymentTarget.OptimismGoerliTestnet,
-		].includes(this.targetNetwork)
-
+	
 	/**
 	 * Main function that is invoked by the deployment process.
 	 */
@@ -74,7 +65,7 @@ export class CoreDeployer {
 		// await this.verifyCoreContracts()
 
 		// do not transfer ownership for now
-		await this.transferContractsOwnerships()
+		// await this.transferContractsOwnerships()
 
 		await this.printDeployerBalance()
 	}
@@ -89,6 +80,7 @@ export class CoreDeployer {
 		this.loadPreviousDeployment()
 
 		const activePool = await this.deployUpgradeable("ActivePool")
+		process.exit(0)
 		const adminContract = await this.deployUpgradeable("AdminContract")
 		const borrowerOperations = await this.deployUpgradeable("BorrowerOperations")
 		const collSurplusPool = await this.deployUpgradeable("CollSurplusPool")
@@ -104,8 +96,6 @@ export class CoreDeployer {
 		let priceFeed: any
 		if (this.isLocalhostDeployment()) {
 			priceFeed = await this.deployNonUpgradeable("PriceFeedTestnet")
-		} else if (this.isLayer2Deployment()) {
-			priceFeed = await this.deployUpgradeable("PriceFeedL2")
 		} else {
 			priceFeed = await this.deployUpgradeable("PriceFeed")
 		}
@@ -346,6 +336,12 @@ export class CoreDeployer {
 					coll.mintCap,
 					defaultPercentDivisor,
 					defaultRedemptionFeeFloor
+				)
+			)
+			await this.sendAndWaitForTransaction(
+				this.coreContracts.adminContract.setRedemptionBlockTimestamp(
+					coll.address,
+					coll.redemptionBlockTimestamp
 				)
 			)
 			console.log(`[${coll.name}] AdminContract.setCollateralParameters() -> ok`)

@@ -18,8 +18,8 @@ import { CoreDeployer, DeploymentTarget } from "./scripts/deployment/deploy-core
 task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Localhost).run()
 )
-task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
-	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.GoerliTestnet).run()
+task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
 )
 task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.ArbitrumGoerliTestnet).run()
@@ -27,8 +27,8 @@ task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testne
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
-task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
-	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
+task("deploy-core-mantle", "Deploys contracts to Mantle").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mantle).run()
 )
 task("deploy-core-polygon-zkevm", "Deploys contracts to Polygon ZkEVM").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.PolygonZkEvm).run()
@@ -65,8 +65,13 @@ module.exports = {
 	},
 	networks: {
 		hardhat: {
-			allowUnlimitedContractSize: true,
 			accounts: accountsList,
+			//allowUnlimitedContractSize: true,
+			chainId: 1,
+			forking: {
+				url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+				blockNumber: 19019820,
+			},
 		},
 		arbitrum: {
 			url: `https://arb1.arbitrum.io/rpc`,
@@ -98,12 +103,13 @@ module.exports = {
 			arbitrum: `${process.env.ARBITRUM_ETHERSCAN_API_KEY}`,
 			holesky: `${process.env.ETHERSCAN_API_KEY}`,
 			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
+			mantle: ``,
 			polygonZkEvm: `${process.env.POLYGON_ZKEVM_ETHERSCAN_API_KEY}`,
 		},
 		customChains: [
 			{
 				network: "arbitrum",
-				chainId: 42161,
+				chainId: 42_161,
 				urls: {
 					apiURL: "https://api.arbiscan.io/api",
 					browserURL: "https://arbiscan.io/",
@@ -111,7 +117,7 @@ module.exports = {
 			},
 			{
 				network: "holesky",
-				chainId: 17000,
+				chainId: 17_000,
 				urls: {
 					apiURL: "https://api-holesky.etherscan.io/api",
 					browserURL: "https://holesky.etherscan.io/",
@@ -119,15 +125,23 @@ module.exports = {
 			},
 			{
 				network: "linea",
-				chainId: 59144,
+				chainId: 59_144,
 				urls: {
 					apiURL: "https://api.lineascan.build/api",
 					browserURL: "https://lineascan.build/",
 				},
 			},
 			{
+				network: "mantle",
+				chainId: 5_000,
+				urls: {
+					apiURL: "https://explorer.mantle.xyz/api",
+					browserURL: "https://explorer.mantle.xyz/",
+				},
+			},
+			{
 				network: "polygonZkEvm",
-				chainId: 1101,
+				chainId: 1_101,
 				urls: {
 					apiURL: "https://api-zkevm.polygonscan.com/api",
 					browserURL: "https://zkevm.polygonscan.com/",

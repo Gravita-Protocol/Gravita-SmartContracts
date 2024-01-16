@@ -16,9 +16,9 @@ const ERC20 = artifacts.require("ERC20")
 const PriceFeed = artifacts.require("PriceFeed")
 const VesselManager = artifacts.require("VesselManager")
 
-const asset = '0xb23C20EFcE6e24Acca0Cef9B7B7aA196b84EC942' // rETH on zkEVM
+const asset = '0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38' // osETH on Mainnet
 const assetPiggyBank = '0xBA12222222228d8Ba445958a75a0704d566BF2C8' // Balancer Vault
-const adminContractAddress = '0x6b42581aC12F442503Dfb3dff2bC75ed83850637'
+const adminContractAddress = '0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53'
 
 let priceFeed, borrowerOperations
 
@@ -38,8 +38,20 @@ contract("CollTest", async accounts => {
 
 	it("openVessel()", async () => {
 		const erc20 = await ERC20.at(asset)
-		console.log(`Using ${await erc20.name()} as collateral`)
-        const price = await priceFeed.fetchPrice(asset)
+		console.log(`Using ${await erc20.symbol()} as collateral`)
+
+		const multisig = await priceFeed.owner()
+		await setBalance(multisig, p("100"))
+		await impersonateAccount(multisig)
+
+		console.log(`Configuring new oracle...`)
+		const isEthIndexed = true
+		await priceFeed.setOracle(asset, "0x66ac817f997efd114edfcccdce99f3268557b32c", 0, 90_000, isEthIndexed, false, {
+			from: multisig,
+		})
+		await stopImpersonatingAccount(multisig)
+
+		const price = await priceFeed.fetchPrice(asset)
 		console.log(`PriceFeed's price: ${f(price)}`)
 		const amount = p('100')
 

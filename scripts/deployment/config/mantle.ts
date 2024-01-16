@@ -21,11 +21,12 @@ const COLLATERAL = [
         oracleTimeoutSeconds: 90_000,
         oracleIsEthIndexed: true,
         borrowingFee: toEther(0.02),
-        MCR: toEther(1.176),
+        MCR: toEther(1.25),
         CCR: toEther(1.4),
         minNetDebt: toEther(200),
         gasCompensation: toEther(20),
-        mintCap: toEther(1_000_000),
+        mintCap: toEther(500_000),
+        redemptionBlockTimestamp: 1705449600
     }
 ]
 
