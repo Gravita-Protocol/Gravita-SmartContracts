@@ -60,7 +60,7 @@ export class CoreDeployer {
 		// await this.addCollaterals()
 
 		// do not hand off from admin to timelock for now
-		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
+		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
 
 		// await this.verifyCoreContracts()
 
@@ -80,7 +80,6 @@ export class CoreDeployer {
 		this.loadPreviousDeployment()
 
 		const activePool = await this.deployUpgradeable("ActivePool")
-		process.exit(0)
 		const adminContract = await this.deployUpgradeable("AdminContract")
 		const borrowerOperations = await this.deployUpgradeable("BorrowerOperations")
 		const collSurplusPool = await this.deployUpgradeable("CollSurplusPool")
@@ -362,7 +361,7 @@ export class CoreDeployer {
 				return
 			}
 			console.log(`[${coll.name}] PriceFeed.setOracle()`)
-			const oracleProviderType = 0 // IPriceFeed.sol :: enum ProviderType.Chainlink
+			const oracleProviderType = 1 // IPriceFeed.sol :: enum ProviderType.API3
 			const isFallback = false
 			await this.sendAndWaitForTransaction(
 				this.coreContracts.priceFeed.setOracle(
