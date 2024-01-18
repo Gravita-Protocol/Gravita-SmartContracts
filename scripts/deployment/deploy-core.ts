@@ -60,12 +60,12 @@ export class CoreDeployer {
 		// await this.addCollaterals()
 
 		// do not hand off from admin to timelock for now
-		await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
+		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
 
 		// await this.verifyCoreContracts()
 
 		// do not transfer ownership for now
-		// await this.transferContractsOwnerships()
+		await this.transferContractsOwnerships()
 
 		await this.printDeployerBalance()
 	}
