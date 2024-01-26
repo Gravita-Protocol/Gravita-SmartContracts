@@ -42,6 +42,7 @@
 		"@openzeppelin/test-helpers": "^0.5.16",
 		"@typechain/ethers-v5": "^10.2.1",
 		"@typechain/hardhat": "^6.1.6",
+		"@types/mocha": "^10.0.6",
 		"chai": "^4.3.7",
 		"decimal.js": "^10.4.3",
 		"eth-gas-reporter": "^0.2.25",

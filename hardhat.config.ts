@@ -64,20 +64,20 @@ module.exports = {
 		],
 	},
 	networks: {
-		hardhat: {
-			allowUnlimitedContractSize: true,
-			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
-			accounts: accountsList,
-		},
-		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
+		// 	allowUnlimitedContractSize: true,
+		// 	// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 		// 	accounts: accountsList,
-		// 	chainId: 42161,
-		// 	forking: {
-		// 		url: "https://arb1.arbitrum.io/rpc",
-		// 		blockNumber: 133331300,
-		// 	},
 		// },
+		// Setup for testing files in test/gravita-fork:
+		hardhat: {
+			accounts: accountsList,
+			chainId: 42161,
+			forking: {
+				url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+				blockNumber: 174132600,
+			},
+		},
 		localhost: {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
