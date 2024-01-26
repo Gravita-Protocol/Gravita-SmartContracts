@@ -75,7 +75,7 @@ module.exports = {
 			chainId: 42161,
 			forking: {
 				url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-				blockNumber: 174132600,
+				blockNumber: 174133000,
 			},
 		},
 		localhost: {

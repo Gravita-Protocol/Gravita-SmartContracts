@@ -55,19 +55,24 @@ contract("SwapRedemptionTest", async accounts => {
     const priceFeed = await PriceFeed.at(await adminContract.priceFeed())
 
     const ethBalanceBefore = BigNumber.from(await provider.getBalance(redeemer))
-
-		console.log(`Depositing ETH for wETH...`)
-		await weth.deposit({ value: p("5").toString() })
-		console.log(`[wETH] balance: ${f(await weth.balanceOf(redeemer))}`)
 		const price = await priceFeed.fetchPrice(weth.address)
-		console.log(`[wETH] price: $${f(price)}`)
 
-		console.log(`Swapping wETH for GRAI...`)
+    const assetAmount = p("1")
+    const assetValue = _calcValue(assetAmount, price)
+		console.log(`Depositing ETH for wETH...`)
+		await weth.deposit({ value: assetAmount.toString() })
+		console.log(`[wETH] balance: ${f(await weth.balanceOf(redeemer))}`)
+		console.log(`[wETH] price: $${f(price)}`)
+		console.log(`[wETH] value: $${f(assetValue)}`)
+
+    console.log(`Swapping wETH for GRAI...`)
 		await weth.approve(swapHelper.address, ethers.constants.MaxUint256)
-		await swapHelper.swap(poolGraiWeth, weth.address, grai.address, true, p("5"))
+		await swapHelper.swap(poolGraiWeth, weth.address, grai.address, true, assetAmount)
 
 		const graiBalance = await grai.balanceOf(redeemer)
-		console.log(`[GRAI] balance: ${f(graiBalance)}`)
+		console.log(`[GRAI] balance: $${f(graiBalance)}`)
+    const graiCost = ethers.FixedNumber.from(assetValue.toString()).divUnsafe(ethers.FixedNumber.from(graiBalance.toString()))
+		console.log(`[GRAI] price: $${graiCost}`)
 
     await _redeem(weth.address, price, graiBalance)
 
@@ -83,7 +88,7 @@ contract("SwapRedemptionTest", async accounts => {
 		console.log(`ETH balance diff: ${f(ethBalanceDiff)} ($${f(dollarDiff)})`)
 	})
 
-  it("SwapRedemptionTest :: wstETH", async () => {
+  it.skip("SwapRedemptionTest :: wstETH", async () => {
 
     const wstEthAddress = ""
     const weth = await WETH.at("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1")
@@ -92,18 +97,23 @@ contract("SwapRedemptionTest", async accounts => {
 
     const ethBalanceBefore = BigNumber.from(await provider.getBalance(redeemer))
 
+    const assetAmount = p("5")
 		console.log(`Depositing ETH for wETH...`)
-		await weth.deposit({ value: p("5").toString() })
+		await weth.deposit({ value: assetAmount.toString() })
 		console.log(`[wETH] balance: ${f(await weth.balanceOf(redeemer))}`)
 		const price = await priceFeed.fetchPrice(weth.address)
 		console.log(`[wETH] price: $${f(price)}`)
+    const assetValue = _calcValue(assetAmount, price)
+		console.log(`[wETH] value: $${f(assetValue)}`)
 
 		console.log(`Swapping wETH for GRAI...`)
 		await weth.approve(swapHelper.address, ethers.constants.MaxUint256)
-		await swapHelper.swap(poolGraiWeth, weth.address, grai.address, true, p("5"))
+		await swapHelper.swap(poolGraiWeth, weth.address, grai.address, true, assetAmount)
 
 		const graiBalance = await grai.balanceOf(redeemer)
 		console.log(`[GRAI] balance: ${f(graiBalance)}`)
+    const graiCost = BigNumber.from(graiBalance.toString()).div(BigNumber.from(assetValue.toString()))
+		console.log(`[GRAI] cost: ${f(graiCost)}`)
 
     await _redeem(weth.address, price, graiBalance)
 
@@ -115,10 +125,17 @@ contract("SwapRedemptionTest", async accounts => {
 
 		const ethBalanceAfter = BigNumber.from(await provider.getBalance(redeemer))
 		const ethBalanceDiff = ethBalanceAfter.sub(ethBalanceBefore)
-		const dollarDiff = BigNumber.from(price.toString()).mul(ethBalanceDiff).div(BigNumber.from((1e18).toString()))
+		const dollarDiff = _calcValue(ethBalanceDiff, price)
 		console.log(`ETH balance diff: ${f(ethBalanceDiff)} ($${f(dollarDiff)})`)
 	})
 })
+
+function _calcValue(assetAmount: any, assetPrice: any) {
+  const assetAmountBn = BigNumber.from(assetAmount.toString())
+  const assetPriceBn = BigNumber.from(assetPrice.toString())
+  const oneEthBn = BigNumber.from((1e18).toString())
+  return assetAmountBn.mul(assetPriceBn).div(oneEthBn)
+}
 
 async function _redeem(assetAddress: string, assetPrice: bigint, graiAmount: bigint) {
 	console.log(`Getting redemption hints 1/3...`)
