@@ -72,10 +72,10 @@ module.exports = {
 		// Setup for testing files in test/gravita-fork:
 		hardhat: {
 			accounts: accountsList,
-			chainId: 42161,
+			chainId: 1,
 			forking: {
-				url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-				blockNumber: 174133000,
+				url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+				blockNumber: 19170860,
 			},
 		},
 		localhost: {
