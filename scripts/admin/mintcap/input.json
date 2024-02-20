@@ -1,0 +1,103 @@
+[
+    {
+        "id": 42161,
+        "network": "arbitrum",
+        "fees": [
+            {
+                "symbol": "wstETH",
+                "address": "0x5979D7b546E38E414F7E9822514be443A4800529",
+                "percent": 4
+            },
+            {
+                "symbol": "rETH",
+                "address": "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
+                "percent": 4
+            },
+            {
+                "symbol": "sfrxETH",
+                "address": "0x95aB45875cFFdba1E5f451B950bC2E42c0053f39",
+                "percent": 4
+            }
+        ]
+    },
+    {
+        "id": 59140,
+        "network": "linea",
+        "fees": [
+            {
+                "symbol": "wstETH",
+                "address": "0xB5beDd42000b71FddE22D3eE8a79Bd49A568fC8F",
+                "percent": 4
+            }
+        ]
+    },
+    {
+        "id": 1,
+        "network": "mainnet",
+        "fees": [
+            {
+                "symbol": "rETH",
+                "address": "0xae78736Cd615f374D3085123A210448E74Fc6393",
+                "percent": 4
+            },
+            {
+                "symbol": "wstETH",
+                "address": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+                "percent": 4
+            },
+            {
+                "symbol": "swETH",
+                "address": "0xf951E335afb289353dc249e82926178EaC7DEd78",
+                "percent": 4
+            },
+            {
+                "symbol": "sfrxETH",
+                "address": "0xac3E018457B222d93114458476f3E3416Abbe38F",
+                "percent": 4
+            },
+            {
+                "symbol": "osETH",
+                "address": "0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38",
+                "percent": 4
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "network": "optimism",
+        "fees": [
+            {
+                "symbol": "wstETH",
+                "address": "0x1f32b1c2345538c0c6f582fcb022739c4a194ebb",
+                "percent": 4
+            },
+            {
+                "symbol": "rETH",
+                "address": "0x9bcef72be871e61ed4fbbc7630889bee758eb81d",
+                "percent": 4
+            }
+        ]
+    },
+    {
+        "id": 1101,
+        "network": "polygon-zkevm",
+        "fees": [
+            {
+                "symbol": "rETH",
+                "address": "0xb23C20EFcE6e24Acca0Cef9B7B7aA196b84EC942",
+                "percent": 4
+            }
+        ]
+    },
+    {
+        "id": 324,
+        "network": "zksync-era",
+        "fees": [
+            {
+                "symbol": "wstETH",
+                "address": "0x703b52F2b28fEbcB60E1372858AF5b18849FE867",
+                "percent": 4
+            }
+        ]
+    }
+]
