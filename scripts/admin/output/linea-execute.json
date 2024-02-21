@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "chainId": "59144",
-    "createdAt": "1708473264484",
+    "createdAt": "1708517440644",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
@@ -49,8 +49,8 @@
             "contractInputsValues": {
                 "target": "0xC8a25eA0Cbd92A6F787AeED8387E04559053a9f8",
                 "value": "0",
-                "signature": "setMintCap(address,uint256)",
-                "eta": "1708732464",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
                 "data": "0x000000000000000000000000b5bedd42000b71fdde22d3ee8a79bd49a568fc8f000000000000000000000000000000000000000000000000008e1bc9bf040000"
             }
         }

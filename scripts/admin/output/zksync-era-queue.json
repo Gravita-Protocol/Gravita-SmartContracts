@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "chainId": "324",
-    "createdAt": "1708473264493",
+    "createdAt": "1708517440648",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
@@ -16,7 +16,7 @@
             "value": "0",
             "data": null,
             "contractMethod": {
-                "name": "executeTransaction",
+                "name": "queueTransaction",
                 "payable": false,
                 "inputs": [
                     {
@@ -49,8 +49,8 @@
             "contractInputsValues": {
                 "target": "0x441F6b484FD60C31b3ca9c61014030b0403F805a",
                 "value": "0",
-                "signature": "setMintCap(address,uint256)",
-                "eta": "1708732464",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
                 "data": "0x000000000000000000000000703b52f2b28febcb60e1372858af5b18849fe867000000000000000000000000000000000000000000000000008e1bc9bf040000"
             }
         }

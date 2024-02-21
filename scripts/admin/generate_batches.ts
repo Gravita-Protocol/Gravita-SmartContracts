@@ -23,12 +23,12 @@ async function main() {
 			batch.transactions.push(tx)
 		}
 		let output = JSON.stringify(batch, null, 4)
-		fs.writeFileSync(`./scripts/admin/mintcap/output/${chain.network}-queue.json`, output)
+		fs.writeFileSync(`./scripts/admin/output/${chain.network}-queue.json`, output)
 		for (const tx of batch.transactions) {
 			tx.contractMethod.name = "executeTransaction"
 		}
 		output = JSON.stringify(batch, null, 4)
-		fs.writeFileSync(`./scripts/admin/mintcap/output/${chain.network}-execute.json`, output)
+		fs.writeFileSync(`./scripts/admin/output/${chain.network}-execute.json`, output)
 	}
 }
 

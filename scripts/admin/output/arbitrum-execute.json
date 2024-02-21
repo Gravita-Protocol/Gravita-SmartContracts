@@ -1,18 +1,18 @@
 {
     "version": "1.0",
-    "chainId": "10",
-    "createdAt": "1708473264490",
+    "chainId": "42161",
+    "createdAt": "1708517440639",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
         "txBuilderVersion": "1.16.0",
-        "createdFromSafeAddress": "0x853b5db6310292dF1C8C05Ad0a4fdf0856B772BB",
+        "createdFromSafeAddress": "0xfB0214D7Ac08ed0D2D9cA920EA6D4f4be2654EA5",
         "createdFromOwnerAddress": "",
         "checksum": ""
     },
     "transactions": [
         {
-            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
+            "to": "0x09dfdF392a56E4316e97A13e20b09C415fCD3d7b",
             "value": "0",
             "data": null,
             "contractMethod": {
@@ -47,15 +47,15 @@
                 ]
             },
             "contractInputsValues": {
-                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
+                "target": "0x4928c8F8c20A1E3C295DddBe05095A9aBBdB3d14",
                 "value": "0",
-                "signature": "setMintCap(address,uint256)",
-                "eta": "1708732464",
-                "data": "0x0000000000000000000000001f32b1c2345538c0c6f582fcb022739c4a194ebb000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x0000000000000000000000005979d7b546e38e414f7e9822514be443a4800529000000000000000000000000000000000000000000000000008e1bc9bf040000"
             }
         },
         {
-            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
+            "to": "0x09dfdF392a56E4316e97A13e20b09C415fCD3d7b",
             "value": "0",
             "data": null,
             "contractMethod": {
@@ -90,11 +90,54 @@
                 ]
             },
             "contractInputsValues": {
-                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
+                "target": "0x4928c8F8c20A1E3C295DddBe05095A9aBBdB3d14",
                 "value": "0",
-                "signature": "setMintCap(address,uint256)",
-                "eta": "1708732464",
-                "data": "0x0000000000000000000000009bcef72be871e61ed4fbbc7630889bee758eb81d000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x000000000000000000000000ec70dcb4a1efa46b8f2d97c310c9c4790ba5ffa8000000000000000000000000000000000000000000000000008e1bc9bf040000"
+            }
+        },
+        {
+            "to": "0x09dfdF392a56E4316e97A13e20b09C415fCD3d7b",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0x4928c8F8c20A1E3C295DddBe05095A9aBBdB3d14",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x00000000000000000000000095ab45875cffdba1e5f451b950bc2e42c0053f39000000000000000000000000000000000000000000000000008e1bc9bf040000"
             }
         }
     ]

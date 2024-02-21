@@ -1,22 +1,22 @@
 {
     "version": "1.0",
-    "chainId": "324",
-    "createdAt": "1708473264493",
+    "chainId": "1101",
+    "createdAt": "1708517440647",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
         "txBuilderVersion": "1.16.0",
-        "createdFromSafeAddress": "0x3369d2cf353be897CF83B9c30DcCD8Cc2B798dfD",
+        "createdFromSafeAddress": "0xc48aD04a391a0cfA538422360fAb8534b49d6878",
         "createdFromOwnerAddress": "",
         "checksum": ""
     },
     "transactions": [
         {
-            "to": "0x23D57c3F65eD7cdd36fea54cA0f9E32D91EaeD63",
+            "to": "0x42865C7FA0b84cf76C8e8256f3356226EDC3b1be",
             "value": "0",
             "data": null,
             "contractMethod": {
-                "name": "queueTransaction",
+                "name": "executeTransaction",
                 "payable": false,
                 "inputs": [
                     {
@@ -47,11 +47,11 @@
                 ]
             },
             "contractInputsValues": {
-                "target": "0x441F6b484FD60C31b3ca9c61014030b0403F805a",
+                "target": "0x6b42581aC12F442503Dfb3dff2bC75ed83850637",
                 "value": "0",
-                "signature": "setMintCap(address,uint256)",
-                "eta": "1708732464",
-                "data": "0x000000000000000000000000703b52f2b28febcb60e1372858af5b18849fe867000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x000000000000000000000000b23c20efce6e24acca0cef9b7b7aa196b84ec942000000000000000000000000000000000000000000000000008e1bc9bf040000"
             }
         }
     ]
