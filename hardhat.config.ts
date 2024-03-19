@@ -68,10 +68,11 @@ module.exports = {
 		},
 		// hardhat: {
 		// 	accounts: accountsList,
-		// 	chainId: 1,
+		// 	chainId: 10,
 		// 	forking: {
 		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-		// 		blockNumber: 18516691,
+		// 		// url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 117603555,
 		// 	},
 		// },
 		// Setup for testing files in test/gravita-fork:
@@ -83,28 +84,20 @@ module.exports = {
 		// 		blockNumber: 145845570,
 		// 	},
 		// },
-		localhost: {
-			url: "http://localhost:8545",
-			gas: 20_000_000,
-		},
-		goerli: {
-			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
-		arbitrum_goerli: {
-			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
 		arbitrum: {
-			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
+			url: `https://arb1.arbitrum.io/rpc`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		linea: {
+			url: `https://linea.drpc.org`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-		linea: {
-			url: `${process.env.LINEA_NETWORK_ENDPOINT}`,
+		optimism: {
+			url: `https://optimism-mainnet.rpc.grove.city/v1/cd187dcbe5aa7aebe71850b9`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 	},

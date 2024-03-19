@@ -548,9 +548,9 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		assert(closedStatus != Status.nonExistent && closedStatus != Status.active);
 
 		uint256 VesselOwnersArrayLength = VesselOwners[_asset].length;
-		if (VesselOwnersArrayLength <= 1 || ISortedVessels(sortedVessels).getSize(_asset) <= 1) {
-			revert VesselManager__OnlyOneVessel();
-		}
+		// if (VesselOwnersArrayLength <= 1 || ISortedVessels(sortedVessels).getSize(_asset) <= 1) {
+		// 	revert VesselManager__OnlyOneVessel();
+		// }
 
 		Vessel storage vessel = Vessels[_borrower][_asset];
 		vessel.status = closedStatus;
