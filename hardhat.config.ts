@@ -100,6 +100,10 @@ module.exports = {
 			url: `https://optimism-mainnet.rpc.grove.city/v1/cd187dcbe5aa7aebe71850b9`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		polygonZkEvm: {
+			url: `https://polygon-zkevm.drpc.org`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
