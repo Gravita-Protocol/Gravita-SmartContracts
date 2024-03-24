@@ -18,11 +18,12 @@ const ADMIN_CONTRACT_MANTLE = '0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6'
 const ADMIN_CONTRACT_OPTIMISM = '0x326398De2dB419Ee39F97600a5eeE97093cf3B27'
 const ADMIN_CONTRACT_POLYGON_ZKEVM = '0x6b42581aC12F442503Dfb3dff2bC75ed83850637'
 
-const NEW_VESSEL_MANAGER_IMPL_ADDRESS = '0x159fc49e0a5935ad6CB715D28BA07FC347854731'
+const ADMIN_CONTRACT = ADMIN_CONTRACT_ARBITRUM
+const NEW_VESSEL_MANAGER_IMPL_ADDRESS = '0xd43Aa8f2E3642156ef6d592Fd161E54374077c9D'
 
 contract("ContractUpgradeTest", async () => {
 	it("upgradeTo()", async () => {
-		const adminContract = await AdminContract.at(ADMIN_CONTRACT_OPTIMISM)
+		const adminContract = await AdminContract.at(ADMIN_CONTRACT)
 		const borrowerOperations = await BorrowerOperations.at(await adminContract.borrowerOperations())
 		const debtToken = await DebtToken.at(await adminContract.debtToken())
 		const sortedVessels = await SortedVessels.at(await adminContract.sortedVessels())
