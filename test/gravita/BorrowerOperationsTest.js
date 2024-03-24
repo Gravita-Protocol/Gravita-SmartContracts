@@ -4649,10 +4649,13 @@ contract("BorrowerOperations", async accounts => {
 			assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// Alice attempts to close her vessel
-			await assertRevert(
-				borrowerOperations.closeVessel(erc20.address, { from: alice }),
-				"VesselManager: Only one vessel in the system"
-			)
+
+			// RULE WAS REMOVED
+			// 
+			// await assertRevert(
+			// 	borrowerOperations.closeVessel(erc20.address, { from: alice }),
+			// 	"VesselManager: Only one vessel in the system"
+			// )
 		})
 
 		it("closeVessel(): reduces a Vessel's collateral to zero", async () => {
