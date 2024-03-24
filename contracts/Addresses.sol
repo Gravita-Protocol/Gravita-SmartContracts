@@ -2,6 +2,6 @@
 
 pragma solidity ^0.8.19;
 
-import "./Dependencies/AddressesMainnet.sol";
+import "./Dependencies/AddressesConfigurable.sol";
 
-contract Addresses is AddressesMainnet {}
+contract Addresses is AddressesConfigurable {}
