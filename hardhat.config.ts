@@ -3,7 +3,6 @@ import "@nomiclabs/hardhat-truffle5"
 import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-etherscan"
 import "@openzeppelin/hardhat-upgrades"
-import "@openzeppelin/hardhat-defender"
 import "solidity-coverage"
 
 import { task } from "hardhat/config"
@@ -29,6 +28,12 @@ task("deploy-core-mantle", "Deploys contracts to Mantle").setAction(
 )
 task("deploy-core-polygon-zkevm", "Deploys contracts to Polygon ZkEVM").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.PolygonZkEvm).run()
+)
+task("deploy-core-linea", "Deploys contracts to Linea").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Linea).run()
+)
+task("deploy-core-optimism", "Deploys contracts to Linea").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Optimism).run()
 )
 
 module.exports = {
@@ -69,10 +74,10 @@ module.exports = {
 		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
 		// 	accounts: accountsList,
-		// 	chainId: 42161,
+		// 	chainId: 10,
 		// 	forking: {
-		// 		url: "https://arb1.arbitrum.io/rpc",
-		// 		blockNumber: 133331300,
+		// 		url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 112763546,
 		// 	},
 		// },
 		arbitrum: {
@@ -85,6 +90,7 @@ module.exports = {
 		},
 		linea: {
 			url: `https://rpc.linea.build`,
+			// url: `https://linea-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mainnet: {
@@ -95,6 +101,10 @@ module.exports = {
 			url: `https://rpc.mantle.xyz`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		optimism: {
+			url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+    },
 		"optimism-sepolia": {
 			url: `https://sepolia.optimism.io`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],

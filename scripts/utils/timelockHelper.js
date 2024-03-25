@@ -6,29 +6,33 @@ const { ethers } = require("hardhat")
 const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 
 // Setup:
-const TIMELOCK_ADDRESS = "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc" // Mainnet::Timelock
-const TARGET_ADDRESS = "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53" // Mainnet::AdminContract
+const TIMELOCK_ADDRESS = "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D" // Mainnet::Timelock
+const TARGET_ADDRESS = "0x5Bd5b45f6565762928A79779F6C2DD43c15c92EE" // Mainnet::AdminContract
 
 // const METHOD_SIGNATURE = "addNewCollateral(address,uint256,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256","uint256"]
 // const METHOD_ARG_VALUES = ["0xA35b1B31Ce002FBF2058D22F30f95D405200A15b","200000000000000000000",18]
 
-const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
-const METHOD_ARG_TYPES = ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"]
-const METHOD_ARG_VALUES = [
-	"0xA35b1B31Ce002FBF2058D22F30f95D405200A15b",
-	"5000000000000000", // borrowingFee
-	"1400000000000000000", // ccr
-	"1250000000000000000", // mcr
-	"2000000000000000000000", // minNetDebt
-	"1000000000000000000000000", // mintCap
-	"200", // percentDivisor
-	"5000000000000000", // redemptionFeeFloor
-]
+// const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
+// const METHOD_ARG_TYPES = ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"]
+// const METHOD_ARG_VALUES = [
+// 	"0xA35b1B31Ce002FBF2058D22F30f95D405200A15b",
+// 	"5000000000000000", // borrowingFee
+// 	"1400000000000000000", // ccr
+// 	"1250000000000000000", // mcr
+// 	"2000000000000000000000", // minNetDebt
+// 	"1000000000000000000000000", // mintCap
+// 	"200", // percentDivisor
+// 	"5000000000000000", // redemptionFeeFloor
+// ]
 
 // const METHOD_SIGNATURE = "setRedemptionBlockTimestamp(address,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256"]
 // const METHOD_ARG_VALUES = ["0xA35b1B31Ce002FBF2058D22F30f95D405200A15b","1695859199"]
+
+const METHOD_SIGNATURE = "setRedemptionSofteningParam(uint256)"
+const METHOD_ARG_TYPES = ["uint256"]
+const METHOD_ARG_VALUES = [9950]
 
 main()
 	.then(() => process.exit(0))
@@ -134,7 +138,7 @@ async function getTimelockContract() {
 
 async function calcETA(timelockContract) {
 	const delay = Number(await timelockContract.delay())
-	return (await getBlockTimestamp()) + delay + 24 * 3_600 // add 24h for multisigning
+	return (await getBlockTimestamp()) + delay + 15 * 3_600 // add 24h for multisigning
 }
 
 async function getBlockTimestamp() {
