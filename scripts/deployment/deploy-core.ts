@@ -13,13 +13,13 @@ import fs from "fs"
  */
 export enum DeploymentTarget {
 	Localhost = "localhost",
-	GoerliTestnet = "goerli",
-	ArbitrumGoerliTestnet = "arbitrum-goerli",
-	OptimismGoerliTestnet = "optimism-goerli",
-	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
+	HoleskyTestnet = "holesky",
 	Linea = "linea",
+	Mainnet = "mainnet",
+	Mantle = "mantle",
 	Optimism = "optimism",
+	PolygonZkEvm = "polygon-zkevm"
 }
 
 /**
@@ -77,7 +77,7 @@ export class CoreDeployer {
 
 		await this.loadOrDeployCoreContracts()
 		// await this.connectCoreContracts()
-		await this.addCollaterals()
+		// await this.addCollaterals()
 
 		// do not hand off from admin to timelock for now
 		// await this.toggleContractSetupInitialization(this.coreContracts.adminContract)
@@ -112,11 +112,9 @@ export class CoreDeployer {
 
 		const gasPool = await this.deployNonUpgradeable("GasPool")
 
-		let priceFeed
+		let priceFeed: any
 		if (this.isLocalhostDeployment()) {
 			priceFeed = await this.deployNonUpgradeable("PriceFeedTestnet")
-		} else if (this.isLayer2Deployment()) {
-			priceFeed = await this.deployUpgradeable("PriceFeedL2")
 		} else {
 			priceFeed = await this.deployUpgradeable("PriceFeed")
 		}
@@ -258,7 +256,7 @@ export class CoreDeployer {
 			]
 			// @ts-ignore
 			for (const [i, addr] of addresses.entries()) {
-				if (!addr || addr == ZERO_ADDRESS) {
+				if (!addr || addr == constants.AddressZero) {
 					throw new Error(`setAddresses :: Invalid address for index ${i}`)
 				}
 			}
@@ -275,6 +273,7 @@ export class CoreDeployer {
 					} catch (e) {
 						console.error(e)
 						console.log(`${key}.setAddresses() failed!`)
+						console.error(e)
 					}
 				} else {
 					console.log(`${key}.setAddresses() already set!`)
@@ -310,7 +309,7 @@ export class CoreDeployer {
 			await this.addCollateral(coll)
 			if (coll.name == "wETH") {
 				// use the same oracle for wETH and ETH
-				await this.addPriceFeedOracle({ ...coll, name: "ETH", address: ZERO_ADDRESS })
+				await this.addPriceFeedOracle({ ...coll, name: "ETH", address: constants.AddressZero })
 			}
 		}
 	}
@@ -353,6 +352,12 @@ export class CoreDeployer {
 					{ ...this.feeData }
 				)
 			)
+			await this.sendAndWaitForTransaction(
+				this.coreContracts.adminContract.setRedemptionBlockTimestamp(
+					coll.address,
+					coll.redemptionBlockTimestamp
+				)
+			)
 			console.log(`[${coll.name}] AdminContract.setCollateralParameters() -> ok`)
 		}
 	}
@@ -371,7 +376,7 @@ export class CoreDeployer {
 				return
 			}
 			console.log(`[${coll.name}] PriceFeed.setOracle()`)
-			const oracleProviderType = 0 // IPriceFeed.sol :: enum ProviderType.Chainlink
+			const oracleProviderType = 1 // IPriceFeed.sol :: enum ProviderType.API3
 			const isFallback = false
 			await this.sendAndWaitForTransaction(
 				this.coreContracts.priceFeed.setOracle(
@@ -399,7 +404,7 @@ export class CoreDeployer {
 	/**
 	 * Transfers the ownership of all Ownable contracts to the address defined on config's CONTRACT_UPGRADES_ADMIN.
 	 */
-	async transferContractsOwnerships(contracts: any) {
+	async transferContractsOwnerships() {
 		const upgradesAdmin = this.config.CONTRACT_UPGRADES_ADMIN
 		if (!upgradesAdmin || upgradesAdmin == ZERO_ADDRESS) {
 			throw Error(
@@ -407,7 +412,7 @@ export class CoreDeployer {
 			)
 		}
 		console.log(`\r\nTransferring contract ownerships to ${upgradesAdmin}...`)
-		for (const contract of Object.values(contracts)) {
+		for (const contract of Object.values(this.coreContracts)) {
 			let name = await this.getContractName(contract)
 			if (!(contract as any).transferOwnership) {
 				console.log(` - ${name} is NOT Ownable`)
@@ -555,9 +560,9 @@ export class CoreDeployer {
 			})
 		} catch (error: any) {
 			// if it was already verified, it’s like a success, so let’s move forward and save it
-			if (error.name != "NomicLabsHardhatPluginError") {
-				console.error(`Error verifying: ${error.name}`)
-				console.error(error)
+			if (e.name != "NomicLabsHardhatPluginError") {
+				console.error(`Error verifying: ${e.name}`)
+				console.error(e)
 				return
 			}
 		}

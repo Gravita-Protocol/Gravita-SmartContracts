@@ -1,10 +1,10 @@
 // Setup in hardhat.config.ts:
 // hardhat: {
 // 	accounts: accountsList,
-// 	chainId: 10,
+// 	chainId: 1101,
 // 	forking: {
-// 		url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-// 		blockNumber: 112763546,
+// 		url: "https://polygonzkevm-mainnet.g.alchemy.com/v2/[API-KEY]",
+// 		blockNumber: 9228745,
 // 	},
 // },
 
@@ -17,9 +17,9 @@ const ERC20 = artifacts.require("ERC20")
 const PriceFeed = artifacts.require("PriceFeed")
 const VesselManager = artifacts.require("VesselManager")
 
-const asset = "0x9bcef72be871e61ed4fbbc7630889bee758eb81d" // "0x1f32b1c2345538c0c6f582fcb022739c4a194ebb" // "0x4200000000000000000000000000000000000006"
-const assetPiggyBank = "0x724dc807b04555b71ed48a6896b6f41593b8c637" // "0xc45a479877e1e9dfe9fcd4056c699575a1045daa" // "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8"
-const adminContractAddress = "0x326398De2dB419Ee39F97600a5eeE97093cf3B27"
+const asset = '0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38' // osETH on Mainnet
+const assetPiggyBank = '0xBA12222222228d8Ba445958a75a0704d566BF2C8' // Balancer Vault
+const adminContractAddress = '0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53'
 
 let borrowerOperations, debtToken, priceFeed, vesselManager
 
@@ -51,7 +51,19 @@ contract("CollTest", async accounts => {
 
 	it("openVessel()", async () => {
 		const erc20 = await ERC20.at(asset)
-		console.log(`Using ${await erc20.name()} as collateral`)
+		console.log(`Using ${await erc20.symbol()} as collateral`)
+
+		const multisig = await priceFeed.owner()
+		await setBalance(multisig, p("100"))
+		await impersonateAccount(multisig)
+
+		console.log(`Configuring new oracle...`)
+		const isEthIndexed = true
+		await priceFeed.setOracle(asset, "0x66ac817f997efd114edfcccdce99f3268557b32c", 0, 90_000, isEthIndexed, false, {
+			from: multisig,
+		})
+		await stopImpersonatingAccount(multisig)
+
 		const price = await priceFeed.fetchPrice(asset)
 		console.log(`PriceFeed's price: ${f(price)}`)
 		const amount = p("100")

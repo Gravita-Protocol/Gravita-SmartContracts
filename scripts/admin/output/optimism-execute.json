@@ -1,0 +1,101 @@
+{
+    "version": "1.0",
+    "chainId": "10",
+    "createdAt": "1708517440646",
+    "meta": {
+        "name": "Transactions Batch",
+        "description": "",
+        "txBuilderVersion": "1.16.0",
+        "createdFromSafeAddress": "0x853b5db6310292dF1C8C05Ad0a4fdf0856B772BB",
+        "createdFromOwnerAddress": "",
+        "checksum": ""
+    },
+    "transactions": [
+        {
+            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x0000000000000000000000001f32b1c2345538c0c6f582fcb022739c4a194ebb000000000000000000000000000000000000000000000000008e1bc9bf040000"
+            }
+        },
+        {
+            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x0000000000000000000000009bcef72be871e61ed4fbbc7630889bee758eb81d000000000000000000000000000000000000000000000000008e1bc9bf040000"
+            }
+        }
+    ]
+}
