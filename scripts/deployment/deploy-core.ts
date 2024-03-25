@@ -8,12 +8,11 @@ import fs from "fs"
  */
 export enum DeploymentTarget {
 	Localhost = "localhost",
-	GoerliTestnet = "goerli",
+	Arbitrum = "arbitrum",
 	ArbitrumGoerliTestnet = "arbitrum-goerli",
-	OptimismGoerliTestnet = "optimism-goerli",
 	HoleskyTestnet = "holesky",
 	Mainnet = "mainnet",
-	Arbitrum = "arbitrum",
+	Mantle = "mantle",
 	PolygonZkEvm = "polygon-zkevm"
 }
 
@@ -44,18 +43,10 @@ export class CoreDeployer {
 	isTestnetDeployment = () =>
 		[
 			DeploymentTarget.Localhost,
-			DeploymentTarget.GoerliTestnet,
 			DeploymentTarget.ArbitrumGoerliTestnet,
-			DeploymentTarget.OptimismGoerliTestnet,
 			DeploymentTarget.HoleskyTestnet,
 		].includes(this.targetNetwork)
-	isLayer2Deployment = () =>
-		[
-			DeploymentTarget.Arbitrum,
-			DeploymentTarget.ArbitrumGoerliTestnet,
-			DeploymentTarget.OptimismGoerliTestnet,
-		].includes(this.targetNetwork)
-
+	
 	/**
 	 * Main function that is invoked by the deployment process.
 	 */
@@ -104,8 +95,6 @@ export class CoreDeployer {
 		let priceFeed: any
 		if (this.isLocalhostDeployment()) {
 			priceFeed = await this.deployNonUpgradeable("PriceFeedTestnet")
-		} else if (this.isLayer2Deployment()) {
-			priceFeed = await this.deployUpgradeable("PriceFeedL2")
 		} else {
 			priceFeed = await this.deployUpgradeable("PriceFeed")
 		}
@@ -348,6 +337,12 @@ export class CoreDeployer {
 					defaultRedemptionFeeFloor
 				)
 			)
+			await this.sendAndWaitForTransaction(
+				this.coreContracts.adminContract.setRedemptionBlockTimestamp(
+					coll.address,
+					coll.redemptionBlockTimestamp
+				)
+			)
 			console.log(`[${coll.name}] AdminContract.setCollateralParameters() -> ok`)
 		}
 	}
@@ -366,7 +361,7 @@ export class CoreDeployer {
 				return
 			}
 			console.log(`[${coll.name}] PriceFeed.setOracle()`)
-			const oracleProviderType = 0 // IPriceFeed.sol :: enum ProviderType.Chainlink
+			const oracleProviderType = 1 // IPriceFeed.sol :: enum ProviderType.API3
 			const isFallback = false
 			await this.sendAndWaitForTransaction(
 				this.coreContracts.priceFeed.setOracle(

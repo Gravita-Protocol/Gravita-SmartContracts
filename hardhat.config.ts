@@ -18,17 +18,14 @@ import { CoreDeployer, DeploymentTarget } from "./scripts/deployment/deploy-core
 task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Localhost).run()
 )
-task("deploy-core-goerli", "Deploys contracts to Goerli Testnet").setAction(
-	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.GoerliTestnet).run()
-)
-task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testnet").setAction(
-	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.ArbitrumGoerliTestnet).run()
+task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
 )
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
-task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
-	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
+task("deploy-core-mantle", "Deploys contracts to Mantle").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mantle).run()
 )
 task("deploy-core-polygon-zkevm", "Deploys contracts to Polygon ZkEVM").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.PolygonZkEvm).run()
@@ -79,21 +76,29 @@ module.exports = {
 		// 	},
 		// },
 		arbitrum: {
-			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
+			url: `https://arb1.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		"arbitrum-sepolia": {
 			url: `https://sepolia-rollup.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		linea: {
+			url: `https://rpc.linea.build`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 		mainnet: {
 			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
+		mantle: {
+			url: `https://rpc.mantle.xyz`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		"optimism-sepolia": {
 			url: `https://sepolia.optimism.io`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
+    },
 		polygonZkEvm: {
 			url: `https://polygon-zkevm.drpc.org`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
@@ -105,13 +110,14 @@ module.exports = {
 			"arbitrum-sepolia": `${process.env.ARBITRUM_ETHERSCAN_API_KEY}`,
 			holesky: `${process.env.ETHERSCAN_API_KEY}`,
 			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
+			mantle: ``,
 			"optimism-sepolia": `${process.env.OPTIMISM_ETHERSCAN_API_KEY}`,
 			polygonZkEvm: `${process.env.POLYGON_ZKEVM_ETHERSCAN_API_KEY}`,
 		},
 		customChains: [
 			{
 				network: "arbitrum",
-				chainId: 42161,
+				chainId: 42_161,
 				urls: {
 					apiURL: "https://api.arbiscan.io/api",
 					browserURL: "https://arbiscan.io/",
@@ -127,7 +133,7 @@ module.exports = {
 			},
 			{
 				network: "holesky",
-				chainId: 17000,
+				chainId: 17_000,
 				urls: {
 					apiURL: "https://api-holesky.etherscan.io/api",
 					browserURL: "https://holesky.etherscan.io/",
@@ -135,23 +141,31 @@ module.exports = {
 			},
 			{
 				network: "linea",
-				chainId: 59144,
+				chainId: 59_144,
 				urls: {
 					apiURL: "https://api.lineascan.build/api",
 					browserURL: "https://lineascan.build/",
 				},
 			},
 			{
+				network: "mantle",
+				chainId: 5_000,
+				urls: {
+					apiURL: "https://explorer.mantle.xyz/api",
+					browserURL: "https://explorer.mantle.xyz/",
+				},
+			},
+      {
 				network: "optimism-sepolia",
 				chainId: 11155420,
 				urls: {
 					apiURL: "https://sepolia-optimism.etherscan.io/api",
 					browserURL: "https://sepolia-optimism.etherscan.io",
-				},
-			},
+        },
+      },
 			{
 				network: "polygonZkEvm",
-				chainId: 1101,
+				chainId: 1_101,
 				urls: {
 					apiURL: "https://api-zkevm.polygonscan.com/api",
 					browserURL: "https://zkevm.polygonscan.com/",
