@@ -15,7 +15,7 @@
 		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
 		"deploy-core-mainnet": "npx hardhat deploy-core-mainnet --network mainnet --show-stack-traces",
 		"deploy-core-mantle": "npx hardhat deploy-core-mantle --network mantle --show-stack-traces",
-		"deploy-core-optimism": "npx hardhat deploy-core-optimism --network optimism --show-stack-traces"
+		"deploy-core-optimism": "npx hardhat deploy-core-optimism --network optimism --show-stack-traces",
 		"deploy-core-polygon-zkevm": "npx hardhat deploy-core-polygon-zkevm --network polygonZkEvm --show-stack-traces"
 	},
 	"keywords": [],
