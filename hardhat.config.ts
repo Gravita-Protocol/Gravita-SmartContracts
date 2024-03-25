@@ -71,6 +71,15 @@ module.exports = {
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
 		},
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	chainId: 10,
+		// 	forking: {
+		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+		// 		// url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+		// 		blockNumber: 117603555,
+		// 	},
+		// },
 		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
 		// 	accounts: accountsList,
@@ -93,8 +102,8 @@ module.exports = {
 			// url: `https://linea-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-		mainnet: {
-			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+		polygonZkEvm: {
+			url: `https://polygon-zkevm.drpc.org`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mantle: {

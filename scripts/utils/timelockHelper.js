@@ -6,12 +6,12 @@ const { ethers } = require("hardhat")
 const DEPLOYER_PRIVATEKEY = process.env.DEPLOYER_PRIVATEKEY
 
 // Setup:
-const TIMELOCK_ADDRESS = "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D" // Mainnet::Timelock
-const TARGET_ADDRESS = "0x5Bd5b45f6565762928A79779F6C2DD43c15c92EE" // Mainnet::AdminContract
+const TIMELOCK_ADDRESS = "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D"
+const TARGET_ADDRESS = "0x5Bd5b45f6565762928A79779F6C2DD43c15c92EE"
 
 // const METHOD_SIGNATURE = "addNewCollateral(address,uint256,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256","uint256"]
-// const METHOD_ARG_VALUES = ["0xA35b1B31Ce002FBF2058D22F30f95D405200A15b","200000000000000000000",18]
+// const METHOD_ARG_VALUES = ["0xcD68DFf4415358c35a28f96Fd5bF7083B22De1D6","20000000000000000000",18]
 
 // const METHOD_SIGNATURE = "setCollateralParameters(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"
 // const METHOD_ARG_TYPES = ["address", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256", "uint256"]
@@ -28,7 +28,19 @@ const TARGET_ADDRESS = "0x5Bd5b45f6565762928A79779F6C2DD43c15c92EE" // Mainnet::
 
 // const METHOD_SIGNATURE = "setRedemptionBlockTimestamp(address,uint256)"
 // const METHOD_ARG_TYPES = ["address","uint256"]
-// const METHOD_ARG_VALUES = ["0xA35b1B31Ce002FBF2058D22F30f95D405200A15b","1695859199"]
+// const METHOD_ARG_VALUES = ["0xcD68DFf4415358c35a28f96Fd5bF7083B22De1D6","1704844800"]
+
+// const METHOD_SIGNATURE = "setMintCap(address,uint256)"
+// const METHOD_ARG_TYPES = ["address","uint256"]
+// const METHOD_ARG_VALUES = ["0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee","3000000000000000000000000"]
+
+// const METHOD_SIGNATURE = "setOracle(address,address,uint8,uint256,bool,bool)"
+// const METHOD_ARG_TYPES = ["address","address","uint8","uint256","bool","bool"]
+// const METHOD_ARG_VALUES = ["0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee","0xddb6f90ffb4d3257dd666b69178e5b3c5bf41136",0,25_200,false,false]
+
+// const METHOD_SIGNATURE = "setRedemptionSofteningParam(uint256)"
+// const METHOD_ARG_TYPES = ["uint256"]
+// const METHOD_ARG_VALUES = [9950]
 
 const METHOD_SIGNATURE = "setRedemptionSofteningParam(uint256)"
 const METHOD_ARG_TYPES = ["uint256"]
@@ -62,14 +74,16 @@ async function main() {
 
 async function previewParameters() {
 	const timelockContract = await getTimelockContract()
-	const eta = await calcETA(timelockContract)
+	const eta = 1703602800 // await calcETA(timelockContract)
 	const data = encodeParameters(METHOD_ARG_TYPES, METHOD_ARG_VALUES)
+	const txHash = calcTxHash(TARGET_ADDRESS, 0, METHOD_SIGNATURE, data, eta)
 	console.log(`----------------------------------------------------------------------------------`)
 	console.log(`   target: ${TARGET_ADDRESS}`)
 	console.log(`    value: 0`)
 	console.log(`signature: ${METHOD_SIGNATURE}`)
 	console.log(`     data: ${data}`)
 	console.log(`      eta: ${eta}`)
+	console.log(`   txHash: ${txHash}`)
 	console.log(`----------------------------------------------------------------------------------`)
 }
 
@@ -138,7 +152,7 @@ async function getTimelockContract() {
 
 async function calcETA(timelockContract) {
 	const delay = Number(await timelockContract.delay())
-	return (await getBlockTimestamp()) + delay + 15 * 3_600 // add 24h for multisigning
+	return (await getBlockTimestamp()) + delay + 13 * 3_600
 }
 
 async function getBlockTimestamp() {
