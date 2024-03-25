@@ -5,7 +5,7 @@ import { ethers } from "hardhat"
  * Script that retrieves and displays latest `n` rounds from a PriceAggregator in an attempt to estimate its heartbeat.
  */
 
-const AGGREGATOR_ADDRESS = "0xddb6f90ffb4d3257dd666b69178e5b3c5bf41136" // Chainlink wETH:USD on LINEA
+const AGGREGATOR_ADDRESS = "0x97d9F9A00dEE0004BE8ca0A8fa374d486567eE2D" // Chainlink ETH:USD on Polygon-ZkEVM
 const ROUNDS = 500
 
 async function main() {

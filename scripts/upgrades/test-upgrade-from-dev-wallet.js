@@ -2,16 +2,8 @@ const { upgrades } = require("hardhat")
 
 const contractList = [
 	{
-		name: "VesselManager",
-		address: "0x2177946fD433F24666b23c51C8D728c34Af05627",
-	},
-	{
-		name: "VesselManagerOperations",
-		address: "0x4FC9067e08B16293b6aB251bB335e832F0e896C9",
-	},
-	{
-		name: "FeeCollector",
-		address: "0x9c966245C17F953Fa1e6FCaD8E79B0D7f9d2a872",
+		name: "PriceFeedL2",
+		address: "0xF0e0915D233C616CB727E0b2Ca29ff0cbD51B66A",
 	},
 ]
 

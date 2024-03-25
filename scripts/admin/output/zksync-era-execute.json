@@ -1,0 +1,58 @@
+{
+    "version": "1.0",
+    "chainId": "324",
+    "createdAt": "1708517440648",
+    "meta": {
+        "name": "Transactions Batch",
+        "description": "",
+        "txBuilderVersion": "1.16.0",
+        "createdFromSafeAddress": "0x3369d2cf353be897CF83B9c30DcCD8Cc2B798dfD",
+        "createdFromOwnerAddress": "",
+        "checksum": ""
+    },
+    "transactions": [
+        {
+            "to": "0x23D57c3F65eD7cdd36fea54cA0f9E32D91EaeD63",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0x441F6b484FD60C31b3ca9c61014030b0403F805a",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1708776640",
+                "data": "0x000000000000000000000000703b52f2b28febcb60e1372858af5b18849fe867000000000000000000000000000000000000000000000000008e1bc9bf040000"
+            }
+        }
+    ]
+}

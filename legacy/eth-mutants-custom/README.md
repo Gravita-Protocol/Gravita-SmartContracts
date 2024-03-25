@@ -25,7 +25,7 @@ check if they pass. It will report the result of each mutation.
 eth-mutants test
 ```
 
-This tools makes some important assumptions about your workspace, which should
+This tool makes some important assumptions about your workspace, which should
 hold true for most Truffle-based projects, but I plan on adding options to
 override them soon:
 
@@ -36,8 +36,8 @@ override them soon:
 ## Mutators
 
 The only mutation implemented at the moment is called `boundary-condition`
-and replaces `<` adn `>` for `<=` and `>=` and vice-versa. Contributions for
-mutators are especially welcomed.
+and replaces `<` and `>` for `<=` and `>=` and vice-versa. Contributions for
+mutators are especially welcome.
 
 ## Author
 

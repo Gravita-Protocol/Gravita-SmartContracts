@@ -9,11 +9,14 @@
 	"scripts": {
 		"hardhat": "hardhat",
 		"test": "hardhat test --max-memory 4096 --show-stack-traces",
-		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
-		"deploy-core-goerli": "npx hardhat deploy-core-goerli --network goerli --show-stack-traces",
+		"deploy-core-arbitrum": "npx hardhat deploy-core-arbitrum --network arbitrum --show-stack-traces",
 		"deploy-core-arbitrum-goerli": "npx hardhat deploy-core-arbitrum-goerli --network arbitrum_goerli --show-stack-traces",
+		"deploy-core-linea": "npx hardhat deploy-core-linea --network linea --show-stack-traces",
+		"deploy-core-localhost": "npx hardhat deploy-core-localhost --network localhost --show-stack-traces",
 		"deploy-core-mainnet": "npx hardhat deploy-core-mainnet --network mainnet --show-stack-traces",
-		"deploy-core-arbitrum": "npx hardhat deploy-core-arbitrum --network arbitrum --show-stack-traces"
+		"deploy-core-mantle": "npx hardhat deploy-core-mantle --network mantle --show-stack-traces",
+		"deploy-core-optimism": "npx hardhat deploy-core-optimism --network optimism --show-stack-traces",
+		"deploy-core-polygon-zkevm": "npx hardhat deploy-core-polygon-zkevm --network polygonZkEvm --show-stack-traces"
 	},
 	"keywords": [],
 	"author": "",
@@ -25,18 +28,18 @@
 		"solc": "^0.6.12"
 	},
 	"devDependencies": {
-		"@enzoferey/ethers-error-parser": "^0.2.3",
 		"@ethersproject/abi": "^5.7.0",
 		"@ethersproject/providers": "^5.7.2",
 		"@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+		"@nomicfoundation/hardhat-ethers": "^3.0.5",
 		"@nomicfoundation/hardhat-network-helpers": "^1.0.8",
 		"@nomicfoundation/hardhat-toolbox": "^2.0.2",
+		"@nomicfoundation/hardhat-verify": "1.1.0",
 		"@nomiclabs/hardhat-ethers": "^2.2.3",
 		"@nomiclabs/hardhat-etherscan": "^3.1.7",
 		"@nomiclabs/hardhat-truffle5": "^2.0.7",
 		"@nomiclabs/hardhat-web3": "^2.0.0",
 		"@openzeppelin/contracts": "^4.8.3",
-		"@openzeppelin/hardhat-defender": "^1.8.2",
 		"@openzeppelin/hardhat-upgrades": "^1.25.0",
 		"@openzeppelin/test-helpers": "^0.5.16",
 		"@typechain/ethers-v5": "^10.2.1",
