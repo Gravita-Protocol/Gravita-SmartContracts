@@ -21,9 +21,6 @@ task("deploy-core-localhost", "Deploys contracts to Localhost").setAction(
 task("deploy-core-arbitrum", "Deploys contracts to Arbitrum").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Arbitrum).run()
 )
-task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testnet").setAction(
-	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.ArbitrumGoerliTestnet).run()
-)
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
@@ -82,8 +79,8 @@ module.exports = {
 			url: `https://arb1.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
-		arbitrum_goerli: {
-			url: `https://arbitrum-goerli.public.blastapi.io`,
+		"arbitrum-sepolia": {
+			url: `https://sepolia-rollup.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		linea: {
@@ -98,6 +95,10 @@ module.exports = {
 			url: `https://rpc.mantle.xyz`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		"optimism-sepolia": {
+			url: `https://sepolia.optimism.io`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+    },
 		polygonZkEvm: {
 			url: `https://polygon-zkevm.drpc.org`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
@@ -106,9 +107,11 @@ module.exports = {
 	etherscan: {
 		apiKey: {
 			arbitrum: `${process.env.ARBITRUM_ETHERSCAN_API_KEY}`,
+			"arbitrum-sepolia": `${process.env.ARBITRUM_ETHERSCAN_API_KEY}`,
 			holesky: `${process.env.ETHERSCAN_API_KEY}`,
 			linea: `${process.env.LINEA_ETHERSCAN_API_KEY}`,
 			mantle: ``,
+			"optimism-sepolia": `${process.env.OPTIMISM_ETHERSCAN_API_KEY}`,
 			polygonZkEvm: `${process.env.POLYGON_ZKEVM_ETHERSCAN_API_KEY}`,
 		},
 		customChains: [
@@ -118,6 +121,14 @@ module.exports = {
 				urls: {
 					apiURL: "https://api.arbiscan.io/api",
 					browserURL: "https://arbiscan.io/",
+				},
+			},
+			{
+				network: "arbitrum-sepolia",
+				chainId: 421614,
+				urls: {
+					apiURL: "https://sepolia.arbiscan.io/api",
+					browserURL: "https://sepolia.arbiscan.io",
 				},
 			},
 			{
@@ -144,6 +155,14 @@ module.exports = {
 					browserURL: "https://explorer.mantle.xyz/",
 				},
 			},
+      {
+				network: "optimism-sepolia",
+				chainId: 11155420,
+				urls: {
+					apiURL: "https://sepolia-optimism.etherscan.io/api",
+					browserURL: "https://sepolia-optimism.etherscan.io",
+        },
+      },
 			{
 				network: "polygonZkEvm",
 				chainId: 1_101,
