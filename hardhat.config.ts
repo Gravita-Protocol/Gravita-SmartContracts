@@ -65,14 +65,19 @@ module.exports = {
 	},
 	networks: {
 		hardhat: {
+			allowUnlimitedContractSize: true,
+			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
-			//allowUnlimitedContractSize: true,
-			chainId: 1,
-			forking: {
-				url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-				blockNumber: 19019820,
-			},
 		},
+		// Setup for testing files in test/gravita-fork:
+		// hardhat: {
+		// 	accounts: accountsList,
+		// 	chainId: 42161,
+		// 	forking: {
+		// 		url: "https://arb1.arbitrum.io/rpc",
+		// 		blockNumber: 133331300,
+		// 	},
+		// },
 		arbitrum: {
 			url: `https://arb1.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],

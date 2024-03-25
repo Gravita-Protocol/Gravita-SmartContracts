@@ -38,7 +38,6 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-		redemptionSofteningParam = 99_50;
 	}
 
 	// Liquidation external functions -----------------------------------------------------------------------------------
