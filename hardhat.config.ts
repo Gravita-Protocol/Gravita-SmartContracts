@@ -66,20 +66,20 @@ module.exports = {
 		],
 	},
 	networks: {
-		hardhat: {
-			allowUnlimitedContractSize: true,
-			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
-			accounts: accountsList,
-		},
 		// hardhat: {
+		// 	allowUnlimitedContractSize: true,
+		// 	// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 		// 	accounts: accountsList,
-		// 	chainId: 10,
-		// 	forking: {
-		// 		url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-		// 		// url: `https://optimism-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-		// 		blockNumber: 117603555,
-		// 	},
 		// },
+		hardhat: {
+			// accounts: accountsList,
+			// chainId: 1,
+			forking: {
+				// url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+				url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+				// blockNumber: 19532800,
+			},
+		},
 		// Setup for testing files in test/gravita-fork:
 		// hardhat: {
 		// 	accounts: accountsList,
