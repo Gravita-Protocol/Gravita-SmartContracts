@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "chainId": "1101",
-    "createdAt": "1708517440647",
+    "createdAt": "1713821252426",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
@@ -50,8 +50,51 @@
                 "target": "0x6b42581aC12F442503Dfb3dff2bC75ed83850637",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1708776640",
-                "data": "0x000000000000000000000000b23c20efce6e24acca0cef9b7b7aa196b84ec942000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "eta": "1714123652",
+                "data": "0x0000000000000000000000004f9a0e7fd2bf6067db6994cf12e4495df938e6e9000000000000000000000000000000000000000000000000013fbe85edc90000"
+            }
+        },
+        {
+            "to": "0x42865C7FA0b84cf76C8e8256f3356226EDC3b1be",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "queueTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0x6b42581aC12F442503Dfb3dff2bC75ed83850637",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000b23c20efce6e24acca0cef9b7b7aa196b84ec942000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         }
     ]

@@ -1,18 +1,18 @@
 {
     "version": "1.0",
-    "chainId": "10",
-    "createdAt": "1713821252424",
+    "chainId": "5000",
+    "createdAt": "1713821252423",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
         "txBuilderVersion": "1.16.0",
-        "createdFromSafeAddress": "0x853b5db6310292dF1C8C05Ad0a4fdf0856B772BB",
+        "createdFromSafeAddress": "0x601FD66A2a32D980835517b135178124E973Dd7f",
         "createdFromOwnerAddress": "",
         "checksum": ""
     },
     "transactions": [
         {
-            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
+            "to": "0xB7D276B74B4c8042aD22d78fFAD15fA5bd02A783",
             "value": "0",
             "data": null,
             "contractMethod": {
@@ -47,15 +47,15 @@
                 ]
             },
             "contractInputsValues": {
-                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
+                "target": "0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
                 "eta": "1714123652",
-                "data": "0x0000000000000000000000004200000000000000000000000000000000000006000000000000000000000000000000000000000000000000013fbe85edc90000"
+                "data": "0x000000000000000000000000deaddeaddeaddeaddeaddeaddeaddeaddead1111000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         },
         {
-            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
+            "to": "0xB7D276B74B4c8042aD22d78fFAD15fA5bd02A783",
             "value": "0",
             "data": null,
             "contractMethod": {
@@ -90,54 +90,11 @@
                 ]
             },
             "contractInputsValues": {
-                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
+                "target": "0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
                 "eta": "1714123652",
-                "data": "0x0000000000000000000000001f32b1c2345538c0c6f582fcb022739c4a194ebb000000000000000000000000000000000000000000000000013fbe85edc90000"
-            }
-        },
-        {
-            "to": "0x9D8bB5496332cbeeD59f1211f28dB8b5Eb214B6D",
-            "value": "0",
-            "data": null,
-            "contractMethod": {
-                "name": "queueTransaction",
-                "payable": false,
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "target",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "value",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "signature",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "data",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "eta",
-                        "type": "uint256"
-                    }
-                ]
-            },
-            "contractInputsValues": {
-                "target": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
-                "value": "0",
-                "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1714123652",
-                "data": "0x0000000000000000000000009bcef72be871e61ed4fbbc7630889bee758eb81d000000000000000000000000000000000000000000000000013fbe85edc90000"
+                "data": "0x000000000000000000000000cda86a272531e8640cd7f1a92c01839911b90bb0000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         }
     ]

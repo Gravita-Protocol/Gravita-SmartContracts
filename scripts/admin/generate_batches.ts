@@ -4,7 +4,7 @@ import batchTemplate from "./batch_template_body.json"
 import transactionTemplate from "./batch_template_transaction.json"
 import { ethers } from "ethers"
 
-const etaWindow = 24 // hours for multisig
+const etaWindow = 36 // hours for multisig
 
 async function main() {
 	const eta = _calcETA()
