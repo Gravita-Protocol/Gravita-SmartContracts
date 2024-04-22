@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "chainId": "1",
-    "createdAt": "1708517440644",
+    "createdAt": "1713821252419",
     "meta": {
         "name": "Transactions Batch",
         "description": "",
@@ -50,8 +50,8 @@
                 "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1708776640",
-                "data": "0x000000000000000000000000ae78736cd615f374d3085123a210448e74fc6393000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         },
         {
@@ -93,8 +93,8 @@
                 "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1708776640",
-                "data": "0x0000000000000000000000007f39c581f595b53c5cb19bd0b3f8da6c935e2ca0000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000b9d7dddca9a4ac480991865efef82e01273f79c3000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         },
         {
@@ -136,8 +136,8 @@
                 "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1708776640",
-                "data": "0x000000000000000000000000f951e335afb289353dc249e82926178eac7ded78000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000ae78736cd615f374d3085123a210448e74fc6393000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         },
         {
@@ -179,8 +179,8 @@
                 "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1708776640",
-                "data": "0x000000000000000000000000ac3e018457b222d93114458476f3e3416abbe38f000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "eta": "1714123652",
+                "data": "0x0000000000000000000000007f39c581f595b53c5cb19bd0b3f8da6c935e2ca0000000000000000000000000000000000000000000000000013fbe85edc90000"
             }
         },
         {
@@ -222,8 +222,137 @@
                 "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
                 "value": "0",
                 "signature": "setBorrowingFee(address,uint256)",
-                "eta": "1708776640",
-                "data": "0x000000000000000000000000f1c9acdc66974dfb6decb12aa385b9cd01190e38000000000000000000000000000000000000000000000000008e1bc9bf040000"
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000f951e335afb289353dc249e82926178eac7ded78000000000000000000000000000000000000000000000000013fbe85edc90000"
+            }
+        },
+        {
+            "to": "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000ac3e018457b222d93114458476f3e3416abbe38f000000000000000000000000000000000000000000000000013fbe85edc90000"
+            }
+        },
+        {
+            "to": "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000f1c9acdc66974dfb6decb12aa385b9cd01190e38000000000000000000000000000000000000000000000000013fbe85edc90000"
+            }
+        },
+        {
+            "to": "0x57a1953bF194A1EF73396e442Ac7Dc761dCd23cc",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "name": "executeTransaction",
+                "payable": false,
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "signature",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "data",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "eta",
+                        "type": "uint256"
+                    }
+                ]
+            },
+            "contractInputsValues": {
+                "target": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
+                "value": "0",
+                "signature": "setBorrowingFee(address,uint256)",
+                "eta": "1714123652",
+                "data": "0x000000000000000000000000cd5fe23c85820f7b72d0926fc9b05b43e359b7ee000000000000000000000000000000000000000000000000016345785d8a0000"
             }
         }
     ]

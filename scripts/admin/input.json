@@ -7,19 +7,29 @@
         "adminContract": "0x4928c8F8c20A1E3C295DddBe05095A9aBBdB3d14",
         "fees": [
             {
+                "symbol": "wETH",
+                "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+                "percent": 9
+            },
+            {
                 "symbol": "wstETH",
                 "address": "0x5979D7b546E38E414F7E9822514be443A4800529",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "rETH",
                 "address": "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "sfrxETH",
                 "address": "0x95aB45875cFFdba1E5f451B950bC2E42c0053f39",
-                "percent": 4
+                "percent": 9
+            },
+            {
+                "symbol": "weETH",
+                "address": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
+                "percent": 10
             }
         ]
     },
@@ -31,9 +41,14 @@
         "adminContract": "0xC8a25eA0Cbd92A6F787AeED8387E04559053a9f8",
         "fees": [
             {
+                "symbol": "wETH",
+                "address": "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f",
+                "percent": 9
+            },
+            {
                 "symbol": "wstETH",
                 "address": "0xB5beDd42000b71FddE22D3eE8a79Bd49A568fC8F",
-                "percent": 4
+                "percent": 9
             }
         ]
     },
@@ -45,29 +60,63 @@
         "adminContract": "0xf7Cc67326F9A1D057c1e4b110eF6c680B13a1f53",
         "fees": [
             {
+                "symbol": "wETH",
+                "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                "percent": 9
+            },
+            {
+                "symbol": "bLUSD",
+                "address": "0xB9D7DdDca9a4AC480991865EfEf82E01273F79C3",
+                "percent": 9
+            },
+            {
                 "symbol": "rETH",
                 "address": "0xae78736Cd615f374D3085123A210448E74Fc6393",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "wstETH",
                 "address": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "swETH",
                 "address": "0xf951E335afb289353dc249e82926178EaC7DEd78",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "sfrxETH",
                 "address": "0xac3E018457B222d93114458476f3E3416Abbe38F",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "osETH",
                 "address": "0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38",
-                "percent": 4
+                "percent": 9
+            },
+            {
+                "symbol": "weETH",
+                "address": "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
+                "percent": 10
+            }
+        ]
+    },
+    {
+        "id": 5000,
+        "network": "mantle",
+        "multisig": "0x601FD66A2a32D980835517b135178124E973Dd7f",
+        "timelock": "0xB7D276B74B4c8042aD22d78fFAD15fA5bd02A783",
+        "adminContract": "0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6",
+        "fees": [
+            {
+                "symbol": "wETH",
+                "address": "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
+                "percent": 9
+            },
+            {
+                "symbol": "mETH",
+                "address": "0xcDA86A272531e8640cD7F1a92c01839911B90bb0",
+                "percent": 9
             }
         ]
     },
@@ -79,14 +128,19 @@
         "adminContract": "0x326398De2dB419Ee39F97600a5eeE97093cf3B27",
         "fees": [
             {
+                "symbol": "wETH",
+                "address": "0x4200000000000000000000000000000000000006",
+                "percent": 9
+            },
+            {
                 "symbol": "wstETH",
                 "address": "0x1f32b1c2345538c0c6f582fcb022739c4a194ebb",
-                "percent": 4
+                "percent": 9
             },
             {
                 "symbol": "rETH",
                 "address": "0x9bcef72be871e61ed4fbbc7630889bee758eb81d",
-                "percent": 4
+                "percent": 9
             }
         ]
     },
@@ -98,9 +152,14 @@
         "adminContract": "0x6b42581aC12F442503Dfb3dff2bC75ed83850637",
         "fees": [
             {
+                "symbol": "wETH",
+                "address": "0x4F9A0e7FD2Bf6067db6994CF12E4495Df938E6e9",
+                "percent": 9
+            },
+            {
                 "symbol": "rETH",
                 "address": "0xb23C20EFcE6e24Acca0Cef9B7B7aA196b84EC942",
-                "percent": 4
+                "percent": 9
             }
         ]
     },
@@ -112,9 +171,14 @@
         "adminContract": "0x441F6b484FD60C31b3ca9c61014030b0403F805a",
         "fees": [
             {
+                "symbol": "wETH",
+                "address": "0x5aea5775959fbc2557cc8789bc1bf90a239d9a91",
+                "percent": 9
+            },
+            {
                 "symbol": "wstETH",
                 "address": "0x703b52F2b28fEbcB60E1372858AF5b18849FE867",
-                "percent": 4
+                "percent": 9
             }
         ]
     }
