@@ -1,0 +1,44 @@
+{
+	"ActivePool": {
+		"address": "0xdDf7ADB56b1Be18A077E7377c88D4E1811aFE0AE"
+	},
+	"AdminContract": {
+		"address": "0x412D48c3467177140B83C0dBdf786317C5604F4e"
+	},
+	"BorrowerOperations": {
+		"address": "0x47C7277224BbCc6Bed8d1735c54490FeaAb27387"
+	},
+	"CollSurplusPool": {
+		"address": "0x5480c5c5610000998677519602cEe57e09Aa493E"
+	},
+	"DebtToken": {
+		"address": "0x1a3C351b6CF73b4488d44D8c71f1234Be61603c5"
+	},
+	"DefaultPool": {
+		"address": "0xBCbDc92e4fa95F90CB38Edf8a00e77e29588F7dD"
+	},
+	"FeeCollector": {
+		"address": "0xafCf3d22fE71459c8FEc9AA0Fe1B5572f13d7EFa"
+	},
+	"GasPool": {
+		"address": "0x337c6D715fac1f8013d78567e154Ed38060ca2A6"
+	},
+	"PriceFeed": {
+		"address": "0xE88EDcc956Cb979bF2d823EeFa1f7C6d69169285"
+	},
+	"SortedVessels": {
+		"address": "0x6cB4BDA294faC398eB7B0eDf4f7E9138bbf8EA89"
+	},
+	"StabilityPool": {
+		"address": "0xD8e4009aE9e22FCF8DE786946E33eF5783eC34Ee"
+	},
+	"Timelock": {
+		"address": "0x54eD9C8b2CAB402540B11996979064CFF709888e"
+	},
+	"VesselManager": {
+		"address": "0xD8a84A6064bAcE062AA906f0C11ac35656CD58b6"
+	},
+	"VesselManagerOperations": {
+		"address": "0x0d441bD787F7bF026dEf59e9e9D9F880fE59B5b4"
+	}
+}
