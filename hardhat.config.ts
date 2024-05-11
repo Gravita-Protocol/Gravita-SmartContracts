@@ -97,13 +97,13 @@ module.exports = {
 			url: `https://sepolia-rollup.arbitrum.io/rpc`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
+		holesky: {
+			url: `https://holesky.drpc.org`,
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		},
 		linea: {
 			url: `https://rpc.linea.build`,
 			// url: `https://linea-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
-		polygonZkEvm: {
-			url: `https://polygon-zkevm.drpc.org`,
 			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
 		},
 		mantle: {
