@@ -26,7 +26,7 @@ Gravita is based on [Liquity](https://github.com/liquity/dev), which introduced 
 Liquity had many forks, which expanded on the original design (e.g. allowing multiple ERC-20 tokens as collateral).
 Gravita took inspiration from two in particular:
 - [Vesta](https://github.com/vesta-finance/vesta-protocol-v1/releases/tag/v1.0) is multi-collateral. Each position can have only one collateral type and it is linked to a specific stability pool. Gravita is a fork of Vesta v1.0. 
-- [Yeti](https://techdocs.yeti.finance/about-yeti-finance/contracts) allows cross-collateral positions, linked to a single stability pool
+- [Yeti](https://techdocs.yeti.finance/about-yeti-finance/contract-addresses) allows cross-collateral positions, linked to a single stability pool
 
 Gravita's debt token is called GRAI, while the governance token (not deployed on launch) GRVT.
 
